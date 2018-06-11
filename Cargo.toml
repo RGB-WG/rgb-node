@@ -1,0 +1,7 @@
+[package]
+name = "rgb"
+version = "0.1.0"
+authors = ["Alekos Filini <alekos.filini@gmail.com>"]
+
+[dependencies]
+bitcoin = "0.13.0"
