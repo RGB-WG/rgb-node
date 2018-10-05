@@ -1,4 +1,9 @@
 extern crate bitcoin;
 
-pub mod entities;
-pub mod util;
+#[cfg(test)]
+mod tests;
+
+pub mod contract;
+pub mod proof;
+pub mod traits;
+pub mod utils;
