@@ -14,9 +14,6 @@ For those who use "macOS" it is possible to install "Rust" through `brew`:
 
 `$ cargo build`
 
-## Example "main"
+## Run the tests
 
-`examples/main.rs` is an example, using the `librgb` built above.
-
-* build: `$ cargo build --example main`
-* run: `$ cargo run --example main`
+`$ cargo test --package rgb --lib tests`
