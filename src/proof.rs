@@ -67,9 +67,8 @@ impl Proof {
     }
 
     fn get_entries_for_us(&self, test_proof: &Proof, needed_txs: &HashMap<&NeededTx, Transaction>) -> Vec<OutputEntry> {
-        // We know that [0] is equal to all others (checked in verify)
-        let committing_tx_this = needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.bind_to[0])).unwrap();
-        let committing_tx_test = needed_txs.get(&NeededTx::WhichSpendsOutPoint(test_proof.bind_to[0])).unwrap();
+        let committing_tx_this = self.get_tx_committing_to_self(needed_txs).unwrap();
+        let committing_tx_test = test_proof.get_tx_committing_to_self(needed_txs).unwrap();
 
         let mut ans = Vec::new();
 
