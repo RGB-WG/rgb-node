@@ -1,14 +1,15 @@
 use bitcoin::Address;
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
-use bitcoin::network::serialize::serialize;
+use bitcoin::network::serialize::deserialize;
+use bitcoin::network::serialize::serialize_hex;
 use bitcoin::OutPoint;
 use bitcoin::Script;
 use bitcoin::util::hash::Sha256dHash;
 use contract::Contract;
 use proof::OutputEntry;
 use proof::Proof;
-use utils::bytes_to_hex;
+use utils::hex_to_bytes;
 
 fn create_demo_contract() -> Contract {
     Contract {
@@ -21,6 +22,28 @@ fn create_demo_contract() -> Contract {
     }
 }
 
+// TODO: test consensus rules
+
+#[test]
+fn serialize_output_entry() {
+    let entry = OutputEntry::new(Sha256dHash::default(), 100, 255);
+
+    let serialized = serialize_hex(&entry).unwrap();
+    let expected = String::from("000000000000000000000000000000000000000000000000000000000000000064000000ff000000");
+
+    assert_eq!(serialized, expected);
+}
+
+#[test]
+fn deserialize_output_entry() {
+    let serialized = String::from("000000000000000000000000000000000000000000000000000000000000000064000000ff000000");
+    let entry: OutputEntry = deserialize(&hex_to_bytes(serialized)).unwrap();
+
+    assert_eq!(entry.get_asset_id(), Sha256dHash::default());
+    assert_eq!(entry.get_amount(), 100);
+    assert_eq!(entry.get_vout(), 255);
+}
+
 #[test]
 fn serialize_root_proof() {
     let contract = create_demo_contract();
@@ -28,7 +51,7 @@ fn serialize_root_proof() {
     // create an invalid root proof (no outputs)
     let root_proof = Proof::new(vec![OutPoint::default()], vec![], vec![], Some(&contract));
 
-    let serialized = bytes_to_hex(&serialize(&root_proof).unwrap());
+    let serialized = serialize_hex(&root_proof).unwrap();
     let expected = String::from("010000000000000000000000000000000000000000000000000000000000000000ffffffff0000010d5465737420436f6e74726163740000000000000000000000000000000000000000000000000000000000000000ffffffff0000000000000000000000000000000000000000000000000000000000000000ffffffff23324e39684c776b5371723163505141507862724756556a78796a4431314732653168650b11090764000000");
 
     assert_eq!(serialized, expected);
@@ -39,7 +62,7 @@ fn serialize_normal_proof() {
     // create an invalid root proof (no outputs)
     let root_proof = Proof::new(vec![OutPoint::default()], vec![], vec![], None);
 
-    let serialized = bytes_to_hex(&serialize(&root_proof).unwrap());
+    let serialized = serialize_hex(&root_proof).unwrap();
     let expected = String::from("010000000000000000000000000000000000000000000000000000000000000000ffffffff000000");
 
     assert_eq!(serialized, expected);
@@ -56,11 +79,6 @@ fn hash_root_proof() {
     let expected = Sha256dHash::from_hex("9a538906e6466ebd2617d321f71bc94e56056ce213d366773699e28158e00614").unwrap();
 
     assert_eq!(hash, expected);
-}
-
-#[test]
-fn proof_without_bind_to_fails() { // TODO
-    assert_eq!(0, 0);
 }
 
 #[test]
