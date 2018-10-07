@@ -248,6 +248,10 @@ impl Verify for Proof {
             None => needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.bind_to[0])) // or get the tx which spends one of the bind_to
         }
     }
+
+    fn set_tx_committing_to_self(&mut self, tx: &Transaction) {
+        self.tx_committing_to_this = Some(tx.txid());
+    }
 }
 
 impl PartialEq for Proof {

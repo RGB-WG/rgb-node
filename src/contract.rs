@@ -93,6 +93,10 @@ impl Verify for Contract {
             None => needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.issuance_utxo)) // or get the tx which spends the issuance_utxo
         }
     }
+
+    fn set_tx_committing_to_self(&mut self, tx: &Transaction) {
+        self.tx_committing_to_this = Some(tx.txid());
+    }
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Contract {

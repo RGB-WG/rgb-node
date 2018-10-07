@@ -15,4 +15,5 @@ pub trait Verify {
     fn verify(&self, needed_txs: &HashMap<&NeededTx, Transaction>) -> bool;
     fn get_expected_script(&self) -> Script;
     fn get_tx_committing_to_self<'m>(&self, needed_txs: &'m HashMap<&NeededTx, Transaction>) -> Option<&'m Transaction>;
+    fn set_tx_committing_to_self(&mut self, tx: &Transaction);
 }
