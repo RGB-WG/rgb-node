@@ -7,3 +7,4 @@ pub mod contract;
 pub mod proof;
 pub mod traits;
 pub mod utils;
+pub mod output_entry;
