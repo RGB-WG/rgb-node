@@ -131,6 +131,32 @@ Spending the issuance_utxo OutPoint { txid: da036035876a60a0ae5e5e828868e00e3c2e
 Spending the initial_owner_utxo OutPoint { txid: d641a6a9d8476159c6f58cba83ea8a349839738abea9a99d34bda1d98fb1fa80, vout: 0 } in 82eb4aab347e180ed45009c8c9ba094c4f38097911c80d01d53446cac21c4559
 ```
 
+### `sync`
+
+Synchronizes proofs with your server.
+
+Downloaded (received) proofs are validated at this stage.
+
+```
+$ kaleidoscope sync
+ --> Uploaded proof ef6acd09ce2dff2e7accf34b0a580d6428363851e0461cda87fcead65ce28cd7
+```
+
+### `burn`
+
+Burns some assets by sending them to the public burn address specified in the contract.
+
+This is equivalent to a `sendtoaddress <burn-address>`.
+
+```
+$ kaleidoscope burn 19fb2674bf892a2dfff0bb5694b4441b2707adf2ae6928948746c65f334fe450 100
+Created a new TX with the following outputs:
+                100 of 19fb2674bf892a2dfff0bb5694b4441b2707adf2ae6928948746c65f334fe450 to mtn51FF3zMkKKzCkK8iTX3N6uQRJhfm5PM
+                2499997500 SAT to mtn51FF3zMkKKzCkK8iTX3N6uQRJhfm5PM
+       [CHANGE] 900 of 19fb2674bf892a2dfff0bb5694b4441b2707adf2ae6928948746c65f334fe450 to mzBPC82VU3uvCbdGBJxmoQYAHSebqFvfdm
+       [CHANGE] 2499997500 SAT to mzBPC82VU3uvCbdGBJxmoQYAHSebqFvfdm
+```
+
 ## Appendix
 
 ### Example `bitcoin.conf`
