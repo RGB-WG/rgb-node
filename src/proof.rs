@@ -40,9 +40,11 @@ impl OutputEntry {
 
 #[derive(Clone, Debug)]
 pub struct Proof {
+    pub version: u16,
     pub bind_to: Vec<OutPoint>,
     pub input: Vec<Proof>,
     pub output: Vec<OutputEntry>,
+    pub tx_committing_to_this: Option<Sha256dHash>,
     pub contract: Option<Box<Contract>>, // Only needed for root proofs
 }
 
@@ -51,10 +53,12 @@ impl Proof {
         let contract = if contract.is_some() { Some(Box::new(contract.unwrap().clone())) } else { None };
 
         Proof {
+            version: 1,
             bind_to,
             input,
             output,
             contract,
+            tx_committing_to_this: None
         }
     }
 
@@ -138,15 +142,21 @@ impl Verify for Proof {
     fn verify(&self, needed_txs: &HashMap<&NeededTx, Transaction>) -> bool {
         // Make sure that all the outpoints we are binding to are spent in the same tx
 
-        let committing_tx = needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.bind_to[0])).unwrap(); // Take the first one
-        for out_point in &self.bind_to {
-            // And compare it to all the others
-            let this_committing_tx = needed_txs.get(&NeededTx::WhichSpendsOutPoint(out_point.clone())).unwrap();
-
-            if committing_tx.txid() != this_committing_tx.txid() {
-                println!("not all the outpoints in bind_to are spent in the same tx {:?}", committing_tx.txid());
-                return false;
+        // Take the tx committing to this
+        let committing_tx = self.get_tx_committing_to_self(&needed_txs).unwrap();
+        let all_spent = self.bind_to.iter().all(|&op| { // And check all the bind_to
+            for input in &committing_tx.input {
+                if input.previous_output == op {
+                    return true;
+                }
             }
+
+            false
+        });
+
+        if !all_spent {
+            println!("not all the outpoints in bind_to are spent in the same tx {:?}", committing_tx.txid());
+            return false;
         }
 
         // ---------------------------------
@@ -232,6 +242,13 @@ impl Verify for Proof {
 
         burn_script_builder.into_script()
     }
+
+    fn get_tx_committing_to_self<'m>(&self, needed_txs: &'m HashMap<&NeededTx, Transaction>) -> Option<&'m Transaction> {
+        match self.tx_committing_to_this {
+            Some(txid) => needed_txs.get(&NeededTx::FromTXID(txid)), // either by using the hint in the proof
+            None => needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.bind_to[0])) // or get the tx which spends one of the bind_to
+        }
+    }
 }
 
 impl PartialEq for Proof {
@@ -265,19 +282,25 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for OutputEntry {
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Proof {
     fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+        self.version.consensus_encode(s)?;
         self.bind_to.consensus_encode(s)?;
         self.input.consensus_encode(s)?;
         self.output.consensus_encode(s)?;
+        self.tx_committing_to_this.consensus_encode(s)?;
         self.contract.consensus_encode(s)
     }
 }
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Proof {
     fn consensus_decode(d: &mut D) -> Result<Proof, serialize::Error> {
+        let version: u16 = ConsensusDecodable::consensus_decode(d)?;
+
         Ok(Proof {
+            version,
             bind_to: ConsensusDecodable::consensus_decode(d)?,
             input: ConsensusDecodable::consensus_decode(d)?,
             output: ConsensusDecodable::consensus_decode(d)?,
+            tx_committing_to_this: ConsensusDecodable::consensus_decode(d)?,
             contract: ConsensusDecodable::consensus_decode(d)?,
         })
     }

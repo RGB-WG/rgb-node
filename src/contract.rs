@@ -5,7 +5,7 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::network::encodable::ConsensusDecodable;
 use bitcoin::network::encodable::ConsensusEncodable;
 use bitcoin::network::serialize;
-use bitcoin::network::serialize::serialize;
+use bitcoin::network::serialize::RawEncoder;
 use bitcoin::network::serialize::SimpleDecoder;
 use bitcoin::network::serialize::SimpleEncoder;
 use bitcoin::Transaction;
@@ -20,12 +20,14 @@ use traits::NeededTx;
 
 #[derive(Clone, Debug)]
 pub struct Contract {
+    pub version: u16,
     pub title: String,
     pub issuance_utxo: OutPoint,
     pub initial_owner_utxo: OutPoint,
     pub burn_address: Address,
     pub network: Network,
     pub total_supply: u32,
+    pub tx_committing_to_this: Option<Sha256dHash>,
 }
 
 impl Contract {
@@ -35,8 +37,21 @@ impl Contract {
 }
 
 impl BitcoinHash for Contract {
-    fn bitcoin_hash(&self) -> Sha256dHash { // all the fields
-        Sha256dHash::from_data(&serialize(self).unwrap())
+    fn bitcoin_hash(&self) -> Sha256dHash {
+        // skip tx_committing_to_this, not relevant for consensus
+
+        let encoded: Vec<u8> = Vec::new();
+        let mut enc = RawEncoder::new(encoded);
+
+        self.version.consensus_encode(&mut enc).unwrap();
+        self.title.consensus_encode(&mut enc).unwrap();
+        self.issuance_utxo.consensus_encode(&mut enc).unwrap();
+        self.initial_owner_utxo.consensus_encode(&mut enc).unwrap();
+        self.burn_address.to_string().consensus_encode(&mut enc).unwrap();
+        self.network.consensus_encode(&mut enc).unwrap();
+        self.total_supply.consensus_encode(&mut enc).unwrap();
+
+        enc.into_inner().bitcoin_hash()
     }
 }
 
@@ -46,7 +61,7 @@ impl Verify for Contract {
     }
 
     fn verify(&self, needed_txs: &HashMap<&NeededTx, Transaction>) -> bool {
-        let committing_tx = needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.issuance_utxo)).unwrap();
+        let committing_tx = self.get_tx_committing_to_self(needed_txs).unwrap();
         let expected = self.get_expected_script();
 
         // Check the outputs
@@ -71,33 +86,45 @@ impl Verify for Contract {
 
         burn_script_builder.into_script()
     }
+
+    fn get_tx_committing_to_self<'m>(&self, needed_txs: &'m HashMap<&NeededTx, Transaction>) -> Option<&'m Transaction> {
+        match self.tx_committing_to_this {
+            Some(txid) => needed_txs.get(&NeededTx::FromTXID(txid)), // either by using the hint in the contract
+            None => needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.issuance_utxo)) // or get the tx which spends the issuance_utxo
+        }
+    }
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Contract {
     fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+        self.version.consensus_encode(s)?;
         self.title.consensus_encode(s)?;
         self.issuance_utxo.consensus_encode(s)?;
         self.initial_owner_utxo.consensus_encode(s)?;
         self.burn_address.to_string().consensus_encode(s)?;
         self.network.consensus_encode(s)?;
-        self.total_supply.consensus_encode(s)
+        self.total_supply.consensus_encode(s)?;
+        self.tx_committing_to_this.consensus_encode(s)
     }
 }
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Contract {
     fn consensus_decode(d: &mut D) -> Result<Contract, serialize::Error> {
+        let version: u16 = ConsensusDecodable::consensus_decode(d)?;
         let title: String = ConsensusDecodable::consensus_decode(d)?;
         let issuance_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
         let initial_owner_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
         let burn_address_str: String = ConsensusDecodable::consensus_decode(d)?;
 
         Ok(Contract {
+            version,
             title,
             issuance_utxo,
             initial_owner_utxo,
             burn_address: Address::from_str(burn_address_str.as_str()).unwrap(),
             network: ConsensusDecodable::consensus_decode(d)?,
             total_supply: ConsensusDecodable::consensus_decode(d)?,
+            tx_committing_to_this: ConsensusDecodable::consensus_decode(d)?
         })
     }
 }
