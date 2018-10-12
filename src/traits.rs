@@ -2,6 +2,9 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::OutPoint;
 use bitcoin::Transaction;
 use bitcoin::util::hash::Sha256dHash;
+use pay_to_contract::ECTweakFactor;
+use secp256k1::Error;
+use secp256k1::PublicKey;
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
@@ -14,4 +17,9 @@ pub trait Verify {
     fn get_needed_txs(&self) -> Vec<NeededTx>;
     fn verify(&self, needed_txs: &HashMap<&NeededTx, Transaction>) -> bool;
     fn get_expected_script(&self) -> Script;
+}
+
+pub trait PayToContract {
+    fn set_commitment_pk(&mut self, pk: &PublicKey) -> (PublicKey, ECTweakFactor);
+    fn get_self_tweak_factor(&self) -> Result<ECTweakFactor, Error>;
 }
