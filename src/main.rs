@@ -106,15 +106,6 @@ fn main() {
                 .value_name("AMOUNT")
                 .required(true)
                 .help("Set the amount")))
-        .subcommand(SubCommand::with_name("server")
-            .about("Run the Bifrost server")
-            .arg(Arg::with_name("port")
-                .long("port")
-                .short("p")
-                .value_name("PORT")
-                .required(true)
-                .default_value("3000")
-                .help("Set a new port")))
         .get_matches();
 
     let default_rgb_dir = home_dir().unwrap().join(".rgb");
