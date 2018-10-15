@@ -5,6 +5,7 @@ use bitcoin::Address;
 use bitcoin::Block;
 use bitcoin::blockdata::transaction::OutPoint;
 use bitcoin::network::serialize;
+use bitcoin::Privkey;
 use bitcoin::Transaction;
 use bitcoin::util::hash::Sha256dHash;
 use jsonrpc;
@@ -97,5 +98,37 @@ pub fn rpc_getnewaddress(client: &mut Client) -> Result<Address, jsonrpc::Error>
         }
 
         Ok(Address::from_str(res.result.unwrap().string().unwrap()).unwrap())
+    })
+}
+
+pub fn rpc_dumpprivkey(client: &mut Client, address: &Address) -> Result<Privkey, jsonrpc::Error> {
+    let request = client
+        .build_request("dumpprivkey".to_string(), vec![Json::from_serialize(address.to_string()).unwrap()]);
+
+    client.send_request(&request).and_then(|res| {
+        if res.error.is_some() {
+            println!("DumpPrivKey error: {:?}", res.error.unwrap());
+            return Err(jsonrpc::Error::NoErrorOrResult);
+        }
+
+        Ok(Privkey::from_str(res.result.unwrap().string().unwrap()).unwrap())
+    })
+}
+
+pub fn rpc_importprivkey(client: &mut Client, privkey: &Privkey) -> Result<(), jsonrpc::Error> {
+    let request = client
+        .build_request("importprivkey".to_string(), vec![
+            Json::from_serialize(privkey.to_string()).unwrap(),
+            Json::from_serialize("").unwrap(),
+            Json::from(false) // no rescan
+        ]);
+
+    client.send_request(&request).and_then(|res| {
+        if res.error.is_some() {
+            println!("ImportPrivKey error: {:?}", res.error.unwrap());
+            return Err(jsonrpc::Error::NoErrorOrResult);
+        }
+
+        Ok(())
     })
 }
