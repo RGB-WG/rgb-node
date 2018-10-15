@@ -4,12 +4,15 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
 use rgb::contract::Contract;
+use rgb::pay_to_contract::ECTweakFactor;
 use rgb::proof::OutputEntry;
 use rgb::proof::Proof;
+use rgb::traits::PayToContract;
 use rgb::traits::Verify;
+use secp256k1::PublicKey;
 use std::collections::HashMap;
 
-pub fn build_issuance_tx(contract: &Contract, outputs: &HashMap<Address, u64>) -> Transaction {
+pub fn build_issuance_tx(contract: &mut Contract, commitment_pubkey: &PublicKey, commitment_amount: u64, extra_outputs: &HashMap<Address, u64>) -> (Transaction, ECTweakFactor) {
     let txin = TxIn {
         previous_output: contract.issuance_utxo,
         script_sig: Script::default(),
@@ -19,7 +22,17 @@ pub fn build_issuance_tx(contract: &Contract, outputs: &HashMap<Address, u64>) -
 
     let mut tx_outs = Vec::new();
 
-    for output in outputs {
+    let (_, tweak_factor) = contract.set_commitment_pk(commitment_pubkey);
+
+    // Tx out first
+    let commitment_txout = TxOut {
+        value: commitment_amount,
+        script_pubkey: contract.get_expected_script(),
+    };
+
+    tx_outs.push(commitment_txout);
+
+    for output in extra_outputs {
         let this_tx_out = TxOut {
             value: *output.1,
             script_pubkey: output.0.script_pubkey(),
@@ -28,19 +41,12 @@ pub fn build_issuance_tx(contract: &Contract, outputs: &HashMap<Address, u64>) -
         tx_outs.push(this_tx_out);
     }
 
-    let commitment_txout = TxOut {
-        value: 0,
-        script_pubkey: contract.get_expected_script(),
-    };
-
-    tx_outs.push(commitment_txout);
-
-    Transaction {
+    (Transaction {
         version: 1,
         lock_time: 0,
         input: vec![txin],
         output: tx_outs,
-    }
+    }, tweak_factor)
 }
 
 #[derive(Clone, Debug)]
@@ -60,7 +66,7 @@ impl BitcoinRgbOutPoints {
     }
 }
 
-pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, outputs: &Vec<BitcoinRgbOutPoints>) -> (Proof, Transaction) {
+pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, commitment_pubkey: &PublicKey, commitment_amount: u64, commitment_tokens: &HashMap<Sha256dHash, u32>, other_outputs: &Vec<BitcoinRgbOutPoints>) -> (Proof, Transaction, ECTweakFactor) {
     // TODO: use raw_tx_commit_to
     // Create all the inputs of this transaction by iterating the outputs of the previous one(s)
 
@@ -87,15 +93,31 @@ pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, o
         input: input_proofs.clone(),
         output: Vec::new(),
         contract: None,
+        original_commitment_pk: None
     };
 
     // ------------------------------------------
     // Create all the outputs of this transaction
 
     let mut tx_outs = Vec::new();
-    let mut tx_out_index = 0;
 
-    for output_item in outputs {
+    // Commitment always goes first
+    let commitment_txout = TxOut {
+        value: commitment_amount,
+        script_pubkey: Script::default(), // will be updated later
+    };
+
+    tx_outs.push(commitment_txout);
+
+    for (asset_id, amount) in commitment_tokens {
+        proof.output.push(OutputEntry::new(asset_id.clone(), amount.clone(), 0));
+    }
+
+    // Add all the other outputs
+
+    let mut tx_out_index = 1;
+
+    for output_item in other_outputs {
         let this_tx_out = TxOut {
             value: output_item.bitcoin_amount,
             script_pubkey: output_item.bitcoin_address.script_pubkey(),
@@ -111,22 +133,19 @@ pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, o
         tx_out_index += 1;
     }
 
-    let commitment_txout = TxOut {
-        value: 0,
-        script_pubkey: proof.get_expected_script(),
-    };
-
-    tx_outs.push(commitment_txout);
+    // Pay to contract
+    let (_, tweak_factor) = proof.set_commitment_pk(commitment_pubkey);
+    tx_outs[0].script_pubkey = proof.get_expected_script(); // updated commitment script after all the outpoints have been added
 
     (proof, Transaction {
         version: 1,
         lock_time: 0,
         input: tx_ins,
         output: tx_outs,
-    })
+    }, tweak_factor)
 }
 
-pub fn raw_tx_commit_to(proof: &Proof, inputs: Vec<OutPoint>, outputs: &HashMap<Address, u64>) -> Transaction {
+pub fn raw_tx_commit_to(proof: &mut Proof, inputs: Vec<OutPoint>, commitment_pubkey: &PublicKey, commitment_amount: u64, other_outputs: &HashMap<Address, u64>) -> (Transaction, ECTweakFactor) {
     // Create all the inputs of this transaction by iterating the outputs of the previous one(s)
 
     let mut tx_ins = Vec::new();
@@ -144,7 +163,17 @@ pub fn raw_tx_commit_to(proof: &Proof, inputs: Vec<OutPoint>, outputs: &HashMap<
 
     let mut tx_outs = Vec::new();
 
-    for (addr, amount) in outputs {
+    let (_, tweak_factor) = proof.set_commitment_pk(commitment_pubkey);
+
+    // Always the first one
+    let commitment_txout = TxOut {
+        value: commitment_amount,
+        script_pubkey: proof.get_expected_script(),
+    };
+
+    tx_outs.push(commitment_txout);
+
+    for (addr, amount) in other_outputs {
         let this_tx_out = TxOut {
             value: *amount,
             script_pubkey: addr.script_pubkey(),
@@ -153,17 +182,10 @@ pub fn raw_tx_commit_to(proof: &Proof, inputs: Vec<OutPoint>, outputs: &HashMap<
         tx_outs.push(this_tx_out);
     }
 
-    let commitment_txout = TxOut {
-        value: 0,
-        script_pubkey: proof.get_expected_script(),
-    };
-
-    tx_outs.push(commitment_txout);
-
-    Transaction {
+    (Transaction {
         version: 1,
         lock_time: 0,
         input: tx_ins,
         output: tx_outs,
-    }
+    }, tweak_factor)
 }

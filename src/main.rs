@@ -4,6 +4,7 @@ extern crate core;
 extern crate hyper;
 extern crate jsonrpc;
 extern crate rgb;
+extern crate secp256k1;
 
 use clap::{App, Arg, SubCommand};
 use kaleidoscope::burn::Burn;
@@ -26,7 +27,7 @@ fn main() {
     const AUTHORS: Option<&'static str> = option_env!("CARGO_PKG_AUTHORS");
 
     // TODO: add --dry-run
-    let matches = App::new("RGB")
+    let matches = App::new("RGB - P2C Version")
         .version(VERSION.unwrap_or("<unknown>"))
         .author(AUTHORS.unwrap_or("<unknown>"))
         .about("<TODO: write the about section>") // TODO

@@ -3,6 +3,7 @@ use bitcoin::Address;
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
 use bitcoin::OutPoint;
+use bitcoin::Privkey;
 use bitcoin::util::hash::Sha256dHash;
 use chain::tx_builder::BitcoinRgbOutPoints;
 use chain::tx_builder::spend_proofs;
@@ -15,6 +16,8 @@ use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
 use rgb::proof::OutputEntry;
 use rgb::proof::Proof;
+use secp256k1::PublicKey;
+use secp256k1::Secp256k1;
 use std::cmp;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -23,7 +26,12 @@ pub struct SendToAddress {}
 
 pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash, amount: u32, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
     const FEE: u64 = 2000;
+
+    let s = Secp256k1::new();
+
     let change_address = rpc_getnewaddress(client).unwrap();
+    let change_privkey = rpc_dumpprivkey(client, &change_address).unwrap();
+    let change_pubkey = PublicKey::from_secret_key(&s, &change_privkey.key);
 
     // -----------------
 
@@ -106,29 +114,39 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
     total_btc_amount -= FEE;
     let payment_amount = total_btc_amount / 2;
 
-    // 0 = payment
+    // payment
     let mut payment_map = HashMap::new();
     payment_map.insert(asset_id.clone(), amount);
     rgb_outputs.push(BitcoinRgbOutPoints::new(btc_address.clone(), payment_amount, payment_map));
 
-    // 1 = change
-    rgb_outputs.push(BitcoinRgbOutPoints::new(change_address.clone(), total_btc_amount - payment_amount, to_self.clone()));
+    let (final_p, final_tx, tweak_factor) = spend_proofs(&chosen_proofs, &chosen_outpoints, &change_pubkey, total_btc_amount - payment_amount, &to_self.clone(), &rgb_outputs);
 
-    let (final_p, final_tx) = spend_proofs(&chosen_proofs, &chosen_outpoints, &rgb_outputs);
+    // Pay to contract
+    let mut tweaked_sk = change_privkey.key.clone();
+    tweaked_sk.add_assign(&s, &tweak_factor.as_inner());
+    let tweaked_privkey = Privkey::from_secret_key(tweaked_sk, true, change_privkey.network);
+
+    let new_change_address = Address::p2pkh(&PublicKey::from_secret_key(&s, &tweaked_privkey.key), change_privkey.network);
+
+    rpc_importprivkey(client, &tweaked_privkey);
+
+    println!("Importing the tweaked private key for the proof commitment...");
 
     // ---------------------------------------
 
     let final_tx = rpc_sign_transaction(client, &final_tx).unwrap();
 
     println!("Created a new TX with the following outputs:");
-    // 0 = payment
+
+    // 0 = change
+    for (to_self_asset, to_self_amount) in &to_self {
+        println!("\t[CHANGE] {} of {} to {}", to_self_amount, to_self_asset, new_change_address.clone());
+    }
+    println!("\t[CHANGE] {} SAT to {}", total_btc_amount - payment_amount, new_change_address.clone());
+
+    // 1 = payment
     println!("\t         {} of {} to {}", amount, asset_id, btc_address.clone());
     println!("\t         {} SAT to {}", payment_amount, btc_address.clone());
-    // 1 = change
-    for (to_self_asset, to_self_amount) in &to_self {
-        println!("\t[CHANGE] {} of {} to {}", to_self_amount, to_self_asset, change_address.clone());
-    }
-    println!("\t[CHANGE] {} SAT to {}", total_btc_amount - payment_amount, change_address.clone());
 
     println!("TXID: {}", final_tx.txid());
 
