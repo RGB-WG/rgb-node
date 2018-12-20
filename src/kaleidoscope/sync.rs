@@ -23,14 +23,34 @@ pub struct Sync {}
 impl<'a> RGBSubCommand<'a> for Sync {
     fn run(matches: &'a ArgMatches<'a>, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
         let server = String::from(matches.value_of("server").unwrap_or(config.rgb_server.as_str()));
+
         let unspent_utxos = rpc_list_unspent(client).unwrap();
 
-        for (outpoint, amount) in unspent_utxos {
-            for p in database.get_proofs_for(&outpoint) { // first upload
-                println!(" --> Uploaded proof {}", p.bitcoin_hash());
-                upload_proofs(&server, &p, &outpoint.txid);
+        let proofs_to_upload = if matches.is_present("upload-all") {
+            database.list_local_proofs()
+        } else {
+            let mut temp_map = HashMap::new();
+
+            for (outpoint, _) in &unspent_utxos {
+                temp_map.insert(outpoint.txid.clone(), database.get_proofs_for(&outpoint));
             }
 
+            temp_map
+        };
+
+
+        // Upload
+
+        for (txid, proofs) in proofs_to_upload {
+            for p in proofs {
+                println!(" --> Uploaded proof {}", p.bitcoin_hash());
+                upload_proofs(&server, &p, &txid);
+            }
+        }
+
+        // Download
+
+        for (outpoint, _) in &unspent_utxos {
             // ---------------------------- // TODO do not re-download proofs we already have
 
             // then download

@@ -3,6 +3,7 @@ extern crate clap;
 extern crate core;
 extern crate hyper;
 extern crate jsonrpc;
+extern crate regex;
 extern crate rgb;
 
 use clap::{App, Arg, SubCommand};
@@ -81,7 +82,12 @@ fn main() {
                 .takes_value(true)
                 .long("server")
                 .value_name("SERVER[:PORT]")
-                .help("Overrides the default server")))
+                .help("Overrides the default server"))
+            .arg(Arg::with_name("upload-all")
+                .long("upload-all")
+                .short("a")
+                .help("Upload every proof instead of the ones you own"))
+        )
         .subcommand(SubCommand::with_name("sendtoaddress")
             .about("Send some RGB tokens to a specified address")
             .arg(Arg::with_name("address")
