@@ -36,6 +36,12 @@ fn main() {
             .value_name("DIRECTORY")
             .help("Sets a data directory")
             .takes_value(true))
+        .arg(Arg::with_name("rpcwallet")
+            .short("w")
+            .long("rpcwallet")
+            .value_name("WALLET NAME")
+            .help("Sets the Bitcoin core's wallet name")
+            .takes_value(true))
         .subcommand(SubCommand::with_name("issueasset")
             .about("Issue a new asset")
             .arg(Arg::with_name("title")
@@ -111,9 +117,11 @@ fn main() {
     let default_rgb_dir = home_dir().unwrap().join(".rgb");
     let datadir = Path::new(matches.value_of("datadir").unwrap_or(default_rgb_dir.to_str().unwrap()));
 
+    let rpc_wallet_path = matches.value_of("rpcwallet").unwrap_or("");
+
     let config = kaleidoscope::Config::load_from(datadir);
     let mut database = database::Database::new(datadir);
-    let mut client = jsonrpc::client::Client::new("http://".to_owned() + &config.rpcconnect + &":".to_owned() + &config.rpcport.to_string(), Some(config.rpcuser.clone()), Some(config.rpcpassword.clone()));
+    let mut client = jsonrpc::client::Client::new(format!("http://{}:{}/wallet/{}", config.rpcconnect, config.rpcport.to_string(), rpc_wallet_path), Some(config.rpcuser.clone()), Some(config.rpcpassword.clone()));
 
     // ---------------------------
 
