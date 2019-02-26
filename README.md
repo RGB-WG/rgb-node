@@ -1,4 +1,19 @@
 # RGB - Kaleidoscope
+Kaleidoscope, the RGB CLI wallet
+
+* [Installation](#installation)
+* [Configuration](#configuration)
+	* [Preparing `bitcoind`](#preparing-bitcoind)
+	* [Example configuration file](#example-configuration-file)
+* [Running RGB](#running-rgb)
+	* [`getnewaddress`](#getnewaddress)
+	* [`listunspent`](#listunspent)
+	* [`sendtoaddress`](#sendtoaddress)
+	* [`issueasset`](#issueasset)
+	* [`sync`](#sync)
+	* [`burn`](#burn)
+* [Appendix](#appendix)
+	* [Example `bitcoin.conf`](#example-bitcoin.conf)
 
 ## Installation
 
@@ -180,4 +195,5 @@ debug=mempool
 
 daemon=1
 addresstype=legacy
+deprecatedrpc=signrawtransaction
 ```
