@@ -10,7 +10,7 @@ use jsonrpc;
 use jsonrpc::client::Client;
 use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
-use rgb::proof::OutputEntry;
+use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use rgb::traits::Verify;
 use std::collections::HashMap;
@@ -50,7 +50,7 @@ impl<'a> RGBSubCommand<'a> for ListUnspent {
                     // -------------------------
 
                     for entry in p.output {
-                        if entry.get_vout() == outpoint.vout {
+                        if entry.get_vout().is_some() && entry.get_vout().unwrap() == outpoint.vout {
                             println!("|  {}   |", entry.get_asset_id());
                             println!("|    Amount: {:12}                                             |", entry.get_amount());
                         }

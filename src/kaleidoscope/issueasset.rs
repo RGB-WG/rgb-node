@@ -9,7 +9,7 @@ use jsonrpc;
 use jsonrpc::client::Client;
 use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
-use rgb::proof::OutputEntry;
+use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use std::collections::HashMap;
 
@@ -65,12 +65,9 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
 
         // -------------------------------------
 
-        let burn_address = rpc_getnewaddress(client).unwrap();
-
         let contract = Contract {
             title: matches.value_of("title").unwrap().to_string(),
             total_supply: matches.value_of("total_supply").unwrap().parse().unwrap(),
-            burn_address,
             network,
             issuance_utxo,
             initial_owner_utxo,
@@ -94,7 +91,7 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
         let root_proof = Proof::new(
             vec![contract.initial_owner_utxo.clone()],
             vec![],
-            vec![OutputEntry::new(contract.get_asset_id(), contract.total_supply, 0)],
+            vec![OutputEntry::new(contract.get_asset_id(), contract.total_supply, Some(0))],
             Some(&contract));
 
         let root_proof_change_address = rpc_getnewaddress(client).unwrap();

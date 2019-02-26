@@ -13,7 +13,7 @@ use jsonrpc;
 use jsonrpc::client::Client;
 use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
-use rgb::proof::OutputEntry;
+use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use std::cmp;
 use std::collections::HashMap;
@@ -53,7 +53,7 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
         let p = &proofs[0];
 
         for entry in &p.output {
-            if entry.get_vout() == outpoint.vout { // entry for us
+            if entry.get_vout().is_some() && entry.get_vout().unwrap() == outpoint.vout { // entry for us
                 used = true;
 
                 if entry.get_asset_id() != asset_id { // full back to self, different asset
@@ -109,10 +109,10 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
     // 0 = payment
     let mut payment_map = HashMap::new();
     payment_map.insert(asset_id.clone(), amount);
-    rgb_outputs.push(BitcoinRgbOutPoints::new(btc_address.clone(), payment_amount, payment_map));
+    rgb_outputs.push(BitcoinRgbOutPoints::new(Some(btc_address.clone()), payment_amount, payment_map));
 
     // 1 = change
-    rgb_outputs.push(BitcoinRgbOutPoints::new(change_address.clone(), total_btc_amount - payment_amount, to_self.clone()));
+    rgb_outputs.push(BitcoinRgbOutPoints::new(Some(change_address.clone()), total_btc_amount - payment_amount, to_self.clone()));
 
     let (final_p, final_tx) = spend_proofs(&chosen_proofs, &chosen_outpoints, &rgb_outputs);
 
