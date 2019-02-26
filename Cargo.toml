@@ -8,7 +8,8 @@ clap = "~2.32.0"
 bitcoin = "~0.14.2"
 strason = "0.4"
 jsonrpc = { git = "https://github.com/apoelstra/rust-jsonrpc.git", tag = "0.9.0" }
-rgb = { git = "https://github.com/rgb-org/rgb.git", rev = "dd51ef945b778ac0d1f010232ec3a8394c4142cd" }
+rgb = { git = "https://github.com/rgb-org/rgb.git", rev = "1a626e1edd61bf5bc836b8fac5469e4e0d6c3426" }
+regex = "1"
 
 [dependencies.hyper]
 version = "0.9.18"
