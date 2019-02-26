@@ -9,10 +9,8 @@ use bitcoin::network::serialize::serialize;
 use bitcoin::network::serialize::SimpleDecoder;
 use bitcoin::network::serialize::SimpleEncoder;
 use bitcoin::Transaction;
-use bitcoin::util::address::Address;
 use bitcoin::util::hash::Sha256dHash;
 use std::collections::HashMap;
-use std::str::FromStr;
 use super::bitcoin::network::constants::Network;
 use super::bitcoin::OutPoint;
 use super::traits::Verify;
@@ -23,7 +21,6 @@ pub struct Contract {
     pub title: String,
     pub issuance_utxo: OutPoint,
     pub initial_owner_utxo: OutPoint,
-    pub burn_address: Address,
     pub network: Network,
     pub total_supply: u32,
 }
@@ -78,7 +75,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Contract {
         self.title.consensus_encode(s)?;
         self.issuance_utxo.consensus_encode(s)?;
         self.initial_owner_utxo.consensus_encode(s)?;
-        self.burn_address.to_string().consensus_encode(s)?;
+
         self.network.consensus_encode(s)?;
         self.total_supply.consensus_encode(s)
     }
@@ -89,13 +86,11 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Contract {
         let title: String = ConsensusDecodable::consensus_decode(d)?;
         let issuance_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
         let initial_owner_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
-        let burn_address_str: String = ConsensusDecodable::consensus_decode(d)?;
 
         Ok(Contract {
             title,
             issuance_utxo,
             initial_owner_utxo,
-            burn_address: Address::from_str(burn_address_str.as_str()).unwrap(),
             network: ConsensusDecodable::consensus_decode(d)?,
             total_supply: ConsensusDecodable::consensus_decode(d)?,
         })
