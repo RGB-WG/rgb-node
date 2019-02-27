@@ -10,7 +10,7 @@ use jsonrpc;
 use jsonrpc::client::Client;
 use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
-use rgb::proof::OutputEntry;
+use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use rgb::traits::Verify;
 use std::collections::HashMap;

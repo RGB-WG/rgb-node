@@ -4,7 +4,7 @@ use bitcoin::blockdata::script::Script;
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
 use rgb::contract::Contract;
-use rgb::proof::OutputEntry;
+use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use rgb::traits::Verify;
 use std::collections::HashMap;
@@ -45,13 +45,13 @@ pub fn build_issuance_tx(contract: &Contract, outputs: &HashMap<Address, u64>) -
 
 #[derive(Clone, Debug)]
 pub struct BitcoinRgbOutPoints {
-    pub bitcoin_address: Address,
+    pub bitcoin_address: Option<Address>,
     pub bitcoin_amount: u64,
     pub rgb_outputs: HashMap<Sha256dHash, u32>,
 }
 
 impl BitcoinRgbOutPoints {
-    pub fn new(bitcoin_address: Address, bitcoin_amount: u64, rgb_outputs: HashMap<Sha256dHash, u32>) -> BitcoinRgbOutPoints {
+    pub fn new(bitcoin_address: Option<Address>, bitcoin_amount: u64, rgb_outputs: HashMap<Sha256dHash, u32>) -> BitcoinRgbOutPoints {
         BitcoinRgbOutPoints {
             bitcoin_address,
             bitcoin_amount,
@@ -96,19 +96,27 @@ pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, o
     let mut tx_out_index = 0;
 
     for output_item in outputs {
-        let this_tx_out = TxOut {
-            value: output_item.bitcoin_amount,
-            script_pubkey: output_item.bitcoin_address.script_pubkey(),
-        };
+        match output_item.bitcoin_address {
+            Some(ref addr) => {
+                let this_tx_out = TxOut {
+                    value: output_item.bitcoin_amount,
+                    script_pubkey: addr.script_pubkey(),
+                };
 
-        tx_outs.push(this_tx_out);
+                tx_outs.push(this_tx_out);
 
-        // Add the RGB outpoints
-        for (asset_id, amount) in &output_item.rgb_outputs {
-            proof.output.push(OutputEntry::new(asset_id.clone(), amount.clone(), tx_out_index));
+                for (asset_id, amount) in &output_item.rgb_outputs {
+                    proof.output.push(OutputEntry::new(asset_id.clone(), amount.clone(), Some(tx_out_index)));
+                }
+
+                tx_out_index += 1;
+            },
+            None => {
+                for (asset_id, amount) in &output_item.rgb_outputs {
+                    proof.output.push(OutputEntry::new(asset_id.clone(), amount.clone(), None));
+                }
+            }
         }
-
-        tx_out_index += 1;
     }
 
     let commitment_txout = TxOut {
