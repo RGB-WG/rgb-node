@@ -19,7 +19,7 @@ pub struct GetNewAddress {}
 
 impl<'a> RGBSubCommand<'a> for GetNewAddress {
     fn run(matches: &'a ArgMatches<'a>, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
-        let server = matches.value_of("server").unwrap_or(config.default_server.as_str());
+        let server = matches.value_of("server").unwrap_or(config.rgb_server.as_str());
 
         let address = rpc_getnewaddress(client).unwrap();
 

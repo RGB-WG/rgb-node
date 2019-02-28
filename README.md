@@ -61,7 +61,7 @@ If the file is missing, it will use as default values the ones shown here.
     "rpcuser": "satoshi",
     "rpcpassword": "nakamoto",
 
-    "default_server": "internal-rgb-bifrost.herokuapp.com"
+    "rgb_server": "internal-rgb-bifrost.herokuapp.com"
 }
 ```
 

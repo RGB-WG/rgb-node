@@ -22,7 +22,7 @@ pub struct Sync {}
 
 impl<'a> RGBSubCommand<'a> for Sync {
     fn run(matches: &'a ArgMatches<'a>, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
-        let server = String::from(matches.value_of("server").unwrap_or(config.default_server.as_str()));
+        let server = String::from(matches.value_of("server").unwrap_or(config.rgb_server.as_str()));
         let unspent_utxos = rpc_list_unspent(client).unwrap();
 
         for (outpoint, amount) in unspent_utxos {
