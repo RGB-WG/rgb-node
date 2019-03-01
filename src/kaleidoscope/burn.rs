@@ -156,6 +156,6 @@ impl<'a> RGBSubCommand<'a> for Burn {
         let unspent_utxos = rpc_list_unspent(client).unwrap();
         let our_address = rpc_getnewaddress(client).unwrap();
 
-        burn_tokens(config.default_server.as_str(), asset_id, amount, config, database, client)
+        burn_tokens(config.rgb_server.as_str(), asset_id, amount, config, database, client)
     }
 }
