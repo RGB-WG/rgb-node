@@ -1,25 +1,27 @@
-use bifrost::upload_proofs;
+use std::cmp;
+use std::collections::HashMap;
+
+use bifrost::client::upload_proofs;
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
+use clap::ArgMatches;
+use jsonrpc;
+use jsonrpc::client::Client;
+use rgb::contract::Contract;
+use rgb::output_entry::OutputEntry;
+use rgb::proof::Proof;
+use rgb::traits::Verify;
+
 use chain::indexer::fetch_transactions;
 use chain::tx_builder::{build_issuance_tx, raw_tx_commit_to};
 use chain::tx_builder::BitcoinRgbOutPoints;
 use chain::tx_builder::spend_proofs;
 use chain::wallet::*;
-use clap::ArgMatches;
 use database::Database;
-use jsonrpc;
-use jsonrpc::client::Client;
 use kaleidoscope::{Config, RGBSubCommand};
 use kaleidoscope::sendtoaddress::send_to_address;
-use rgb::contract::Contract;
-use rgb::output_entry::OutputEntry;
-use rgb::proof::Proof;
-use rgb::traits::Verify;
-use std::cmp;
-use std::collections::HashMap;
 
 pub struct Burn {}
 

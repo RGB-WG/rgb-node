@@ -1,3 +1,4 @@
+extern crate bifrost;
 extern crate bitcoin;
 extern crate clap;
 extern crate core;
@@ -5,7 +6,11 @@ extern crate hyper;
 extern crate jsonrpc;
 extern crate rgb;
 
+use std::env::home_dir;
+use std::path::Path;
+
 use clap::{App, Arg, SubCommand};
+
 use kaleidoscope::burn::Burn;
 use kaleidoscope::getnewaddress::GetNewAddress;
 use kaleidoscope::issueasset::IssueAsset;
@@ -13,13 +18,10 @@ use kaleidoscope::listunspent::ListUnspent;
 use kaleidoscope::RGBSubCommand;
 use kaleidoscope::sendtoaddress::SendToAddress;
 use kaleidoscope::sync::Sync;
-use std::env::home_dir;
-use std::path::Path;
 
 pub mod kaleidoscope;
 pub mod database;
 pub mod chain;
-pub mod bifrost;
 
 fn main() {
     const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");

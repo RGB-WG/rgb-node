@@ -1,23 +1,25 @@
-use bifrost::upload_proofs;
+use std::cmp;
+use std::collections::HashMap;
+use std::str::FromStr;
+
+use bifrost::client::upload_proofs;
 use bitcoin::Address;
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
-use chain::tx_builder::BitcoinRgbOutPoints;
-use chain::tx_builder::spend_proofs;
-use chain::wallet::*;
 use clap::ArgMatches;
-use database::Database;
 use jsonrpc;
 use jsonrpc::client::Client;
-use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
 use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
-use std::cmp;
-use std::collections::HashMap;
-use std::str::FromStr;
+
+use chain::tx_builder::BitcoinRgbOutPoints;
+use chain::tx_builder::spend_proofs;
+use chain::wallet::*;
+use database::Database;
+use kaleidoscope::{Config, RGBSubCommand};
 
 pub struct SendToAddress {}
 
