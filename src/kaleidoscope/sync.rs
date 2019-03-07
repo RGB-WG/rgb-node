@@ -1,22 +1,24 @@
-use bifrost::get_proofs_for;
-use bifrost::upload_proofs;
+use std::collections::HashMap;
+
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
-use chain::indexer::fetch_transactions;
-use chain::tx_builder::{build_issuance_tx, raw_tx_commit_to};
-use chain::wallet::*;
 use clap::ArgMatches;
-use database::Database;
 use jsonrpc;
 use jsonrpc::client::Client;
-use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
 use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use rgb::traits::Verify;
-use std::collections::HashMap;
+
+use bifrost::get_proofs_for;
+use bifrost::upload_proofs;
+use chain::indexer::fetch_transactions;
+use chain::wallet::*;
+use database::Database;
+use kaleidoscope::{Config, RGBSubCommand};
+use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to};
 
 pub struct Sync {}
 

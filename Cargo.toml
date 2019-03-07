@@ -18,3 +18,11 @@ default-features = false
 [features]
 default = []
 ssl = ["hyper/ssl"]
+
+[lib]
+name = "kaleidoscope"
+path = "src/lib/mod.rs"
+
+[[bin]]
+name = "kaleidoscope"
+path = "src/main.rs"
