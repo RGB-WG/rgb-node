@@ -110,9 +110,10 @@ fn main() {
 
     let default_rgb_dir = home_dir().unwrap().join(".rgb");
     let datadir = Path::new(matches.value_of("datadir").unwrap_or(default_rgb_dir.to_str().unwrap()));
-
+    let datadirDataStr = [matches.value_of("datadir").unwrap_or(default_rgb_dir.to_str().unwrap()), "/data"].join("");
+    let datadirData = Path::new(&datadirDataStr);
     let config = kaleidoscope::Config::load_from(datadir);
-    let mut database = database::Database::new(datadir);
+    let mut database = database::Database::new(&datadirData);
     let mut client = jsonrpc::client::Client::new("http://".to_owned() + &config.rpcconnect + &":".to_owned() + &config.rpcport.to_string(), Some(config.rpcuser.clone()), Some(config.rpcpassword.clone()));
 
     // ---------------------------
