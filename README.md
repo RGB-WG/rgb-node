@@ -8,6 +8,7 @@ Kaleidoscope, the RGB CLI wallet
 * [Running RGB](#running-rgb)
 	* [`getnewaddress`](#getnewaddress)
 	* [`listunspent`](#listunspent)
+		* <a href="#json1234">`--json`</a>
 	* [`sendtoaddress`](#sendtoaddress)
 	* [`issueasset`](#issueasset)
 	* [`sync`](#sync)
@@ -116,7 +117,47 @@ $ kaleidoscope listunspent
 |                          ! NO RGB Proofs !                          |
 +---------------------------------------------------------------------+
 ```
+#### <a name="json1234">`--json`</a>
 
+Using the option `-J` or `--json` to have the output in JSON format:
+
+```
+$ kaleidoscope listunspent --json | jq
+{
+  "listunspent": [
+    {
+      "txid": "580e292316f19fe87b2fde5eb48a1082c6fd233f45d36522e21f266520a6a1c4",
+      "vout": 0,
+      "amount": 1249992250,
+      "assets": {
+        "id": "36784101f003dc17095f7108835a8f11b8a7da5b9460a4b5d949c12122a0ede3",
+        "amount": "863"
+      }
+    },
+    {
+      "txid": "c53e7984725ebf1f34ac3698cefe8cb76b29b3410947a1b9c76a038b8217373d",
+      "vout": 0,
+      "amount": 5000000000
+    }
+  ]
+}
+```
+To filter out only the UTXOs with RGB proofs, `jq '.listunspent | [.[] | select (has ("assets"))]'`
+
+```
+$ kaleidoscope listunspent --json | jq '.listunspent | [.[] | select (has ("assets"))]'
+[
+  {
+    "txid": "580e292316f19fe87b2fde5eb48a1082c6fd233f45d36522e21f266520a6a1c4",
+    "vout": 0,
+    "amount": 1249992250,
+    "assets": {
+      "id": "36784101f003dc17095f7108835a8f11b8a7da5b9460a4b5d949c12122a0ede3",
+      "amount": "863"
+    }
+  }
+]
+```
 ### `sendtoaddress`
 
 Sends some tokens to an RGB address
