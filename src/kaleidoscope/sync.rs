@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use bifrost::client::get_proofs_for;
-use bifrost::client::upload_proofs;
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
 use bitcoin::OutPoint;
@@ -14,11 +12,13 @@ use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use rgb::traits::Verify;
 
+use bifrost::get_proofs_for;
+use bifrost::upload_proofs;
 use chain::indexer::fetch_transactions;
-use chain::tx_builder::{build_issuance_tx, raw_tx_commit_to};
 use chain::wallet::*;
 use database::Database;
 use kaleidoscope::{Config, RGBSubCommand};
+use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to};
 
 pub struct Sync {}
 

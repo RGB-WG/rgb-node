@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bitcoin::{Transaction, TxIn, TxOut};
 use bitcoin::Address;
 use bitcoin::blockdata::script::Script;
@@ -7,7 +9,6 @@ use rgb::contract::Contract;
 use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use rgb::traits::Verify;
-use std::collections::HashMap;
 
 pub fn build_issuance_tx(contract: &Contract, outputs: &HashMap<Address, u64>) -> Transaction {
     let txin = TxIn {
@@ -51,6 +52,7 @@ pub struct BitcoinRgbOutPoints {
 }
 
 impl BitcoinRgbOutPoints {
+    // bitcoin_address can be None in case you want to burn an asset
     pub fn new(bitcoin_address: Option<Address>, bitcoin_amount: u64, rgb_outputs: HashMap<Sha256dHash, u32>) -> BitcoinRgbOutPoints {
         BitcoinRgbOutPoints {
             bitcoin_address,
@@ -61,49 +63,26 @@ impl BitcoinRgbOutPoints {
 }
 
 pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, outputs: &Vec<BitcoinRgbOutPoints>) -> (Proof, Transaction) {
-    // TODO: use raw_tx_commit_to
-    // Create all the inputs of this transaction by iterating the outputs of the previous one(s)
-
-    let mut tx_ins = Vec::new();
-    let mut bind_to = Vec::new();
-
-    for out_point in bitcoin_inputs {
-        let this_txin = TxIn {
-            previous_output: out_point.clone(),
-            script_sig: Script::default(),
-            sequence: 0,
-            witness: Vec::new(),
-        };
-
-        tx_ins.push(this_txin);
-        bind_to.push(out_point.clone());
-    }
-
     // ------------------------------------------
     // Prepare the partial prooof (no outputs)
 
     let mut proof = Proof {
-        bind_to,
+        bind_to: bitcoin_inputs.clone(),
         input: input_proofs.clone(),
         output: Vec::new(),
         contract: None,
     };
 
     // ------------------------------------------
-    // Create all the outputs of this transaction
+    // Create all the outputs of this proof and a map of the Bitcoin outputs
 
-    let mut tx_outs = Vec::new();
+    let mut bitcoin_outputs = HashMap::new();
     let mut tx_out_index = 0;
 
     for output_item in outputs {
         match output_item.bitcoin_address {
             Some(ref addr) => {
-                let this_tx_out = TxOut {
-                    value: output_item.bitcoin_amount,
-                    script_pubkey: addr.script_pubkey(),
-                };
-
-                tx_outs.push(this_tx_out);
+                bitcoin_outputs.insert(addr.clone(), output_item.bitcoin_amount);
 
                 for (asset_id, amount) in &output_item.rgb_outputs {
                     proof.output.push(OutputEntry::new(asset_id.clone(), amount.clone(), Some(tx_out_index)));
@@ -112,6 +91,8 @@ pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, o
                 tx_out_index += 1;
             },
             None => {
+                // Just burn this output
+
                 for (asset_id, amount) in &output_item.rgb_outputs {
                     proof.output.push(OutputEntry::new(asset_id.clone(), amount.clone(), None));
                 }
@@ -119,19 +100,9 @@ pub fn spend_proofs(input_proofs: &Vec<Proof>, bitcoin_inputs: &Vec<OutPoint>, o
         }
     }
 
-    let commitment_txout = TxOut {
-        value: 0,
-        script_pubkey: proof.get_expected_script(),
-    };
+    let tx = raw_tx_commit_to(&proof, bitcoin_inputs.clone(), &bitcoin_outputs);
 
-    tx_outs.push(commitment_txout);
-
-    (proof, Transaction {
-        version: 1,
-        lock_time: 0,
-        input: tx_ins,
-        output: tx_outs,
-    })
+    (proof, tx)
 }
 
 pub fn raw_tx_commit_to(proof: &Proof, inputs: Vec<OutPoint>, outputs: &HashMap<Address, u64>) -> Transaction {

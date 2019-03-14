@@ -1,4 +1,3 @@
-extern crate bifrost;
 extern crate bitcoin;
 extern crate clap;
 extern crate core;
@@ -22,6 +21,8 @@ use kaleidoscope::sync::Sync;
 pub mod kaleidoscope;
 pub mod database;
 pub mod chain;
+pub mod bifrost;
+pub mod lib;
 
 fn main() {
     const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");

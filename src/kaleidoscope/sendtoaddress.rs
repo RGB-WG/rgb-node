@@ -2,7 +2,6 @@ use std::cmp;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use bifrost::client::upload_proofs;
 use bitcoin::Address;
 use bitcoin::network::constants::Network;
 use bitcoin::network::serialize::BitcoinHash;
@@ -15,11 +14,12 @@ use rgb::contract::Contract;
 use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 
-use chain::tx_builder::BitcoinRgbOutPoints;
-use chain::tx_builder::spend_proofs;
+use bifrost::upload_proofs;
 use chain::wallet::*;
 use database::Database;
 use kaleidoscope::{Config, RGBSubCommand};
+use lib::tx_builder::BitcoinRgbOutPoints;
+use lib::tx_builder::spend_proofs;
 
 pub struct SendToAddress {}
 
