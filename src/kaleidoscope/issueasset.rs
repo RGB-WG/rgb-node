@@ -28,9 +28,10 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
             .collect();
 
         const FEE: u64 = 3000;
+		const necessary_number_utxos: usize = 2;
 
-        if unspent_utxos_outpoints.len() < 2 {
-            eprintln!("Necessary number of UTXOs not reached!");
+        if unspent_utxos_outpoints.len() < necessary_number_utxos {
+            eprintln!("At least {} UTXOs are needed!", necessary_number_utxos);
             return Err(jsonrpc::Error::NoErrorOrResult);
         }
 
