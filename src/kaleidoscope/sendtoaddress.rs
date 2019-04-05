@@ -23,7 +23,7 @@ use lib::tx_builder::spend_proofs;
 
 pub struct SendToAddress {}
 
-pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash, amount: u32, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
+pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash, asset_amount: u32, satoshi_amount: u32, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
     const FEE: u64 = 2000;
     let change_address = rpc_getnewaddress(client).unwrap();
 
@@ -63,7 +63,7 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
                     *aggregator += entry.get_amount();
                 } else {
                     let use_from_this = cmp::min(
-                        amount - total_asset_amount, // remaining part
+                        asset_amount - total_asset_amount, // remaining part
                         entry.get_amount(), // or all of it
                     );
 
@@ -91,13 +91,13 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
             }
         }
 
-        if total_asset_amount == amount { // we are done here
+        if total_asset_amount == asset_amount { // we are done here
             break;
         }
     }
 
-    if total_asset_amount < amount {
-        println!("Insufficient funds! {} < {}", total_asset_amount, amount);
+    if total_asset_amount < asset_amount {
+        println!("Insufficient funds! {} < {}", total_asset_amount, asset_amount);
         return Err(jsonrpc::Error::NoErrorOrResult);
     }
 
@@ -106,11 +106,11 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
     let mut rgb_outputs = Vec::new();
 
     total_btc_amount -= FEE;
-    let payment_amount = total_btc_amount / 2;
+    let payment_amount:u64 = satoshi_amount.into();
 
     // 0 = payment
     let mut payment_map = HashMap::new();
-    payment_map.insert(asset_id.clone(), amount);
+    payment_map.insert(asset_id.clone(), asset_amount);
     rgb_outputs.push(BitcoinRgbOutPoints::new(Some(btc_address.clone()), payment_amount, payment_map));
 
     // 1 = change
@@ -124,7 +124,7 @@ pub fn send_to_address(btc_address: Address, server: &str, asset_id: Sha256dHash
 
     println!("Created a new TX with the following outputs:");
     // 0 = payment
-    println!("\t         {} of {} to {}", amount, asset_id, btc_address.clone());
+    println!("\t         {} of {} to {}", asset_amount, asset_id, btc_address.clone());
     println!("\t         {} SAT to {}", payment_amount, btc_address.clone());
     // 1 = change
     for (to_self_asset, to_self_amount) in &to_self {
@@ -155,8 +155,9 @@ impl<'a> RGBSubCommand<'a> for SendToAddress {
         let server = address_parts[1];
 
         let asset_id = Sha256dHash::from_hex(matches.value_of("asset_id").unwrap()).unwrap();
-        let amount: u32 = matches.value_of("amount").unwrap().parse().unwrap();
+        let asset_amount: u32 = matches.value_of("asset_amount").unwrap().parse().unwrap();
+        let satoshi_amount: u32 = matches.value_of("satoshi_amount").unwrap().parse().unwrap();
 
-        send_to_address(btc_address, server, asset_id, amount, config, database, client)
+        send_to_address(btc_address, server, asset_id, asset_amount, satoshi_amount, config, database, client)
     }
 }
