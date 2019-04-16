@@ -53,6 +53,9 @@ pub fn rpc_list_unspent(client: &mut Client) -> Result<HashMap<OutPoint, u64>, j
         let result = res.result.unwrap();
 
         for i in 0..result.len() {
+            if !result.array().unwrap()[i].get("spendable").unwrap().bool().unwrap() {
+                continue;
+            }
             let op = OutPoint {
                 txid: Sha256dHash::from_hex(result.array().unwrap()[i].get("txid").unwrap().string().unwrap()).unwrap(),
                 vout: result.array().unwrap()[i].get("vout").unwrap().num().unwrap().parse().unwrap(),
