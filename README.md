@@ -165,7 +165,7 @@ Sends some tokens to an RGB address
 Example:
 
 ```
-$ kaleidoscope sendtoaddress mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q@127.0.0.1 60a5ddd483eda2d45d5564e2ff1a62dda37384b8f982b7a0c0b9dcfbc760c415 400
+$ kaleidoscope sendtoaddress mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q@127.0.0.1 60a5ddd483eda2d45d5564e2ff1a62dda37384b8f982b7a0c0b9dcfbc760c415 400 1000
 Created a new TX with the following outputs:
          400 of 60a5ddd483eda2d45d5564e2ff1a62dda37384b8f982b7a0c0b9dcfbc760c415 to mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q
          488227 SAT to mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q
