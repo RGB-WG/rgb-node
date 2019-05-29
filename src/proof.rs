@@ -20,10 +20,14 @@ use traits::NeededTx;
 
 #[derive(Clone, Debug)]
 pub struct Proof {
+    /// The spent assets are held by these txos
     pub bind_to: Vec<OutPoint>,
+    /// All the proofs of inputs txs
     pub input: Vec<Proof>,
+    /// RGB outputs. If output entry.vout is None then use the index in this vector
     pub output: Vec<OutputEntry>,
-    pub contract: Option<Box<Contract>>, // Only needed for root proofs
+    /// Issuance contract, only needed for root proofs
+    pub contract: Option<Box<Contract>>,
 }
 
 impl Proof {
@@ -42,6 +46,8 @@ impl Proof {
         return self.contract.is_some() && self.bind_to.len() == 1 && self.bind_to[0] == self.contract.as_ref().unwrap().initial_owner_utxo;
     }
 
+    /// Look for test_proof OutputEntries spent in the first elements of self.bind_to,
+    /// if test_proof is a first level parent of the tx associated to this proof (?)
     fn get_entries_for_us(&self, test_proof: &Proof, needed_txs: &HashMap<&NeededTx, Transaction>) -> Vec<OutputEntry> {
         // We know that [0] is equal to all others (checked in verify)
         let committing_tx_this = needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.bind_to[0])).unwrap();

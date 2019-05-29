@@ -5,8 +5,15 @@ use bitcoin::network::serialize::SimpleDecoder;
 use bitcoin::network::serialize::SimpleEncoder;
 use bitcoin::util::hash::Sha256dHash;
 
+/// RGB output
 #[derive(Clone, Debug)]
-pub struct OutputEntry(Sha256dHash, u32, Option<u32>); // asset_id, amount -> vout
+pub struct OutputEntry(
+    /// Asset id
+    Sha256dHash,
+    /// Asset amount
+    u32,
+    /// Vout (optional): the index of this RGB output as bitcoin transaction output (?)
+    Option<u32>);
 
 impl OutputEntry {
     pub fn new(asset_id: Sha256dHash, amount: u32, vout: Option<u32>) -> OutputEntry {
