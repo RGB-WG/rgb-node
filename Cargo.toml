@@ -5,3 +5,6 @@ authors = ["Alekos Filini <alekos.filini@gmail.com>"]
 
 [dependencies]
 bitcoin = "~0.14.2"
+
+[dev-dependencies]
+hex = "~0.3.2"

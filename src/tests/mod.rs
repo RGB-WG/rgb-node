@@ -1,6 +1,2 @@
-// TODO!
-
-#[test]
-fn it_works() {
-    assert_eq!(2 + 2, 4);
-}
+extern crate hex;
+mod contract;
