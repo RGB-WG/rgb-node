@@ -19,7 +19,9 @@ use traits::NeededTx;
 #[derive(Clone, Debug)]
 pub struct Contract {
     pub title: String,
+    /// Will be spent in the contract transaction
     pub issuance_utxo: OutPoint,
+    /// Will own the issued assets
     pub initial_owner_utxo: OutPoint,
     pub network: Network,
     pub total_supply: u32,
