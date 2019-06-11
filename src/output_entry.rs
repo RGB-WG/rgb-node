@@ -6,10 +6,10 @@ use bitcoin::network::serialize::SimpleEncoder;
 use bitcoin::util::hash::Sha256dHash;
 
 #[derive(Clone, Debug)]
-pub struct OutputEntry(Sha256dHash, u32, Option<u32>); // asset_id, amount -> vout
+pub struct OutputEntry(Sha256dHash, u64, Option<u32>); // asset_id, amount -> vout
 
 impl OutputEntry {
-    pub fn new(asset_id: Sha256dHash, amount: u32, vout: Option<u32>) -> OutputEntry {
+    pub fn new(asset_id: Sha256dHash, amount: u64, vout: Option<u32>) -> OutputEntry {
         OutputEntry(asset_id, amount, vout)
     }
 
@@ -17,7 +17,7 @@ impl OutputEntry {
         self.0.clone()
     }
 
-    pub fn get_amount(&self) -> u32 {
+    pub fn get_amount(&self) -> u64 {
         self.1
     }
 
