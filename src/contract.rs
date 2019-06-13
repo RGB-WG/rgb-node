@@ -17,7 +17,6 @@ use secp256k1::Error;
 use secp256k1::PublicKey;
 use secp256k1::Secp256k1;
 use std::collections::HashMap;
-use std::str::FromStr;
 use super::bitcoin::network::constants::Network;
 use super::bitcoin::OutPoint;
 use super::traits::Verify;
@@ -29,9 +28,8 @@ pub struct Contract {
     pub title: String,
     pub issuance_utxo: OutPoint,
     pub initial_owner_utxo: OutPoint,
-    pub burn_address: Address,
     pub network: Network,
-    pub total_supply: u32,
+    pub total_supply: u64,
     pub original_commitment_pk: Option<PublicKey>
 }
 
@@ -107,7 +105,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Contract {
         self.title.consensus_encode(s)?;
         self.issuance_utxo.consensus_encode(s)?;
         self.initial_owner_utxo.consensus_encode(s)?;
-        self.burn_address.to_string().consensus_encode(s)?;
+
         self.network.consensus_encode(s)?;
         self.total_supply.consensus_encode(s)?;
 
@@ -129,13 +127,11 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Contract {
         let title: String = ConsensusDecodable::consensus_decode(d)?;
         let issuance_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
         let initial_owner_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
-        let burn_address_str: String = ConsensusDecodable::consensus_decode(d)?;
 
         let mut c = Contract {
             title,
             issuance_utxo,
             initial_owner_utxo,
-            burn_address: Address::from_str(burn_address_str.as_str()).unwrap(),
             network: ConsensusDecodable::consensus_decode(d)?,
             total_supply: ConsensusDecodable::consensus_decode(d)?,
             original_commitment_pk: None

@@ -10,3 +10,4 @@ pub mod proof;
 pub mod traits;
 pub mod utils;
 pub mod pay_to_contract;
+pub mod output_entry;
