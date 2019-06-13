@@ -1,20 +1,23 @@
+use std::collections::HashMap;
+
 use bitcoin::network::constants::Network;
 use bitcoin::OutPoint;
 use bitcoin::Privkey;
 use bitcoin::util::hash::Sha256dHash;
-use chain::tx_builder::{build_issuance_tx, raw_tx_commit_to};
-use chain::wallet::*;
 use clap::ArgMatches;
-use database::Database;
 use jsonrpc;
 use jsonrpc::client::Client;
-use kaleidoscope::{Config, RGBSubCommand};
 use rgb::contract::Contract;
-use rgb::proof::OutputEntry;
+use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use secp256k1::PublicKey;
 use secp256k1::Secp256k1;
 use std::collections::HashMap;
+
+use chain::wallet::*;
+use database::Database;
+use kaleidoscope::{Config, RGBSubCommand};
+use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to};
 
 pub struct IssueAsset {}
 
@@ -75,7 +78,6 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
         let mut contract = Contract {
             title: matches.value_of("title").unwrap().to_string(),
             total_supply: matches.value_of("total_supply").unwrap().parse().unwrap(),
-            burn_address,
             network,
             issuance_utxo,
             initial_owner_utxo,

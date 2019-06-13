@@ -57,7 +57,8 @@ pub struct BitcoinRgbOutPoints {
 }
 
 impl BitcoinRgbOutPoints {
-    pub fn new(bitcoin_address: Address, bitcoin_amount: u64, rgb_outputs: HashMap<Sha256dHash, u32>) -> BitcoinRgbOutPoints {
+    // bitcoin_address can be None in case you want to burn an asset
+    pub fn new(bitcoin_address: Option<Address>, bitcoin_amount: u64, rgb_outputs: HashMap<Sha256dHash, u32>) -> BitcoinRgbOutPoints {
         BitcoinRgbOutPoints {
             bitcoin_address,
             bitcoin_amount,

@@ -1,4 +1,20 @@
 # RGB - Kaleidoscope
+Kaleidoscope, the RGB CLI wallet
+
+* [Installation](#installation)
+* [Configuration](#configuration)
+	* [Preparing `bitcoind`](#preparing-bitcoind)
+	* [Example configuration file](#example-configuration-file)
+* [Running RGB](#running-rgb)
+	* [`getnewaddress`](#getnewaddress)
+	* [`listunspent`](#listunspent)
+		* <a href="#json1234">`--json`</a>
+	* [`sendtoaddress`](#sendtoaddress)
+	* [`issueasset`](#issueasset)
+	* [`sync`](#sync)
+	* [`burn`](#burn)
+* [Appendix](#appendix)
+	* [Example `bitcoin.conf`](#example-bitcoin.conf)
 
 ## Installation
 
@@ -46,7 +62,7 @@ If the file is missing, it will use as default values the ones shown here.
     "rpcuser": "satoshi",
     "rpcpassword": "nakamoto",
 
-    "default_server": "internal-rgb-bifrost.herokuapp.com"
+    "rgb_server": "internal-rgb-bifrost.herokuapp.com"
 }
 ```
 
@@ -101,7 +117,47 @@ $ kaleidoscope listunspent
 |                          ! NO RGB Proofs !                          |
 +---------------------------------------------------------------------+
 ```
+#### <a name="json1234">`--json`</a>
 
+Using the option `-J` or `--json` to have the output in JSON format:
+
+```
+$ kaleidoscope listunspent --json | jq
+{
+  "listunspent": [
+    {
+      "txid": "580e292316f19fe87b2fde5eb48a1082c6fd233f45d36522e21f266520a6a1c4",
+      "vout": 0,
+      "amount": 1249992250,
+      "assets": {
+        "id": "36784101f003dc17095f7108835a8f11b8a7da5b9460a4b5d949c12122a0ede3",
+        "amount": "863"
+      }
+    },
+    {
+      "txid": "c53e7984725ebf1f34ac3698cefe8cb76b29b3410947a1b9c76a038b8217373d",
+      "vout": 0,
+      "amount": 5000000000
+    }
+  ]
+}
+```
+To filter out only the UTXOs with RGB proofs, `jq '.listunspent | [.[] | select (has ("assets"))]'`
+
+```
+$ kaleidoscope listunspent --json | jq '.listunspent | [.[] | select (has ("assets"))]'
+[
+  {
+    "txid": "580e292316f19fe87b2fde5eb48a1082c6fd233f45d36522e21f266520a6a1c4",
+    "vout": 0,
+    "amount": 1249992250,
+    "assets": {
+      "id": "36784101f003dc17095f7108835a8f11b8a7da5b9460a4b5d949c12122a0ede3",
+      "amount": "863"
+    }
+  }
+]
+```
 ### `sendtoaddress`
 
 Sends some tokens to an RGB address
@@ -109,7 +165,7 @@ Sends some tokens to an RGB address
 Example:
 
 ```
-$ kaleidoscope sendtoaddress mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q@127.0.0.1 60a5ddd483eda2d45d5564e2ff1a62dda37384b8f982b7a0c0b9dcfbc760c415 400
+$ kaleidoscope sendtoaddress mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q@127.0.0.1 60a5ddd483eda2d45d5564e2ff1a62dda37384b8f982b7a0c0b9dcfbc760c415 400 1000
 Created a new TX with the following outputs:
          400 of 60a5ddd483eda2d45d5564e2ff1a62dda37384b8f982b7a0c0b9dcfbc760c415 to mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q
          488227 SAT to mhmEj3thQZ4JBJ1ZiHDnNzj3bcixauQZ9Q
@@ -180,4 +236,5 @@ debug=mempool
 
 daemon=1
 addresstype=legacy
+deprecatedrpc=signrawtransaction
 ```

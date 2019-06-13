@@ -26,7 +26,7 @@ pub struct Config {
     pub rpcuser: String,
     pub rpcpassword: String,
 
-    pub default_server: String,
+    pub rgb_server: String,
 }
 
 impl Config {
@@ -46,7 +46,7 @@ impl Config {
             rpcuser: json.get("rpcuser").unwrap_or(&strason::Json::from("satoshi")).string().unwrap().to_string(),
             rpcpassword: json.get("rpcpassword").unwrap_or(&strason::Json::from("nakamoto")).string().unwrap().to_string(),
 
-            default_server: json.get("default_server").unwrap_or(&strason::Json::from("internal-rgb-bifrost.herokuapp.com")).string().unwrap().to_string(),
+            rgb_server: json.get("rgb_server").unwrap_or(&strason::Json::from("internal-rgb-bifrost.herokuapp.com")).string().unwrap().to_string(),
         }
     }
 }

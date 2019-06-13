@@ -8,8 +8,9 @@ clap = "~2.32.0"
 bitcoin = "~0.14.2"
 strason = "0.4"
 jsonrpc = { git = "https://github.com/apoelstra/rust-jsonrpc.git", tag = "0.9.0" }
-rgb = { git = "https://github.com/rgb-org/rgb.git", branch = "pay-to-contract" }
-secp256k1 = "~0.11.2"
+rgb = { git = "https://github.com/rgb-org/rgb.git", rev = "1a626e1edd61bf5bc836b8fac5469e4e0d6c3426" }
+bifrost = { git = "https://github.com/rgb-org/bifrost.git", rev="cd158b1be7c9372c8059d6dd946ee710b24da223"}
+regex = "1"
 
 [dependencies.hyper]
 version = "0.9.18"
@@ -18,3 +19,11 @@ default-features = false
 [features]
 default = []
 ssl = ["hyper/ssl"]
+
+[lib]
+name = "kaleidoscope"
+path = "src/lib/mod.rs"
+
+[[bin]]
+name = "kaleidoscope"
+path = "src/main.rs"

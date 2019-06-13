@@ -61,7 +61,10 @@ impl Database {
 
     pub fn save_proof(&self, proof: &Proof, txid: &Sha256dHash) {
         for out in &proof.output {
-            let outpoint_str = txid.be_hex_string() + ":" + out.get_vout().to_string().as_str();
+            let outpoint_str = match out.get_vout() {
+                Some(vout) => txid.be_hex_string() + ":" + vout.to_string().as_str(),
+                None => txid.be_hex_string() + ":BURN"
+            };
 
             let mut proof_path = self.basedir.clone();
             proof_path.push(outpoint_str);
