@@ -12,12 +12,11 @@ use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
 use secp256k1::PublicKey;
 use secp256k1::Secp256k1;
-use std::collections::HashMap;
 
 use chain::wallet::*;
 use database::Database;
 use kaleidoscope::{Config, RGBSubCommand};
-use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to};
+use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to, raw_tx_commit_to_p2c};
 
 pub struct IssueAsset {}
 
@@ -110,7 +109,7 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
         let mut root_proof = Proof::new(
             vec![contract.initial_owner_utxo.clone()],
             vec![],
-            vec![OutputEntry::new(contract.get_asset_id(), contract.total_supply, 0)],
+            vec![OutputEntry::new(contract.get_asset_id(), contract.total_supply, Some(0))],
             Some(&contract),
             None);
 
@@ -121,7 +120,7 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
 
         let mut proof_commit_tx_outputs = HashMap::new();
 
-        let (root_proof_tx, root_proof_tweak_factor) = raw_tx_commit_to(
+        let (root_proof_tx, root_proof_tweak_factor) = raw_tx_commit_to_p2c(
             &mut root_proof,
             vec![contract.initial_owner_utxo.clone()],
             &root_proof_change_pubkey,
