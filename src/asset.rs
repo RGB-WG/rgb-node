@@ -13,7 +13,7 @@ pub struct Asset {
 
 impl Asset {
     pub fn get_asset_id(&self) -> AssetId {
-        sha256d::Hash::from_data(&serialize(self).unwrap())
+        self.contract.get_asset_id()
     }
 
     pub fn get_root_proof(&self) -> Option<Proof> {

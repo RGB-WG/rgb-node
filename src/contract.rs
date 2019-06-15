@@ -2,6 +2,8 @@ use bitcoin::{Address, OutPoint};
 use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 
+use crate::AssetId;
+
 #[derive(Clone, Debug)]
 pub enum CommitmentScheme {
     OpReturn = 0, PayToContract = 1
@@ -43,7 +45,9 @@ pub struct Contract {
 }
 
 impl Contract {
-
+    pub fn get_asset_id(&self) -> AssetId {
+        sha256d::Hash::from_data(&serialize(self).unwrap())
+    }
 }
 
 impl<S: Encoder> Encodable<S> for Contract {
