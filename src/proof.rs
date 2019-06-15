@@ -59,6 +59,9 @@ impl<S: Encoder> Encodable<S> for Proof {
         self.outputs.consensus_encode(s)?;
         self.metadata.consensus_encode(s)?;
         self.bind_to.consensus_encode(s)?;
+
+        // For optionals, we use first byte to determine presence of the value (0x0 for no value,
+        // 0x1 for some value) and then, if there is a value presented, we serialize it.
         match self.contract {
             Some(contract) => {
                 u8(0x1).consensus_encode(s);
@@ -86,20 +89,20 @@ impl<D: Decoder> Decodable<D> for Proof {
         let outputs: Vec<RgbOutEntry> = Decodable::consensus_decode(d)?;
         let metadata: Vec<u8> = Decodable::consensus_decode(d)?;
         let bind_to: Vec<OutPoint> = Decodable::consensus_decode(d)?;
-        let asset_presence: u8 = Decodable::consensus_decode(d)?;
+
+        // For optionals, we use first byte to determine presence of the value (0x0 for no value,
+        // 0x1 for some value) and then, if there is a value presented, we deserialize it.
         let mut contract: Option<Box<Contract>> = None;
-        if asset_presence {
+        if Decodable::consensus_decode(d)? {
             let c: Contract = Decodable::consensus_decode(d)?;
-            contract = Some(c);
+            contract = Some(Box(c));
         }
-        let original_pk_presence: u8 = Decodable::consensus_decode(d)?;
         let mut original_pk: Option<PublicKey> = None;
-        if original_pk_presence {
+        if Decodable::consensus_decode(d)? {
             let pk = Decodable::consensus_decode(d)?;
             original_pk = Some(pk);
         }
-        
-        let mut proof = Proof(inputs, outputs, metadata, bind_to, contract, original_pk);
-        Ok(proof)
+
+        Ok(Proof(inputs, outputs, metadata, bind_to, contract, original_pk))
     }
 }

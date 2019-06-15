@@ -4,6 +4,8 @@ pub mod contract;
 pub mod proof;
 pub mod outputs;
 
+mod util;
+
 use crate::constants::*;
 use crate::asset::Asset;
 use crate::contract::Contract;

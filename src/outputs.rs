@@ -104,8 +104,7 @@ impl<D: Decoder> Decodable<D> for RgbOutEntry {
         let asset_id: AssetId = Decodable.consensus_decode(d)?;
         let amount: u64 = Decodable.consensus_decode(d)?;
         let out_point: RgbOutPoint = Decodable.consensus_decode(d)?;
-        let mut output_entry = OutputEntry(asset_id, amount, out_point);
-        Ok(output_entry)
+        Ok(OutputEntry(asset_id, amount, out_point))
     }
 }
 
