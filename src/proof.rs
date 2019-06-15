@@ -53,6 +53,9 @@ pub struct Proof {
     pub original_commitment_pk: Option<PublicKey>,
 }
 
+impl Proof {
+}
+
 impl<S: Encoder> Encodable<S> for Proof {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.inputs.consensus_encode(s)?;
@@ -63,7 +66,7 @@ impl<S: Encoder> Encodable<S> for Proof {
         // For optionals, we use first byte to determine presence of the value (0x0 for no value,
         // 0x1 for some value) and then, if there is a value presented, we serialize it.
         match self.contract {
-            Some(contract) => {
+            Some(ref contract) => {
                 u8(0x1).consensus_encode(s);
                 contract.consensus_encode(s)?;
             },
@@ -95,7 +98,7 @@ impl<D: Decoder> Decodable<D> for Proof {
         let mut contract: Option<Box<Contract>> = None;
         if Decodable::consensus_decode(d)? {
             let c: Contract = Decodable::consensus_decode(d)?;
-            contract = Some(Box(c));
+            contract = Some(Box::new(c));
         }
         let mut original_pk: Option<PublicKey> = None;
         if Decodable::consensus_decode(d)? {
