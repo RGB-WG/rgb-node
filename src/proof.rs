@@ -23,7 +23,6 @@ use bitcoin::consensus::encode::*;
 use secp256k1::PublicKey;
 
 use crate::{Contract, RgbOutEntry};
-use crate::constants::AssetId;
 
 /// In-memory representation of offchain proofs for RGB transaction linked to an on-chain
 /// bitcoin transaction. Data structure provides serialization with consensus serialization methods
@@ -67,20 +66,20 @@ impl<S: Encoder> Encodable<S> for Proof {
         // 0x1 for some value) and then, if there is a value presented, we serialize it.
         match self.contract {
             Some(ref contract) => {
-                u8(0x1).consensus_encode(s);
+                true.consensus_encode(s);
                 contract.consensus_encode(s)?;
             },
             None => {
-                u8(0x0).consensus_encode(s);
+                false.consensus_encode(s);
             }
         }
         match self.original_commitment_pk {
             Some(pk) => {
-                u8(0x1).consensus_encode(s);
+                true.consensus_encode(s);
                 pk.consensus_encode(s)
             },
             None => {
-                u8(0x0).consensus_encode(s)
+                false.consensus_encode(s)
             }
         }
     }
@@ -100,12 +99,12 @@ impl<D: Decoder> Decodable<D> for Proof {
             let c: Contract = Decodable::consensus_decode(d)?;
             contract = Some(Box::new(c));
         }
-        let mut original_pk: Option<PublicKey> = None;
+        let mut original_commitment_pk: Option<PublicKey> = None;
         if Decodable::consensus_decode(d)? {
             let pk = Decodable::consensus_decode(d)?;
-            original_pk = Some(pk);
+            original_commitment_pk = Some(pk);
         }
 
-        Ok(Proof(inputs, outputs, metadata, bind_to, contract, original_pk))
+        Ok(Proof { inputs, outputs, metadata, bind_to, contract, original_commitment_pk })
     }
 }

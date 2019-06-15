@@ -42,14 +42,14 @@ impl<S: Encoder> Encodable<S> for RgbOutPoint {
         match self {
             RgbOutPoint::UTXO(hash) => {
                 // 0x1 stands for UTXO-based RGB transaction
-                u8(0x1).consensus_encode(s)?;
+                (0x1 as u8).consensus_encode(s)?;
                 // next we put the hash of the concatenated TX hash and 32-bit vout:
                 // SHA256D(TX_HASH || OUTPUT_INDEX_AS_U32)
                 hash.consensus_encode(s)
             },
             RgbOutPoint::Vout(vout) => {
                 // 0x2 stands for address-based RGB transaction
-                u8(0x2).consensus_encode(s)?;
+                (0x2 as u8).consensus_encode(s)?;
                 // next we need to put vout to which asset will be bound
                 vout.consensus_encode(s)
             },
@@ -101,27 +101,30 @@ impl<S: Encoder> Encodable<S> for RgbOutEntry {
 
 impl<D: Decoder> Decodable<D> for RgbOutEntry {
     fn consensus_decode(d: &mut D) -> Result<RgbOutEntry, Error> {
-        let asset_id: AssetId = Decodable.consensus_decode(d)?;
-        let amount: u64 = Decodable.consensus_decode(d)?;
-        let out_point: RgbOutPoint = Decodable.consensus_decode(d)?;
-        Ok(OutputEntry(asset_id, amount, out_point))
+        let asset_id: AssetId = Decodable::consensus_decode(d)?;
+        let amount: u64 = Decodable::consensus_decode(d)?;
+        let out_point: RgbOutPoint = Decodable::consensus_decode(d)?;
+        Ok(RgbOutEntry { asset_id, amount, out_point })
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use secp256k1;
     use bitcoin_hashes::sha256d;
     use bitcoin;
     use bitcoin::network::constants::Network;
-    use crate::outputs::{RgbOutPoint, RgbOutEntry};
-    use bitcoin::util::psbt::serialize::Serialize;
-    use bitcoin::consensus::encode::Encodable;
+    use crate::outputs::RgbOutPoint;
     use bitcoin::consensus::serialize;
 
-    const GENESIS_PUBKEY: bitcoin::PublicKey = bitcoin::PublicKey(true, secp256k1::PublicKey::from_str(
+    const GENESIS_PUBKEY: bitcoin::PublicKey = bitcoin::PublicKey {
+        compressed: true,
+        key: secp256k1::PublicKey::from_str(
         "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f\
-        4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5").unwrap());
+        4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5").unwrap()
+    };
 
     fn generate_utxo_outpoint() -> RgbOutPoint {
         let address = bitcoin::Address::p2wpkh(&GENESIS_PUBKEY, Network::Mainnet);
@@ -151,7 +154,6 @@ mod test {
     #[test]
     fn encode_vout_outpoint_test() {
         let outpoint = generate_vout_outpoint();
-        print!("{}", data);
     }
 
     #[test]

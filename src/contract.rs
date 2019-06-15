@@ -17,11 +17,13 @@
 //!
 //! Implementation of data structures used in RGB contracts
 
+use bitcoin_hashes::sha256d;
 use bitcoin::{Address, OutPoint};
 use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 
 use crate::AssetId;
+use crate::contract::BlueprintType::{Crowdsale, Reissue, Unknown};
 
 /// Commitment scheme variants used by RGB contract header field `commitment_scheme`.
 /// With the current specification only two possible schemes are supported: OP_RETURN and
@@ -29,6 +31,7 @@ use crate::AssetId;
 ///
 /// NB: Commitment scheme specifies the way of commiting proofs for RGB transactions, not
 /// the way by which original RGB contract is commited
+#[repr(u8)]
 #[derive(Clone, Debug)]
 pub enum CommitmentScheme {
     /// Used by reissuance blueprint contract, which inherits `commitment_scheme` from
@@ -43,11 +46,22 @@ pub enum CommitmentScheme {
     PayToContract = 0x2,
 }
 
+impl From<u8> for CommitmentScheme {
+    fn from(no: u8) -> Self {
+        match no {
+            0x1 => CommitmentScheme::OpReturn,
+            0x2 => CommitmentScheme::PayToContract,
+            _ => CommitmentScheme::NotApplicable,
+        }
+    }
+}
+
 /// Types of blueprints for the RGB contracts. Each blueprint type defines custom fields used
 /// in the contract body – and sometimes special requirements for the contract header fields.
 /// Read more on <https://github.com/rgb-org/spec/blob/master/01-rgb.md#blueprints-and-versioning>
 ///
 /// Subjected to the future extension, at this moment this is very preliminary work.
+#[repr(u16)]
 #[derive(Clone, Debug)]
 pub enum BlueprintType {
     /// Simple issuance contract
@@ -58,6 +72,20 @@ pub enum BlueprintType {
 
     /// Reissuing contract
     Reissue = 0x03,
+
+    /// Reserved for all other blueprints which are unknown for the current version
+    Unknown = 0x04,
+}
+
+impl From<u16> for BlueprintType {
+    fn from(no: u16) -> Self {
+        match no {
+            0x01 => BlueprintType::Issue,
+            0x02 => Crowdsale,
+            0x03 => Reissue,
+            _ => Unknown,
+        }
+    }
 }
 
 /// Contract header fields required by the specification
@@ -92,7 +120,7 @@ pub struct ContractHeader {
     pub max_hops: Option<u32>,
 
     /// Whether the re-issuance feature is enabled or not
-    pub reissuance_enabled: Bool,
+    pub reissuance_enabled: bool,
 
     /// UTXO which have to be spent to reissue tokens. Optional.
     pub reissuance_utxo: Option<OutPoint>,
@@ -111,8 +139,18 @@ impl<S: Encoder> Encodable<S> for ContractHeader {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.version.consensus_encode(s)?;
         self.title.consensus_encode(s)?;
-        self.description.consensus_encode(s)?;
-        self.contract_url.consensus_encode(s)?;
+
+        // For optional strings we use zero-length string to represent `None` value
+        let zero: String = "".to_string();
+        match self.description {
+            Some(ref str) => str.consensus_encode(s)?,
+            None => zero.consensus_encode(s)?,
+        }
+        match self.contract_url {
+            Some(ref str) => str.consensus_encode(s)?,
+            None => zero.consensus_encode(s)?,
+        }
+
         self.issuance_utxo.consensus_encode(s)?;
         self.network.consensus_encode(s)?;
         self.total_supply.consensus_encode(s)?;
@@ -122,61 +160,74 @@ impl<S: Encoder> Encodable<S> for ContractHeader {
         // 0x1 for some value) and then, if there is a value presented, we deserialize it.
         match self.max_hops {
             Some(hops) => {
-                u8(0x1).consensus_encode(s)?;
+                true.consensus_encode(s)?;
                 hops.consensus_encode(s)?;
             },
-            None => u8(0x0).consensus_encode(s)?,
+            None => false.consensus_encode(s)?,
         }
         self.reissuance_enabled.consensus_encode(s)?;
         match self.reissuance_utxo {
             Some(out) => {
-                u8(0x1).consensus_encode(s)?;
+                true.consensus_encode(s)?;
                 out.consensus_encode(s)?;
             },
-            None => u8(0x0).consensus_encode(s)?,
+            None => false.consensus_encode(s)?,
         }
         match self.burn_address {
             Some(ref addr) => {
-                u8(0x1).consensus_encode(s)?;
+                true.consensus_encode(s)?;
                 addr.consensus_encode(s)?;
             },
-            None => u8(0x0).consensus_encode(s)?,
+            None => false.consensus_encode(s)?,
         }
-        self.commitment_scheme.consensus_encode(s)?;
-        self.blueprint_type.consensus_encode(s)
+        (self.commitment_scheme as u8).consensus_encode(s)?;
+        (self.blueprint_type as u16).consensus_encode(s)
     }
 }
 
-impl<D: Encoder> Decodable<D> for ContractHeader {
+impl<D: Decoder> Decodable<D> for ContractHeader {
     fn consensus_decode(d: &mut D) -> Result<ContractHeader, Error> {
-        let version: u16 = Decodable.consensus_decode(d)?;
-        let title: String = Decodable.consensus_decode(d)?;
-        let description: Option<String> = Decodable.consensus_decode(d)?;
-        let contract_url: Option<String> = Decodable.consensus_decode(d)?;
-        let issuance_utxo: OutPoint = Decodable.consensus_decode(d)?;
-        let network: Network = Decodable.consensus_decode(d)?;
-        let total_supply: u64 = Decodable.consensus_decode(d)?;
-        let min_amount: u64 = Decodable.consensus_decode(d)?;
+        let version: u16 = Decodable::consensus_decode(d)?;
+        let title: String = Decodable::consensus_decode(d)?;
+
+        // For optional strings we use zero-length string to represent `None` value
+        let string: String = Decodable::consensus_decode(d)?;
+        let description: Option<String> = match string.len() {
+            0 => None,
+            _ => Some(string),
+        };
+        let string: String = Decodable::consensus_decode(d)?;
+        let contract_url: Option<String> = match string.len() {
+            0 => None,
+            _ => Some(string),
+        };
+
+        let issuance_utxo: OutPoint = Decodable::consensus_decode(d)?;
+        let network: Network = Decodable::consensus_decode(d)?;
+        let total_supply: u64 = Decodable::consensus_decode(d)?;
+        let min_amount: u64 = Decodable::consensus_decode(d)?;
 
         // For optionals, we use first byte to determine presence of the value (0x0 for no value,
         // 0x1 for some value) and then, if there is a value presented, we deserialize it.
         let mut max_hops: Option<u32> = None;
-        if Decodable.consensus_decode(d)? == true {
-            max_hops = Some(Decodable.consensus_decode(d)?);
+        if Decodable::consensus_decode(d)? == true {
+            max_hops = Some(Decodable::consensus_decode(d)?);
         }
-        let reissuance_enabled: Bool = Decodable.consensus_decode(d)?;
+        let reissuance_enabled: bool = Decodable::consensus_decode(d)?;
         let mut reissuance_utxo: Option<OutPoint> = None;
-        if Decodable.consensus_decode(d)? == true {
-            reissuance_utxo = Some(Decodable.consensus_decode(d)?);
+        if Decodable::consensus_decode(d)? == true {
+            reissuance_utxo = Some(Decodable::consensus_decode(d)?);
         }
         let mut burn_address: Option<Address> = None;
-        if Decodable.consensus_decode(d)? == true {
-            burn_address = Some(Decodable.consensus_decode(d)?);
+        if Decodable::consensus_decode(d)? == true {
+            burn_address = Some(Decodable::consensus_decode(d)?);
         }
-        let commitment_scheme: CommitmentScheme = Decodable.consensus_decode(d)?;
-        let blueprint_type: BlueprintType = Decodable.consensus_decode(d)?;
+        let commitment_scheme_id: u8 = Decodable::consensus_decode(d)?;
+        let commitment_scheme= CommitmentScheme::from(commitment_scheme_id);
+        let blueprint_type_id: u16 = Decodable::consensus_decode(d)?;
+        let blueprint_type = BlueprintType::from(blueprint_type_id);
 
-        Ok(ContractHeader(
+        Ok(ContractHeader {
             version,
             title,
             description,
@@ -191,22 +242,12 @@ impl<D: Encoder> Decodable<D> for ContractHeader {
             burn_address,
             commitment_scheme,
             blueprint_type
-        ))
+        })
     }
 }
 
 /// Trait to be used by custom contract blueprint implementation to provide its own custom fields.
 pub trait ContractBody {
-}
-
-impl<S: Encoder> Encodable<S> for ContractBody {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-    }
-}
-impl<D: Encoder> Decodable<D> for ContractBody {
-    fn consensus_decode(d: &mut D) -> Result<ContractBody, Error> {
-        Ok(ContractBody())
-    }
 }
 
 /// Simple issuance contract
@@ -229,10 +270,11 @@ impl<S: Encoder> Encodable<S> for IssuanceContractBody {
         self.owner_utxo.consensus_encode(s)
     }
 }
-impl<D: Encoder> Decodable<D> for IssuanceContractBody {
+impl<D: Decoder> Decodable<D> for IssuanceContractBody {
     fn consensus_decode(d: &mut D) -> Result<IssuanceContractBody, Error> {
-        let owner_utxo: OutPoint = Decodable.consensus_decode(d)?;
-        Ok(IssuanceContractBody(owner_utxo))
+        Ok(IssuanceContractBody {
+            owner_utxo: Decodable::consensus_decode(d)?
+        })
     }
 }
 
@@ -282,19 +324,19 @@ impl<S: Encoder> Encodable<S> for CrowdsaleContractBody {
         self.to_block.consensus_encode(s)
     }
 }
-impl<D: Encoder> Decodable<D> for CrowdsaleContractBody {
+impl<D: Decoder> Decodable<D> for CrowdsaleContractBody {
     fn consensus_decode(d: &mut D) -> Result<CrowdsaleContractBody, Error> {
-        let deposit_address: Address = Decodable.consensus_decode(d)?;
-        let price_sat: u64 = Decodable.consensus_decode(d)?;
-        let from_block: u64 = Decodable.consensus_decode(d)?;
-        let to_block: u64 = Decodable.consensus_decode(d)?;
+        let deposit_address: Address = Decodable::consensus_decode(d)?;
+        let price_sat: u64 = Decodable::consensus_decode(d)?;
+        let from_block: u64 = Decodable::consensus_decode(d)?;
+        let to_block: u64 = Decodable::consensus_decode(d)?;
 
-        Ok(CrowdsaleContractBody(
+        Ok(CrowdsaleContractBody {
             deposit_address,
             price_sat,
             from_block,
             to_block
-        ))
+        })
     }
 }
 
@@ -335,40 +377,50 @@ impl ContractBody for ReissueContractBody {
 }
 
 
+impl<S: Encoder> Encodable<S> for ReissueContractBody {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
+        Ok(())
+    }
+}
+impl<D: Decoder> Decodable<D> for ReissueContractBody {
+    fn consensus_decode(d: &mut D) -> Result<ReissueContractBody, Error> {
+        Ok(ReissueContractBody { })
+    }
+}
+
 /// RGB Contract in-memory representation.
 ///
 /// Data structure provides serialization with consensus serialization methods
 /// for disk storage and network messaging between Bifröst servers and RGB-enabled wallets,
 /// verification of the contract internal consistency and blueprint specification
 /// and tool methods for generating bitcoin output scripts for the associated on-chain transaction.
-#[derive(Clone, Debug)]
 pub struct Contract {
     /// Contract header, containing fixed set of fields, shared by all contract blueprints
     pub header: ContractHeader,
 
     /// Contract body, with blueprint-specific set of fields
-    pub body: ContractBody,
+    pub body: Box<ContractBody>,
 }
 
 impl Contract {
     /// Provides unique asset_id, which is computed as a SHA256d-hash from the consensus-serialized
     /// contract data
     pub fn get_asset_id(&self) -> AssetId {
-        sha256d::Hash::from_data(&serialize(self).unwrap())
+        sha256d::Hash::from_slice(&serialize(self))
     }
 }
 
 impl<S: Encoder> Encodable<S> for Contract {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-        header.consensus_encode(s)?;
-        body.consensus_encode(s)
+        self.header.consensus_encode(s)?;
+        (*self.body).consensus_encode(s)
     }
 }
 
-impl<D: Encoder> Decodable<D> for Contract {
+impl<D: Decoder> Decodable<D> for Contract {
     fn consensus_decode(d: &mut D) -> Result<Contract, Error> {
-        let header = Decodable::consensus_decode(d)?;
-        let body = Decodable::consensus_decode(d)?;
-        Ok(Contract(header, body))
+        let header: ContractHeader = Decodable::consensus_decode(d)?;
+        let body: Box<ContractBody> = Box::new(Decodable::consensus_decode(d)?);
+        Ok(Contract{ header, body })
     }
 }

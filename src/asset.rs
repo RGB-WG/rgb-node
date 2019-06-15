@@ -15,7 +15,6 @@
 
 //! RGB asset abstractions
 
-use bitcoin_hashes::sha256d;
 use bitcoin::consensus::encode::*;
 
 use crate::constants::*;
@@ -24,7 +23,6 @@ use crate::proof::Proof;
 
 /// RGB asset data structure for in-memory representation of bundled asset issuence contracts and
 /// chain of proofs for each of the known assets
-#[derive(Clone, Debug)]
 pub struct Asset {
     /// Original asset issue contract
     pub contract: Contract,
@@ -47,14 +45,16 @@ impl Asset {
 impl<S: Encoder> Encodable<S> for Asset {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.contract.consensus_encode(s)?;
-        self.proofs.consensus_encode(s)
+        self.reissues.consensus_encode(s)?;
+        self.proof_chains.consensus_encode(s)
     }
 }
 
 impl<D: Decoder> Decodable<D> for Asset {
     fn consensus_decode(d: &mut D) -> Result<Asset, Error> {
         let contract: Contract = Decodable::consensus_decode(d)?;
-        let proofs: Vec<Proof> = Decodable::consensus_decode(d)?;
-        Ok(Asset(contract, proofs))
+        let reissues: Vec<Contract> = Decodable::consensus_decode(d)?;
+        let proof_chains: Vec<Proof> = Decodable::consensus_decode(d)?;
+        Ok(Asset {contract, reissues, proof_chains})
     }
 }
