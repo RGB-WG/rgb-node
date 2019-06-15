@@ -1,11 +1,32 @@
+// RGB Rust Library
+// Written in 2019 by
+//     Dr. Maxim Orlovsky <dr.orlovsky@gmail.com>
+// basing on the original RGB rust library by
+//     Alekos Filini <alekos.filini@gmail.com>
+//
+// To the extent possible under law, the author(s) have dedicated all
+// copyright and related and neighboring rights to this software to
+// the public domain worldwide. This software is distributed without
+// any warranty.
+//
+// You should have received a copy of the MIT License
+// along with this software.
+// If not, see <https://opensource.org/licenses/MIT>.
+
+//! RGB transaction output types
+//!
+//! Implementation of data structures used in RGB contracts and transaction proofs for
+//! specifying particular  outputs and bindings to the on-chain transactions
+
 use bitcoin::consensus::encode::*;
+use crate::{AssetId, RgbOutHash};
 
-use crate::RgbOutHash;
-
-/// Outpoint for an RGB transaction, defined by the https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint
+/// Outpoint for an RGB transaction, defined by the [RGB Specification](https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint). Can be of two different type,
+/// represented by the corresponding enum variants.
 #[derive(Clone, Debug)]
 pub enum RgbOutPoint {
-    /// UTXO-based RGB transaction, pointing to the hash of some pre-existing UTXO with some `vout` in it
+    /// UTXO-based RGB transaction, pointing to the hash of some pre-existing UTXO
+    /// with some `vout` in it
     UTXO(RgbOutHash),
 
     /// Vout-based RGB transaction, pointing to specific vout of the current bitcoin transaction
@@ -57,13 +78,44 @@ impl<D: Decoder> Decodable<D> for RgbOutPoint {
     }
 }
 
+/// RGB transaction details for each of the transaction outputs for assets transfer.
+/// Triplets specifying type of the asset transferred, amount and output points.
+#[derive(Clone, Debug)]
+pub struct RgbOutEntry {
+    /// Asset type (hash of the consensus-serialized asset issue contract)
+    // TODO: Probably unnecessary due to #72 <https://github.com/rgb-org/spec/issues/72>
+    asset_id: AssetId,
+    /// Amount, 64-bytes (for compatibility with bitcoin amounts)
+    amount: u64,
+    /// Output point for the transfer
+    out_point: RgbOutPoint
+}
+
+impl<S: Encoder> Encodable<S> for RgbOutEntry {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
+        self.asset_id.consensus_encode()?;
+        self.amount.consensus_encode()?;
+        self.out_point.consensus_encode()
+    }
+}
+
+impl<D: Decoder> Decodable<D> for RgbOutEntry {
+    fn consensus_decode(d: &mut D) -> Result<RgbOutEntry, Error> {
+        let asset_id: AssetId = Decodable.consensus_decode(d)?;
+        let amount: u64 = Decodable.consensus_decode(d)?;
+        let out_point: RgbOutPoint = Decodable.consensus_decode(d)?;
+        let mut output_entry = OutputEntry(asset_id, amount, out_point);
+        Ok(output_entry)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use secp256k1;
     use bitcoin_hashes::sha256d;
     use bitcoin;
     use bitcoin::network::constants::Network;
-    use crate::outpoint::RgbOutPoint;
+    use crate::outputs::{RgbOutPoint, RgbOutEntry};
     use bitcoin::util::psbt::serialize::Serialize;
     use bitcoin::consensus::encode::Encodable;
     use bitcoin::consensus::serialize;
@@ -72,8 +124,7 @@ mod test {
         "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f\
         4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5").unwrap());
 
-    #[test]
-    fn encode_utxo_outpoint_test() {
+    fn generate_utxo_outpoint() -> RgbOutPoint {
         let address = bitcoin::Address::p2wpkh(&GENESIS_PUBKEY, Network::Mainnet);
         let vout: [u8; 4] = [0, 0, 0, 0];
 
@@ -84,15 +135,30 @@ mod test {
         engine.write_all(&preimage.as_slice());
 
         let hash = sha256d::Hash::from_engine(engine);
-        let outpoint = RgbOutPoint::UTXO(hash);
+        RgbOutPoint::UTXO(hash)
+    }
 
+    fn generate_vout_outpoint() -> RgbOutPoint {
+        RgbOutPoint::Vout(3)
+    }
+
+    #[test]
+    fn encode_utxo_outpoint_test() {
+        let outpoint = generate_utxo_outpoint();
         let data = serialize(&outpoint);
         print!("{}", data);
     }
 
     #[test]
     fn encode_vout_outpoint_test() {
+        let outpoint = generate_vout_outpoint();
+        print!("{}", data);
+    }
 
+    #[test]
+    fn transcode_simple_outentry() {
+        // let outpoint = generate_vout_outpoint();
+        // let outentry = RgbOutEntry();
     }
 
     #[test]
