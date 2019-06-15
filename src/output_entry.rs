@@ -1,10 +1,11 @@
-use bitcoin::network::encodable::ConsensusDecodable;
-use bitcoin::network::encodable::ConsensusEncodable;
+use bitcoin::network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use bitcoin::network::serialize;
-use bitcoin::network::serialize::SimpleDecoder;
-use bitcoin::network::serialize::SimpleEncoder;
+use bitcoin::network::serialize::{SimpleDecoder, SimpleEncoder};
 use bitcoin::util::hash::Sha256dHash;
 
+// TODO: Add named fields in order to make a use of the structure more verbal and avoid errors
+// in accessing structure fields
+// TODO: Clarify why amount field is optional
 #[derive(Clone, Debug)]
 pub struct OutputEntry(Sha256dHash, u64, Option<u32>); // asset_id, amount -> vout
 
@@ -36,6 +37,9 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for OutputEntry {
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for OutputEntry {
     fn consensus_decode(d: &mut D) -> Result<OutputEntry, serialize::Error> {
-        Ok(OutputEntry::new(ConsensusDecodable::consensus_decode(d)?, ConsensusDecodable::consensus_decode(d)?, ConsensusDecodable::consensus_decode(d)?))
+        Ok(OutputEntry::new(
+            ConsensusDecodable::consensus_decode(d)?,
+            ConsensusDecodable::consensus_decode(d)?,
+            ConsensusDecodable::consensus_decode(d)?))
     }
 }

@@ -1,11 +1,9 @@
+use std::collections::HashMap;
 use bitcoin::blockdata::script::Script;
-use bitcoin::OutPoint;
-use bitcoin::Transaction;
+use bitcoin::{OutPoint, Transaction};
 use bitcoin::util::hash::Sha256dHash;
 use pay_to_contract::ECTweakFactor;
-use secp256k1::Error;
-use secp256k1::PublicKey;
-use std::collections::HashMap;
+use secp256k1::{Error, PublicKey};
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum NeededTx {

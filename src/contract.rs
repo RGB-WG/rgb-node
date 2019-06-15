@@ -1,25 +1,17 @@
-use bitcoin::BitcoinHash;
-use bitcoin::blockdata::opcodes;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::blockdata::script::Script;
-use bitcoin::network::encodable::ConsensusDecodable;
-use bitcoin::network::encodable::ConsensusEncodable;
-use bitcoin::network::serialize;
-use bitcoin::network::serialize::serialize;
-use bitcoin::network::serialize::SimpleDecoder;
-use bitcoin::network::serialize::SimpleEncoder;
-use bitcoin::Transaction;
-use bitcoin::util::address::Address;
-use bitcoin::util::hash::Hash160;
-use bitcoin::util::hash::Sha256dHash;
-use pay_to_contract::ECTweakFactor;
-use secp256k1::Error;
-use secp256k1::PublicKey;
-use secp256k1::Secp256k1;
 use std::collections::HashMap;
-use super::bitcoin::network::constants::Network;
-use super::bitcoin::OutPoint;
-use super::traits::Verify;
+
+use bitcoin::{BitcoinHash, OutPoint, Transaction};
+use bitcoin::blockdata::opcodes;
+use bitcoin::blockdata::script::{Builder, Script};
+use bitcoin::network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use bitcoin::network::serialize;
+use bitcoin::network::serialize::{serialize, SimpleDecoder, SimpleEncoder};
+use bitcoin::network::constants::Network;
+use bitcoin::util::hash::{Hash160, Sha256dHash};
+use secp256k1::{Error, PublicKey, Secp256k1};
+
+use pay_to_contract::ECTweakFactor;
+use traits::Verify;
 use traits::NeededTx;
 use traits::PayToContract;
 
@@ -42,7 +34,8 @@ impl Contract {
 impl BitcoinHash for Contract {
     fn bitcoin_hash(&self) -> Sha256dHash { // all the fields
         // TODO: leave out "original_commitment_pk": it's not necessary to "pre-commit" to this value,
-        // and doing so could actually make some tokens/bitcoins unspendable (if original_commitment_pk is not set)
+        // and doing so could actually make some tokens/bitcoins unspendable
+        // (if original_commitment_pk is not set)
         Sha256dHash::from_data(&serialize(self).unwrap())
     }
 }

@@ -1,28 +1,19 @@
-use bitcoin::BitcoinHash;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+
+use bitcoin::{BitcoinHash, OutPoint, Transaction};
 use bitcoin::blockdata::opcodes;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::blockdata::script::Script;
-use bitcoin::network::encodable::ConsensusDecodable;
-use bitcoin::network::encodable::ConsensusEncodable;
+use bitcoin::blockdata::script::{Builder, Script};
+use bitcoin::network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use bitcoin::network::serialize;
-use bitcoin::network::serialize::SimpleDecoder;
-use bitcoin::network::serialize::SimpleEncoder;
-use bitcoin::Transaction;
-use bitcoin::util::hash::Hash160;
-use bitcoin::util::hash::Sha256dHash;
+use bitcoin::network::serialize::{SimpleDecoder, SimpleEncoder};
+use bitcoin::util::hash::{Hash160, Sha256dHash};
+use secp256k1::{Error, PublicKey, Secp256k1};
+
 use contract::Contract;
 use pay_to_contract::ECTweakFactor;
-use secp256k1::Error;
-use secp256k1::PublicKey;
-use secp256k1::Secp256k1;
 use output_entry::OutputEntry;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::hash::Hasher;
-use super::bitcoin::OutPoint;
-use super::traits::Verify;
-use traits::NeededTx;
-use traits::PayToContract;
+use traits::{Verify, NeededTx, PayToContract};
 
 #[derive(Clone, Debug)]
 pub struct Proof {
