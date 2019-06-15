@@ -47,9 +47,15 @@ impl Verify for Contract {
 
     fn verify(&self, needed_txs: &HashMap<&NeededTx, Transaction>) -> bool {
         let committing_tx = needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.issuance_utxo)).unwrap();
+        let expected = self.get_expected_script();
 
-        // TODO: signal the commitment output somehow
-        if committing_tx.output[0].script_pubkey != self.get_expected_script() {
+        // Check the outputs
+        let mut found_output = false;
+        for i in 0..committing_tx.output.len() {
+            found_output = found_output || committing_tx.output[i].script_pubkey == expected;
+        }
+
+        if !found_output {
             println!("invalid commitment");
             return false;
         }

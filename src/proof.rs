@@ -117,8 +117,15 @@ impl Verify for Proof {
 
         // ---------------------------------
 
-        // TODO: right now we are forcing the commitment to be in the first output
-        if committing_tx.output[0].script_pubkey != self.get_expected_script() {
+        let expected = self.get_expected_script();
+
+        // Check the tx outputs for the commitment
+        let mut found_output = false;
+        for i in 0..committing_tx.output.len() {
+            found_output = found_output || committing_tx.output[i].script_pubkey == expected;
+        }
+
+        if !found_output {
             println!("invalid commitment");
             return false;
         }
