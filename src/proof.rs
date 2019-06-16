@@ -57,7 +57,7 @@ impl<T: ContractBody> Proof<T> {
 }
 
 impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), bitcoin::consensus::encode::Error> {
         self.inputs.consensus_encode(s)?;
         self.outputs.consensus_encode(s)?;
         self.metadata.consensus_encode(s)?;
@@ -67,17 +67,18 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
         // 0x1 for some value) and then, if there is a value presented, we serialize it.
         match self.contract {
             Some(ref contract) => {
-                true.consensus_encode(s);
+                true.consensus_encode(s)?;
                 contract.consensus_encode(s)?;
             },
             None => {
-                false.consensus_encode(s);
+                false.consensus_encode(s)?;
             }
         }
         match self.original_commitment_pk {
             Some(pk) => {
-                true.consensus_encode(s);
-                pk.consensus_encode(s)
+                true.consensus_encode(s)?;
+                let data = pk.serialize();
+                data.consensus_encode(s)
             },
             None => {
                 false.consensus_encode(s)
@@ -87,7 +88,7 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
 }
 
 impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Proof<T> {
-    fn consensus_decode(d: &mut D) -> Result<Proof<T>, Error> {
+    fn consensus_decode(d: &mut D) -> Result<Proof<T>, bitcoin::consensus::encode::Error> {
         let inputs: Vec<Proof<T>> = Decodable::consensus_decode(d)?;
         let outputs: Vec<RgbOutEntry> = Decodable::consensus_decode(d)?;
         let metadata: Vec<u8> = Decodable::consensus_decode(d)?;
@@ -102,8 +103,12 @@ impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Proof<T> {
         }
         let mut original_commitment_pk: Option<PublicKey> = None;
         if Decodable::consensus_decode(d)? {
-            let pk = Decodable::consensus_decode(d)?;
-            original_commitment_pk = Some(pk);
+            let data: Vec<u8> = Decodable::consensus_decode(d)?;
+            match PublicKey::from_slice(&data[..]) {
+                Ok(pk) => original_commitment_pk = Some(pk),
+                Err(_) => return Err(
+                        bitcoin::consensus::encode::Error::ParseFailed("Can't decode public key"))
+            };
         }
 
         Ok(Proof { inputs, outputs, metadata, bind_to, contract, original_commitment_pk })

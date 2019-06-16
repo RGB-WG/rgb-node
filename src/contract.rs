@@ -39,14 +39,14 @@ use crate::contract::BlueprintType::{Crowdsale, Reissue, Unknown};
 pub enum CommitmentScheme {
     /// Used by reissuance blueprint contract, which inherits `commitment_scheme` from
     /// the original issuance contract.
-    NotApplicable = 0x0,
+    NotApplicable,
 
     /// OP_RETURN scheme, committing RGB proofs to a special bitcoin transaction output
     /// containing `OP_RETURN` opcode followed by the hash of RGB contract or proof
-    OpReturn = 0x1,
+    OpReturn,
 
     /// Pay to contract scheme, committing RGB proofs to a bitcoin UTXO via public key tweak.
-    PayToContract = 0x2,
+    PayToContract,
 }
 
 impl From<u8> for CommitmentScheme {
@@ -59,6 +59,17 @@ impl From<u8> for CommitmentScheme {
     }
 }
 
+impl From<CommitmentScheme> for u8 {
+    fn from(scheme: CommitmentScheme) -> Self {
+        match scheme {
+            CommitmentScheme::OpReturn => 0x1,
+            CommitmentScheme::PayToContract => 0x2,
+            CommitmentScheme::NotApplicable => 0x0,
+        }
+    }
+}
+
+
 /// Types of blueprints for the RGB contracts. Each blueprint type defines custom fields used
 /// in the contract body – and sometimes special requirements for the contract header fields.
 /// Read more on <https://github.com/rgb-org/spec/blob/master/01-rgb.md#blueprints-and-versioning>
@@ -68,25 +79,37 @@ impl From<u8> for CommitmentScheme {
 #[derive(Clone, Debug)]
 pub enum BlueprintType {
     /// Simple issuance contract
-    Issue = 0x01,
+    Issue,
 
     /// Crowdsale contract
-    Crowdsale = 0x02,
+    Crowdsale,
 
     /// Reissuing contract
-    Reissue = 0x03,
+    Reissue,
 
     /// Reserved for all other blueprints which are unknown for the current version
-    Unknown = 0x04,
+    Unknown,
 }
 
 impl From<u16> for BlueprintType {
     fn from(no: u16) -> Self {
         match no {
-            0x01 => BlueprintType::Issue,
-            0x02 => Crowdsale,
-            0x03 => Reissue,
+            0x0001 => BlueprintType::Issue,
+            0x0002 => Crowdsale,
+            0x0003 => Reissue,
             _ => Unknown,
+        }
+    }
+}
+
+
+impl From<BlueprintType> for u16 {
+    fn from(blueprint: BlueprintType) -> Self {
+        match blueprint {
+            BlueprintType::Issue => 0x0001,
+            Crowdsale => 0x0002,
+            Reissue => 0x0003,
+            Unknown => 0xFFFF,
         }
     }
 }
@@ -183,8 +206,10 @@ impl<S: Encoder> Encodable<S> for ContractHeader {
             },
             None => false.consensus_encode(s)?,
         }
-        (self.commitment_scheme as u8).consensus_encode(s)?;
-        (self.blueprint_type as u16).consensus_encode(s)
+        let commitment_scheme_u: u8 = self.commitment_scheme.clone().into();
+        commitment_scheme_u.consensus_encode(s)?;
+        let ref blueprint_type_u: u16 = self.blueprint_type.clone().into();
+        blueprint_type_u.consensus_encode(s)
     }
 }
 
@@ -212,7 +237,7 @@ impl<D: Decoder> Decodable<D> for ContractHeader {
 
         // For optionals, we use first byte to determine presence of the value (0x0 for no value,
         // 0x1 for some value) and then, if there is a value presented, we deserialize it.
-        let mut has_value: bool = false;
+        let mut has_value: bool;
 
         let mut max_hops: Option<u32> = None;
         has_value = Decodable::consensus_decode(d)?;
@@ -400,12 +425,12 @@ impl ContractBody for ReissueContractBody {
 
 
 impl<S: Encoder> Encodable<S> for ReissueContractBody {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
+    fn consensus_encode(&self, _: &mut S) -> Result<(), Error> {
         Ok(())
     }
 }
 impl<D: Decoder> Decodable<D> for ReissueContractBody {
-    fn consensus_decode(d: &mut D) -> Result<ReissueContractBody, Error> {
+    fn consensus_decode(_: &mut D) -> Result<ReissueContractBody, Error> {
         Ok(ReissueContractBody { })
     }
 }

@@ -111,30 +111,37 @@ impl<D: Decoder> Decodable<D> for RgbOutEntry {
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
+    use std::io::Write;
 
-    use secp256k1;
-    use bitcoin_hashes::sha256d;
     use bitcoin;
+    use bitcoin_hashes::{sha256d, Hash};
     use bitcoin::network::constants::Network;
     use crate::outputs::RgbOutPoint;
     use bitcoin::consensus::serialize;
 
-    const GENESIS_PUBKEY: bitcoin::PublicKey = bitcoin::PublicKey {
-        compressed: true,
-        key: secp256k1::PublicKey::from_str(
+    const GENESIS_PUBKEY: &str =
         "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f\
-        4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5").unwrap()
-    };
+        4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5";
+
+    fn generate_pubkey() -> bitcoin::PublicKey {
+        bitcoin::PublicKey {
+            compressed: true,
+            key: secp256k1::key::PublicKey::from_str(GENESIS_PUBKEY).unwrap()
+        }
+    }
 
     fn generate_utxo_outpoint() -> RgbOutPoint {
-        let address = bitcoin::Address::p2wpkh(&GENESIS_PUBKEY, Network::Mainnet);
+        let address = bitcoin::Address::p2wpkh(&generate_pubkey(), Network::Bitcoin);
         let vout: [u8; 4] = [0, 0, 0, 0];
 
         let mut preimage = address.to_string().into_bytes();
         preimage.extend_from_slice(&vout);
 
         let mut engine = sha256d::Hash::engine();
-        engine.write_all(&preimage.as_slice());
+        match engine.write_all(&preimage.as_slice()) {
+            Err(err) => panic!(err),
+            _ => (),
+        }
 
         let hash = sha256d::Hash::from_engine(engine);
         RgbOutPoint::UTXO(hash)
@@ -148,7 +155,7 @@ mod test {
     fn encode_utxo_outpoint_test() {
         let outpoint = generate_utxo_outpoint();
         let data = serialize(&outpoint);
-        print!("{}", data);
+        print!("{:?}", data);
     }
 
     #[test]
