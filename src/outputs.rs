@@ -118,8 +118,9 @@ mod test {
     use bitcoin;
     use bitcoin_hashes::{sha256d, Hash};
     use bitcoin::network::constants::Network;
-    use crate::outputs::RgbOutPoint;
+    use crate::outputs::{RgbOutPoint, RgbOutEntry};
     use bitcoin::consensus::{serialize, deserialize};
+    use crate::constants::AssetId;
 
     const GENESIS_PUBKEY: &str =
         "043f80a276a6550f68e360907aea2359120e4c358d904aef351dd6a478f4cbd74550b96215e243c\
@@ -137,13 +138,16 @@ mod test {
         preimage.extend_from_slice(&vout);
 
         let mut engine = sha256d::Hash::engine();
-        match engine.write_all(&preimage.as_slice()) {
-            Err(err) => panic!(err),
-            _ => (),
-        }
+        engine.write_all(&preimage.as_slice()).unwrap();
 
         let hash = sha256d::Hash::from_engine(engine);
         RgbOutPoint::UTXO(hash)
+    }
+
+    fn generate_asset_id() -> AssetId {
+        let mut engine = sha256d::Hash::engine();
+        engine.write_all(&[1, 2, 3, 4]).unwrap();
+        sha256d::Hash::from_engine(engine)
     }
 
     fn generate_vout_outpoint() -> RgbOutPoint {
@@ -224,7 +228,14 @@ mod test {
 
     #[test]
     fn transcode_simple_outentry() {
-        // let outpoint = generate_vout_outpoint();
-        // let outentry = RgbOutEntry();
+        let outpoint = generate_vout_outpoint();
+        let outentry = RgbOutEntry {
+            asset_id: generate_asset_id(),
+            amount: 13,
+            out_point: outpoint
+        };
+        let data = serialize(&outentry);
+        let outentry_transcoded: RgbOutEntry = deserialize(&data[..]).unwrap();
+        assert_eq!(outentry, outentry_transcoded);
     }
 }
