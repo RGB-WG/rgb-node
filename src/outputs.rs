@@ -120,14 +120,11 @@ mod test {
     use bitcoin::consensus::serialize;
 
     const GENESIS_PUBKEY: &str =
-        "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f\
-        4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5";
+        "043f80a276a6550f68e360907aea2359120e4c358d904aef351dd6a478f4cbd74550b96215e243c\
+        75a9f630b80f29d6013f2029059ef7330543e2444ae9e9af2a6";
 
     fn generate_pubkey() -> bitcoin::PublicKey {
-        bitcoin::PublicKey {
-            compressed: true,
-            key: secp256k1::key::PublicKey::from_str(GENESIS_PUBKEY).unwrap()
-        }
+        bitcoin::PublicKey::from_str(GENESIS_PUBKEY).unwrap()
     }
 
     fn generate_utxo_outpoint() -> RgbOutPoint {
