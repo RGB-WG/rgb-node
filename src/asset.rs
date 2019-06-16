@@ -1,7 +1,7 @@
 // RGB Rust Library
 // Written in 2019 by
 //     Dr. Maxim Orlovsky <dr.orlovsky@gmail.com>
-// basing on the original RGB rust library by
+// basing on ideas from the original RGB rust library by
 //     Alekos Filini <alekos.filini@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -21,7 +21,7 @@ use bitcoin::consensus::encode::*;
 
 use crate::constants::*;
 use crate::contract::{Contract, ContractBody, ReissueContractBody};
-use crate::proof::Proof;
+use crate::Proof;
 
 /// RGB asset data structure for in-memory representation of bundled asset issuence contracts and
 /// chain of proofs for each of the known assets

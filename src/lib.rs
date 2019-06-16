@@ -1,7 +1,7 @@
 // RGB Rust Library
 // Written in 2019 by
 //     Dr. Maxim Orlovsky <dr.orlovsky@gmail.com>
-// basing on the original RGB rust library by
+// basing on ideas from the original RGB rust library by
 //     Alekos Filini <alekos.filini@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -19,12 +19,12 @@ pub mod asset;
 pub mod contract;
 pub mod proof;
 pub mod outputs;
-
-mod util;
+pub mod util;
 
 use crate::constants::*;
 use crate::asset::Asset;
-use crate::contract::Contract;
+use crate::contract::{Contract, CommitmentScheme, BlueprintType};
 use crate::proof::Proof;
 use crate::outputs::RgbOutEntry;
 use crate::outputs::RgbOutPoint;
+use crate::util::*;

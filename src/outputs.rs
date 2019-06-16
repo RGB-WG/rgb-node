@@ -1,7 +1,7 @@
 // RGB Rust Library
 // Written in 2019 by
 //     Dr. Maxim Orlovsky <dr.orlovsky@gmail.com>
-// basing on the original RGB rust library by
+// basing on ideas from the original RGB rust library by
 //     Alekos Filini <alekos.filini@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all

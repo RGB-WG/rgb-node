@@ -1,7 +1,7 @@
 // RGB Rust Library
 // Written in 2019 by
 //     Dr. Maxim Orlovsky <dr.orlovsky@gmail.com>
-// basing on the original RGB rust library by
+// basing on ideas from the original RGB rust library by
 //     Alekos Filini <alekos.filini@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -283,19 +283,8 @@ impl<D: Decoder> Decodable<D> for ContractHeader {
 }
 
 /// Trait to be used by custom contract blueprint implementation to provide its own custom fields.
-pub trait ContractBody: Sized {
-}
+pub trait ContractBody: Sized { }
 
-/*
-impl<S: Encoder> Encodable<S> for ContractBody {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-    }
-}
-impl<D: Decoder> Decodable<D> for ContractBody {
-    fn consensus_decode(d: &mut D) -> Result<ContractBody, Error> {
-        Err(Error::ParseFailed("Serialization for the ContractBody has to be implemented in each particular subclass"))
-    }
-}*/
 
 /// Simple issuance contract
 ///
