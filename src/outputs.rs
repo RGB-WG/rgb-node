@@ -21,9 +21,10 @@
 use bitcoin::consensus::encode::*;
 use crate::{AssetId, RgbOutHash};
 
-/// Outpoint for an RGB transaction, defined by the [RGB Specification](https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint). Can be of two different type,
-/// represented by the corresponding enum variants.
-#[derive(Clone, Debug)]
+/// Outpoint for an RGB transaction, defined by the
+/// [RGB Specification](https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint).
+/// Can be of two different type, represented by the corresponding enum variants.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RgbOutPoint {
     /// UTXO-based RGB transaction, pointing to the hash of some pre-existing UTXO
     /// with some `vout` in it
@@ -62,7 +63,8 @@ impl<D: Decoder> Decodable<D> for RgbOutPoint {
         // Encoding RgbOutPoint according to the rules specified in
         // https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint:
         // First byte — code for the type of RgbOutPoint
-        match Decodable::consensus_decode(d)? {
+        let byte: u8 = Decodable::consensus_decode(d)?;
+        match byte {
             // 0x1 stands for UTXO-based RGB transaction
             0x1 => {
                 Ok(RgbOutPoint::UTXO(Decodable::consensus_decode(d)?))
@@ -80,7 +82,7 @@ impl<D: Decoder> Decodable<D> for RgbOutPoint {
 
 /// RGB transaction details for each of the transaction outputs for assets transfer.
 /// Triplets specifying type of the asset transferred, amount and output points.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RgbOutEntry {
     /// Asset type (hash of the consensus-serialized asset issue contract)
     // TODO: Probably unnecessary due to #72 <https://github.com/rgb-org/spec/issues/72>
@@ -117,7 +119,7 @@ mod test {
     use bitcoin_hashes::{sha256d, Hash};
     use bitcoin::network::constants::Network;
     use crate::outputs::RgbOutPoint;
-    use bitcoin::consensus::serialize;
+    use bitcoin::consensus::{serialize, deserialize};
 
     const GENESIS_PUBKEY: &str =
         "043f80a276a6550f68e360907aea2359120e4c358d904aef351dd6a478f4cbd74550b96215e243c\
@@ -152,42 +154,77 @@ mod test {
     fn encode_utxo_outpoint_test() {
         let outpoint = generate_utxo_outpoint();
         let data = serialize(&outpoint);
-        print!("{:?}", data);
+        let data_standard: [u8; 33] = [
+            1, 181, 12, 89, 229, 61, 22, 250, 116, 213, 204, 253, 200, 43, 222, 217, 74, 18, 135,
+            54, 11, 227, 50, 48, 90, 182, 117, 141, 145, 138, 111, 124, 23];
+        assert_eq!(data[0], 0x1, "First byte of serialized UTXO-based outpoint must be equal to 0x1");
+        assert_eq!(data.len(), data_standard.len(), "Wrong length of serialized data");
+        assert_eq!(data[..], data_standard[..], "Broken serialization");
     }
 
     #[test]
     fn encode_vout_outpoint_test() {
         let outpoint = generate_vout_outpoint();
+        let data = serialize(&outpoint);
+        let data_standard: [u8; 5] = [2, 3, 0, 0, 0];
+        assert_eq!(data[0], 0x2, "First byte of serialized vout-based outpoint must be equal to 0x1");
+        assert_eq!(data.len(), data_standard.len(), "Wrong length of serialized data");
+        assert_eq!(data[..], data_standard[..], "Broken serialization");
+    }
+
+    #[test]
+    fn decode_utxo_outpoint_test() {
+        let data_standard: [u8; 33] = [
+            1, 181, 12, 89, 229, 61, 22, 250, 116, 213, 204, 253, 200, 43, 222, 217, 74, 18, 135,
+            54, 11, 227, 50, 48, 90, 182, 117, 141, 145, 138, 111, 124, 23];
+        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
+        assert_eq!(outpoint, generate_utxo_outpoint());
+    }
+
+    #[test]
+    fn decode_utxo_outpoint_different_test() {
+        let data_standard: [u8; 33] = [
+            1, 18, 12, 89, 229, 61, 22, 250, 116, 213, 204, 253, 200, 43, 222, 217, 74, 18, 135,
+            54, 11, 227, 50, 48, 90, 182, 117, 141, 145, 138, 111, 124, 23];
+        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
+        assert_ne!(outpoint, generate_utxo_outpoint());
+    }
+
+    #[test]
+    #[should_panic]
+    fn decode_utxo_outpoint_misformat_test() {
+        let data_standard: [u8; 33] = [
+            3, 181, 12, 89, 229, 61, 22, 250, 116, 213, 204, 253, 200, 43, 222, 217, 74, 18, 135,
+            54, 11, 227, 50, 48, 90, 182, 117, 141, 145, 138, 111, 124, 23];
+        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
+        assert_ne!(outpoint, generate_utxo_outpoint());
+    }
+
+    #[test]
+    fn decode_vout_outpoint_test() {
+        let data_standard: [u8; 5] = [2, 3, 0, 0, 0];
+        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
+        assert_eq!(outpoint, generate_vout_outpoint());
+    }
+
+    #[test]
+    #[should_panic]
+    fn decode_vout_outpoint_misformat_test() {
+        let data_standard: [u8; 5] = [1, 3, 0, 0, 0];
+        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
+        assert_ne!(outpoint, generate_vout_outpoint());
+    }
+
+    #[test]
+    #[should_panic]
+    fn decode_rogue_outpoint_test() {
+        let data_standard: [u8; 10] = [2, 4, 6, 7, 8, 3, 5, 6, 8, 9];
+        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
     }
 
     #[test]
     fn transcode_simple_outentry() {
         // let outpoint = generate_vout_outpoint();
         // let outentry = RgbOutEntry();
-    }
-
-    #[test]
-    fn decode_utxo_outpoint_test() {
-
-    }
-
-    #[test]
-    fn decode_utxo_outpoint_misformat_test() {
-
-    }
-
-    #[test]
-    fn decode_vout_outpoint_test() {
-
-    }
-
-    #[test]
-    fn decode_vout_outpoint_misformat_test() {
-
-    }
-
-    #[test]
-    fn decode_rogue_outpoint_test() {
-
     }
 }
