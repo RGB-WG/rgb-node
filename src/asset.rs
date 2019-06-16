@@ -15,26 +15,29 @@
 
 //! RGB asset abstractions
 
+use std::io::Cursor;
+
 use bitcoin::consensus::encode::*;
 
 use crate::constants::*;
-use crate::contract::Contract;
+use crate::contract::{Contract, ContractBody, ReissueContractBody};
 use crate::proof::Proof;
 
 /// RGB asset data structure for in-memory representation of bundled asset issuence contracts and
 /// chain of proofs for each of the known assets
-pub struct Asset {
+#[derive(Clone, Debug)]
+pub struct Asset<B: ContractBody> {
     /// Original asset issue contract
-    pub contract: Contract,
+    pub contract: Contract<B>,
 
     /// Set of asset reissue contracts (if any)
-    pub reissues: Vec<Contract>,
+    pub reissues: Vec<Contract<ReissueContractBody>>,
 
     /// Set of all known unspent RGB proofs for a given asset (i.e. heads of the proof chains)
-    pub proof_chains: Vec<Proof>,
+    pub proof_chains: Vec<Proof<B>>,
 }
 
-impl Asset {
+impl<B: ContractBody> Asset<B> where B: Encodable<Cursor<Vec<u8>>> {
     /// Provides unique asset_id, which is computed as a SHA256d-hash from the consensus-serialized
     /// contract data
     pub fn get_asset_id(&self) -> AssetId {
@@ -42,7 +45,7 @@ impl Asset {
     }
 }
 
-impl<S: Encoder> Encodable<S> for Asset {
+impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Asset<T> {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.contract.consensus_encode(s)?;
         self.reissues.consensus_encode(s)?;
@@ -50,11 +53,11 @@ impl<S: Encoder> Encodable<S> for Asset {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Asset {
-    fn consensus_decode(d: &mut D) -> Result<Asset, Error> {
-        let contract: Contract = Decodable::consensus_decode(d)?;
-        let reissues: Vec<Contract> = Decodable::consensus_decode(d)?;
-        let proof_chains: Vec<Proof> = Decodable::consensus_decode(d)?;
+impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Asset<T> {
+    fn consensus_decode(d: &mut D) -> Result<Asset<T>, Error> {
+        let contract: Contract<T> = Decodable::consensus_decode(d)?;
+        let reissues: Vec<Contract<ReissueContractBody>> = Decodable::consensus_decode(d)?;
+        let proof_chains: Vec<Proof<T>> = Decodable::consensus_decode(d)?;
         Ok(Asset {contract, reissues, proof_chains})
     }
 }

@@ -93,9 +93,9 @@ pub struct RgbOutEntry {
 
 impl<S: Encoder> Encodable<S> for RgbOutEntry {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-        self.asset_id.consensus_encode()?;
-        self.amount.consensus_encode()?;
-        self.out_point.consensus_encode()
+        self.asset_id.consensus_encode(s)?;
+        self.amount.consensus_encode(s)?;
+        self.out_point.consensus_encode(s)
     }
 }
 

@@ -23,6 +23,7 @@ use bitcoin::consensus::encode::*;
 use secp256k1::PublicKey;
 
 use crate::{Contract, RgbOutEntry};
+use crate::contract::ContractBody;
 
 /// In-memory representation of offchain proofs for RGB transaction linked to an on-chain
 /// bitcoin transaction. Data structure provides serialization with consensus serialization methods
@@ -30,10 +31,10 @@ use crate::{Contract, RgbOutEntry};
 /// verification of the proof internal consistency, compliance with original asset issuing contract,
 /// and tool methods for generating bitcoin output scripts for the associated on-chain transactions.
 #[derive(Clone, Debug)]
-pub struct Proof {
+pub struct Proof<T: ContractBody> {
     /// Proofs of the previous RGB transaction which outputs are spent by this transaction.
     /// For the first transaction spending initial contract issuance contains an empty Vec.
-    pub inputs: Vec<Proof>,
+    pub inputs: Vec<Proof<T>>,
 
     /// Set of new transaction outputs
     pub outputs: Vec<RgbOutEntry>,
@@ -45,17 +46,17 @@ pub struct Proof {
     pub bind_to: Vec<OutPoint>,
 
     /// Contract issuing assets which this RGB transaction operates
-    pub contract: Option<Box<Contract>>, // Only needed for root proofs
+    pub contract: Option<Box<Contract<T>>>, // Only needed for root proofs
 
     /// Original public key used for signing the transaction output.
     /// For pay-to-contract schemes only.
     pub original_commitment_pk: Option<PublicKey>,
 }
 
-impl Proof {
+impl<T: ContractBody> Proof<T> {
 }
 
-impl<S: Encoder> Encodable<S> for Proof {
+impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.inputs.consensus_encode(s)?;
         self.outputs.consensus_encode(s)?;
@@ -85,18 +86,18 @@ impl<S: Encoder> Encodable<S> for Proof {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Proof {
-    fn consensus_decode(d: &mut D) -> Result<Proof, Error> {
-        let inputs: Vec<Proof> = Decodable::consensus_decode(d)?;
+impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Proof<T> {
+    fn consensus_decode(d: &mut D) -> Result<Proof<T>, Error> {
+        let inputs: Vec<Proof<T>> = Decodable::consensus_decode(d)?;
         let outputs: Vec<RgbOutEntry> = Decodable::consensus_decode(d)?;
         let metadata: Vec<u8> = Decodable::consensus_decode(d)?;
         let bind_to: Vec<OutPoint> = Decodable::consensus_decode(d)?;
 
         // For optionals, we use first byte to determine presence of the value (0x0 for no value,
         // 0x1 for some value) and then, if there is a value presented, we deserialize it.
-        let mut contract: Option<Box<Contract>> = None;
+        let mut contract: Option<Box<Contract<T>>> = None;
         if Decodable::consensus_decode(d)? {
-            let c: Contract = Decodable::consensus_decode(d)?;
+            let c: Contract<T> = Decodable::consensus_decode(d)?;
             contract = Some(Box::new(c));
         }
         let mut original_commitment_pk: Option<PublicKey> = None;
