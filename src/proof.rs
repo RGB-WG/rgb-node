@@ -19,15 +19,14 @@
 
 
 use std::fmt;
-use std::io::{Write, Cursor};
+use std::io::Cursor;
 
-use bitcoin_hashes::{sha256d, hash160, Hash};
+use bitcoin_hashes::{sha256d, Hash};
 use bitcoin::OutPoint;
-use bitcoin::blockdata::{opcodes::all::*, script::Builder, script::Script};
 use bitcoin::consensus::encode::*;
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, Contract, CommitmentScheme, RgbOutEntry, RgbError};
+use crate::{IdentityHash, OnChain, Contract, RgbOutEntry, RgbError};
 use crate::contract::ContractBody;
 
 /// In-memory representation of offchain proofs for RGB transaction linked to an on-chain
@@ -58,10 +57,10 @@ pub struct Proof<T: ContractBody> {
     pub original_commitment_pk: Option<PublicKey>,
 }
 
-impl<T: ContractBody + Encodable<Cursor<Vec<u8>>>> Proof<T> {
+impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>> {
     /// Function providing unique hash ID of the RGB transaction proof. It is based on
     /// serialization of all transaction outputs
-    pub fn get_identity_hash(&self) -> IdentityHash {
+    fn get_identity_hash(&self) -> IdentityHash {
         // We do really need to hash not only outputs (as was done in the reference implementation),
         // since one can master an attack vector targeting the same UTXOs with the same amounts
         // with some fake asset, and it will have the same hash for this setting...
@@ -83,44 +82,17 @@ impl<T: ContractBody + Encodable<Cursor<Vec<u8>>>> Proof<T> {
 
     /// Returns root RGB contract for the proof by iterating through all of the first ascendants
     /// of the proof (using `inputs`)
-    pub fn get_contract(&self) -> Result<&Contract<T>, RgbError<T>> {
+    fn get_contract(&self) -> Result<&Contract<B>, RgbError<B>> {
         match self.contract {
             Some(ref boxed) => Ok(&**boxed),
             None => Err(RgbError::ProofWithoutContract(self))
         }
     }
 
-    /// Generates Bitcoin script corresponding to the proof (taking into account the commitment
-    /// scheme of the source RGB contract)
-    pub fn get_script(&self) -> Result<Script, RgbError<T>> {
-        let builder = match self.get_contract()?.header.commitment_scheme {
-            CommitmentScheme::OpReturn => Builder::new()
-                // Simple OP_RETURN with data corresponding to the hash of the current proof
-                .push_opcode(OP_RETURN)
-                .push_slice(&self.get_identity_hash().into_inner()),
-
-            CommitmentScheme::PayToContract => Builder::new()
-                // Pay to contract: standard P2PKH utilizing tweaked public key
-                .push_opcode(OP_DUP)
-                .push_opcode(OP_HASH160)
-                .push_slice(
-                    &sha256d::Hash::from_engine({
-                            let mut engine = sha256d::Hash::engine();
-                            engine.write_all(
-                                &self.original_commitment_pk
-                                    .ok_or_else(|| RgbError::NoOriginalPubKey(self))?
-                                    .serialize()
-                            );
-                            engine
-                        }
-                    )[..]
-                )
-                .push_opcode(OP_EQUALVERIFY)
-                .push_opcode(OP_CHECKSIG),
-
-            _ => return Err(RgbError::ProofWithoutContract(self)),
-        };
-        Ok(builder.into_script())
+    /// Returns untweaked public key if the pay-to-contract commitment scheme is used in the
+    /// RGB contract; `None` otherwise
+    fn get_original_pk(&self) -> Option<PublicKey> {
+        self.original_commitment_pk
     }
 }
 
@@ -151,8 +123,7 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
         match self.original_commitment_pk {
             Some(pk) => {
                 true.consensus_encode(s)?;
-                let data = pk.serialize();
-                data.consensus_encode(s)
+                pk.serialize().consensus_encode(s)
             },
             None => {
                 false.consensus_encode(s)

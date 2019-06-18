@@ -19,14 +19,13 @@
 
 use std::io::Cursor;
 
-use bitcoin_hashes::sha256d;
-use bitcoin_hashes::Hash;
+use bitcoin_hashes::{sha256d, Hash};
 use bitcoin::OutPoint;
 use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
+use secp256k1::PublicKey;
 
-use crate::AssetId;
-use crate::contract::BlueprintType::{Crowdsale, Reissue, Unknown};
+use crate::{IdentityHash, RgbError, OnChain};
 
 /// Commitment scheme variants used by RGB contract header field `commitment_scheme`.
 /// With the current specification only two possible schemes are supported: OP_RETURN and
@@ -95,9 +94,9 @@ impl From<u16> for BlueprintType {
     fn from(no: u16) -> Self {
         match no {
             0x0001 => BlueprintType::Issue,
-            0x0002 => Crowdsale,
-            0x0003 => Reissue,
-            _ => Unknown,
+            0x0002 => BlueprintType::Crowdsale,
+            0x0003 => BlueprintType::Reissue,
+            _ => BlueprintType::Unknown,
         }
     }
 }
@@ -107,9 +106,9 @@ impl From<BlueprintType> for u16 {
     fn from(blueprint: BlueprintType) -> Self {
         match blueprint {
             BlueprintType::Issue => 0x0001,
-            Crowdsale => 0x0002,
-            Reissue => 0x0003,
-            Unknown => 0xFFFF,
+            BlueprintType::Crowdsale => 0x0002,
+            BlueprintType::Reissue => 0x0003,
+            BlueprintType::Unknown => 0xFFFF,
         }
     }
 }
@@ -437,21 +436,43 @@ pub struct Contract<B: ContractBody> {
 
     /// Contract body, with blueprint-specific set of fields
     pub body: Box<B>,
+
+    /// Original public key used for signing the contract. Used for pay-to-contract schemes only.
+    /// Serialized, but not a part of the commitment hash.
+    pub original_commitment_pk: Option<PublicKey>,
 }
 
-impl<B: ContractBody> Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
+impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
     /// Provides unique asset_id, which is computed as a SHA256d-hash from the consensus-serialized
     /// contract data
-    pub fn get_asset_id(&self) -> AssetId {
+    fn get_identity_hash(&self) -> IdentityHash {
         let hash = serialize(self);
         sha256d::Hash::from_slice(hash.as_slice()).unwrap()
+    }
+
+    /// Returns RGB contract, i.e. itself
+    fn get_contract(&self) -> Result<&Contract<B>, RgbError<B>> {
+        Ok(&self)
+    }
+
+    /// Returns untweaked public key if the pay-to-contract commitment scheme is used.
+    fn get_original_pk(&self) -> Option<PublicKey> {
+        self.original_commitment_pk
     }
 }
 
 impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Contract<T> {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.header.consensus_encode(s)?;
-        (*self.body).consensus_encode(s)
+        (*self.body).consensus_encode(s)?;
+
+        // We do not need to serialize a flag whether `original_commitment_pk` is present since
+        // its presence is defined by the `commitment_scheme` field in the contract header,
+        // which is already serialized
+        match self.original_commitment_pk {
+            Some(pk) => pk.serialize().consensus_encode(s),
+            None => Ok(()),
+        }
     }
 }
 
@@ -459,6 +480,19 @@ impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Contract<T> {
     fn consensus_decode(d: &mut D) -> Result<Contract<T>, Error> {
         let header: ContractHeader = Decodable::consensus_decode(d)?;
         let body: Box<T> = Box::new(Decodable::consensus_decode(d)?);
-        Ok(Contract{ header, body })
+        let mut original_commitment_pk: Option<PublicKey> = None;
+        match header.commitment_scheme {
+            CommitmentScheme::PayToContract => {
+                let data: Vec<u8> = Decodable::consensus_decode(d)?;
+                match PublicKey::from_slice(&data[..]) {
+                    Ok(pk) => original_commitment_pk = Some(pk),
+                    Err(_) => return Err(
+                        bitcoin::consensus::encode::Error::ParseFailed("Can't decode public key"))
+                };
+            },
+            _ => ()
+        };
+
+        Ok(Contract{ header, body, original_commitment_pk })
     }
 }

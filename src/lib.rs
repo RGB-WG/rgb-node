@@ -16,6 +16,7 @@
 
 pub mod constants;
 pub mod asset;
+pub mod onchain;
 pub mod contract;
 pub mod proof;
 pub mod outputs;
@@ -23,6 +24,7 @@ pub mod util;
 
 use crate::constants::*;
 use crate::asset::Asset;
+use crate::onchain::*;
 use crate::contract::{Contract, CommitmentScheme, BlueprintType};
 use crate::proof::Proof;
 use crate::outputs::RgbOutEntry;

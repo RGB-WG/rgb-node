@@ -19,7 +19,7 @@
 //! specifying particular  outputs and bindings to the on-chain transactions
 
 use bitcoin::consensus::encode::*;
-use crate::{AssetId, RgbOutHash};
+use crate::{IdentityHash, RgbOutHash};
 
 /// Outpoint for an RGB transaction, defined by the
 /// [RGB Specification](https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint).
@@ -86,7 +86,7 @@ impl<D: Decoder> Decodable<D> for RgbOutPoint {
 pub struct RgbOutEntry {
     /// Asset type (hash of the consensus-serialized asset issue contract)
     // TODO: Probably unnecessary due to #72 <https://github.com/rgb-org/spec/issues/72>
-    asset_id: AssetId,
+    asset_id: IdentityHash,
     /// Amount, 64-bytes (for compatibility with bitcoin amounts)
     amount: u64,
     /// Output point for the transfer
@@ -103,7 +103,7 @@ impl<S: Encoder> Encodable<S> for RgbOutEntry {
 
 impl<D: Decoder> Decodable<D> for RgbOutEntry {
     fn consensus_decode(d: &mut D) -> Result<RgbOutEntry, Error> {
-        let asset_id: AssetId = Decodable::consensus_decode(d)?;
+        let asset_id: IdentityHash = Decodable::consensus_decode(d)?;
         let amount: u64 = Decodable::consensus_decode(d)?;
         let out_point: RgbOutPoint = Decodable::consensus_decode(d)?;
         Ok(RgbOutEntry { asset_id, amount, out_point })
@@ -120,7 +120,7 @@ mod test {
     use bitcoin::network::constants::Network;
     use crate::outputs::{RgbOutPoint, RgbOutEntry};
     use bitcoin::consensus::{serialize, deserialize};
-    use crate::constants::AssetId;
+    use crate::constants::IdentityHash;
 
     const GENESIS_PUBKEY: &str =
         "043f80a276a6550f68e360907aea2359120e4c358d904aef351dd6a478f4cbd74550b96215e243c\
@@ -144,7 +144,7 @@ mod test {
         RgbOutPoint::UTXO(hash)
     }
 
-    fn generate_asset_id() -> AssetId {
+    fn generate_asset_id() -> IdentityHash {
         let mut engine = sha256d::Hash::engine();
         engine.write_all(&[1, 2, 3, 4]).unwrap();
         sha256d::Hash::from_engine(engine)
@@ -223,7 +223,7 @@ mod test {
     #[should_panic]
     fn decode_rogue_outpoint_test() {
         let data_standard: [u8; 10] = [2, 4, 6, 7, 8, 3, 5, 6, 8, 9];
-        let outpoint: RgbOutPoint = deserialize(&data_standard).unwrap();
+        let _: RgbOutPoint = deserialize(&data_standard).unwrap();
     }
 
     #[test]

@@ -15,7 +15,6 @@
 
 //! General utility functions
 
-use std::error;
 use std::io::{self, Cursor};
 use std::fmt::{Display, Formatter, Error};
 use std::convert::From;
@@ -25,27 +24,28 @@ use bitcoin::consensus::encode::*;
 
 use crate::{Proof, CommitmentScheme};
 use crate::contract::ContractBody;
+use crate::constants::IdentityHash;
 
 pub enum RgbError<'a, T: ContractBody> {
     BitcoinHashError(BitcoinHashError),
     IoError(io::Error),
 
-    ProofWithoutContract(&'a Proof<T>),
     UnsupportedCommitmentScheme(CommitmentScheme),
-    NoOriginalPubKey(&'a Proof<T>),
+    NoOriginalPubKey(IdentityHash),
+    ProofWithoutContract(&'a Proof<T>),
 }
 
 impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
-            RgbError::ProofWithoutContract(ref proof) =>
-                write!(f, "Proof {} does not have a root contract", proof),
+            RgbError::ProofWithoutContract(id) =>
+                write!(f, "Proof {} does not have a root contract", **id),
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
                 write!(f, "Unknown commitment scheme with id {}", { let s: u8 = scheme.clone().into(); s }),
             RgbError::BitcoinHashError(err) => Display::fmt(err, f),
             RgbError::IoError(err) => Display::fmt(err, f),
-            RgbError::NoOriginalPubKey(ref proof) =>
-                write!(f, "No original pubkey found pay-to-contract proof {}",proof),
+            RgbError::NoOriginalPubKey(ref hash) =>
+                write!(f, "No original pubkey found pay-to-contract proof {}", *hash),
         }
     }
 }
