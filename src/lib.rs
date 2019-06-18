@@ -20,7 +20,7 @@ pub mod onchain;
 pub mod contract;
 pub mod proof;
 pub mod outputs;
-pub mod util;
+pub mod error;
 
 use crate::constants::*;
 use crate::asset::Asset;
@@ -29,4 +29,4 @@ use crate::contract::{Contract, CommitmentScheme, BlueprintType};
 use crate::proof::Proof;
 use crate::outputs::RgbOutEntry;
 use crate::outputs::RgbOutPoint;
-use crate::util::*;
+use crate::error::*;

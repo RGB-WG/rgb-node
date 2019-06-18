@@ -331,7 +331,7 @@ impl<D: Decoder> Decodable<D> for IssuanceContractBody {
 #[derive(Clone, Debug)]
 pub struct CrowdsaleContractBody {
     // FIXME: It's unclear how two different asset types are supported by this contract
-    // and how their `asset_id`s are defined.
+    // and how their `get_identity_hash`s are defined.
     // For more details see issue #72 <https://github.com/rgb-org/spec/issues/72>
 
     /// An address to send Bitcoins to in order to buy tokens

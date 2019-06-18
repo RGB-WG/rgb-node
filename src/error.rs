@@ -13,8 +13,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-//! General utility functions
-
 use std::io::{self, Cursor};
 use std::fmt::{Display, Formatter, Error};
 use std::convert::From;
@@ -26,6 +24,7 @@ use crate::{Proof, CommitmentScheme};
 use crate::contract::ContractBody;
 use crate::constants::IdentityHash;
 
+///! Error types for RGB protocol
 pub enum RgbError<'a, T: ContractBody> {
     BitcoinHashError(BitcoinHashError),
     IoError(io::Error),
