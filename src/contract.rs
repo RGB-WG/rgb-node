@@ -17,6 +17,8 @@
 //!
 //! Implementation of data structures used in RGB contracts
 
+use std::fmt;
+use std::rc::Weak;
 use std::io::Cursor;
 
 use bitcoin_hashes::{sha256d, Hash};
@@ -25,7 +27,7 @@ use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, RgbError, OnChain};
+use crate::{IdentityHash, RgbError, OnChain, Proof};
 
 /// Commitment scheme variants used by RGB contract header field `commitment_scheme`.
 /// With the current specification only two possible schemes are supported: OP_RETURN and
@@ -440,6 +442,11 @@ pub struct Contract<B: ContractBody> {
     /// Original public key used for signing the contract. Used for pay-to-contract schemes only.
     /// Serialized, but not a part of the commitment hash.
     pub original_commitment_pk: Option<PublicKey>,
+
+    /// Contract must weakly reference it's root proof. Since it's unknown during deserealization,
+    /// it is defined as optional; however it must contain value when the contract is used,
+    /// otherwise a `ContractWithoutRootProof` error will be produced.
+    pub root_proof: Option<Weak<Proof<B>>>,
 }
 
 impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
@@ -465,6 +472,12 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     /// Returns untweaked public key if the pay-to-contract commitment scheme is used.
     fn get_original_pk(&self) -> Option<PublicKey> {
         self.original_commitment_pk
+    }
+}
+
+impl<T: ContractBody + Encodable<Cursor<Vec<u8>>>> fmt::Display for Contract<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self.get_identity_hash())
     }
 }
 
@@ -500,6 +513,6 @@ impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Contract<T> {
             _ => ()
         };
 
-        Ok(Contract{ header, body, original_commitment_pk })
+        Ok(Contract{ header, body, original_commitment_pk, root_proof: None })
     }
 }

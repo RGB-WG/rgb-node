@@ -20,25 +20,28 @@ use std::convert::From;
 use bitcoin_hashes::error::Error as BitcoinHashError;
 use bitcoin::consensus::encode::*;
 
-use crate::{Proof, CommitmentScheme};
+use crate::{Proof, Contract, CommitmentScheme};
 use crate::contract::ContractBody;
 use crate::constants::IdentityHash;
 
 ///! Error types for RGB protocol
-pub enum RgbError<'a, T: ContractBody> {
+pub enum RgbError<'a, B: ContractBody> {
     BitcoinHashError(BitcoinHashError),
     IoError(io::Error),
 
     UnsupportedCommitmentScheme(CommitmentScheme),
     NoOriginalPubKey(IdentityHash),
-    ProofWithoutContract(&'a Proof<T>),
+    ProofWithoutContract(&'a Proof<B>),
+    ContractWithoutRootProof(&'a Contract<B>)
 }
 
 impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             RgbError::ProofWithoutContract(id) =>
-                write!(f, "Proof {} does not have a root contract", **id),
+                write!(f, "Root proof {} does not reference a contract", **id),
+            RgbError::ContractWithoutRootProof(id) =>
+                write!(f, "Contract {} does not reference a root proof", **id),
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
                 write!(f, "Unknown commitment scheme with id {}", { let s: u8 = scheme.clone().into(); s }),
             RgbError::BitcoinHashError(err) => Display::fmt(err, f),
