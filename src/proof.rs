@@ -65,16 +65,16 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
         // since one can master an attack vector targeting the same UTXOs with the same amounts
         // with some fake asset, and it will have the same hash for this setting...
         let mut data = serialize(&self.outputs);
-        data.extend(&serialize(&self.inputs));
-        data.extend(&serialize(&self.bind_to));
-        data.extend(&serialize(&self.metadata));
+        data.extend(serialize(&self.inputs));
+        data.extend(serialize(&self.bind_to));
+        data.extend(serialize(&self.metadata));
         match self.contract {
             Some(ref boxed) => {
-                data.extend(&serialize(&0x1));
-                data.extend(&serialize(&*boxed));
+                data.extend(serialize(&0x1));
+                data.extend(serialize(&*boxed));
             },
             None => {
-                data.extend(&serialize(&0x0));
+                data.extend(serialize(&0x0));
             }
         }
         sha256d::Hash::from_slice(&data[..]).unwrap()

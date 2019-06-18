@@ -448,7 +448,12 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     /// <https://github.com/rgb-org/spec/issues/61>
     fn get_identity_hash(&self) -> IdentityHash {
         let mut hash: Vec<u8> = "rgb".into();
-        hash.extend(serialize(self));
+        // We can't use standard serialization of the contract from bitcoin::Encodable trait
+        // since here we do not need to commit to `original_commitment_pk` field, which is
+        // serialized by the trait implementation for disk storage and network transfers.
+        // So here we are doing custom serialization of contract header and body.
+        hash.extend(serialize(&self.header));
+        hash.extend(serialize(&*self.body));
         sha256d::Hash::from_slice(hash.as_slice()).unwrap()
     }
 
