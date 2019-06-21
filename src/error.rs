@@ -20,9 +20,7 @@ use std::convert::From;
 use bitcoin_hashes::error::Error as BitcoinHashError;
 use bitcoin::consensus::encode::*;
 
-use crate::{Proof, Contract, CommitmentScheme};
-use crate::contract::ContractBody;
-use crate::constants::{IdentityHash, AssetId};
+use crate::*;
 
 ///! Error types for RGB protocol
 pub enum RgbError<'a, B: ContractBody> {

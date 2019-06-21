@@ -20,8 +20,7 @@ use bitcoin::{Transaction, OutPoint};
 use bitcoin::blockdata::{opcodes::all::*, script::Builder, script::Script};
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, Contract, CommitmentScheme, RgbError};
-use crate::contract::ContractBody;
+use crate::*;
 
 pub enum TxQuery {
     TxId(sha256d::Hash),
@@ -88,7 +87,7 @@ pub trait Verify<B: ContractBody> {
     /// part of the proofs and contracts. Since rgblib has no direct access to a bitcoin node
     /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
     /// callback during the verification process.
-    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+    fn verify(&self, _: TxProvider<B>) -> Result<(), RgbError<B>> {
         Ok(())
     }
 }

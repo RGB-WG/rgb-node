@@ -20,8 +20,8 @@
 
 use bitcoin_hashes::sha256d;
 use bitcoin::consensus::encode::*;
-use crate::{IdentityHash, RgbOutHash};
-use crate::constants::AssetId;
+
+use crate::*;
 
 /// Outpoint for an RGB transaction, defined by the
 /// [RGB Specification](https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint).

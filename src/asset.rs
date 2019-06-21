@@ -16,12 +16,8 @@
 //! RGB asset abstractions
 
 use std::io::Cursor;
-
 use bitcoin::consensus::encode::*;
-
-use crate::{Proof, Contract, OnChain};
-use crate::constants::*;
-use crate::contract::{ContractBody, ReissueContractBody};
+use crate::*;
 
 /// RGB asset data structure for in-memory representation of bundled asset issuence contracts and
 /// chain of proofs for each of the known assets

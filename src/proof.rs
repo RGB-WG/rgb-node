@@ -20,17 +20,14 @@
 
 use std::fmt;
 use std::io::Cursor;
+use std::collections::HashMap;
 
 use bitcoin_hashes::{sha256d, Hash};
-use bitcoin::{Transaction, OutPoint};
 use bitcoin::consensus::encode::*;
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, OnChain, Verify, Contract,
+use crate::{IdentityHash, AssetId, OnChain, Verify, Contract, ContractBody,
             TxQuery, TxProvider, RgbTransaction, RgbOutEntry, RgbOutPoint, RgbError};
-use crate::contract::ContractBody;
-use std::collections::HashMap;
-use crate::constants::AssetId;
 
 /// In-memory representation of offchain proofs for RGB transaction linked to an on-chain
 /// bitcoin transaction. Data structure provides serialization with consensus serialization methods
@@ -234,7 +231,7 @@ impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Curs
 
             input_proof.outputs.iter().try_for_each(|output| {
                 match output.out_point {
-                    RgbOutPoint::UTXO(txid) => {
+                    RgbOutPoint::UTXO(_) => {
                         // TODO: Implement proof inputs verification for UTXO-bound RGB asset transfers
                         Ok(())
                     },
