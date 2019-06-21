@@ -26,7 +26,7 @@ use bitcoin::{Transaction, OutPoint};
 use bitcoin::consensus::encode::*;
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, OnChain, Contract,
+use crate::{IdentityHash, OnChain, Verify, Contract,
             TxQuery, TxProvider, RgbTransaction, RgbOutEntry, RgbOutPoint, RgbError};
 use crate::contract::ContractBody;
 use std::collections::HashMap;
@@ -60,7 +60,7 @@ pub struct Proof<T: ContractBody> {
     pub original_commitment_pk: Option<PublicKey>,
 }
 
-impl<B: ContractBody> Proof<B> {
+impl<B: ContractBody> Proof<B> where Proof<B>: OnChain<B> {
     /// Checks if this proof is a root proof. The root proof has no upstream proofs (i.e. empty
     /// `inputs` list) and must have an associated contract. The function checks both conditions
     /// and returns `true` only if they are both satisfied.
@@ -72,14 +72,16 @@ impl<B: ContractBody> Proof<B> {
     pub fn get_input_amounts(&self) -> HashMap<AssetId, u64> {
         // For the root proof we need to return total supply
         if self.is_root() {
-            let assets = HashMap::new();
-            assets[self.get_identity_hash()] = self.contract.unwrap().header.total_supply;
+            let mut assets = HashMap::new();
+            let contract = self.contract.as_ref().unwrap();
+            assets.insert(self.get_identity_hash(), contract.header.total_supply);
+            return assets;
         }
         // Otherwise we compute sums for each asset by iterating over inputs
         let init: HashMap<AssetId, u64> = HashMap::new();
         self.inputs.iter().fold(init, |mut acc, input| {
             input.get_input_amounts().iter().for_each(|input_amounts| {
-                *acc.entry(*input_amounts.0).or_insert(0) += input_amounts.1;
+                *acc.entry(*input_amounts.0).or_insert(0) += *input_amounts.1;
             });
             acc
         })
@@ -132,7 +134,9 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
     fn get_original_pk(&self) -> Option<PublicKey> {
         self.original_commitment_pk
     }
+}
 
+impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Cursor<Vec<u8>>> {
     /// Function performing verification of the integrity for the RGB proof
     /// for both on-chain and off-chain parts; including internal consistency, integrity,
     /// proper formation of commitment transactions etc. The function iterates over all proof chain
@@ -158,8 +162,8 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
                 return Err(RgbError::ProofWihoutInputs(self)),
 
             // 2. Contract must pass verification check
-            (Some(ref contract), true) =>
-                contract.verify(tx_provider)?,
+            (Some(contract), true) =>
+                (**contract).verify(tx_provider)?,
 
             // Noting to check in all other cases, they are fine
             _ => (),

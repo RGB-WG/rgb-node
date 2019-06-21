@@ -72,10 +72,14 @@ pub trait OnChain<B: ContractBody> {
         };
         Ok(builder.into_script())
     }
+}
 
+/// Trait for verifiable entries
+pub trait Verify<B: ContractBody> {
     /// Function performing verification of the integrity for the RGB entity (contract or particular
     /// proof) for both on-chain and off-chain parts; including internal consistency, integrity,
-    /// proper formation of commitment transactions etc.
+    /// proper formation of commitment transactions etc. This is default implementation,
+    /// it checks nothing
     ///
     /// # Arguments:
     /// * `tx_provider` - a specially-formed callback function provided by the callee (wallet app
@@ -84,5 +88,7 @@ pub trait OnChain<B: ContractBody> {
     /// part of the proofs and contracts. Since rgblib has no direct access to a bitcoin node
     /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
     /// callback during the verification process.
-    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>>;
+    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+        Ok(())
+    }
 }

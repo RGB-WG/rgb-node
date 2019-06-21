@@ -16,7 +16,7 @@
 
 pub mod constants;
 pub mod asset;
-pub mod onchain;
+pub mod traits;
 pub mod contract;
 pub mod proof;
 pub mod outputs;
@@ -24,7 +24,7 @@ pub mod error;
 
 use crate::constants::*;
 use crate::asset::Asset;
-use crate::onchain::*;
+use crate::traits::*;
 use crate::contract::{Contract, CommitmentScheme, BlueprintType};
 use crate::proof::Proof;
 use crate::outputs::*;

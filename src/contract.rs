@@ -27,7 +27,7 @@ use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, RgbError, OnChain, Proof, TxQuery, TxProvider};
+use crate::{IdentityHash, RgbError, OnChain, Verify, Proof, TxQuery, TxProvider};
 
 /// Commitment scheme variants used by RGB contract header field `commitment_scheme`.
 /// With the current specification only two possible schemes are supported: OP_RETURN and
@@ -180,6 +180,23 @@ impl ContractHeader {
     }
 }
 
+impl<B: ContractBody> Verify<B> for ContractHeader {
+    /// Function performing verification of the integrity for the RGB contract header for both
+    /// on-chain and off-chain parts; including internal consistency, integrity, proper formation of
+    /// commitment transactions etc.
+    ///
+    /// # Arguments:
+    /// * `tx_provider` - a specially-formed callback function provided by the callee (wallet app
+    /// or bifrost server) that returns transaction for a given case (specified by `TxQuery`-typed
+    /// argument given to the callback). Used during the verification process to check on-chain
+    /// part of the contract. Since rgblib has no direct access to a bitcoin node
+    /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
+    /// callback during the verification process.
+    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+        Ok(())
+    }
+}
+
 impl<S: Encoder> Encodable<S> for ContractHeader {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.version.consensus_encode(s)?;
@@ -323,8 +340,10 @@ pub struct IssuanceContractBody {
     pub owner_utxo: OutPoint,
 }
 
-impl ContractBody for IssuanceContractBody {
+impl ContractBody for IssuanceContractBody { }
 
+impl Verify<Self> for IssuanceContractBody {
+    // Nothing to check here, so we default to the trait implementation always returning `Ok`
 }
 
 impl<S: Encoder> Encodable<S> for IssuanceContractBody {
@@ -374,8 +393,10 @@ pub struct CrowdsaleContractBody {
     pub to_block: u64,
 }
 
-impl ContractBody for CrowdsaleContractBody {
+impl ContractBody for CrowdsaleContractBody { }
 
+impl Verify<Self> for CrowdsaleContractBody {
+    // TODO: Do the actual verification for ReissueContractBody instead of the default empty one
 }
 
 impl<S: Encoder> Encodable<S> for CrowdsaleContractBody {
@@ -435,9 +456,11 @@ impl<D: Decoder> Decodable<D> for CrowdsaleContractBody {
 pub struct ReissueContractBody {
 }
 
-impl ContractBody for ReissueContractBody {
-}
+impl ContractBody for ReissueContractBody { }
 
+impl Verify<Self> for ReissueContractBody {
+    // TODO: Do the actual verification for ReissueContractBody instead of the default empty one
+}
 
 impl<S: Encoder> Encodable<S> for ReissueContractBody {
     fn consensus_encode(&self, _: &mut S) -> Result<(), Error> {
@@ -510,7 +533,9 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     fn get_original_pk(&self) -> Option<PublicKey> {
         self.original_commitment_pk
     }
+}
 
+impl<B: ContractBody + Verify<B>> Verify<B> for Contract<B> {
     /// Function performing verification of the integrity for the RGB contract for both on-chain
     /// and off-chain parts; including internal consistency, integrity,  proper formation of
     /// commitment transactions etc.
@@ -523,7 +548,8 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
     /// callback during the verification process.
     fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
-        unimplemented!()
+        self.header.verify(tx_provider)?;
+        self.body.verify(tx_provider)
     }
 }
 
