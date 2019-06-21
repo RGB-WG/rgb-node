@@ -27,6 +27,5 @@ use crate::asset::Asset;
 use crate::onchain::*;
 use crate::contract::{Contract, CommitmentScheme, BlueprintType};
 use crate::proof::Proof;
-use crate::outputs::RgbOutEntry;
-use crate::outputs::RgbOutPoint;
+use crate::outputs::*;
 use crate::error::*;

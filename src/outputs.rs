@@ -18,8 +18,10 @@
 //! Implementation of data structures used in RGB contracts and transaction proofs for
 //! specifying particular  outputs and bindings to the on-chain transactions
 
+use bitcoin_hashes::sha256d;
 use bitcoin::consensus::encode::*;
 use crate::{IdentityHash, RgbOutHash};
+use crate::constants::AssetId;
 
 /// Outpoint for an RGB transaction, defined by the
 /// [RGB Specification](https://github.com/rgb-org/spec/blob/master/01-rgb.md#rgboutpoint).
@@ -86,11 +88,11 @@ impl<D: Decoder> Decodable<D> for RgbOutPoint {
 pub struct RgbOutEntry {
     /// Asset type (hash of the consensus-serialized asset issue contract)
     // TODO: Probably unnecessary due to #72 <https://github.com/rgb-org/spec/issues/72>
-    asset_id: IdentityHash,
+    pub asset_id: IdentityHash,
     /// Amount, 64-bytes (for compatibility with bitcoin amounts)
-    amount: u64,
+    pub amount: u64,
     /// Output point for the transfer
-    out_point: RgbOutPoint
+    pub out_point: RgbOutPoint
 }
 
 impl<S: Encoder> Encodable<S> for RgbOutEntry {
@@ -107,6 +109,32 @@ impl<D: Decoder> Decodable<D> for RgbOutEntry {
         let amount: u64 = Decodable::consensus_decode(d)?;
         let out_point: RgbOutPoint = Decodable::consensus_decode(d)?;
         Ok(RgbOutEntry { asset_id, amount, out_point })
+    }
+}
+
+/// Structure representing bitcoin transaction with a set of coloured outputs
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RgbTransaction {
+    /// Hash of the transaction as its identifier
+    pub txid: sha256d::Hash,
+
+    /// Set of coloured outputs
+    pub vouts: Vec<u32>,
+}
+
+impl<S: Encoder> Encodable<S> for RgbTransaction {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
+        self.txid.consensus_encode(s)?;
+        self.vouts.consensus_encode(s)
+    }
+}
+
+impl<D: Decoder> Decodable<D> for RgbTransaction {
+    fn consensus_decode(d: &mut D) -> Result<RgbTransaction, Error> {
+        Ok(RgbTransaction {
+            txid: Decodable::consensus_decode(d)?,
+            vouts: Decodable::consensus_decode(d)?,
+        })
     }
 }
 

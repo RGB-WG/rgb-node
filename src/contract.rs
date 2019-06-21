@@ -22,12 +22,12 @@ use std::rc::Weak;
 use std::io::Cursor;
 
 use bitcoin_hashes::{sha256d, Hash};
-use bitcoin::OutPoint;
+use bitcoin::{Transaction, OutPoint};
 use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, RgbError, OnChain, Proof};
+use crate::{IdentityHash, RgbError, OnChain, Proof, TxQuery, TxProvider};
 
 /// Commitment scheme variants used by RGB contract header field `commitment_scheme`.
 /// With the current specification only two possible schemes are supported: OP_RETURN and
@@ -472,6 +472,21 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     /// Returns untweaked public key if the pay-to-contract commitment scheme is used.
     fn get_original_pk(&self) -> Option<PublicKey> {
         self.original_commitment_pk
+    }
+
+    /// Function performing verification of the integrity for the RGB contract for both on-chain
+    /// and off-chain parts; including internal consistency, integrity,  proper formation of
+    /// commitment transactions etc.
+    ///
+    /// # Arguments:
+    /// * `tx_provider` - a specially-formed callback function provided by the callee (wallet app
+    /// or bifrost server) that returns transaction for a given case (specified by `TxQuery`-typed
+    /// argument given to the callback). Used during the verification process to check on-chain
+    /// part of the contract. Since rgblib has no direct access to a bitcoin node
+    /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
+    /// callback during the verification process.
+    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+        unimplemented!()
     }
 }
 

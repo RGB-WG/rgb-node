@@ -32,7 +32,11 @@ pub enum RgbError<'a, B: ContractBody> {
     UnsupportedCommitmentScheme(CommitmentScheme),
     NoOriginalPubKey(IdentityHash),
     ProofWithoutContract(&'a Proof<B>),
-    ContractWithoutRootProof(&'a Contract<B>)
+    ContractWithoutRootProof(&'a Contract<B>),
+    ProofWihoutInputs(&'a Proof<B>),
+    MissingVout(&'a Proof<B>, u32),
+    WrongScript(&'a Proof<B>, u32),
+    AmountsNotEqual(&'a Proof<B>),
 }
 
 impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, T> {
@@ -42,6 +46,15 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
                 write!(f, "Root proof {} does not reference a contract", **id),
             RgbError::ContractWithoutRootProof(id) =>
                 write!(f, "Contract {} does not reference a root proof", **id),
+            RgbError::ProofWihoutInputs(id) =>
+                write!(f, "Non-root proof {} does not have any upstream proofs", **id),
+            RgbError::MissingVout(id, vout) =>
+                write!(f, "Proof {} references unexisting output {} in its bouding tx", **id, vout),
+            RgbError::WrongScript(id, vout) =>
+                write!(f, "Output {} for the proof {} is not colored with a proper script", **id, vout),
+            RgbError::AmountsNotEqual(id) =>
+                write!(f, "Input and output amounts for the proof {} do not equal", **id),
+
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
                 write!(f, "Unknown commitment scheme with id {}", { let s: u8 = scheme.clone().into(); s }),
             RgbError::BitcoinHashError(err) => Display::fmt(err, f),
