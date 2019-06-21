@@ -162,6 +162,24 @@ pub struct ContractHeader {
     pub blueprint_type: BlueprintType,
 }
 
+impl ContractHeader {
+    /// Validates given proof to have a correct structure matching RGB contract header fields
+    pub fn validate_proof<'a, B: ContractBody>(&self, proof: &'a Proof<B>) -> Result<(), RgbError<'a, B>>
+        where Proof<B>: OnChain<B> {
+        // Pay-to-contract proofs MUST have original public key (before applying tweak) specified,
+        // the rest MUST NOT
+        match (&self.commitment_scheme, proof.original_commitment_pk) {
+            (CommitmentScheme::OpReturn, Some(_)) =>
+                Err(RgbError::ProofStructureNotMatchingContract(proof)),
+            (CommitmentScheme::PayToContract, None) =>
+                Err(RgbError::NoOriginalPubKey(proof.get_identity_hash())),
+            (CommitmentScheme::NotApplicable, _) =>
+                Err(RgbError::UnsupportedCommitmentScheme(CommitmentScheme::NotApplicable)),
+            _ => Ok(()),
+        }
+    }
+}
+
 impl<S: Encoder> Encodable<S> for ContractHeader {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.version.consensus_encode(s)?;
@@ -284,8 +302,15 @@ impl<D: Decoder> Decodable<D> for ContractHeader {
 }
 
 /// Trait to be used by custom contract blueprint implementation to provide its own custom fields.
-pub trait ContractBody: Sized { }
-
+pub trait ContractBody: Sized {
+    /// Validates given proof to have a correct structure matching RGB contract blueprint.
+    /// This is default implementation that checks nothing, all required functionality for specific
+    /// blueprint type (like checking proof metadata/scripts) must be implemented by custom
+    /// classes implementing `ContractBody` trait.
+    fn validate_proof(&self, _: &Proof<Self>) -> Result<(), RgbError<Self>> {
+        Ok(())
+    }
+}
 
 /// Simple issuance contract
 ///
@@ -447,6 +472,18 @@ pub struct Contract<B: ContractBody> {
     /// it is defined as optional; however it must contain value when the contract is used,
     /// otherwise a `ContractWithoutRootProof` error will be produced.
     pub root_proof: Option<Weak<Proof<B>>>,
+}
+
+impl<B: ContractBody> Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
+    /// Validates given proof to have a correct structure for the used RGB contract blueprint
+    /// (i.e. it has or has no metadata field, has original public key for pay-to-contract
+    /// commitment schemes etc.)
+    pub fn validate_proof<'a>(&'a self, proof: &'a Proof<B>) -> Result<(), RgbError<'a, B>> {
+        // Validate that the proof is matching header fields
+        self.header.validate_proof(proof)?;
+        // Validate proof regarding custom contract blueprint (like correct metadata scripts etc)
+        self.body.validate_proof(proof)
+    }
 }
 
 impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u8>>> {

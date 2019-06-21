@@ -139,28 +139,33 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
             }
         }
 
-        // 3. Re-iterate verification for each of the upstream proofs
+        // 3. Validate that proof has correct structure for the given RGB contract blueprint
+        // (i.e. has or has no metadata field, has original public key for pay-to-contract
+        // commitment schemes etc.)
+        self.get_contract()?.validate_proof(&self)?;
+
+        // 4. Re-iterate verification for each of the upstream proofs
         self.inputs.iter().try_for_each(|proof| {
             proof.verify(tx_provider)
         })?;
 
-        // 4. Verify associated commitments in bitcoin transactions
+        // 5. Verify associated commitments in bitcoin transactions
         let commitment_tx = tx_provider(TxQuery::TxId(self.bind_to.txid))?;
         self.bind_to.vouts.iter().try_for_each(|vout| {
             let vout_no = *vout as usize;
-            // 4.1. Check that commitment transaction has all the necessary outputs referenced
+            // 5.1. Check that commitment transaction has all the necessary outputs referenced
             // by the proof
             if vout_no >= commitment_tx.output.len() {
                 return Err(RgbError::MissingVout(self, *vout));
             }
-            // 4.1. Check that each output referenced by the proof is colored with proper script
+            // 5.1. Check that each output referenced by the proof is colored with proper script
             if commitment_tx.output[vout_no].script_pubkey != self.get_script()? {
                 return Err(RgbError::WrongScript(self, *vout));
             }
             Ok(())
         })?;
 
-        // 5. Matching input and output balances
+        // 6. Matching input and output balances
         let init: HashMap<AssetId, u64> = HashMap::new();
         let out_balances = self.outputs.iter().fold(init, |mut acc, output| {
             let aggregator = acc.entry(output.asset_id).or_insert(0);
@@ -168,10 +173,7 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
             acc
         });
         //let in_balances = self.inputs.iter().fold()
-        // TODO: Finish implementation of proof verification:
-        // 1. Compute input balances and compare to outputs
-        // 2. Validate tweaked key for pay-to-contract commitment scheme
-        // 3. Validate that proof fields corresponds to the RGB contract
+        // TODO: Finish implementation of proof verification: compute input balances and compare to outputs
 
         Ok(())
     }

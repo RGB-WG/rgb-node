@@ -29,19 +29,24 @@ pub enum RgbError<'a, B: ContractBody> {
     BitcoinHashError(BitcoinHashError),
     IoError(io::Error),
 
-    UnsupportedCommitmentScheme(CommitmentScheme),
-    NoOriginalPubKey(IdentityHash),
     ProofWithoutContract(&'a Proof<B>),
     ContractWithoutRootProof(&'a Contract<B>),
     ProofWihoutInputs(&'a Proof<B>),
     MissingVout(&'a Proof<B>, u32),
     WrongScript(&'a Proof<B>, u32),
     AmountsNotEqual(&'a Proof<B>),
+
+    UnsupportedCommitmentScheme(CommitmentScheme),
+    NoOriginalPubKey(IdentityHash),
+    ProofStructureNotMatchingContract(&'a Proof<B>),
 }
 
 impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
+            RgbError::BitcoinHashError(err) => Display::fmt(err, f),
+            RgbError::IoError(err) => Display::fmt(err, f),
+
             RgbError::ProofWithoutContract(id) =>
                 write!(f, "Root proof {} does not reference a contract", **id),
             RgbError::ContractWithoutRootProof(id) =>
@@ -51,16 +56,18 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
             RgbError::MissingVout(id, vout) =>
                 write!(f, "Proof {} references unexisting output {} in its bouding tx", **id, vout),
             RgbError::WrongScript(id, vout) =>
-                write!(f, "Output {} for the proof {} is not colored with a proper script", **id, vout),
+                write!(f, "Output {} for the proof {} is not colored with a proper script",
+                       **id, vout),
             RgbError::AmountsNotEqual(id) =>
                 write!(f, "Input and output amounts for the proof {} do not equal", **id),
 
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
-                write!(f, "Unknown commitment scheme with id {}", { let s: u8 = scheme.clone().into(); s }),
-            RgbError::BitcoinHashError(err) => Display::fmt(err, f),
-            RgbError::IoError(err) => Display::fmt(err, f),
+                write!(f, "Unknown commitment scheme with id {}",
+                       { let s: u8 = scheme.clone().into(); s }),
             RgbError::NoOriginalPubKey(ref hash) =>
-                write!(f, "No original pubkey found pay-to-contract proof {}", *hash),
+                write!(f, "No original public key is found pay-to-contract proof {}", *hash),
+            RgbError::ProofStructureNotMatchingContract(id) =>
+                write!(f, "Proof structure for {} does not match RGB contract structure", **id),
         }
     }
 }
