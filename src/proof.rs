@@ -27,7 +27,7 @@ use bitcoin::consensus::encode::*;
 use secp256k1::PublicKey;
 
 use crate::{IdentityHash, OnChain, Contract,
-            TxQuery, TxProvider, RgbTransaction, RgbOutEntry, RgbError};
+            TxQuery, TxProvider, RgbTransaction, RgbOutEntry, RgbOutPoint, RgbError};
 use crate::contract::ContractBody;
 use std::collections::HashMap;
 use crate::constants::AssetId;
@@ -66,6 +66,26 @@ impl<B: ContractBody> Proof<B> {
     /// and returns `true` only if they are both satisfied.
     pub fn is_root(&self) -> bool {
         self.inputs.len() == 0 && self.contract.is_some()
+    }
+
+    /// Computes and returns sum of all input amounts as per asset (packed in a HashMap)
+    pub fn get_input_amounts(&self) -> HashMap<AssetId, u64> {
+        let init: HashMap<AssetId, u64> = HashMap::new();
+        self.inputs.iter().fold(init, |mut acc, input| {
+            input.get_input_amounts().iter().for_each(|input_amounts| {
+                *acc.entry(*input_amounts.0).or_insert(0) += input_amounts.1;
+            });
+            acc
+        })
+    }
+
+    /// Computes and returns sum of all output amounts as per asset (packed in a HashMap)
+    pub fn get_output_amounts(&self) -> HashMap<AssetId, u64> {
+        let init: HashMap<AssetId, u64> = HashMap::new();
+        self.outputs.iter().fold(init, |mut acc, output| {
+            *acc.entry(output.asset_id).or_insert(0) += output.amount;
+            acc
+        })
     }
 }
 
@@ -122,7 +142,7 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
     /// callback during the verification process.
     fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
         // 1. Checking proof integrity
-        match (self.contract, self.inputs.is_empty()) {
+        match (&self.contract, self.inputs.is_empty()) {
             // 1.1. Proofs with contract assigned must be root proofs
             (Some(_), false) =>
                 return Err(RgbError::ProofWithoutContract(self)),
@@ -166,16 +186,59 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
         })?;
 
         // 6. Matching input and output balances
-        let init: HashMap<AssetId, u64> = HashMap::new();
-        let out_balances = self.outputs.iter().fold(init, |mut acc, output| {
-            let aggregator = acc.entry(output.asset_id).or_insert(0);
-            *aggregator += output.amount;
-            acc
-        });
-        //let in_balances = self.inputs.iter().fold()
-        // TODO: Finish implementation of proof verification: compute input balances and compare to outputs
+        let in_balances = self.get_input_amounts();
+        let out_balances = self.get_output_amounts();
+        // 6.1. There should be the same number of assets in both inputs and outputs
+        if in_balances.len() != out_balances.len() {
+            return Err(RgbError::AssetsNotEqual(self));
+        }
+        // 6.2. Comparing input and output amounts per each asset
+        in_balances.iter().try_for_each(|inp| {
+            let asset_id = inp.0;
+            let in_amount = inp.1;
+            match out_balances.get(asset_id) {
+                Some(out_amount) => if in_amount != out_amount {
+                    Err(RgbError::AmountsNotEqual(self, *asset_id))
+                } else {
+                    Ok(())
+                },
+                None => Err(RgbError::AssetsNotEqual(self)),
+            }
+        })?;
 
-        Ok(())
+        // 7. Check commitment transactions for each of the proof inputs
+        self.inputs.iter().try_for_each(|input_proof| {
+            // Getting commitment transaction for the specific proof input
+            let input_tx = tx_provider(TxQuery::TxId(input_proof.bind_to.txid))?;
+
+            // Filtering bitcoin transaction inputs for the proof commitment transaction
+            // corresponding to the proof input
+            let txins = commitment_tx.input.iter().filter(
+                |txin| txin.previous_output.txid != input_tx.txid()
+            );
+
+            input_proof.outputs.iter().try_for_each(|output| {
+                match output.out_point {
+                    RgbOutPoint::UTXO(txid) => {
+                        // TODO: Implement proof inputs verification for UTXO-bound RGB asset transfers
+                        Ok(())
+                    },
+                    RgbOutPoint::Vout(vout) => {
+                        // Getting those transactions which vouts matches vout specified in the
+                        // input proof
+                        let txins = txins.clone();
+                        let correct_txins = txins.filter(
+                            |txin| txin.previous_output.vout == vout
+                        );
+                        // There should the be only matching transaction
+                        match correct_txins.count() {
+                            1 => Ok(()),
+                            _ => Err(RgbError::MissingVout(input_proof, vout)),
+                        }
+                    },
+                }
+            })
+        })
     }
 }
 

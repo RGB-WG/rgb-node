@@ -22,7 +22,7 @@ use bitcoin::consensus::encode::*;
 
 use crate::{Proof, Contract, CommitmentScheme};
 use crate::contract::ContractBody;
-use crate::constants::IdentityHash;
+use crate::constants::{IdentityHash, AssetId};
 
 ///! Error types for RGB protocol
 pub enum RgbError<'a, B: ContractBody> {
@@ -34,7 +34,8 @@ pub enum RgbError<'a, B: ContractBody> {
     ProofWihoutInputs(&'a Proof<B>),
     MissingVout(&'a Proof<B>, u32),
     WrongScript(&'a Proof<B>, u32),
-    AmountsNotEqual(&'a Proof<B>),
+    AssetsNotEqual(&'a Proof<B>),
+    AmountsNotEqual(&'a Proof<B>, AssetId),
 
     UnsupportedCommitmentScheme(CommitmentScheme),
     NoOriginalPubKey(IdentityHash),
@@ -58,8 +59,11 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
             RgbError::WrongScript(id, vout) =>
                 write!(f, "Output {} for the proof {} is not colored with a proper script",
                        **id, vout),
-            RgbError::AmountsNotEqual(id) =>
-                write!(f, "Input and output amounts for the proof {} do not equal", **id),
+            RgbError::AssetsNotEqual(id) =>
+                write!(f, "Input and output assets for the proof {} do not match", **id),
+            RgbError::AmountsNotEqual(proof, asset_id) =>
+                write!(f, "Input and output asset {} amounts for the proof {} are not equal",
+                       *asset_id, **proof),
 
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
                 write!(f, "Unknown commitment scheme with id {}",
