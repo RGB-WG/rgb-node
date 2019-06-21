@@ -36,6 +36,7 @@ pub enum RgbError<'a, B: ContractBody> {
     WrongScript(&'a Proof<B>, u32),
     AssetsNotEqual(&'a Proof<B>),
     AmountsNotEqual(&'a Proof<B>, AssetId),
+    NoInputs(&'a Proof<B>),
 
     UnsupportedCommitmentScheme(CommitmentScheme),
     NoOriginalPubKey(IdentityHash),
@@ -64,6 +65,8 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
             RgbError::AmountsNotEqual(proof, asset_id) =>
                 write!(f, "Input and output asset {} amounts for the proof {} are not equal",
                        *asset_id, **proof),
+            RgbError::NoInputs(proof) =>
+                write!(f, "Non-root proof {} has no transaction inputs", **proof),
 
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
                 write!(f, "Unknown commitment scheme with id {}",

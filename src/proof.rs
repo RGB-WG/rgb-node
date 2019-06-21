@@ -70,6 +70,12 @@ impl<B: ContractBody> Proof<B> {
 
     /// Computes and returns sum of all input amounts as per asset (packed in a HashMap)
     pub fn get_input_amounts(&self) -> HashMap<AssetId, u64> {
+        // For the root proof we need to return total supply
+        if self.is_root() {
+            let assets = HashMap::new();
+            assets[self.get_identity_hash()] = self.contract.unwrap().header.total_supply;
+        }
+        // Otherwise we compute sums for each asset by iterating over inputs
         let init: HashMap<AssetId, u64> = HashMap::new();
         self.inputs.iter().fold(init, |mut acc, input| {
             input.get_input_amounts().iter().for_each(|input_amounts| {
@@ -207,6 +213,11 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
         })?;
 
         // 7. Check commitment transactions for each of the proof inputs
+        // 7.1. For non-root proofs there MUST be inputs for the transaction
+        if self.inputs.len() == 0 && !self.is_root() {
+            return Err(RgbError::NoInputs(self));
+        }
+        // 7.2. Check commitment transactions for each of the proof inputs
         self.inputs.iter().try_for_each(|input_proof| {
             // Getting commitment transaction for the specific proof input
             let input_tx = tx_provider(TxQuery::TxId(input_proof.bind_to.txid))?;
