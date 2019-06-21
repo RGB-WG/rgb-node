@@ -122,21 +122,21 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
     /// callback during the verification process.
     fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
         // 1. Checking proof integrity
-        // 1.1. Proofs with contract assigned must be root proofs
-        match self.contract {
-            Some(ref contract) => {
-                if !self.inputs.is_empty() {
-                    return Err(RgbError::ProofWithoutContract(self))
-                }
-                // 2. Contract must pass verification check
-                contract.verify(tx_provider)?
-            }
-            None => {
-                // 1.2. All non-root proofs MUST have upstream proofs
-                if self.inputs.is_empty() {
-                    return Err(RgbError::ProofWihoutInputs(self))
-                }
-            }
+        match (self.contract, self.inputs.is_empty()) {
+            // 1.1. Proofs with contract assigned must be root proofs
+            (Some(_), false) =>
+                return Err(RgbError::ProofWithoutContract(self)),
+
+            // 1.2. All non-root proofs MUST have upstream proofs
+            (None, true) =>
+                return Err(RgbError::ProofWihoutInputs(self)),
+
+            // 2. Contract must pass verification check
+            (Some(ref contract), true) =>
+                contract.verify(tx_provider)?,
+
+            // Noting to check in all other cases, they are fine
+            _ => (),
         }
 
         // 3. Validate that proof has correct structure for the given RGB contract blueprint
