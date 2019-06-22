@@ -53,19 +53,25 @@ pub trait OnChain<B: ContractBody> {
                 // Pay to contract: standard P2PKH utilizing tweaked public key
                 .push_opcode(OP_DUP)
                 .push_opcode(OP_HASH160)
+                // Pushing the hash of the tweaked public key
                 .push_slice(
                     &sha256d::Hash::from_engine({
                         let mut engine = sha256d::Hash::engine();
                         engine.write_all(
+                            // Tweaking public key
                             &tweak_key(
                                 &Secp256k1::new(),
                                 bitcoin::PublicKey {
                                     compressed: true,
-                                    key: self.get_original_pk()
-                                        .ok_or_else(|| RgbError::NoOriginalPubKey(self.get_identity_hash()))?
+                                    key: self.get_original_pk().ok_or_else(
+                                        || RgbError::NoOriginalPubKey(self.get_identity_hash())
+                                    )?
                                 },
                                 &[
+                                    // Adding "RGB" string according to
+                                    // <https://github.com/rgb-org/spec/issues/61>
                                     "RGB".as_bytes(),
+                                    // Adding contract hash
                                     &self.get_identity_hash()[..]
                                 ].concat()[..]
                             ).serialize()

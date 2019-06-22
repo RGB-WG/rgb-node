@@ -151,10 +151,10 @@ impl<B: ContractBody> Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
 
 impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
     /// Provides unique get_identity_hash, which is computed as a SHA256d-hash from the
-    /// consensus-serialized contract data, prefixed with 'rgb' due to
+    /// consensus-serialized contract data, prefixed with 'RGB' due to
     /// <https://github.com/rgb-org/spec/issues/61>
     fn get_identity_hash(&self) -> IdentityHash {
-        let mut hash: Vec<u8> = "rgb".into();
+        let mut hash: Vec<u8> = "RGB".into();
         // We can't use standard serialization of the contract from bitcoin::Encodable trait
         // since here we do not need to commit to `original_commitment_pk` field, which is
         // serialized by the trait implementation for disk storage and network transfers.
