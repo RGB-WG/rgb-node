@@ -47,6 +47,7 @@ use crate::*;
 /// There are no additional fields in its body.
 #[derive(Clone, Debug)]
 pub struct ReissueContractBody {
+    // TODO: Implement ReissueContractBody structure and functionality
 }
 
 impl ContractBody for ReissueContractBody { }

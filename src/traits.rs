@@ -18,9 +18,11 @@ use std::io::Write;
 use bitcoin_hashes::{sha256d, Hash};
 use bitcoin::{Transaction, OutPoint};
 use bitcoin::blockdata::{opcodes::all::*, script::Builder, script::Script};
-use secp256k1::PublicKey;
+use secp256k1::{Secp256k1, PublicKey};
 
 use crate::*;
+use bitcoin::util::contracthash::tweak_key;
+use bitcoin::util::psbt::serialize::Serialize;
 
 pub enum TxQuery {
     TxId(sha256d::Hash),
@@ -55,10 +57,18 @@ pub trait OnChain<B: ContractBody> {
                     &sha256d::Hash::from_engine({
                         let mut engine = sha256d::Hash::engine();
                         engine.write_all(
-                            // TODO: Add actual public key tweaking
-                            &self.get_original_pk()
-                                .ok_or_else(|| RgbError::NoOriginalPubKey(self.get_identity_hash()))?
-                                .serialize()
+                            &tweak_key(
+                                &Secp256k1::new(),
+                                bitcoin::PublicKey {
+                                    compressed: true,
+                                    key: self.get_original_pk()
+                                        .ok_or_else(|| RgbError::NoOriginalPubKey(self.get_identity_hash()))?
+                                },
+                                &[
+                                    "RGB".as_bytes(),
+                                    &self.get_identity_hash()[..]
+                                ].concat()[..]
+                            ).serialize()
                         )?;
                         engine
                     }
