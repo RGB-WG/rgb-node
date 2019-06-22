@@ -13,12 +13,15 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::rc::Rc;
 use std::io::{self, Cursor};
 use std::fmt::{Display, Formatter, Error};
 use std::convert::From;
 
+use bitcoin_hashes::sha256d;
 use bitcoin_hashes::error::Error as BitcoinHashError;
 use bitcoin::consensus::encode::*;
+use bitcoin::Transaction;
 
 use crate::*;
 
@@ -31,14 +34,17 @@ pub enum RgbError<'a, B: ContractBody> {
     ContractWithoutRootProof(&'a Contract<B>),
     ProofWihoutInputs(&'a Proof<B>),
     MissingVout(&'a Proof<B>, u32),
-    WrongScript(&'a Proof<B>, u32),
+    WrongScript(sha256d::Hash, u32),
     AssetsNotEqual(&'a Proof<B>),
     AmountsNotEqual(&'a Proof<B>, AssetId),
     NoInputs(&'a Proof<B>),
+    OutdatedContractVersion(Rc<Contract<B>>),
+    UnknownContractVersion(Rc<Contract<B>>),
 
     UnsupportedCommitmentScheme(CommitmentScheme),
     NoOriginalPubKey(IdentityHash),
     ProofStructureNotMatchingContract(&'a Proof<B>),
+    InternalContractIncosistency(Rc<Contract<B>>, &'a str),
 }
 
 impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, T> {
@@ -55,9 +61,9 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
                 write!(f, "Non-root proof {} does not have any upstream proofs", **id),
             RgbError::MissingVout(id, vout) =>
                 write!(f, "Proof {} references unexisting output {} in its bouding tx", **id, vout),
-            RgbError::WrongScript(id, vout) =>
-                write!(f, "Output {} for the proof {} is not colored with a proper script",
-                       **id, vout),
+            RgbError::WrongScript(txid, vout) =>
+                write!(f, "Output {} for the transaction {} is not colored with a proper script",
+                       txid, vout),
             RgbError::AssetsNotEqual(id) =>
                 write!(f, "Input and output assets for the proof {} do not match", **id),
             RgbError::AmountsNotEqual(proof, asset_id) =>
@@ -65,6 +71,10 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
                        *asset_id, **proof),
             RgbError::NoInputs(proof) =>
                 write!(f, "Non-root proof {} has no transaction inputs", **proof),
+            RgbError::OutdatedContractVersion(contract) =>
+                write!(f, "Unsupported contract version for contract {}", **contract),
+            RgbError::UnknownContractVersion(contract) =>
+                write!(f, "Unknown future version found in contract {}", **contract),
 
             RgbError::UnsupportedCommitmentScheme(ref scheme) =>
                 write!(f, "Unknown commitment scheme with id {}",
@@ -73,6 +83,8 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
                 write!(f, "No original public key is found pay-to-contract proof {}", *hash),
             RgbError::ProofStructureNotMatchingContract(id) =>
                 write!(f, "Proof structure for {} does not match RGB contract structure", **id),
+            RgbError::InternalContractIncosistency(contract, msg) =>
+                write!(f, "Internal inconsistency found for the contract {}: {}", **contract, msg),
         }
     }
 }

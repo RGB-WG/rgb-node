@@ -13,16 +13,23 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::rc::Weak;
 
 use bitcoin::OutPoint;
 use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 
 use crate::*;
+use crate::error::RgbError::{OutdatedContractVersion, UnknownContractVersion};
+use std::io::Cursor;
+use core::borrow::Borrow;
 
 /// Contract header fields required by the specification
 #[derive(Clone, Debug)]
-pub struct ContractHeader {
+pub struct ContractHeader<B: ContractBody> {
+    /// Weak reference to the contract itself
+    pub contract: Weak<Contract<B>>,
+
     /// 16-bit unsigned integer representing version of the blueprint used
     pub version: u16,
 
@@ -67,9 +74,9 @@ pub struct ContractHeader {
     pub blueprint_type: BlueprintType,
 }
 
-impl ContractHeader {
+impl<B: ContractBody> ContractHeader<B> {
     /// Validates given proof to have a correct structure matching RGB contract header fields
-    pub fn validate_proof<'a, B: ContractBody>(&self, proof: &'a Proof<B>) -> Result<(), RgbError<'a, B>>
+    pub fn validate_proof<'a>(&self, proof: &'a Proof<B>) -> Result<(), RgbError<'a, B>>
         where Proof<B>: OnChain<B> {
         // Pay-to-contract proofs MUST have original public key (before applying tweak) specified,
         // the rest MUST NOT
@@ -85,7 +92,7 @@ impl ContractHeader {
     }
 }
 
-impl<B: ContractBody> Verify<B> for ContractHeader {
+impl<B: ContractBody> Verify<B> for ContractHeader<B> where Contract<B>: OnChain<B> {
     /// Function performing verification of the integrity for the RGB contract header for both
     /// on-chain and off-chain parts; including internal consistency, integrity, proper formation of
     /// commitment transactions etc.
@@ -97,12 +104,35 @@ impl<B: ContractBody> Verify<B> for ContractHeader {
     /// part of the contract. Since rgblib has no direct access to a bitcoin node
     /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
     /// callback during the verification process.
-    fn verify(&self, _: TxProvider<B>) -> Result<(), RgbError<B>> {
+    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+        let contract = self.contract.upgrade().unwrap();
+
+        // 1. Checking that the contract is of supported versions
+        match self.version {
+            0x0001 => return Err(RgbError::OutdatedContractVersion(contract)),
+            0x0002 => (),
+            _ => return Err(RgbError::UnknownContractVersion(contract)),
+        }
+
+        // 2. Checking for internal consistency
+        // 2.1. We can't require minimum transaction amount to be larger than the total supply
+        if self.min_amount > self.total_supply {
+            return Err(RgbError::InternalContractIncosistency(contract,
+                "The requirement for the minimum transaction amount exceeds total asset supply"
+            ));
+        }
+        // 2.2. If we enable reissuance, we need to provide UTXO to spend the reissued tokens
+        if self.reissuance_enabled && self.reissuance_utxo.is_none() {
+            return Err(RgbError::InternalContractIncosistency(contract,
+                "Asset reissuance is enabled, but no reissuance UTXO is provided"
+            ));
+        }
+
         Ok(())
     }
 }
 
-impl<S: Encoder> Encodable<S> for ContractHeader {
+impl<B: ContractBody, S: Encoder> Encodable<S> for ContractHeader<B> {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.version.consensus_encode(s)?;
         self.title.consensus_encode(s)?;
@@ -154,8 +184,8 @@ impl<S: Encoder> Encodable<S> for ContractHeader {
     }
 }
 
-impl<D: Decoder> Decodable<D> for ContractHeader {
-    fn consensus_decode(d: &mut D) -> Result<ContractHeader, Error> {
+impl<B: ContractBody, D: Decoder> Decodable<D> for ContractHeader<B> {
+    fn consensus_decode(d: &mut D) -> Result<ContractHeader<B>, Error> {
         let version: u16 = Decodable::consensus_decode(d)?;
         let title: String = Decodable::consensus_decode(d)?;
 
@@ -205,6 +235,7 @@ impl<D: Decoder> Decodable<D> for ContractHeader {
         let blueprint_type = BlueprintType::from(blueprint_type_id);
 
         Ok(ContractHeader {
+            contract: Weak::new(),
             version,
             title,
             description,

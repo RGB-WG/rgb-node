@@ -187,7 +187,7 @@ impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Curs
             }
             // 5.1. Check that each output referenced by the proof is colored with proper script
             if commitment_tx.output[vout_no].script_pubkey != self.get_script()? {
-                return Err(RgbError::WrongScript(self, *vout));
+                return Err(RgbError::WrongScript(commitment_tx.txid(), *vout));
             }
             Ok(())
         })?;

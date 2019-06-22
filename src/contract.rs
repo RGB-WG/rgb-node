@@ -122,7 +122,7 @@ impl From<BlueprintType> for u16 {
 #[derive(Clone, Debug)]
 pub struct Contract<B: ContractBody> {
     /// Contract header, containing fixed set of fields, shared by all contract blueprints
-    pub header: ContractHeader,
+    pub header: ContractHeader<B>,
 
     /// Contract body, with blueprint-specific set of fields
     pub body: Box<B>,
@@ -175,7 +175,7 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     }
 }
 
-impl<B: ContractBody + Verify<B>> Verify<B> for Contract<B> {
+impl<B: ContractBody + Verify<B>> Verify<B> for Contract<B> where Contract<B>: OnChain<B> {
     /// Function performing verification of the integrity for the RGB contract for both on-chain
     /// and off-chain parts; including internal consistency, integrity,  proper formation of
     /// commitment transactions etc.
@@ -188,7 +188,19 @@ impl<B: ContractBody + Verify<B>> Verify<B> for Contract<B> {
     /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
     /// callback during the verification process.
     fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+        // 1. Checking commitment transaction publishing the contract
+        let issue_tx = tx_provider(TxQuery::TxId(self.header.issuance_utxo.txid))?;
+        // 1.1. Checking commitment transaction script to be corresponding to the actual RGB
+        // contract
+        let vout = self.header.issuance_utxo.vout;
+        let vout_u = vout as usize;
+        if issue_tx.output[vout_u].script_pubkey != self.get_script()? {
+            Err(RgbError::WrongScript(issue_tx.txid(), vout))?;
+        }
+
+        // 2. Checking header consistency
         self.header.verify(tx_provider)?;
+        // 3. Checking body consistency and metadata
         self.body.verify(tx_provider)
     }
 }
@@ -214,10 +226,10 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Contract<T> {
     }
 }
 
-impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Contract<T> {
-    fn consensus_decode(d: &mut D) -> Result<Contract<T>, Error> {
-        let header: ContractHeader = Decodable::consensus_decode(d)?;
-        let body: Box<T> = Box::new(Decodable::consensus_decode(d)?);
+impl<D: Decoder, B: Decodable<D> + ContractBody> Decodable<D> for Contract<B> {
+    fn consensus_decode(d: &mut D) -> Result<Contract<B>, Error> {
+        let header: ContractHeader<B> = Decodable::consensus_decode(d)?;
+        let body: Box<B> = Box::new(Decodable::consensus_decode(d)?);
         let mut original_commitment_pk: Option<PublicKey> = None;
         match header.commitment_scheme {
             CommitmentScheme::PayToContract => {
