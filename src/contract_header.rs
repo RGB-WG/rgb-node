@@ -20,9 +20,6 @@ use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
 
 use crate::*;
-use crate::error::RgbError::{OutdatedContractVersion, UnknownContractVersion};
-use std::io::Cursor;
-use core::borrow::Borrow;
 
 /// Contract header fields required by the specification
 #[derive(Clone, Debug)]
@@ -104,7 +101,7 @@ impl<B: ContractBody> Verify<B> for ContractHeader<B> where Contract<B>: OnChain
     /// part of the contract. Since rgblib has no direct access to a bitcoin node
     /// (it's rather a task for particular wallet or Bifrost implementation) it relies on this
     /// callback during the verification process.
-    fn verify(&self, tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
+    fn verify(&self, _tx_provider: TxProvider<B>) -> Result<(), RgbError<B>> {
         let contract = self.contract.upgrade().unwrap();
 
         // 1. Checking that the contract is of supported versions

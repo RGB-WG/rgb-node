@@ -21,7 +21,6 @@ use std::convert::From;
 use bitcoin_hashes::sha256d;
 use bitcoin_hashes::error::Error as BitcoinHashError;
 use bitcoin::consensus::encode::*;
-use bitcoin::Transaction;
 
 use crate::*;
 
@@ -31,7 +30,7 @@ pub enum RgbError<'a, B: ContractBody> {
     IoError(io::Error),
 
     ProofWithoutContract(&'a Proof<B>),
-    ContractWithoutRootProof(&'a Contract<B>),
+    ContractWithoutRootProof(Rc<Contract<B>>),
     ProofWihoutInputs(&'a Proof<B>),
     MissingVout(&'a Proof<B>, u32),
     WrongScript(sha256d::Hash, u32),
