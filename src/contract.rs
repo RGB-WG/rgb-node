@@ -1,26 +1,17 @@
-use bitcoin::BitcoinHash;
-use bitcoin::blockdata::opcodes;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::blockdata::script::Script;
-use bitcoin::network::encodable::ConsensusDecodable;
-use bitcoin::network::encodable::ConsensusEncodable;
-use bitcoin::network::serialize;
-use bitcoin::network::serialize::serialize;
-use bitcoin::network::serialize::SimpleDecoder;
-use bitcoin::network::serialize::SimpleEncoder;
-use bitcoin::Transaction;
-use bitcoin::util::address::Address;
-use bitcoin::util::hash::Hash160;
-use bitcoin::util::hash::Sha256dHash;
-use pay_to_contract::ECTweakFactor;
-use secp256k1::Error;
-use secp256k1::PublicKey;
-use secp256k1::Secp256k1;
 use std::collections::HashMap;
-use std::str::FromStr;
-use super::bitcoin::network::constants::Network;
-use super::bitcoin::OutPoint;
-use super::traits::Verify;
+
+use bitcoin::{BitcoinHash, OutPoint, Transaction};
+use bitcoin::blockdata::opcodes;
+use bitcoin::blockdata::script::{Builder, Script};
+use bitcoin::network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use bitcoin::network::serialize;
+use bitcoin::network::serialize::{serialize, SimpleDecoder, SimpleEncoder};
+use bitcoin::network::constants::Network;
+use bitcoin::util::hash::{Hash160, Sha256dHash};
+use secp256k1::{Error, PublicKey, Secp256k1};
+
+use pay_to_contract::ECTweakFactor;
+use traits::Verify;
 use traits::NeededTx;
 use traits::PayToContract;
 
@@ -29,9 +20,8 @@ pub struct Contract {
     pub title: String,
     pub issuance_utxo: OutPoint,
     pub initial_owner_utxo: OutPoint,
-    pub burn_address: Address,
     pub network: Network,
-    pub total_supply: u32,
+    pub total_supply: u64,
     pub original_commitment_pk: Option<PublicKey>
 }
 
@@ -44,7 +34,8 @@ impl Contract {
 impl BitcoinHash for Contract {
     fn bitcoin_hash(&self) -> Sha256dHash { // all the fields
         // TODO: leave out "original_commitment_pk": it's not necessary to "pre-commit" to this value,
-        // and doing so could actually make some tokens/bitcoins unspendable (if original_commitment_pk is not set)
+        // and doing so could actually make some tokens/bitcoins unspendable
+        // (if original_commitment_pk is not set)
         Sha256dHash::from_data(&serialize(self).unwrap())
     }
 }
@@ -56,9 +47,15 @@ impl Verify for Contract {
 
     fn verify(&self, needed_txs: &HashMap<&NeededTx, Transaction>) -> bool {
         let committing_tx = needed_txs.get(&NeededTx::WhichSpendsOutPoint(self.issuance_utxo)).unwrap();
+        let expected = self.get_expected_script();
 
-        // TODO: signal the commitment output somehow
-        if committing_tx.output[0].script_pubkey != self.get_expected_script() {
+        // Check the outputs
+        let mut found_output = false;
+        for i in 0..committing_tx.output.len() {
+            found_output = found_output || committing_tx.output[i].script_pubkey == expected;
+        }
+
+        if !found_output {
             println!("invalid commitment");
             return false;
         }
@@ -107,7 +104,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Contract {
         self.title.consensus_encode(s)?;
         self.issuance_utxo.consensus_encode(s)?;
         self.initial_owner_utxo.consensus_encode(s)?;
-        self.burn_address.to_string().consensus_encode(s)?;
+
         self.network.consensus_encode(s)?;
         self.total_supply.consensus_encode(s)?;
 
@@ -129,13 +126,11 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Contract {
         let title: String = ConsensusDecodable::consensus_decode(d)?;
         let issuance_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
         let initial_owner_utxo: OutPoint = ConsensusDecodable::consensus_decode(d)?;
-        let burn_address_str: String = ConsensusDecodable::consensus_decode(d)?;
 
         let mut c = Contract {
             title,
             issuance_utxo,
             initial_owner_utxo,
-            burn_address: Address::from_str(burn_address_str.as_str()).unwrap(),
             network: ConsensusDecodable::consensus_decode(d)?,
             total_supply: ConsensusDecodable::consensus_decode(d)?,
             original_commitment_pk: None

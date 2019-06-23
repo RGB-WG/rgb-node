@@ -1,48 +1,19 @@
-use bitcoin::BitcoinHash;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+
+use bitcoin::{BitcoinHash, OutPoint, Transaction};
 use bitcoin::blockdata::opcodes;
-use bitcoin::blockdata::script::Builder;
-use bitcoin::blockdata::script::Script;
-use bitcoin::network::encodable::ConsensusDecodable;
-use bitcoin::network::encodable::ConsensusEncodable;
+use bitcoin::blockdata::script::{Builder, Script};
+use bitcoin::network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use bitcoin::network::serialize;
-use bitcoin::network::serialize::SimpleDecoder;
-use bitcoin::network::serialize::SimpleEncoder;
-use bitcoin::Transaction;
-use bitcoin::util::hash::Hash160;
-use bitcoin::util::hash::Sha256dHash;
+use bitcoin::network::serialize::{SimpleDecoder, SimpleEncoder};
+use bitcoin::util::hash::{Hash160, Sha256dHash};
+use secp256k1::{Error, PublicKey, Secp256k1};
+
 use contract::Contract;
 use pay_to_contract::ECTweakFactor;
-use secp256k1::Error;
-use secp256k1::PublicKey;
-use secp256k1::Secp256k1;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::hash::Hasher;
-use super::bitcoin::OutPoint;
-use super::traits::Verify;
-use traits::NeededTx;
-use traits::PayToContract;
-
-#[derive(Clone, Debug)]
-pub struct OutputEntry(Sha256dHash, u32, u32); // asset_id, amount -> vout
-
-impl OutputEntry {
-    pub fn new(asset_id: Sha256dHash, amount: u32, vout: u32) -> OutputEntry {
-        OutputEntry(asset_id, amount, vout)
-    }
-
-    pub fn get_asset_id(&self) -> Sha256dHash {
-        self.0.clone()
-    }
-
-    pub fn get_amount(&self) -> u32 {
-        self.1
-    }
-
-    pub fn get_vout(&self) -> u32 {
-        self.2
-    }
-}
+use output_entry::OutputEntry;
+use traits::{Verify, NeededTx, PayToContract};
 
 #[derive(Clone, Debug)]
 pub struct Proof {
@@ -87,28 +58,13 @@ impl Proof {
             let input_for_us = committing_tx_this.input[i].previous_output.vout;
 
             for entry in &test_proof.output {
-                if entry.2 == input_for_us {
+                if entry.get_vout().is_some() && entry.get_vout().unwrap() == input_for_us {
                     ans.push(entry.clone());
                 }
             }
         }
 
         ans
-    }
-
-    pub fn get_contract_for(&self, asset_id: Sha256dHash) -> Option<Contract> {
-        if self.is_root_proof() && self.contract.as_ref().unwrap().get_asset_id() == asset_id {
-            return Some(self.contract.as_ref().unwrap().as_ref().clone());
-        } else {
-            for input in &self.input {
-                let result = input.get_contract_for(asset_id);
-                if result.is_some() {
-                    return result;
-                }
-            }
-        }
-
-        None
     }
 }
 
@@ -161,8 +117,15 @@ impl Verify for Proof {
 
         // ---------------------------------
 
-        // TODO: right now we are forcing the commitment to be in the first output
-        if committing_tx.output[0].script_pubkey != self.get_expected_script() {
+        let expected = self.get_expected_script();
+
+        // Check the tx outputs for the commitment
+        let mut found_output = false;
+        for i in 0..committing_tx.output.len() {
+            found_output = found_output || committing_tx.output[i].script_pubkey == expected;
+        }
+
+        if !found_output {
             println!("invalid commitment");
             return false;
         }
@@ -172,8 +135,6 @@ impl Verify for Proof {
         let mut in_amounts = HashMap::new();
 
         if self.is_root_proof() {
-            // Burn addresses are only checked in normal proofs, not root proofs
-
             if self.input.len() > 0 {
                 println!("the root proof should not have any input proofs");
                 return false;
@@ -186,26 +147,12 @@ impl Verify for Proof {
             for input_proof in &self.input {
                 let mut entries_for_us = self.get_entries_for_us(input_proof, &needed_txs);
                 in_entries.append(&mut entries_for_us);
-
-                // -------------------------------------------------------
-                // Make sure we are not spending burned assets
-
-                let tx_spent = needed_txs.get(&NeededTx::WhichSpendsOutPoint(input_proof.bind_to[0])).unwrap();
-                for entry in &entries_for_us {
-                    let index: usize = entry.get_vout() as usize;
-                    let script_pubkey = &tx_spent.output[index].script_pubkey;
-
-                    if script_pubkey == &self.get_contract_for(entry.get_asset_id()).unwrap().burn_address.script_pubkey() {
-                        println!("Trying to spend burned coins!");
-                        return false;
-                    }
-                }
             }
 
             // Aggregate the amounts
             for entry in in_entries {
-                let aggregator = in_amounts.entry(entry.0).or_insert(0);
-                *aggregator += entry.1;
+                let aggregator = in_amounts.entry(entry.get_asset_id()).or_insert(0);
+                *aggregator += entry.get_amount();
             }
         }
 
@@ -215,8 +162,8 @@ impl Verify for Proof {
         let mut out_amounts = HashMap::new();
 
         for output_entry in &self.output {
-            let aggregator = out_amounts.entry(output_entry.0).or_insert(0);
-            *aggregator += output_entry.1;
+            let aggregator = out_amounts.entry(output_entry.get_asset_id()).or_insert(0);
+            *aggregator += output_entry.get_amount();
         }
 
         if in_amounts != out_amounts {
@@ -275,20 +222,6 @@ impl Hash for Proof {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let consensus_hash = self.bitcoin_hash();
         consensus_hash.hash(state);
-    }
-}
-
-impl<S: SimpleEncoder> ConsensusEncodable<S> for OutputEntry {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
-        self.0.consensus_encode(s)?;
-        self.1.consensus_encode(s)?;
-        self.2.consensus_encode(s)
-    }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for OutputEntry {
-    fn consensus_decode(d: &mut D) -> Result<OutputEntry, serialize::Error> {
-        Ok(OutputEntry::new(ConsensusDecodable::consensus_decode(d)?, ConsensusDecodable::consensus_decode(d)?, ConsensusDecodable::consensus_decode(d)?))
     }
 }
 

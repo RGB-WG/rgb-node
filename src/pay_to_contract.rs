@@ -1,22 +1,22 @@
-use bitcoin::util::hash::Sha256dHash;
-use secp256k1::Error;
-use secp256k1::PublicKey;
-use secp256k1::Secp256k1;
-use secp256k1::SecretKey;
-use secp256k1::Verification;
 use std::fmt;
+use bitcoin::util::hash::Sha256dHash;
+use secp256k1::{Error, PublicKey, Secp256k1, SecretKey, Verification};
 
-// Create a wrapper around secp256k1's data type, to improve readability
+// Wrapper around secp256k1's data type, to improve readability
 pub struct ECTweakFactor(SecretKey);
 
 impl ECTweakFactor {
     pub fn from_pk_data<C>(secp: &Secp256k1<C>, pk: &PublicKey, data: &Sha256dHash) -> Result<ECTweakFactor, Error> {
-        let mut tmp = [0; 65];
+        // 1. Constructing data for hashing by concatenating bytes of the existing public key and some  hash
+        let mut tweaking_data = [0; 65];
+        tweaking_data[..33].copy_from_slice(&pk.serialize());
+        tweaking_data[33..].copy_from_slice(data.as_bytes());
 
-        tmp[..33].copy_from_slice(&pk.serialize());
-        tmp[33..].copy_from_slice(data.as_bytes());
+        // 2. Getting hash of the concatenated value
+        let tweaking_hash = Sha256dHash::from_data(&tweaking_data);
 
-        let tweak_factor = SecretKey::from_slice(&secp, Sha256dHash::from_data(&tmp).as_bytes())?;
+        // 3. Converting hash value into a private key
+        let tweak_factor = SecretKey::from_slice(&secp, tweaking_hash.as_bytes())?;
 
         Ok(ECTweakFactor(tweak_factor))
     }
