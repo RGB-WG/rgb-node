@@ -10,7 +10,10 @@ use std::io::Read;
 
 pub fn upload_proofs(server: &String, proof: &Proof, txid: &Sha256dHash) -> Result<(), Error> {
     for out in &proof.output {
-        let outpoint_str = txid.be_hex_string() + ":" + out.get_vout().to_string().as_str();
+        let outpoint_str = match out.get_vout() {
+            Some(vout) => txid.be_hex_string() + ":" + vout.to_string().as_str(),
+            None => txid.be_hex_string() + ":BURN"
+        };
         let url = format!("http://{}/{}", server, outpoint_str);
 
         let client = Client::new();

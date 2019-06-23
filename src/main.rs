@@ -6,7 +6,11 @@ extern crate jsonrpc;
 extern crate rgb;
 extern crate secp256k1;
 
+use std::env::home_dir;
+use std::path::Path;
+
 use clap::{App, Arg, SubCommand};
+
 use kaleidoscope::burn::Burn;
 use kaleidoscope::getnewaddress::GetNewAddress;
 use kaleidoscope::issueasset::IssueAsset;
@@ -14,20 +18,19 @@ use kaleidoscope::listunspent::ListUnspent;
 use kaleidoscope::RGBSubCommand;
 use kaleidoscope::sendtoaddress::SendToAddress;
 use kaleidoscope::sync::Sync;
-use std::env::home_dir;
-use std::path::Path;
 
 pub mod kaleidoscope;
 pub mod database;
 pub mod chain;
 pub mod bifrost;
+pub mod lib;
 
 fn main() {
     const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
     const AUTHORS: Option<&'static str> = option_env!("CARGO_PKG_AUTHORS");
 
     // TODO: add --dry-run
-    let matches = App::new("RGB - P2C Version")
+    let matches = App::new("RGB - Kaleidoscope Client")
         .version(VERSION.unwrap_or("<unknown>"))
         .author(AUTHORS.unwrap_or("<unknown>"))
         .about("<TODO: write the about section>") // TODO
@@ -68,7 +71,11 @@ fn main() {
                 .help("Set the network")
                 .default_value("testnet")))
         .subcommand(SubCommand::with_name("listunspent")
-            .about("List the unspent Bitcoin outputs and RGB proofs"))
+            .about("List the unspent Bitcoin outputs and RGB proofs")
+            .arg(Arg::with_name("json")
+                 .short("J")
+                 .long("json")
+                 .help("Output in JSON format")))
         .subcommand(SubCommand::with_name("getnewaddress")
             .about("Generate a new RGB address")
             .arg(Arg::with_name("server")
@@ -84,7 +91,7 @@ fn main() {
                 .value_name("SERVER[:PORT]")
                 .help("Overrides the default server")))
         .subcommand(SubCommand::with_name("sendtoaddress")
-            .about("Send some RGB tokens to a specified address")
+            .about("Send some RGB tokens and SATOSHIs to a specified address")
             .arg(Arg::with_name("address")
                 .value_name("ADDRESS")
                 .required(true)
@@ -93,10 +100,14 @@ fn main() {
                 .value_name("ASSET_ID")
                 .required(true)
                 .help("Set the asset_id"))
-            .arg(Arg::with_name("amount")
-                .value_name("AMOUNT")
+            .arg(Arg::with_name("asset_amount")
+                .value_name("ASSET_AMOUNT")
                 .required(true)
-                .help("Set the amount")))
+                .help("Set the asset amount"))
+            .arg(Arg::with_name("satoshi_amount")
+                .value_name("SATOSHI_AMOUNT")
+                .required(true)
+                .help("Set the satoshi amount")))
         .subcommand(SubCommand::with_name("burn")
             .about("Burn some RGB tokens")
             .arg(Arg::with_name("asset_id")
@@ -107,22 +118,14 @@ fn main() {
                 .value_name("AMOUNT")
                 .required(true)
                 .help("Set the amount")))
-        .subcommand(SubCommand::with_name("server")
-            .about("Run the Bifrost server")
-            .arg(Arg::with_name("port")
-                .long("port")
-                .short("p")
-                .value_name("PORT")
-                .required(true)
-                .default_value("3000")
-                .help("Set a new port")))
         .get_matches();
 
     let default_rgb_dir = home_dir().unwrap().join(".rgb");
     let datadir = Path::new(matches.value_of("datadir").unwrap_or(default_rgb_dir.to_str().unwrap()));
-
+    let datadirDataStr = [matches.value_of("datadir").unwrap_or(default_rgb_dir.to_str().unwrap()), "/data"].join("");
+    let datadirData = Path::new(&datadirDataStr);
     let config = kaleidoscope::Config::load_from(datadir);
-    let mut database = database::Database::new(datadir);
+    let mut database = database::Database::new(&datadirData);
     let mut client = jsonrpc::client::Client::new("http://".to_owned() + &config.rpcconnect + &":".to_owned() + &config.rpcport.to_string(), Some(config.rpcuser.clone()), Some(config.rpcpassword.clone()));
 
     // ---------------------------
