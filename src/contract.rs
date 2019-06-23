@@ -22,7 +22,7 @@ pub struct Contract {
     pub issuance_utxo: OutPoint,
     pub initial_owner_utxo: OutPoint,
     pub network: Network,
-    pub total_supply: u32,
+    pub total_supply: u64,
 }
 
 impl Contract {
