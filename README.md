@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/dr-orlovsky/rgb-rust.svg?branch=master)](https://travis-ci.org/dr-orlovsky/rgb-rust) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6289725dbd8d4751b3fa8180e962c185)](https://www.codacy.com/app/dr-orlovsky/rgb-rust?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dr-orlovsky/rgb-rust&amp;utm_campaign=Badge_Grade) [![Coverage Status](https://coveralls.io/repos/github/dr-orlovsky/rgb-rust/badge.svg?branch=master)](https://coveralls.io/github/dr-orlovsky/rgb-rust?branch=master)
+[![Build Status](https://travis-ci.org/rgb-org/rgb-rust.svg?branch=master)](https://travis-ci.org/rgb-org/rgb-rust) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6289725dbd8d4751b3fa8180e962c185)](https://www.codacy.com/app/rgb-org/rgb-rust?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=rgb-org/rgb-rust&amp;utm_campaign=Badge_Grade) [![codecov](https://codecov.io/gh/rgb-org/rgb-rust/branch/master/graph/badge.svg)](https://codecov.io/gh/rgb-org/rgb-rust)
 
 # RGB library on Rust
 
