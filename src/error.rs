@@ -13,14 +13,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::rc::Rc;
-use std::io::{self, Cursor};
-use std::fmt::{Display, Formatter, Error};
 use std::convert::From;
+use std::fmt::{Display, Error, Formatter};
+use std::io::{self, Cursor};
+use std::rc::Rc;
 
-use bitcoin_hashes::sha256d;
-use bitcoin_hashes::error::Error as BitcoinHashError;
 use bitcoin::consensus::encode::*;
+use bitcoin_hashes::error::Error as BitcoinHashError;
+use bitcoin_hashes::sha256d;
 
 use crate::*;
 
@@ -52,38 +52,70 @@ impl<'a, T: ContractBody + Encodable<Cursor<Vec<u8>>>> Display for RgbError<'a, 
             RgbError::BitcoinHashError(err) => Display::fmt(err, f),
             RgbError::IoError(err) => Display::fmt(err, f),
 
-            RgbError::ProofWithoutContract(id) =>
-                write!(f, "Root proof {} does not reference a contract", **id),
-            RgbError::ContractWithoutRootProof(id) =>
-                write!(f, "Contract {} does not reference a root proof", **id),
-            RgbError::ProofWihoutInputs(id) =>
-                write!(f, "Non-root proof {} does not have any upstream proofs", **id),
-            RgbError::MissingVout(id, vout) =>
-                write!(f, "Proof {} references unexisting output {} in its bouding tx", **id, vout),
-            RgbError::WrongScript(txid, vout) =>
-                write!(f, "Output {} for the transaction {} is not colored with a proper script",
-                       txid, vout),
-            RgbError::AssetsNotEqual(id) =>
-                write!(f, "Input and output assets for the proof {} do not match", **id),
-            RgbError::AmountsNotEqual(proof, asset_id) =>
-                write!(f, "Input and output asset {} amounts for the proof {} are not equal",
-                       *asset_id, **proof),
-            RgbError::NoInputs(proof) =>
-                write!(f, "Non-root proof {} has no transaction inputs", **proof),
-            RgbError::OutdatedContractVersion(contract) =>
-                write!(f, "Unsupported contract version for contract {}", **contract),
-            RgbError::UnknownContractVersion(contract) =>
-                write!(f, "Unknown future version found in contract {}", **contract),
+            RgbError::ProofWithoutContract(id) => {
+                write!(f, "Root proof {} does not reference a contract", **id)
+            }
+            RgbError::ContractWithoutRootProof(id) => {
+                write!(f, "Contract {} does not reference a root proof", **id)
+            }
+            RgbError::ProofWihoutInputs(id) => write!(
+                f,
+                "Non-root proof {} does not have any upstream proofs",
+                **id
+            ),
+            RgbError::MissingVout(id, vout) => write!(
+                f,
+                "Proof {} references unexisting output {} in its bouding tx",
+                **id, vout
+            ),
+            RgbError::WrongScript(txid, vout) => write!(
+                f,
+                "Output {} for the transaction {} is not colored with a proper script",
+                txid, vout
+            ),
+            RgbError::AssetsNotEqual(id) => write!(
+                f,
+                "Input and output assets for the proof {} do not match",
+                **id
+            ),
+            RgbError::AmountsNotEqual(proof, asset_id) => write!(
+                f,
+                "Input and output asset {} amounts for the proof {} are not equal",
+                *asset_id, **proof
+            ),
+            RgbError::NoInputs(proof) => {
+                write!(f, "Non-root proof {} has no transaction inputs", **proof)
+            }
+            RgbError::OutdatedContractVersion(contract) => write!(
+                f,
+                "Unsupported contract version for contract {}",
+                **contract
+            ),
+            RgbError::UnknownContractVersion(contract) => {
+                write!(f, "Unknown future version found in contract {}", **contract)
+            }
 
-            RgbError::UnsupportedCommitmentScheme(ref scheme) =>
-                write!(f, "Unknown commitment scheme with id {}",
-                       { let s: u8 = scheme.clone().into(); s }),
-            RgbError::NoOriginalPubKey(ref hash) =>
-                write!(f, "No original public key is found pay-to-contract proof {}", *hash),
-            RgbError::ProofStructureNotMatchingContract(id) =>
-                write!(f, "Proof structure for {} does not match RGB contract structure", **id),
-            RgbError::InternalContractIncosistency(contract, msg) =>
-                write!(f, "Internal inconsistency found for the contract {}: {}", **contract, msg),
+            RgbError::UnsupportedCommitmentScheme(ref scheme) => {
+                write!(f, "Unknown commitment scheme with id {}", {
+                    let s: u8 = scheme.clone().into();
+                    s
+                })
+            }
+            RgbError::NoOriginalPubKey(ref hash) => write!(
+                f,
+                "No original public key is found pay-to-contract proof {}",
+                *hash
+            ),
+            RgbError::ProofStructureNotMatchingContract(id) => write!(
+                f,
+                "Proof structure for {} does not match RGB contract structure",
+                **id
+            ),
+            RgbError::InternalContractIncosistency(contract, msg) => write!(
+                f,
+                "Internal inconsistency found for the contract {}: {}",
+                **contract, msg
+            ),
         }
     }
 }

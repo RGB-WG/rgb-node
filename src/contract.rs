@@ -18,11 +18,11 @@
 //! Implementation of data structures used in RGB contracts
 
 use std::fmt;
-use std::rc::Weak;
 use std::io::Cursor;
+use std::rc::Weak;
 
-use bitcoin_hashes::{sha256d, Hash};
 use bitcoin::consensus::encode::*;
+use bitcoin_hashes::{sha256d, Hash};
 use secp256k1::PublicKey;
 
 use crate::*;
@@ -68,7 +68,6 @@ impl From<CommitmentScheme> for u8 {
     }
 }
 
-
 /// Types of blueprints for the RGB contracts. Each blueprint type defines custom fields used
 /// in the contract body – and sometimes special requirements for the contract header fields.
 /// Read more on <https://github.com/rgb-org/spec/blob/master/01-rgb.md#blueprints-and-versioning>
@@ -100,7 +99,6 @@ impl From<u16> for BlueprintType {
         }
     }
 }
-
 
 impl From<BlueprintType> for u16 {
     fn from(blueprint: BlueprintType) -> Self {
@@ -137,7 +135,10 @@ pub struct Contract<B: ContractBody> {
     pub root_proof: Option<Weak<Proof<B>>>,
 }
 
-impl<B: ContractBody> Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
+impl<B: ContractBody> Contract<B>
+where
+    B: Encodable<Cursor<Vec<u8>>>,
+{
     /// Validates given proof to have a correct structure for the used RGB contract blueprint
     /// (i.e. it has or has no metadata field, has original public key for pay-to-contract
     /// commitment schemes etc.)
@@ -149,7 +150,10 @@ impl<B: ContractBody> Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
     }
 }
 
-impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u8>>> {
+impl<B: ContractBody> OnChain<B> for Contract<B>
+where
+    B: Encodable<Cursor<Vec<u8>>>,
+{
     /// Provides unique get_identity_hash, which is computed as a SHA256d-hash from the
     /// consensus-serialized contract data, prefixed with 'RGB' due to
     /// <https://github.com/rgb-org/spec/issues/61>
@@ -175,7 +179,10 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
     }
 }
 
-impl<B: ContractBody + Verify<B>> Verify<B> for Contract<B> where Contract<B>: OnChain<B> {
+impl<B: ContractBody + Verify<B>> Verify<B> for Contract<B>
+where
+    Contract<B>: OnChain<B>,
+{
     /// Function performing verification of the integrity for the RGB contract for both on-chain
     /// and off-chain parts; including internal consistency, integrity,  proper formation of
     /// commitment transactions etc.
@@ -236,13 +243,21 @@ impl<D: Decoder, B: Decodable<D> + ContractBody> Decodable<D> for Contract<B> {
                 let data: Vec<u8> = Decodable::consensus_decode(d)?;
                 match PublicKey::from_slice(&data[..]) {
                     Ok(pk) => original_commitment_pk = Some(pk),
-                    Err(_) => return Err(
-                        bitcoin::consensus::encode::Error::ParseFailed("Can't decode public key"))
+                    Err(_) => {
+                        return Err(bitcoin::consensus::encode::Error::ParseFailed(
+                            "Can't decode public key",
+                        ))
+                    }
                 };
-            },
-            _ => ()
+            }
+            _ => (),
         };
 
-        Ok(Contract{ header, body, original_pubkey: original_commitment_pk, root_proof: None })
+        Ok(Contract {
+            header,
+            body,
+            original_commitment_pk,
+            root_proof: None,
+        })
     }
 }

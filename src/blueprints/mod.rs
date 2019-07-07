@@ -13,6 +13,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+pub mod crowdsale;
 pub mod issue;
 pub mod reissue;
-pub mod crowdsale;

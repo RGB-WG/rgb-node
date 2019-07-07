@@ -37,7 +37,6 @@ pub struct CrowdsaleContractBody {
     // FIXME: It's unclear how two different asset types are supported by this contract
     // and how their `get_identity_hash`s are defined.
     // For more details see issue #72 <https://github.com/rgb-org/spec/issues/72>
-
     /// An address to send Bitcoins to in order to buy tokens
     pub deposit_address: String,
 
@@ -51,7 +50,7 @@ pub struct CrowdsaleContractBody {
     pub to_block: u64,
 }
 
-impl ContractBody for CrowdsaleContractBody { }
+impl ContractBody for CrowdsaleContractBody {}
 
 impl Verify<Self> for CrowdsaleContractBody {
     // TODO: Do the actual verification for ReissueContractBody instead of the default empty one
@@ -76,7 +75,7 @@ impl<D: Decoder> Decodable<D> for CrowdsaleContractBody {
             deposit_address,
             price_sat,
             from_block,
-            to_block
+            to_block,
         })
     }
 }

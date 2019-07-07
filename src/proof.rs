@@ -17,17 +17,18 @@
 //!
 //! Implementation of data structures used in RGB transaction proofs
 
-
+use std::collections::HashMap;
 use std::fmt;
 use std::io::Cursor;
-use std::collections::HashMap;
 
-use bitcoin_hashes::{sha256d, Hash};
 use bitcoin::consensus::encode::*;
+use bitcoin_hashes::{sha256d, Hash};
 use secp256k1::PublicKey;
 
-use crate::{IdentityHash, AssetId, OnChain, Verify, Contract, ContractBody,
-            TxQuery, TxProvider, RgbTransaction, RgbOutEntry, RgbOutPoint, RgbError};
+use crate::{
+    AssetId, Contract, ContractBody, IdentityHash, OnChain, RgbError, RgbOutEntry, RgbOutPoint,
+    RgbTransaction, TxProvider, TxQuery, Verify,
+};
 
 /// In-memory representation of offchain proofs for RGB transaction linked to an on-chain
 /// bitcoin transaction. Data structure provides serialization with consensus serialization methods
@@ -57,7 +58,10 @@ pub struct Proof<T: ContractBody> {
     pub original_pubkey: Option<PublicKey>,
 }
 
-impl<B: ContractBody> Proof<B> where Proof<B>: OnChain<B> {
+impl<B: ContractBody> Proof<B>
+where
+    Proof<B>: OnChain<B>,
+{
     /// Checks if this proof is a root proof. The root proof has no upstream proofs (i.e. empty
     /// `inputs` list) and must have an associated contract. The function checks both conditions
     /// and returns `true` only if they are both satisfied.
@@ -94,7 +98,10 @@ impl<B: ContractBody> Proof<B> where Proof<B>: OnChain<B> {
     }
 }
 
-impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>> {
+impl<B: ContractBody> OnChain<B> for Proof<B>
+where
+    B: Encodable<Cursor<Vec<u8>>>,
+{
     /// Function providing unique hash ID of the RGB transaction proof. It is based on
     /// serialization of all transaction outputs
     fn get_identity_hash(&self) -> IdentityHash {
@@ -109,7 +116,7 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
             Some(ref boxed) => {
                 data.extend(serialize(&0x1));
                 data.extend(serialize(&*boxed));
-            },
+            }
             None => {
                 data.extend(serialize(&0x0));
             }
@@ -122,7 +129,7 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
     fn get_contract(&self) -> Result<&Contract<B>, RgbError<B>> {
         match self.contract {
             Some(ref boxed) => Ok(&**boxed),
-            None => Err(RgbError::ProofWithoutContract(self))
+            None => Err(RgbError::ProofWithoutContract(self)),
         }
     }
 
@@ -133,7 +140,10 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
     }
 }
 
-impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Cursor<Vec<u8>>> {
+impl<B: ContractBody> Verify<B> for Proof<B>
+where
+    B: Verify<B> + Encodable<Cursor<Vec<u8>>>,
+{
     /// Function performing verification of the integrity for the RGB proof
     /// for both on-chain and off-chain parts; including internal consistency, integrity,
     /// proper formation of commitment transactions etc. The function iterates over all proof chain
@@ -151,16 +161,13 @@ impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Curs
         // 1. Checking proof integrity
         match (&self.contract, self.inputs.is_empty()) {
             // 1.1. Proofs with contract assigned must be root proofs
-            (Some(_), false) =>
-                return Err(RgbError::ProofWithoutContract(self)),
+            (Some(_), false) => return Err(RgbError::ProofWithoutContract(self)),
 
             // 1.2. All non-root proofs MUST have upstream proofs
-            (None, true) =>
-                return Err(RgbError::ProofWihoutInputs(self)),
+            (None, true) => return Err(RgbError::ProofWihoutInputs(self)),
 
             // 2. Contract must pass verification check
-            (Some(contract), true) =>
-                (**contract).verify(tx_provider)?,
+            (Some(contract), true) => (**contract).verify(tx_provider)?,
 
             // Noting to check in all other cases, they are fine
             _ => (),
@@ -172,9 +179,9 @@ impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Curs
         self.get_contract()?.validate_proof(&self)?;
 
         // 4. Re-iterate verification for each of the upstream proofs
-        self.inputs.iter().try_for_each(|proof| {
-            proof.verify(tx_provider)
-        })?;
+        self.inputs
+            .iter()
+            .try_for_each(|proof| proof.verify(tx_provider))?;
 
         // 5. Verify associated commitments in bitcoin transactions
         let commitment_tx = tx_provider(TxQuery::TxId(self.bind_to.txid))?;
@@ -204,11 +211,13 @@ impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Curs
             let asset_id = inp.0;
             let in_amount = inp.1;
             match out_balances.get(asset_id) {
-                Some(out_amount) => if in_amount != out_amount {
-                    Err(RgbError::AmountsNotEqual(self, *asset_id))
-                } else {
-                    Ok(())
-                },
+                Some(out_amount) => {
+                    if in_amount != out_amount {
+                        Err(RgbError::AmountsNotEqual(self, *asset_id))
+                    } else {
+                        Ok(())
+                    }
+                }
                 None => Err(RgbError::AssetsNotEqual(self)),
             }
         })?;
@@ -225,29 +234,28 @@ impl<B: ContractBody> Verify<B> for Proof<B> where B: Verify<B> + Encodable<Curs
 
             // Filtering bitcoin transaction inputs for the proof commitment transaction
             // corresponding to the proof input
-            let txins = commitment_tx.input.iter().filter(
-                |txin| txin.previous_output.txid != input_tx.txid()
-            );
+            let txins = commitment_tx
+                .input
+                .iter()
+                .filter(|txin| txin.previous_output.txid != input_tx.txid());
 
             input_proof.outputs.iter().try_for_each(|output| {
                 match output.out_point {
                     RgbOutPoint::UTXO(_) => {
                         // TODO: Implement proof inputs verification for UTXO-bound RGB asset transfers
                         Ok(())
-                    },
+                    }
                     RgbOutPoint::Vout(vout) => {
                         // Getting those transactions which vouts matches vout specified in the
                         // input proof
                         let txins = txins.clone();
-                        let correct_txins = txins.filter(
-                            |txin| txin.previous_output.vout == vout
-                        );
+                        let correct_txins = txins.filter(|txin| txin.previous_output.vout == vout);
                         // There should the be only matching transaction
                         match correct_txins.count() {
                             1 => Ok(()),
                             _ => Err(RgbError::MissingVout(input_proof, vout)),
                         }
-                    },
+                    }
                 }
             })
         })
@@ -273,7 +281,7 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
             Some(ref contract) => {
                 true.consensus_encode(s)?;
                 contract.consensus_encode(s)?;
-            },
+            }
             None => {
                 false.consensus_encode(s)?;
             }
@@ -282,10 +290,8 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
             Some(pk) => {
                 true.consensus_encode(s)?;
                 pk.serialize().consensus_encode(s)
-            },
-            None => {
-                false.consensus_encode(s)
             }
+            None => false.consensus_encode(s),
         }
     }
 }
@@ -309,12 +315,22 @@ impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Proof<T> {
             let data: Vec<u8> = Decodable::consensus_decode(d)?;
             match PublicKey::from_slice(&data[..]) {
                 Ok(pk) => original_commitment_pk = Some(pk),
-                Err(_) => return Err(
-                        bitcoin::consensus::encode::Error::ParseFailed("Can't decode public key"))
+                Err(_) => {
+                    return Err(bitcoin::consensus::encode::Error::ParseFailed(
+                        "Can't decode public key",
+                    ))
+                }
             };
         }
 
-        Ok(Proof { inputs, outputs, metadata, bind_to, contract, original_pubkey: original_commitment_pk })
+        Ok(Proof {
+            inputs,
+            outputs,
+            metadata,
+            bind_to,
+            contract,
+            original_commitment_pk,
+        })
     }
 }
 

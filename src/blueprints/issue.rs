@@ -14,7 +14,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use bitcoin::consensus::encode::*;
-use bitcoin::{OutPoint};
+use bitcoin::OutPoint;
 
 use crate::*;
 
@@ -29,7 +29,7 @@ pub struct IssuanceContractBody {
     pub owner_utxo: OutPoint,
 }
 
-impl ContractBody for IssuanceContractBody { }
+impl ContractBody for IssuanceContractBody {}
 
 impl Verify<Self> for IssuanceContractBody {
     // Nothing to check here, so we default to the trait implementation always returning `Ok`
@@ -43,7 +43,7 @@ impl<S: Encoder> Encodable<S> for IssuanceContractBody {
 impl<D: Decoder> Decodable<D> for IssuanceContractBody {
     fn consensus_decode(d: &mut D) -> Result<IssuanceContractBody, Error> {
         Ok(IssuanceContractBody {
-            owner_utxo: Decodable::consensus_decode(d)?
+            owner_utxo: Decodable::consensus_decode(d)?,
         })
     }
 }

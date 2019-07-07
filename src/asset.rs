@@ -15,9 +15,9 @@
 
 //! RGB asset abstractions
 
-use std::io::Cursor;
-use bitcoin::consensus::encode::*;
 use crate::*;
+use bitcoin::consensus::encode::*;
+use std::io::Cursor;
 
 /// RGB asset data structure for in-memory representation of bundled asset issuence contracts and
 /// chain of proofs for each of the known assets
@@ -33,7 +33,11 @@ pub struct Asset<B: ContractBody> {
     pub proof_chains: Vec<Proof<B>>,
 }
 
-impl<B: ContractBody> Asset<B> where B: Encodable<Cursor<Vec<u8>>>, Contract<B>: OnChain<B> {
+impl<B: ContractBody> Asset<B>
+where
+    B: Encodable<Cursor<Vec<u8>>>,
+    Contract<B>: OnChain<B>,
+{
     /// Provides unique asset_id, which is computed as a SHA256d-hash from the consensus-serialized
     /// contract data
     pub fn get_asset_id(&self) -> IdentityHash {
@@ -54,6 +58,10 @@ impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Asset<T> {
         let contract: Contract<T> = Decodable::consensus_decode(d)?;
         let reissues: Vec<Contract<ReissueContractBody>> = Decodable::consensus_decode(d)?;
         let proof_chains: Vec<Proof<T>> = Decodable::consensus_decode(d)?;
-        Ok(Asset {contract, reissues, proof_chains})
+        Ok(Asset {
+            contract,
+            reissues,
+            proof_chains,
+        })
     }
 }

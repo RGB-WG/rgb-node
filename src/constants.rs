@@ -14,7 +14,6 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 ///! Core constant used by the library
-
 use bitcoin_hashes::sha256d;
 
 pub type IdentityHash = sha256d::Hash;

@@ -35,7 +35,7 @@ pub struct ReissueContractBody {
     pub contract: Weak<Contract<Self>>,
 }
 
-impl ContractBody for ReissueContractBody { }
+impl ContractBody for ReissueContractBody {}
 
 impl Verify<Self> for ReissueContractBody {
     /// Function performing verification of the integrity for the RGB contract body.
@@ -92,7 +92,8 @@ impl<S: Encoder> Encodable<S> for ReissueContractBody {
 }
 impl<D: Decoder> Decodable<D> for ReissueContractBody {
     fn consensus_decode(_: &mut D) -> Result<ReissueContractBody, Error> {
-        Ok(ReissueContractBody { contract: Weak::new() })
+        Ok(ReissueContractBody {
+            contract: Weak::new(),
+        })
     }
 }
-

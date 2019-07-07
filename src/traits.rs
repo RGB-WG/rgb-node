@@ -15,10 +15,10 @@
 
 use std::io::Write;
 
-use bitcoin_hashes::{sha256d, Hash};
-use bitcoin::{Transaction, OutPoint};
 use bitcoin::blockdata::{opcodes::all::*, script::Builder, script::Script};
-use secp256k1::{Secp256k1, PublicKey};
+use bitcoin::{OutPoint, Transaction};
+use bitcoin_hashes::{sha256d, Hash};
+use secp256k1::{PublicKey, Secp256k1};
 
 use crate::*;
 use bitcoin::util::contracthash::tweak_key;
@@ -63,22 +63,23 @@ pub trait OnChain<B: ContractBody> {
                                 &Secp256k1::new(),
                                 bitcoin::PublicKey {
                                     compressed: true,
-                                    key: self.get_original_pk().ok_or_else(
-                                        || RgbError::NoOriginalPubKey(self.get_identity_hash())
-                                    )?
+                                    key: self.get_original_pk().ok_or_else(|| {
+                                        RgbError::NoOriginalPubKey(self.get_identity_hash())
+                                    })?,
                                 },
                                 &[
                                     // Adding "RGB" string according to
                                     // <https://github.com/rgb-org/spec/issues/61>
                                     "RGB".as_bytes(),
                                     // Adding contract hash
-                                    &self.get_identity_hash()[..]
-                                ].concat()[..]
-                            ).serialize()
+                                    &self.get_identity_hash()[..],
+                                ]
+                                .concat()[..],
+                            )
+                            .serialize(),
                         )?;
                         engine
-                    }
-                    )[..]
+                    })[..],
                 )
                 .push_opcode(OP_EQUALVERIFY)
                 .push_opcode(OP_CHECKSIG),

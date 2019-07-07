@@ -15,9 +15,9 @@
 
 use std::rc::Weak;
 
-use bitcoin::OutPoint;
 use bitcoin::consensus::encode::*;
 use bitcoin::network::constants::Network;
+use bitcoin::OutPoint;
 
 use crate::*;
 
@@ -74,22 +74,30 @@ pub struct ContractHeader<B: ContractBody> {
 impl<B: ContractBody> ContractHeader<B> {
     /// Validates given proof to have a correct structure matching RGB contract header fields
     pub fn validate_proof<'a>(&self, proof: &'a Proof<B>) -> Result<(), RgbError<'a, B>>
-        where Proof<B>: OnChain<B> {
+    where
+        Proof<B>: OnChain<B>,
+    {
         // Pay-to-contract proofs MUST have original public key (before applying tweak) specified,
         // the rest MUST NOT
-        match (&self.commitment_scheme, proof.original_pubkey) {
-            (CommitmentScheme::OpReturn, Some(_)) =>
-                Err(RgbError::ProofStructureNotMatchingContract(proof)),
-            (CommitmentScheme::PayToContract, None) =>
-                Err(RgbError::NoOriginalPubKey(proof.get_identity_hash())),
-            (CommitmentScheme::NotApplicable, _) =>
-                Err(RgbError::UnsupportedCommitmentScheme(CommitmentScheme::NotApplicable)),
+        match (&self.commitment_scheme, proof.original_commitment_pk) {
+            (CommitmentScheme::OpReturn, Some(_)) => {
+                Err(RgbError::ProofStructureNotMatchingContract(proof))
+            }
+            (CommitmentScheme::PayToContract, None) => {
+                Err(RgbError::NoOriginalPubKey(proof.get_identity_hash()))
+            }
+            (CommitmentScheme::NotApplicable, _) => Err(RgbError::UnsupportedCommitmentScheme(
+                CommitmentScheme::NotApplicable,
+            )),
             _ => Ok(()),
         }
     }
 }
 
-impl<B: ContractBody> Verify<B> for ContractHeader<B> where Contract<B>: OnChain<B> {
+impl<B: ContractBody> Verify<B> for ContractHeader<B>
+where
+    Contract<B>: OnChain<B>,
+{
     /// Function performing verification of the integrity for the RGB contract header for both
     /// on-chain and off-chain parts; including internal consistency, integrity, proper formation of
     /// commitment transactions etc.
@@ -114,14 +122,16 @@ impl<B: ContractBody> Verify<B> for ContractHeader<B> where Contract<B>: OnChain
         // 2. Checking for internal consistency
         // 2.1. We can't require minimum transaction amount to be larger than the total supply
         if self.min_amount > self.total_supply {
-            return Err(RgbError::InternalContractIncosistency(contract,
-                "The requirement for the minimum transaction amount exceeds total asset supply"
+            return Err(RgbError::InternalContractIncosistency(
+                contract,
+                "The requirement for the minimum transaction amount exceeds total asset supply",
             ));
         }
         // 2.2. If we enable reissuance, we need to provide UTXO to spend the reissued tokens
         if self.reissuance_enabled && self.reissuance_utxo.is_none() {
-            return Err(RgbError::InternalContractIncosistency(contract,
-                "Asset reissuance is enabled, but no reissuance UTXO is provided"
+            return Err(RgbError::InternalContractIncosistency(
+                contract,
+                "Asset reissuance is enabled, but no reissuance UTXO is provided",
             ));
         }
 
@@ -156,7 +166,7 @@ impl<B: ContractBody, S: Encoder> Encodable<S> for ContractHeader<B> {
             Some(hops) => {
                 true.consensus_encode(s)?;
                 hops.consensus_encode(s)?;
-            },
+            }
             None => false.consensus_encode(s)?,
         }
         self.reissuance_enabled.consensus_encode(s)?;
@@ -164,14 +174,14 @@ impl<B: ContractBody, S: Encoder> Encodable<S> for ContractHeader<B> {
             Some(out) => {
                 true.consensus_encode(s)?;
                 out.consensus_encode(s)?;
-            },
+            }
             None => false.consensus_encode(s)?,
         }
         match self.burn_address {
             Some(ref addr) => {
                 true.consensus_encode(s)?;
                 addr.consensus_encode(s)?;
-            },
+            }
             None => false.consensus_encode(s)?,
         }
         let commitment_scheme_u: u8 = self.commitment_scheme.clone().into();
@@ -227,7 +237,7 @@ impl<B: ContractBody, D: Decoder> Decodable<D> for ContractHeader<B> {
             _ => Some(string),
         };
         let commitment_scheme_id: u8 = Decodable::consensus_decode(d)?;
-        let commitment_scheme= CommitmentScheme::from(commitment_scheme_id);
+        let commitment_scheme = CommitmentScheme::from(commitment_scheme_id);
         let blueprint_type_id: u16 = Decodable::consensus_decode(d)?;
         let blueprint_type = BlueprintType::from(blueprint_type_id);
 
@@ -246,7 +256,7 @@ impl<B: ContractBody, D: Decoder> Decodable<D> for ContractHeader<B> {
             reissuance_utxo,
             burn_address,
             commitment_scheme,
-            blueprint_type
+            blueprint_type,
         })
     }
 }
