@@ -77,7 +77,7 @@ impl<B: ContractBody> ContractHeader<B> {
         where Proof<B>: OnChain<B> {
         // Pay-to-contract proofs MUST have original public key (before applying tweak) specified,
         // the rest MUST NOT
-        match (&self.commitment_scheme, proof.original_commitment_pk) {
+        match (&self.commitment_scheme, proof.original_pubkey) {
             (CommitmentScheme::OpReturn, Some(_)) =>
                 Err(RgbError::ProofStructureNotMatchingContract(proof)),
             (CommitmentScheme::PayToContract, None) =>

@@ -54,7 +54,7 @@ pub struct Proof<T: ContractBody> {
 
     /// Original public key used for signing the transaction output.
     /// For pay-to-contract schemes only.
-    pub original_commitment_pk: Option<PublicKey>,
+    pub original_pubkey: Option<PublicKey>,
 }
 
 impl<B: ContractBody> Proof<B> where Proof<B>: OnChain<B> {
@@ -129,7 +129,7 @@ impl<B: ContractBody> OnChain<B> for Proof<B> where B: Encodable<Cursor<Vec<u8>>
     /// Returns untweaked public key if the pay-to-contract commitment scheme is used in the
     /// RGB contract; `None` otherwise
     fn get_original_pk(&self) -> Option<PublicKey> {
-        self.original_commitment_pk
+        self.original_pubkey
     }
 }
 
@@ -278,7 +278,7 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Proof<T> {
                 false.consensus_encode(s)?;
             }
         }
-        match self.original_commitment_pk {
+        match self.original_pubkey {
             Some(pk) => {
                 true.consensus_encode(s)?;
                 pk.serialize().consensus_encode(s)
@@ -314,6 +314,20 @@ impl<D: Decoder, T: Decodable<D> + ContractBody> Decodable<D> for Proof<T> {
             };
         }
 
-        Ok(Proof { inputs, outputs, metadata, bind_to, contract, original_commitment_pk })
+        Ok(Proof { inputs, outputs, metadata, bind_to, contract, original_pubkey: original_commitment_pk })
     }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::*;
+
+    /*
+    #![test]
+    fn simple_issue_test() {
+        let issue_contract = Contract {
+
+        }
+    }
+    */
 }

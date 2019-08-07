@@ -129,7 +129,7 @@ pub struct Contract<B: ContractBody> {
 
     /// Original public key used for signing the contract. Used for pay-to-contract schemes only.
     /// Serialized, but not a part of the commitment hash.
-    pub original_commitment_pk: Option<PublicKey>,
+    pub original_pubkey: Option<PublicKey>,
 
     /// Contract must weakly reference it's root proof. Since it's unknown during deserealization,
     /// it is defined as optional; however it must contain value when the contract is used,
@@ -171,7 +171,7 @@ impl<B: ContractBody> OnChain<B> for Contract<B> where B: Encodable<Cursor<Vec<u
 
     /// Returns untweaked public key if the pay-to-contract commitment scheme is used.
     fn get_original_pk(&self) -> Option<PublicKey> {
-        self.original_commitment_pk
+        self.original_pubkey
     }
 }
 
@@ -219,7 +219,7 @@ impl<S: Encoder, T: Encodable<S> + ContractBody> Encodable<S> for Contract<T> {
         // We do not need to serialize a flag whether `original_commitment_pk` is present since
         // its presence is defined by the `commitment_scheme` field in the contract header,
         // which is already serialized
-        match self.original_commitment_pk {
+        match self.original_pubkey {
             Some(pk) => pk.serialize().consensus_encode(s),
             None => Ok(()),
         }
@@ -243,6 +243,6 @@ impl<D: Decoder, B: Decodable<D> + ContractBody> Decodable<D> for Contract<B> {
             _ => ()
         };
 
-        Ok(Contract{ header, body, original_commitment_pk, root_proof: None })
+        Ok(Contract{ header, body, original_pubkey: original_commitment_pk, root_proof: None })
     }
 }
