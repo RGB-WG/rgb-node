@@ -16,6 +16,7 @@ env_logger = "~0.7"
 toml = "~0.5"
 serde = "~1.0"
 serde_derive = "~1.0"
+rpassword = "~4.0"
 
 [dependencies.clap]
 # Fix this by switching to the crate released version after 2.34+
