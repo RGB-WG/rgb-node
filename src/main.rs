@@ -1,10 +1,11 @@
 #[macro_use] extern crate clap;
 extern crate bitcoin_wallet;
 
-use std::{io, fs::File, io::prelude::*, thread, env, fmt::Display, str::FromStr, process::exit};
-use clap::ArgMatches;
+use std::{io, fs::File, io::prelude::*};
+use bitcoin::util::bip32::{ExtendedPubKey, ChildNumber};
 use bitcoin::network::constants::Network;
-use bitcoin_wallet::account::*;
+use bitcoin::Address;
+use bitcoin_wallet::{account::*, context::*};
 
 enum Verbosity {
     Silent = 0,
@@ -58,8 +59,8 @@ impl Error {
         return Error(String::from(str))
     }
 }
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
+impl<E: ToString> From<E> for Error {
+    fn from(err: E) -> Self {
         Error(err.to_string())
     }
 }
@@ -68,6 +69,11 @@ impl Into<io::Error> for Error {
         io::Error::new(io::ErrorKind::Other, self.0)
     }
 }
+
+
+const HD_PURPOSE: u32 = 0x84;
+const HD_COIN: u32 = 0x524742; // Base16 encoding for "RGB"
+
 
 fn main() -> io::Result<()> {
     let matches = clap_app!(lbx =>
@@ -80,6 +86,12 @@ fn main() -> io::Result<()> {
             (about: "creates a new wallet and stores it in WALLET_FILE; prints extended public key to STDOUT")
             (@arg WALLET_FILE: +required "A file which will contain the wallet; must not exist")
         )
+        (@subcommand ("address-derive") =>
+            (about: "returns an address for a given XPUBKEY and HD path")
+            (@arg XPUBKEY: +required "Extended public key")
+            (@arg ACCOUNT: +required "Number of account to use")
+            (@arg ADDR: +required "Index to use for the address under the acocunt")
+        )
     ).get_matches();
 
     unsafe {
@@ -88,6 +100,11 @@ fn main() -> io::Result<()> {
 
     if let Err(err) = match matches.subcommand() {
         ("wallet-create", Some(sm)) => wallet_create(sm.value_of("WALLET_FILE").unwrap()),
+        ("address-derive", Some(sm)) => address_derive(
+            value_t_or_exit!(sm, "XPUBKEY", ExtendedPubKey),
+            value_t_or_exit!(sm, "ACCOUNT", u32),
+            value_t_or_exit!(sm, "ADDR", u32),
+        ),
         _ => Ok(()),
     } {
         Err(err.into())
@@ -116,5 +133,18 @@ fn wallet_create(filename: &str) -> Result<(), Error> {
 
     let mut file = File::create(filename)?;
     file.write_all(master.encrypted())?;
+    Ok(())
+}
+
+fn address_derive(xpubkey: ExtendedPubKey, acc_i: u32, addr_i: u32) -> Result<(), Error> {
+    vprintln!(Laconic, "Generating new address from account #{} and index {}", acc_i, addr_i);
+    let ctx = SecpContext::new();
+    let xpubkey = ctx.public_child(&xpubkey, ChildNumber::Normal{index: HD_PURPOSE})?;
+    let xpubkey = ctx.public_child(&xpubkey, ChildNumber::Normal{index: HD_COIN})?;
+    let xpubkey = ctx.public_child(&xpubkey, ChildNumber::Normal{index: acc_i})?;
+    let xpubkey = ctx.public_child(&xpubkey, ChildNumber::Normal{index: 0})?;
+    let xpubkey = ctx.public_child(&xpubkey, ChildNumber::Normal{index: addr_i})?;
+    vprintln!(Verbose, "- the generated pubkey in compressed format:");
+    println!("{}", Address::p2wpkh(&xpubkey.public_key, Network::Bitcoin));
     Ok(())
 }
