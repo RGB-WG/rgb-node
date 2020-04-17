@@ -2,24 +2,30 @@
 name = "kaleidoscope"
 version = "0.2.0"
 license = "MIT"
-authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>", "Alekos Filini <@afilini>"]
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>", "Alekos Filini <alekos.filini@gmail.com>"]
 description = "Command-line bitcoin and RGB wallet"
-keywords = ["bitcoin", "lightning", "blockchain", "layer-2", "cryptography", "rgb"]
+keywords = ["bitcoin", "lightning", "layer-2", "crypto", "rgb"]
 readme = "README.md"
 edition = "2018"
 
 [dependencies]
-bitcoin-wallet = "~1.0"
 bitcoin = "~0.21"
-log = "~0.4"
-env_logger = "~0.7"
-toml = "~0.5"
+bitcoin-wallet = "~1.1"
 serde = "~1.0"
 serde_derive = "~1.0"
 rpassword = "~4.0"
+dotenv = "~0.15"
+clap = { git = "https://github.com/clap-rs/clap.git" }
+chrono = "~0.4"
+derive_wrapper = "~0.1"
+async-trait = "~0.1"
+log = { version = "~0.4", features = ["max_level_trace", "release_max_level_debug"] }
+env_logger = "~0.7"
+diesel = { version = "~1.4", features = ["sqlite", "uuid", "numeric", "chrono"] }
+tokio = { version = "~0.2", features = ["full"] }
+futures = "~0.3"
+zmq = "~0.9"
 
-[dependencies.clap]
-# Fix this by switching to the crate released version after 2.34+
-git = "https://github.com/clap-rs/clap.git"
-branch = "master"
-default-features = true
+[dependencies.lnpbp]
+git = "https://github.com/lnp-bp/rust-lnpbp"
+features = ["use-tor", "use-tokio", "use-log", "use-daemons"]
