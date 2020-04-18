@@ -18,7 +18,10 @@ dotenv = "~0.15"
 clap = { git = "https://github.com/clap-rs/clap.git" }
 chrono = "~0.4"
 derive_wrapper = "~0.1"
+num-traits = "0.2.11"
+num-derive = "0.3.0"
 async-trait = "~0.1"
+rand = "~0.7"
 log = { version = "~0.4", features = ["max_level_trace", "release_max_level_debug"] }
 env_logger = "~0.7"
 diesel = { version = "~1.4", features = ["sqlite", "uuid", "numeric", "chrono"] }

@@ -23,11 +23,27 @@ use crate::constants::*;
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
 pub enum Command {
+    /// Lists all known accounts
+    List,
+
     /// Creates a new wallet and stores it in WALLET_FILE; prints extended public key to STDOUT
     Create {
-        /// A file which will contain the wallet; must not exist
-        #[clap(default_value = WALLET_FILE)]
-        file: PathBuf
+        /// Account name
+        name: String,
+
+        /// Additional account information
+        description: Option<String>
+    },
+
+    Import {
+        /// Wallet file to import
+        wallet: PathBuf,
+
+        /// Account name
+        name: String,
+
+        /// Additional account information
+        description: Option<String>
     },
 
     /// Returns an address for a given XPUBKEY and HD path

@@ -26,6 +26,7 @@ use bitcoin_wallet::{account::*, context::*};
 use super::*;
 use crate::constants::*;
 use crate::error::BootstrapError;
+use crate::accounts::KeyringManager;
 
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -63,7 +64,7 @@ impl Runtime {
         api_socket.bind(&config.bpd_api)
             .map_err(|e| BootstrapError::PublishingError(e))?;
 
-        debug!("Opening push notification socket to bpd on {} ...", config.bpd_subscr);
+        debug!("Subscribing to bpd notifications on {} ...", config.bpd_subscr);
         let sub_socket = context.socket(zmq::SUB)
             .map_err(|e| BootstrapError::SubscriptionError(e))?;
         sub_socket.connect(&config.bpd_subscr)
@@ -71,7 +72,9 @@ impl Runtime {
         sub_socket.set_subscribe("".as_bytes())
             .map_err(|e| BootstrapError::SubscriptionError(e))?;
 
-        debug!("Console is launched");
+
+
+        debug!("Initialization is completed");
         Ok(Self {
             config,
             context,
