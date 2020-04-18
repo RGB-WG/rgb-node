@@ -12,18 +12,5 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-pub mod fungible;
-pub mod collectible;
-pub mod identity;
+pub enum Error { }
 
-pub mod marker;
-mod coordination;
-
-pub use coordination::*;
-
-
-pub mod managers {
-    pub struct KeyringManager {}
-
-    pub trait KeyringStore {}
-}

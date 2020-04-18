@@ -12,18 +12,11 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-pub mod fungible;
-pub mod collectible;
-pub mod identity;
+use super::Allocation;
 
-pub mod marker;
-mod coordination;
+pub trait Strategy {
+    fn select(&self, allocations: dyn Iterator<Item=Allocation>) -> Vec<Allocation>;
+}
+pub struct DefaultStrategy {
 
-pub use coordination::*;
-
-
-pub mod managers {
-    pub struct KeyringManager {}
-
-    pub trait KeyringStore {}
 }

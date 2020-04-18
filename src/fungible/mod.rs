@@ -11,19 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+pub mod invoice;
+mod error;
+mod stock;
+pub mod selection;
 
-pub mod fungible;
-pub mod collectible;
-pub mod identity;
+pub use invoice::Invoice;
+pub use error::Error;
+pub use stock::*;
 
-pub mod marker;
-mod coordination;
-
-pub use coordination::*;
-
-
-pub mod managers {
-    pub struct KeyringManager {}
-
-    pub trait KeyringStore {}
-}
+pub type Amount = u64;

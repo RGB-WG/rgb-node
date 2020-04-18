@@ -10,20 +10,3 @@
 // You should have received a copy of the MIT License
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
-
-
-pub mod fungible;
-pub mod collectible;
-pub mod identity;
-
-pub mod marker;
-mod coordination;
-
-pub use coordination::*;
-
-
-pub mod managers {
-    pub struct KeyringManager {}
-
-    pub trait KeyringStore {}
-}

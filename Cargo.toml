@@ -1,9 +1,21 @@
 [package]
-name = "rgb-sdk"
+name = "rgb"
 version = "0.1.0"
+license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "RGB standard library"
+keywords = ["bitcoin", "lightning", "layer-2", "crypto", "rgb"]
+readme = "README.md"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+derive_wrapper = "~0.1"
+# TODO: Move this dependency to LNP/BP core library
+lightning-invoice = "~0.2"
+
+[dependencies.lnpbp]
+git = "https://github.com/lnp-bp/rust-lnpbp"
+branch = "feat-wallet"
+features = ["use-tor", "use-lightning", "use-rgb"]
