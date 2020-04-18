@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::collections::HashMap;
+use std::{str::FromStr, collections::HashMap};
 use chrono::NaiveDateTime;
 use lnpbp::{bp, bitcoin, bitcoin::secp256k1, rgb::*};
 use lnpbp::bitcoin::{OutPoint};
@@ -25,12 +25,16 @@ type HistoryGraph = ();
 type Signature = ();
 
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub enum Supply {
     Unknown,
     PartiallyKnown(Amount),
     Known(Amount)
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub struct Stock {
     pub ticker: String,
     pub title: String,
@@ -74,27 +78,42 @@ impl Iterator for IssueIter {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub enum NextIssuance {
     Prohibited,
     Unknown,
     Known(Box<Issue>)
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub struct Issue {
     pub supply: Amount,
     pub next: NextIssuance,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub struct Allocation {
     pub amount: Amount,
     pub seal: OutPoint,
     pub payment: Option<Payment>,
 }
 
+impl FromStr for Allocation {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        unimplemented!()
+    }
+}
+
 impl Allocation {
 }
 
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub enum Payer {
     BitcoinPubkey(bitcoin::PublicKey),
     BitcoinMultisig(Vec<bitcoin::PublicKey>, u8),
@@ -103,6 +122,8 @@ pub enum Payer {
     LightningNode(secp256k1::PublicKey),
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub struct Payment {
     pub date: NaiveDateTime,
     pub payer: Payer,

@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
+use std::str::FromStr;
 use lnpbp::{bp, rgb};
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lightning_invoice::Invoice as LightningInvoice;
@@ -21,6 +22,8 @@ use crate::marker;
 
 
 /// API endpoint for extra-transaction proof transfer
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub enum Endpoint {
     /// RGB server (non-anonymizing personal server or on-line wallet)
     RGB(InetSocketAddr),
@@ -33,6 +36,8 @@ pub enum Endpoint {
 }
 
 /// Definition of where the transferred asset have to be assigned to
+#[derive(Clone, Debug, PartialEq, Display)]
+#[display_from(Debug)]
 pub enum SealDefinition {
     /// Use existing UTXO (but blinded, so we don't know which is it)
     ExistingUtxo(bp::blind::OutpointHash),
@@ -44,6 +49,8 @@ pub enum SealDefinition {
 }
 
 /// Fungible invoice data
+#[derive(Clone, Debug, PartialEq, Display)]
+#[display_from(Debug)]
 pub struct Invoice {
     pub contract_id: rgb::ContractId,
     pub assign_to: SealDefinition,
@@ -53,6 +60,13 @@ pub struct Invoice {
     /// Requires sender to provide accessory information on commitment
     /// transaction ids
     pub provide_txids: bool,
+}
+
+impl FromStr for Invoice {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        unimplemented!()
+    }
 }
 
 
