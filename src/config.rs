@@ -84,7 +84,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
-            network: lnpbp::bitcoin::Network::Signet,
+            network: lnpbp::bitcoin::Network::Testnet,
             msgbus_peer_api_addr: MSGBUS_PEER_API_ADDR.to_string(),
             msgbus_peer_sub_addr: MSGBUS_PEER_PUSH_ADDR.to_string()
         }

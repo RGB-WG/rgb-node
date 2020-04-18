@@ -13,7 +13,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 use clap::Clap;
 use lnpbp::bitcoin::{TxIn};
 use lnpbp::{bp, rgb};
@@ -22,16 +22,34 @@ use ::rgb::fungible;
 
 /// Defines information required to generate bitcoin transaction output from
 /// command-line argument
+#[derive(Clone, Debug, Display)]
+#[display_from(Debug)]
 pub struct Output {
     pub amount: bitcoin::Amount,
     pub lock: bp::PubkeyScriptSource,
 }
 
+impl FromStr for Output {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        unimplemented!()
+    }
+}
+
 /// Defines information required to generate bitcoin transaction input from
 /// command-line argument
+#[derive(Clone, Debug, Display)]
+#[display_from(Debug)]
 pub struct Input {
     pub txin: TxIn,
     pub unlock: bp::PubkeyScriptSource,
+}
+
+impl FromStr for Input {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        unimplemented!()
+    }
 }
 
 
