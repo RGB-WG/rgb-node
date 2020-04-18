@@ -47,7 +47,7 @@ pub struct Opts {
     pub bpd_push_socket_str: String,
 
     /// Network to use
-    #[clap(global = true, short, long, default_value="Bitcoin", env="KALEIDOSCOPE_NETWORK")]
+    #[clap(global = true, short, long, default_value="Testnet", env="KALEIDOSCOPE_NETWORK")]
     pub network: lnpbp::bitcoin::Network,
 
     #[clap(subcommand)]

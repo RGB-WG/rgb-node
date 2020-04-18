@@ -15,7 +15,7 @@
 
 use std::{path::PathBuf, str::FromStr};
 use clap::Clap;
-use lnpbp::bitcoin::{TxIn};
+use lnpbp::bitcoin::{TxIn, OutPoint};
 use lnpbp::{bp, rgb};
 use ::rgb::fungible;
 
@@ -63,25 +63,63 @@ pub enum Command {
         owned: bool
     },
 
+    /// Creates a new asset
+    Issue {
+        /// Limit for the total supply (by default equals to the `amount`
+        #[clap(short, long)]
+        supply: Option<rgb::data::Amount>,
+
+        /// Enables secondary issuance/inflation; takes UTXO seal definition
+        /// as its value
+        #[clap(short, long, requires("supply"))]
+        inflatable: Option<OutPoint>,
+
+        /// Precision, i.e. number of digits reserved for fractional part
+        #[clap(short, long, default_value="0")]
+        precision: u8,
+
+        /// Dust limit for asset transfers; defaults to no limit
+        #[clap(short="D", long, default_value="0")]
+        dust_limit: rgb::data::Amount,
+
+        /// Filename to save asset genesis to; defaults to `ticker.rgb`
+        #[clap(short, long)]
+        output: Option<PathBuf>,
+
+        /// Asset ticker (will be capitalized)
+        ticker: String,
+
+        /// Asset title
+        title: String,
+
+        /// Asset description
+        #[clap(short, long)]
+        description: Option<String>,
+
+        /// Asset allocation, in form of <amount>@<txid>:<vout>
+        #[clap(min_values=1)]
+        allocate: Vec<fungible::Allocation>,
+    },
+
     /// Transfers some asset to another party
     Pay {
-        /// Use custom commitment output
-        #[clap(short, long)]
-        commit_into: Option<Output>,
+        /// Use custom commitment output for generated witness transaction
+        #[clap(long)]
+        commit_txout: Option<Output>,
 
-        /// Adds output
-        #[clap(short, long)]
+        /// Adds output(s) to generated witness transaction
+        #[clap(long)]
         txout: Vec<Output>,
 
-        /// Adds input
-        #[clap(short, long)]
+        /// Adds input(s) to generated witness transaction
+        #[clap(long)]
         txin: Vec<Input>,
 
         /// Allocates other assets to custom outputs
         #[clap(short, long)]
         allocate: Vec<fungible::Allocation>,
 
-        /// Saves transaction to a file instead of publishing it
+        /// Saves witness transaction to a file instead of publishing it
         #[clap(short, long)]
         transaction: Option<PathBuf>,
 
