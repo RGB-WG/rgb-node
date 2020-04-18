@@ -26,7 +26,6 @@
 #![feature(in_band_lifetimes)]
 #![feature(repr_transparent)]
 
-extern crate bitcoin;
 #[macro_use]
 extern crate tokio;
 extern crate futures;
@@ -43,12 +42,16 @@ extern crate log;
 extern crate env_logger;
 extern crate dotenv;
 extern crate chrono;
+
+extern crate bitcoin;
 extern crate lnpbp;
+extern crate rgb;
 
 
 mod constants;
 mod error;
 mod config;
+mod commands;
 mod runtime;
 
 use std::env;

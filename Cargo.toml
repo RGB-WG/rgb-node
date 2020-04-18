@@ -25,7 +25,8 @@ diesel = { version = "~1.4", features = ["sqlite", "uuid", "numeric", "chrono"] 
 tokio = { version = "~0.2", features = ["full"] }
 futures = "~0.3"
 zmq = "~0.9"
+rgb = { git = "https://github.com/rgb-org/rgb-sdk" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
-features = ["use-tor", "use-tokio", "use-log", "use-daemons"]
+features = ["use-tor", "use-tokio", "use-log", "use-daemons", "use-rgb"]

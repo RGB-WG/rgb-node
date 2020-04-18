@@ -1,4 +1,11 @@
-```bash
+```shell script
+kaleidoscope asset list
+kaleidoscope asset add <file-with-history>
+kaleidoscope send
+```
+
+
+```console
 $ kaleidoscope issue --interactive
 $ kaleidoscope issue [--signet] [-r --reissue-enable] [-p --precision 0] [-d --dust-limit 1] 10000 usdt "USD Tether" "Description"
 ```

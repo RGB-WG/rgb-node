@@ -13,12 +13,10 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::path::PathBuf;
 use clap::Clap;
 
-use bitcoin::util::bip32::ExtendedPubKey;
-
 use crate::constants::*;
+use crate::commands::*;
 
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -40,39 +38,20 @@ pub struct Opts {
     pub verbose: u8,
 
     /// IPC connection string for bp daemon API
-    #[clap(global = true, short = "w", long = "queryd-api",
-      default_value = MSGBUS_PEER_API_ADDR, env="KALEIDOSCOPE_BPD_API_ADDR")]
+    #[clap(global = true, short="b", long="bpd-api", default_value=MSGBUS_PEER_API_ADDR, env="KALEIDOSCOPE_BPD_API")]
     pub bpd_api_socket_str: String,
 
     /// IPC connection string for bp daemon push notifications on transaction
     /// updates
-    #[clap(global = true, short = "W", long = "queryd-push",
-      default_value = MSGBUS_PEER_PUSH_ADDR, env="KALEIDOSCOPE_BPD_PUSH_ADDR")]
+    #[clap(global = true, short="B", long="bpd-push", default_value=MSGBUS_PEER_PUSH_ADDR, env="KALEIDOSCOPE_BPD_PUSH")]
     pub bpd_push_socket_str: String,
+
+    /// Network to use
+    #[clap(global = true, short, long, default_value="Bitcoin", env="KALEIDOSCOPE_NETWORK")]
+    pub network: lnpbp::bitcoin::Network,
 
     #[clap(subcommand)]
     pub command: Command
-}
-
-#[derive(Clap, Clone, Debug, Display)]
-#[display_from(Debug)]
-pub enum Command {
-    /// Creates a new wallet and stores it in WALLET_FILE; prints extended public key to STDOUT
-    WalletCreate {
-        /// A file which will contain the wallet; must not exist
-        #[clap(default_value = WALLET_FILE)]
-        file: PathBuf
-    },
-
-    /// Returns an address for a given XPUBKEY and HD path
-    AddressDerive {
-        /// Extended public key
-        xpubkey: ExtendedPubKey,
-        /// Number of account to use
-        account: u32,
-        /// Index to use for the address under the account
-        address: u32,
-    }
 }
 
 
@@ -83,6 +62,7 @@ pub enum Command {
 #[display_from(Debug)]
 pub struct Config {
     pub verbose: u8,
+    pub network: lnpbp::bitcoin::Network,
     pub msgbus_peer_api_addr: String,
     pub msgbus_peer_sub_addr: String,
 }
@@ -91,6 +71,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Self {
             verbose: opts.verbose,
+            network: opts.network,
             msgbus_peer_api_addr: opts.bpd_api_socket_str,
             msgbus_peer_sub_addr: opts.bpd_push_socket_str,
 
@@ -103,6 +84,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
+            network: lnpbp::bitcoin::Network::Signet,
             msgbus_peer_api_addr: MSGBUS_PEER_API_ADDR.to_string(),
             msgbus_peer_sub_addr: MSGBUS_PEER_PUSH_ADDR.to_string()
         }
