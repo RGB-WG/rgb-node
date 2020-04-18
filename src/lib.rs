@@ -12,6 +12,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
+#[macro_use]
+extern crate derive_wrapper;
+extern crate chrono;
+extern crate lightning_invoice;
+extern crate lnpbp;
+
+
 pub mod fungible;
 pub mod collectible;
 pub mod identity;

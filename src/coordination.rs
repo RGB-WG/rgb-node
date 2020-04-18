@@ -17,6 +17,11 @@ use lnpbp::bitcoin::{Transaction, TxIn, TxOut, OutPoint};
 use lnpbp::rgb::*;
 
 
+// Temporary types
+type MultimessageCommitment = ();
+type UtxoSeal = ();
+
+
 pub trait OwnershipProvider {
     fn can_spend(&self, script: PubkeyScript) -> bool { unimplemented!() }
 }
