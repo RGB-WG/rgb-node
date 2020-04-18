@@ -13,8 +13,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-pub const MSGBUS_PEER_API_ADDR: &str = "ipc://bp.queryd.api";
-pub const MSGBUS_PEER_PUSH_ADDR: &str = "ipc://bp.queryd.push";
+pub const BPD_API_ADDR: &str = "ipc://bp.queryd.api";
+pub const BPD_PUSH_ADDR: &str = "ipc://bp.queryd.push";
 
 pub const WALLET_FILE: &str = "./wallet.dat";
 

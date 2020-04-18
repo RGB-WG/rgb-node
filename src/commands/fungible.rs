@@ -82,7 +82,8 @@ pub enum Command {
         #[clap(short="D", long, default_value="0")]
         dust_limit: rgb::data::Amount,
 
-        /// Filename to save asset genesis to; defaults to `ticker.rgb`
+        /// Filename to export asset genesis to;
+        /// saves into data dir if not provided
         #[clap(short, long)]
         output: Option<PathBuf>,
 

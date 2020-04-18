@@ -57,16 +57,16 @@ impl Runtime {
     pub async fn init(config: Config) -> Result<Self, BootstrapError> {
         let context = zmq::Context::new();
 
-        debug!("Opening API socket to bpd on {} ...", config.msgbus_peer_api_addr);
+        debug!("Opening API socket to bpd on {} ...", config.bpd_api);
         let api_socket = context.socket(zmq::REQ)
             .map_err(|e| BootstrapError::PublishingError(e))?;
-        api_socket.bind(&config.msgbus_peer_api_addr)
+        api_socket.bind(&config.bpd_api)
             .map_err(|e| BootstrapError::PublishingError(e))?;
 
-        debug!("Opening push notification socket to bpd on {} ...", config.msgbus_peer_sub_addr);
+        debug!("Opening push notification socket to bpd on {} ...", config.bpd_subscr);
         let sub_socket = context.socket(zmq::SUB)
             .map_err(|e| BootstrapError::SubscriptionError(e))?;
-        sub_socket.connect(&config.msgbus_peer_sub_addr)
+        sub_socket.connect(&config.bpd_subscr)
             .map_err(|e| BootstrapError::SubscriptionError(e))?;
         sub_socket.set_subscribe("".as_bytes())
             .map_err(|e| BootstrapError::SubscriptionError(e))?;
@@ -131,9 +131,9 @@ impl TryService for Runtime {
 impl Drop for Runtime {
     fn drop(&mut self) {
         trace!("Shutting down sockets");
-        self.api_socket.disconnect(&self.config.msgbus_peer_api_addr)
+        self.api_socket.disconnect(&self.config.bpd_api)
             .unwrap_or_else(|err| error!("Error disconnecting message bus API socket: {}", err));
-        self.sub_socket.disconnect(&self.config.msgbus_peer_sub_addr)
+        self.sub_socket.disconnect(&self.config.bpd_subscr)
             .unwrap_or_else(|err| error!("Error disconnecting message bus push socket: {}", err));
     }
 }

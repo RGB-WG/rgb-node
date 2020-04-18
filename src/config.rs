@@ -13,6 +13,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
+use std::path::PathBuf;
 use clap::Clap;
 
 use crate::constants::*;
@@ -28,26 +29,26 @@ use crate::commands::*;
     about =  "Kaleidoscope: RGB command-line wallet utility"
 )]
 pub struct Opts {
-    /// Path and name of the configuration file
-    #[clap(global = true, short = "c", long = "config", default_value = "./kaleidoscope.toml")]
-    pub config: String,
-
     /// Sets verbosity level; can be used multiple times to increase verbosity
-    #[clap(global = true, short = "v", long = "verbose",
-      min_values = 0, max_values = 4, parse(from_occurrences))]
+    #[clap(global=true, short, long,
+      min_values=0, max_values=4, parse(from_occurrences))]
     pub verbose: u8,
 
+    /// Data directory for keeping information about keyrings, assets etc
+    #[clap(global=true, long, default_value="~/.kaleidoscope", env="KALEIDOSCOPE_DATA_DIR")]
+    pub data_dir: PathBuf,
+
     /// IPC connection string for bp daemon API
-    #[clap(global = true, short="b", long="bpd-api", default_value=MSGBUS_PEER_API_ADDR, env="KALEIDOSCOPE_BPD_API")]
-    pub bpd_api_socket_str: String,
+    #[clap(global=true, long, default_value=BPD_API_ADDR, env="KALEIDOSCOPE_BPD_API")]
+    pub bpd_api: String,
 
     /// IPC connection string for bp daemon push notifications on transaction
     /// updates
-    #[clap(global = true, short="B", long="bpd-push", default_value=MSGBUS_PEER_PUSH_ADDR, env="KALEIDOSCOPE_BPD_PUSH")]
-    pub bpd_push_socket_str: String,
+    #[clap(global=true, long, default_value=BPD_PUSH_ADDR, env="KALEIDOSCOPE_BPD_SUBSCR")]
+    pub bpd_subscr: String,
 
     /// Network to use
-    #[clap(global = true, short, long, default_value="Testnet", env="KALEIDOSCOPE_NETWORK")]
+    #[clap(global=true, short, long, default_value="Testnet", env="KALEIDOSCOPE_NETWORK")]
     pub network: lnpbp::bitcoin::Network,
 
     #[clap(subcommand)]
@@ -63,8 +64,8 @@ pub struct Opts {
 pub struct Config {
     pub verbose: u8,
     pub network: lnpbp::bitcoin::Network,
-    pub msgbus_peer_api_addr: String,
-    pub msgbus_peer_sub_addr: String,
+    pub bpd_api: String,
+    pub bpd_subscr: String,
 }
 
 impl From<Opts> for Config {
@@ -72,8 +73,8 @@ impl From<Opts> for Config {
         Self {
             verbose: opts.verbose,
             network: opts.network,
-            msgbus_peer_api_addr: opts.bpd_api_socket_str,
-            msgbus_peer_sub_addr: opts.bpd_push_socket_str,
+            bpd_api: opts.bpd_api,
+            bpd_subscr: opts.bpd_subscr,
 
             ..Config::default()
         }
@@ -85,8 +86,8 @@ impl Default for Config {
         Self {
             verbose: 0,
             network: lnpbp::bitcoin::Network::Testnet,
-            msgbus_peer_api_addr: MSGBUS_PEER_API_ADDR.to_string(),
-            msgbus_peer_sub_addr: MSGBUS_PEER_PUSH_ADDR.to_string()
+            bpd_api: BPD_API_ADDR.to_string(),
+            bpd_subscr: BPD_PUSH_ADDR.to_string()
         }
     }
 }
