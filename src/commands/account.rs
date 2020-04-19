@@ -14,11 +14,24 @@
 
 
 use std::path::PathBuf;
+use regex::Regex;
 use clap::Clap;
-use lnpbp::bitcoin::util::bip32::ExtendedPubKey;
+use lnpbp::bitcoin::util::bip32::DerivationPath;
 
 use crate::constants::*;
 
+
+fn name_validator(name: String) -> Result<(), String> {
+    let re = Regex::new(r"^\w[\w\d_\-]{0,23}$").expect("Regex parse failure");
+    if !re.is_match(&name) {
+        Err("Account name must be <24 chars, contain no spaces, consist only of \
+            alphanumeric characters, dashes and underscores and start with \
+            a letter\
+            ".to_string())
+    } else {
+        Ok(())
+    }
+}
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -26,33 +39,16 @@ pub enum Command {
     /// Lists all known accounts
     List,
 
-    /// Creates a new wallet and stores it in WALLET_FILE; prints extended public key to STDOUT
+    /// Creates a new account under current keyring
     Create {
-        /// Account name
+        /// Account tag name (must not contain spaces)
+        #[clap(validator=name_validator)]
         name: String,
 
-        /// Additional account information
+        /// Derivation path
+        derivation_path: DerivationPath,
+
+        /// Additional account information, like purpose
         description: Option<String>
-    },
-
-    Import {
-        /// Wallet file to import
-        wallet: PathBuf,
-
-        /// Account name
-        name: String,
-
-        /// Additional account information
-        description: Option<String>
-    },
-
-    /// Returns an address for a given XPUBKEY and HD path
-    Derive {
-        /// Extended public key
-        xpubkey: ExtendedPubKey,
-        /// Number of account to use
-        account: u32,
-        /// Index to use for the address under the account
-        address: u32,
-    },
+    }
 }

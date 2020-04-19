@@ -41,6 +41,7 @@ extern crate async_trait;
 extern crate log;
 extern crate env_logger;
 extern crate dotenv;
+extern crate regex;
 extern crate chrono;
 extern crate rand;
 extern crate rpassword;
@@ -111,9 +112,12 @@ async fn main() -> Result<(), Error> {
     debug!("Parsing and processing a command");
     match opts.command {
         Command::Account(subcommand) => match subcommand {
-            account::Command::List => runtime.account_list(),
+            account::Command::List =>
+                runtime.account_list(),
+            account::Command::Create { name, derivation_path, description } =>
+                runtime.account_create(name, derivation_path, description.unwrap_or_default()),
             _ => unimplemented!()
-        }
+        },
         //Command::Query { query } => runtime.command_query(query).await?,
         _ => unimplemented!()
     }

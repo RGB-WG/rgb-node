@@ -31,14 +31,14 @@ use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
 
 #[derive(Debug)]
 pub struct KeyringManager {
-    keyrings: Vec<Keyring>,
+    pub keyrings: Vec<Keyring>,
 }
 
 impl fmt::Display for KeyringManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f,
-                 "\n {:<8}    {:>4}    {:<16}    {:<24}     {}",
-                 "Keyring", "Id", "Derivation path", "Name", "Description")?;
+                 "\n {:<8}    {:>4}    {:<24}    {:<32}     {}",
+                 "Keyring", "Id", "Name", "Derivation path", "Description")?;
         writeln!(f,
                  "-------------------------------------------------------------------------------------------------------------------------------")?;
         self.keyrings.iter().enumerate().try_for_each(|(kidx, keyring)| {
@@ -53,8 +53,8 @@ impl fmt::Display for KeyringManager {
                     None => "-".to_string()
                 };
                 writeln!(f,
-                         " {:<8}    {:>4}    {:<16}    {:<24}     {}",
-                         name, format!("{}{}", id, aidx + 1), path, acc.name, acc.description)?;
+                         " {:<8}    {:>4}    {:<24}    {:<32}     {}",
+                         name, format!("{}{}", id, aidx + 1), acc.name, path, acc.description)?;
                 name = "";
                 Ok(())
             })
@@ -140,6 +140,15 @@ impl Keyring {
                 derivation_path: Some("m/44'/0'/0'/0'/0".parse()
                     .expect("Compile-time default derivation path error"))
             }]
+        }
+    }
+
+    pub fn add_account(&mut self, account: Account) -> Result<(), Error> {
+        use Keyring::*;
+        match self {
+            Hierarchical { accounts, .. } => Ok(accounts.push(account)),
+            Keyset { .. } => Err(Error::OperationNotSupported("for the legacy keyring format".to_string())),
+            _ => unreachable!()
         }
     }
 

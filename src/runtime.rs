@@ -19,7 +19,7 @@ use std::convert::TryFrom;
 
 use lnpbp::service::*;
 use lnpbp::bitcoin;
-use bitcoin::util::bip32::{ExtendedPubKey, ChildNumber};
+use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, ChildNumber};
 use bitcoin::network::constants::Network;
 use bitcoin::Address;
 use bitcoin_wallet::{account::*, context::*};
@@ -27,7 +27,7 @@ use bitcoin_wallet::{account::*, context::*};
 use super::*;
 use crate::constants::*;
 use crate::error::Error;
-use crate::accounts::KeyringManager;
+use crate::accounts::{KeyringManager, Account};
 
 
 pub struct Runtime {
@@ -87,8 +87,30 @@ impl TryService for Runtime {
 }
 
 impl Runtime {
+    fn get_keyring(&mut self) -> &mut Keyring {
+        self.keyrings
+            .keyrings
+            .get_mut(0)
+            .expect("Keyring manager contains no accounts")
+    }
+
     pub fn account_list(self) -> Result<(), Error> {
+        info!("Listing known accounts");
         println!("{}", self.keyrings);
+        Ok(())
+    }
+
+    pub fn account_create(mut self, name: String, derivation_path: DerivationPath, description: String) -> Result<(), Error> {
+        let mut keyring = self.get_keyring();
+        info!("Creating new account {} with derivation path {}", name, derivation_path);
+        keyring.add_account(Account {
+            name: name.clone(),
+            description,
+            derivation_path: Some(derivation_path)
+        })?;
+        debug!("Saving into the vault");
+        self.keyrings.store(self.config.data_path(DataItem::KeyringVault))?;
+        println!("New account {} successfully added to the default keyring and saved to the vault", name);
         Ok(())
     }
 }

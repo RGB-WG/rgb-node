@@ -39,6 +39,10 @@ pub enum Error {
 
     #[derive_from]
     SerializeError(serialize::Error),
+
+    OperationNotSupported(String),
+
+    UnknownKeyring(usize),
 }
 
 impl std::error::Error for Error { }
