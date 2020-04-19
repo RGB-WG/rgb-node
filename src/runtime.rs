@@ -24,10 +24,15 @@ use bitcoin::network::constants::Network;
 use bitcoin::Address;
 use bitcoin_wallet::{account::*, context::*};
 
+use crate::lnpbp::rgb::commit::Identifiable;
+use lnpbp::rgb::data::amount;
+use lnpbp::rgb::Rgb1;
+
 use super::*;
 use crate::constants::*;
 use crate::error::Error;
 use crate::accounts::{KeyringManager, Account};
+use lnpbp::csv::Storage;
 
 
 pub struct Runtime {
@@ -111,6 +116,32 @@ impl Runtime {
         debug!("Saving into the vault");
         self.keyrings.store(self.config.data_path(DataItem::KeyringVault))?;
         println!("New account {} successfully added to the default keyring and saved to the vault", name);
+        Ok(())
+    }
+
+    pub fn fungible_issue(mut self, issue: commands::fungible::Issue) -> Result<(), Error> {
+        info!("Issuing asset with parameters {}", issue);
+        let balances = issue.allocate.iter().map(|alloc| {
+            let confidential = amount::Confidential::from(alloc.amount);
+            (alloc.seal, confidential.commitment)
+        }).collect();
+        let genesis = Rgb1::issue(
+            self.config.network,
+            &issue.ticker,
+            &issue.title,
+            issue.description.as_deref(),
+            balances,
+            issue.precision,
+            issue.supply,
+            issue.dust_limit
+        )?;
+
+        let asset_id = genesis.commitment()
+            .expect("Probability of the commitment generation failure is less than negligible");
+        println!("New asset {} is issued with ContractId={}", issue.ticker, asset_id);
+
+        genesis.storage_serialize(self.config.data_writer(DataItem::ContractGenesis(asset_id))?)?;
+
         Ok(())
     }
 }

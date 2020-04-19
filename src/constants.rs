@@ -13,8 +13,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-pub const BPD_API_ADDR: &str = "ipc://bp.queryd.api";
-pub const BPD_PUSH_ADDR: &str = "ipc://bp.queryd.push";
+pub const BPD_API_ADDR: &str = "tcp://0.0.0.0:66601";
+pub const BPD_PUSH_ADDR: &str = "tcp://0.0.0.0:66602";
 
 pub const WALLET_FILE: &str = "./wallet.dat";
 

@@ -118,6 +118,11 @@ async fn main() -> Result<(), Error> {
                 runtime.account_create(name, derivation_path, description.unwrap_or_default()),
             _ => unimplemented!()
         },
+        Command::Fungible(subcommand) => match subcommand {
+            fungible::Command::Issue(issue) =>
+                runtime.fungible_issue(issue),
+            _ => unimplemented!()
+        }
         //Command::Query { query } => runtime.command_query(query).await?,
         _ => unimplemented!()
     }

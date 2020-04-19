@@ -13,11 +13,12 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::{io, fs, fmt, hash::Hash};
+use std::{io, fs, fmt, hash::Hash, convert::TryInto};
 use std::path::PathBuf;
 use std::collections::HashMap;
 use rand::{thread_rng, RngCore};
 
+use lnpbp::bp;
 use lnpbp::bitcoin;
 use bitcoin::secp256k1;
 use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, ChildNumber};
@@ -26,7 +27,6 @@ use bitcoin_wallet::{account::Seed, context::SecpContext};
 use lnpbp::csv::serialize::{self, network::*, storage::*};
 
 use crate::error::Error;
-use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
 
 
 #[derive(Debug)]
@@ -128,7 +128,7 @@ impl Keyring {
         let context = SecpContext::new();
         let encrypted = seed.encrypt(passphrase)
             .expect("Encryption failed");
-        let master_key = context.master_private_key(bitcoin::Network::Bitcoin, &seed)
+        let master_key = context.master_private_key(bp::Network::Mainnet.try_into().unwrap(), &seed)
             .expect("Public key generation failed");
         let xpubkey = context.extended_public_from_private(&master_key);
         Keyring::Hierarchical {

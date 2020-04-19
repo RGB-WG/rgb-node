@@ -17,6 +17,7 @@ use std::io;
 use tokio::task::JoinError;
 
 use lnpbp::csv::serialize;
+use lnpbp::rgb;
 
 
 #[derive(Debug, Display, From)]
@@ -43,6 +44,9 @@ pub enum Error {
     OperationNotSupported(String),
 
     UnknownKeyring(usize),
+
+    #[derive_from]
+    FungibleSchemataError(rgb::schemata::fungible::Error)
 }
 
 impl std::error::Error for Error { }

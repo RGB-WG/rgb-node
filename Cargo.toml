@@ -31,5 +31,5 @@ rgb = { git = "https://github.com/rgb-org/rgb-sdk" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
-branch = "feat-wallet"
+branch = "staging"
 features = ["use-tor", "use-tokio", "use-log", "use-daemons", "use-rgb"]

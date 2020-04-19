@@ -15,12 +15,25 @@
 
 use std::{path::PathBuf, str::FromStr};
 use clap::Clap;
+use regex::Regex;
 
 use lnpbp::bitcoin;
 use bitcoin::{TxIn, OutPoint};
 
 use lnpbp::{bp, rgb};
 use ::rgb::fungible;
+
+
+fn ticker_validator(name: String) -> Result<(), String> {
+    let re = Regex::new(r"^[A-Z]{3,8}$").expect("Regex parse failure");
+    if !re.is_match(&name) {
+        Err("Ticker name must be between 2 and 8 chars, contain no spaces and \
+            consist only of capital letters\
+            ".to_string())
+    } else {
+        Ok(())
+    }
+}
 
 
 /// Defines information required to generate bitcoin transaction output from
@@ -67,74 +80,83 @@ pub enum Command {
     },
 
     /// Creates a new asset
-    Issue {
-        /// Limit for the total supply (by default equals to the `amount`
-        #[clap(short, long)]
-        supply: Option<rgb::data::Amount>,
-
-        /// Enables secondary issuance/inflation; takes UTXO seal definition
-        /// as its value
-        #[clap(short, long, requires("supply"))]
-        inflatable: Option<OutPoint>,
-
-        /// Precision, i.e. number of digits reserved for fractional part
-        #[clap(short, long, default_value="0")]
-        precision: u8,
-
-        /// Dust limit for asset transfers; defaults to no limit
-        #[clap(short="D", long, default_value="0")]
-        dust_limit: rgb::data::Amount,
-
-        /// Filename to export asset genesis to;
-        /// saves into data dir if not provided
-        #[clap(short, long)]
-        output: Option<PathBuf>,
-
-        /// Asset ticker (will be capitalized)
-        ticker: String,
-
-        /// Asset title
-        title: String,
-
-        /// Asset description
-        #[clap(short, long)]
-        description: Option<String>,
-
-        /// Asset allocation, in form of <amount>@<txid>:<vout>
-        #[clap(min_values=1)]
-        allocate: Vec<fungible::Allocation>,
-    },
+    Issue(Issue),
 
     /// Transfers some asset to another party
-    Pay {
-        /// Use custom commitment output for generated witness transaction
-        #[clap(long)]
-        commit_txout: Option<Output>,
+    Pay(Pay)
+}
 
-        /// Adds output(s) to generated witness transaction
-        #[clap(long)]
-        txout: Vec<Output>,
+#[derive(Clap, Clone, Debug, Display)]
+#[display_from(Debug)]
+pub struct Issue {
+    /// Limit for the total supply (by default equals to the `amount`
+    #[clap(short, long)]
+    pub supply: Option<rgb::data::Amount>,
 
-        /// Adds input(s) to generated witness transaction
-        #[clap(long)]
-        txin: Vec<Input>,
+    /// Enables secondary issuance/inflation; takes UTXO seal definition
+    /// as its value
+    #[clap(short, long, requires("supply"))]
+    pub inflatable: Option<OutPoint>,
 
-        /// Allocates other assets to custom outputs
-        #[clap(short, long)]
-        allocate: Vec<fungible::Allocation>,
+    /// Precision, i.e. number of digits reserved for fractional part
+    #[clap(short, long, default_value="0")]
+    pub precision: u8,
 
-        /// Saves witness transaction to a file instead of publishing it
-        #[clap(short, long)]
-        transaction: Option<PathBuf>,
+    /// Dust limit for asset transfers; defaults to no limit
+    #[clap(short="D", long)]
+    pub dust_limit: Option<rgb::data::Amount>,
 
-        /// Saves proof data to a file instead of sending it to the remote party
-        #[clap(short, long)]
-        proof: Option<PathBuf>,
+    /// Filename to export asset genesis to;
+    /// saves into data dir if not provided
+    #[clap(short, long)]
+    pub output: Option<PathBuf>,
 
-        /// Invoice to pay
-        invoice: fungible::Invoice,
+    /// Asset ticker
+    #[clap(validator=ticker_validator)]
+    pub ticker: String,
 
-        /// Overrides amount provided in the invoice
-        amount: rgb::data::Amount,
-    }
+    /// Asset title
+    pub title: String,
+
+    /// Asset description
+    #[clap(short, long)]
+    pub description: Option<String>,
+
+    /// Asset allocation, in form of <amount>@<txid>:<vout>
+    #[clap(required=true)]
+    pub allocate: Vec<fungible::Allocation>,
+}
+
+#[derive(Clap, Clone, Debug, Display)]
+#[display_from(Debug)]
+pub struct Pay  {
+    /// Use custom commitment output for generated witness transaction
+    #[clap(long)]
+    commit_txout: Option<Output>,
+
+    /// Adds output(s) to generated witness transaction
+    #[clap(long)]
+    txout: Vec<Output>,
+
+    /// Adds input(s) to generated witness transaction
+    #[clap(long)]
+    txin: Vec<Input>,
+
+    /// Allocates other assets to custom outputs
+    #[clap(short, long)]
+    allocate: Vec<fungible::Allocation>,
+
+    /// Saves witness transaction to a file instead of publishing it
+    #[clap(short, long)]
+    transaction: Option<PathBuf>,
+
+    /// Saves proof data to a file instead of sending it to the remote party
+    #[clap(short, long)]
+    proof: Option<PathBuf>,
+
+    /// Invoice to pay
+    invoice: fungible::Invoice,
+
+    /// Overrides amount provided in the invoice
+    amount: rgb::data::Amount,
 }

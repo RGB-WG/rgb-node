@@ -13,8 +13,10 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::path::PathBuf;
+use std::{io, fs, path::PathBuf};
 use clap::Clap;
+use lnpbp::bp;
+use lnpbp::rgb::commit::TransitionCommitment;
 
 use crate::constants::*;
 use crate::commands::*;
@@ -48,8 +50,8 @@ pub struct Opts {
     pub bpd_subscr: String,
 
     /// Network to use
-    #[clap(global=true, short, long, default_value="testnet", env="KALEIDOSCOPE_NETWORK")]
-    pub network: lnpbp::bitcoin::Network,
+    #[clap(global=true, short, long, default_value="signet", env="KALEIDOSCOPE_NETWORK")]
+    pub network: bp::Network,
 
     #[clap(subcommand)]
     pub command: Command
@@ -63,7 +65,7 @@ pub struct Opts {
 #[display_from(Debug)]
 pub struct Config {
     pub verbose: u8,
-    pub network: lnpbp::bitcoin::Network,
+    pub network: bp::Network,
     pub data_dir: PathBuf,
     pub bpd_api: String,
     pub bpd_subscr: String,
@@ -91,7 +93,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
-            network: lnpbp::bitcoin::Network::Testnet,
+            network: bp::Network::Signet,
             data_dir: DATA_DIR.parse().expect("Parse of DATA_DIR constant has failed"),
             bpd_api: BPD_API_ADDR.to_string(),
             bpd_subscr: BPD_PUSH_ADDR.to_string()
@@ -104,6 +106,8 @@ impl Default for Config {
 pub enum DataItem {
     Root,
     KeyringVault,
+    ContractsVault,
+    ContractGenesis(TransitionCommitment)
 }
 
 impl Config {
@@ -112,7 +116,24 @@ impl Config {
         match item {
             DataItem::Root => (),
             DataItem::KeyringVault => path.push("vault.dat"),
+            DataItem::ContractsVault => {
+                path.push("contracts");
+                if !path.exists() {
+                    fs::create_dir_all(path.clone()).unwrap();
+                }
+            },
+            DataItem::ContractGenesis(cmt) => {
+                path = self.data_path(DataItem::ContractsVault);
+                path.push(format!("{}", cmt));
+                path.set_extension("rgb");
+            },
         }
         path
+    }
+
+    pub fn data_writer(&self, item: DataItem) -> Result<impl io::Write, io::Error> {
+        let file_name = self.data_path(item);
+        let file = fs::File::create(file_name)?;
+        Ok(io::BufWriter::new(file))
     }
 }
