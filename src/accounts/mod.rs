@@ -21,12 +21,13 @@ use rand::{thread_rng, RngCore};
 use lnpbp::bp;
 use lnpbp::bitcoin;
 use bitcoin::secp256k1;
-use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, ChildNumber};
+use bitcoin::util::bip32::{self, ExtendedPrivKey, ExtendedPubKey, DerivationPath, ChildNumber};
 use bitcoin_wallet::{account::Seed, context::SecpContext};
 
 use lnpbp::csv::serialize::{self, network::*, storage::*};
 
 use crate::error::Error;
+use lnpbp::miniscript::bitcoin::secp256k1::PublicKey;
 
 
 #[derive(Debug)]
@@ -88,6 +89,10 @@ impl KeyringManager {
 
     pub fn get_accounts(&self) -> Vec<Account> {
         self.keyrings.iter().map(Keyring::get_accounts).flatten().collect()
+    }
+
+    pub fn get_main_keyring(&self) -> &Keyring {
+        self.keyrings.first().unwrap()
     }
 }
 
@@ -152,6 +157,34 @@ impl Keyring {
         }
     }
 
+    pub fn list_deposit_boxes(&self, account_tag: String, offset: u32, no: u8) -> Option<Vec<DepositBox>> {
+        if let Keyring::Hierarchical { xpubkey, encrypted, .. } = self {
+            let account = self.get_account(account_tag)?;
+            let mut dp = account.derivation_path.as_ref().unwrap().clone();
+            let secp = secp256k1::Secp256k1::new();
+            let to = offset + (no as u32);
+            let mut dp_iter = dp.children_from(ChildNumber::Normal { index: offset });
+
+            if Err(bip32::Error::CannotDeriveFromHardenedKey) == xpubkey.derive_pub(&secp, &dp) {
+                let password = rpassword::prompt_password_stderr("Generation of hardened public keys requires unlocking extended private key: ").unwrap();
+                let seed = Seed::decrypt(encrypted, &password).expect("Wrong password");
+                let xprivkey = ExtendedPrivKey::new_master(bitcoin::Network::Bitcoin, &seed.0).expect("Wrong password");
+                Some((offset..to).map(|_| {
+                    let dp = dp_iter.next().unwrap();
+                    let sk = xprivkey.derive_priv(&secp, &dp).unwrap().private_key;
+                    DepositBox::from(sk.public_key(&secp))
+                }).collect())
+            } else {
+                Some((offset..to).map(|_| {
+                    let dp = dp_iter.next().unwrap();
+                    DepositBox::from(xpubkey.derive_pub(&secp, &dp).unwrap().public_key)
+                }).collect())
+            }
+        } else {
+            None
+        }
+    }
+
     #[inline]
     fn get_accounts(&self) -> Vec<Account> {
         use Keyring::*;
@@ -160,6 +193,10 @@ impl Keyring {
             Keyset { account, .. } => vec![account.clone()],
             _ => unreachable!()
         }
+    }
+
+    fn get_account(&self, account_tag: String) -> Option<Account> {
+        self.get_accounts().into_iter().find(|a| a.name == account_tag)
     }
 }
 
@@ -244,5 +281,45 @@ impl serialize::Network for Account {
             description: String::network_deserialize(&mut d)?,
             derivation_path: Option::<DerivationPath>::network_deserialize(&mut d)?,
         })
+    }
+}
+
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[display_from(Debug)]
+pub struct DepositBox(secp256k1::PublicKey);
+
+impl From<secp256k1::PublicKey> for DepositBox {
+    #[inline]
+    fn from(pk: secp256k1::PublicKey) -> Self {
+        Self(pk)
+    }
+}
+
+impl From<bitcoin::PublicKey> for DepositBox {
+    #[inline]
+    fn from(pk: bitcoin::PublicKey) -> Self {
+        Self(pk.key)
+    }
+}
+
+impl DepositBox {
+    #[inline]
+    pub fn get_pubkey(&self) -> bitcoin::PublicKey {
+        bitcoin::PublicKey { compressed: true, key: self.0 }
+    }
+
+    #[inline]
+    pub fn get_p2pkh_addr(&self, network: bitcoin::Network) -> bitcoin::Address {
+        use bitcoin::util::address::Payload;
+        bitcoin::Address {
+            network,
+            payload: Payload::PubkeyHash(self.get_pubkey().pubkey_hash())
+        }
+    }
+
+    #[inline]
+    pub fn get_p2wpkh_addr(&self, network: bitcoin::Network) -> bitcoin::Address {
+        bitcoin::Address::p2wpkh(&self.get_pubkey(), network)
     }
 }

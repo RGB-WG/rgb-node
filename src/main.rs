@@ -116,6 +116,8 @@ async fn main() -> Result<(), Error> {
                 runtime.account_list(),
             account::Command::Create { name, derivation_path, description } =>
                 runtime.account_create(name, derivation_path, description.unwrap_or_default()),
+            account::Command::DepositBoxes { no, offset, account } =>
+                runtime.account_deposit_boxes(account, offset, no),
             _ => unimplemented!()
         },
         Command::Fungible(subcommand) => match subcommand {

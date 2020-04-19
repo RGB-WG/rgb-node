@@ -50,5 +50,20 @@ pub enum Command {
 
         /// Additional account information, like purpose
         description: Option<String>
+    },
+
+    /// Lists detailed information about account-controlled "deposit boxes":
+    /// items that may be managed with account private keys
+    DepositBoxes {
+        /// Amount of deposit boxes to list
+        #[clap(short="N", long, default_value="10")]
+        no: u8,
+
+        /// Offset for the first deposit box
+        #[clap(short="O", long, default_value="0")]
+        offset: u32,
+
+        /// Tag name of the account to list deposit boxes
+        account: String
     }
 }

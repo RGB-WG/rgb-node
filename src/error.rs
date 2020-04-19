@@ -46,7 +46,9 @@ pub enum Error {
     UnknownKeyring(usize),
 
     #[derive_from]
-    FungibleSchemataError(rgb::schemata::fungible::Error)
+    FungibleSchemataError(rgb::schemata::fungible::Error),
+
+    AccountNotFound,
 }
 
 impl std::error::Error for Error { }

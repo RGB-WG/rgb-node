@@ -15,7 +15,7 @@
 
 use std::fs::File;
 use std::io::{self, prelude::*};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 use lnpbp::service::*;
 use lnpbp::bitcoin;
@@ -116,6 +116,24 @@ impl Runtime {
         debug!("Saving into the vault");
         self.keyrings.store(self.config.data_path(DataItem::KeyringVault))?;
         println!("New account {} successfully added to the default keyring and saved to the vault", name);
+        Ok(())
+    }
+
+    pub fn account_deposit_boxes(self, account_tag: String, offset: u32, no: u8) -> Result<(), Error> {
+        info!("Listing deposit boxes");
+        let mut index = offset;
+        let network = self.config.network.try_into().unwrap_or(bitcoin::Network::Testnet);
+        println!("{:>4}:  {:64}    {:32}    {:48}", "ID", "PUBKEY", "P2WPKH ADDRESS", "P2PKH ADDRESS");
+        self.keyrings
+            .get_main_keyring()
+            .list_deposit_boxes(account_tag, offset, no)
+            .ok_or(Error::AccountNotFound)?
+            .iter()
+            .for_each(|depo| {
+                println!("{:>4}:  {:64}    {:32}    {:48}",
+                         index, depo.get_pubkey(), depo.get_p2wpkh_addr(network), depo.get_p2pkh_addr(network));
+                index += 1;
+            });
         Ok(())
     }
 
