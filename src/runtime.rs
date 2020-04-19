@@ -35,6 +35,7 @@ pub struct Runtime {
     context: zmq::Context,
     api_socket: zmq::Socket,
     sub_socket: zmq::Socket,
+    keyrings: KeyringManager,
 }
 
 impl Runtime {
@@ -55,11 +56,13 @@ impl Runtime {
         sub_socket.set_subscribe("".as_bytes())
             .map_err(|e| Error::SubscriptionError(e))?;
 
-        if !config.data_path(DataItem::Root).exists() {
+        debug!("Opening vault in safe mode");
+        if !config.data_path(DataItem::KeyringVault).exists() {
             Err(Error::from("Data directory does not exist: \
                     wrong configuration or you have not initialized data directory \
                     Try running `kaleidoscope init`"))?;
         }
+        let keyrings = KeyringManager::load(config.data_path(DataItem::KeyringVault))?;
 
         debug!("Initialization is completed");
         Ok(Self {
@@ -67,6 +70,7 @@ impl Runtime {
             context,
             api_socket,
             sub_socket,
+            keyrings,
         })
     }
 }
@@ -79,6 +83,13 @@ impl TryService for Runtime {
         loop {
 
         }
+    }
+}
+
+impl Runtime {
+    pub fn account_list(self) -> Result<(), Error> {
+        println!("{}", self.keyrings);
+        Ok(())
     }
 }
 

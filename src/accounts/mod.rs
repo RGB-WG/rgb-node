@@ -13,7 +13,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::{io, fs, hash::Hash};
+use std::{io, fs, fmt, hash::Hash};
 use std::path::PathBuf;
 use std::collections::HashMap;
 use rand::{thread_rng, RngCore};
@@ -26,12 +26,40 @@ use bitcoin_wallet::{account::Seed, context::SecpContext};
 use lnpbp::csv::serialize::{self, network::*, storage::*};
 
 use crate::error::Error;
+use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
 
 
-#[derive(Debug, Display)]
-#[display_from(Debug)]
+#[derive(Debug)]
 pub struct KeyringManager {
     keyrings: Vec<Keyring>,
+}
+
+impl fmt::Display for KeyringManager {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f,
+                 "\n {:<8}    {:>4}    {:<16}    {:<24}     {}",
+                 "Keyring", "Id", "Derivation path", "Name", "Description")?;
+        writeln!(f,
+                 "-------------------------------------------------------------------------------------------------------------------------------")?;
+        self.keyrings.iter().enumerate().try_for_each(|(kidx, keyring)| {
+            let (mut name, id) = match keyring {
+                Keyring::Hierarchical { .. } => ("HD:", format!("{}:", kidx + 1)),
+                Keyring::Keyset { .. } => ("Legacy:", "".to_string()),
+                _ => unreachable!(),
+            };
+            keyring.get_accounts().iter().enumerate().try_for_each(|(aidx, acc)| {
+                let path = match acc.derivation_path {
+                    Some(ref dp) => format!("{}", dp),
+                    None => "-".to_string()
+                };
+                writeln!(f,
+                         " {:<8}    {:>4}    {:<16}    {:<24}     {}",
+                         name, format!("{}{}", id, aidx + 1), path, acc.name, acc.description)?;
+                name = "";
+                Ok(())
+            })
+        })
+    }
 }
 
 impl KeyringManager {

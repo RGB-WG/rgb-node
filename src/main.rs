@@ -110,9 +110,11 @@ async fn main() -> Result<(), Error> {
     // Non-interactive command processing:
     debug!("Parsing and processing a command");
     match opts.command {
+        Command::Account(subcommand) => match subcommand {
+            account::Command::List => runtime.account_list(),
+            _ => unimplemented!()
+        }
         //Command::Query { query } => runtime.command_query(query).await?,
         _ => unimplemented!()
     }
-
-    Ok(())
 }

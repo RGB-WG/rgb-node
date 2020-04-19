@@ -13,12 +13,12 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-mod account;
-mod bitcoin;
-mod lightning;
-mod fungible;
-mod collectible;
-mod identity;
+pub mod account;
+pub mod bitcoin;
+pub mod lightning;
+pub mod fungible;
+pub mod collectible;
+pub mod identity;
 
 
 use clap::Clap;
