@@ -12,6 +12,7 @@ edition = "2018"
 
 [dependencies]
 chrono = "~0.4"
+regex = "~1.3"
 derive_wrapper = "~0.1"
 # TODO: Move this dependency to LNP/BP core library
 lightning-invoice = "~0.2"

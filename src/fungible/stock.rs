@@ -13,9 +13,12 @@
 
 
 use std::{str::FromStr, collections::HashMap};
+use std::num::ParseIntError;
+use regex::Regex;
 use chrono::NaiveDateTime;
+use bitcoin::hashes::hex::{self, FromHex};
 use lnpbp::{bp, bitcoin, bitcoin::secp256k1, rgb::*};
-use lnpbp::bitcoin::{OutPoint};
+use lnpbp::bitcoin::{Txid, OutPoint};
 use lnpbp::miniscript::Miniscript;
 
 use super::{Amount, Error, Invoice, selection};
@@ -23,6 +26,13 @@ use super::{Amount, Error, Invoice, selection};
 // Temporary types
 type HistoryGraph = ();
 type Signature = ();
+
+
+#[derive(Clone, Debug, Display)]
+#[display_from(Debug)]
+pub struct ParseError;
+impl From<ParseIntError> for ParseError { fn from(err: ParseIntError) -> Self { Self } }
+impl From<hex::Error> for ParseError { fn from(err: hex::Error) -> Self { Self } }
 
 
 #[derive(Clone, Debug, PartialEq, Eq, Display)]
@@ -102,9 +112,26 @@ pub struct Allocation {
 }
 
 impl FromStr for Allocation {
-    type Err = String;
+    type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        unimplemented!()
+        let re = Regex::new(r"^([\d.,_']+)@([a-f\d]{64}):(\d+)$").expect("Regex parse failure");
+        if let Some(m) = re.captures(&s.to_ascii_lowercase()) {
+            match (m.get(1), m.get(2), m.get(3)) {
+                (Some(amount), Some(txid), Some(vout)) => {
+                    Ok(Self {
+                        amount: amount.as_str().parse()?,
+                        seal: OutPoint {
+                            txid: Txid::from_hex(txid.as_str())?,
+                            vout: vout.as_str().parse()?
+                        },
+                        payment: None
+                    })
+                },
+                _ => Err(ParseError)
+            }
+        } else {
+            Err(ParseError)
+        }
     }
 }
 

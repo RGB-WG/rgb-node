@@ -15,6 +15,7 @@
 #[macro_use]
 extern crate derive_wrapper;
 extern crate chrono;
+extern crate regex;
 extern crate lightning_invoice;
 extern crate lnpbp;
 
