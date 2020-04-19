@@ -27,6 +27,9 @@ use clap::Clap;
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
 pub enum Command {
+    /// Initializes data directory
+    Init,
+
     /// Accounts-related operations
     Account(account::Command),
 

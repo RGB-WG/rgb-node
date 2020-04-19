@@ -16,45 +16,39 @@
 use std::io;
 use tokio::task::JoinError;
 
+use lnpbp::csv::serialize;
 
-#[derive(Debug, Display)]
+
+#[derive(Debug, Display, From)]
 #[display_from(Debug)]
-pub enum BootstrapError {
+pub enum Error {
     TorNotYetSupported,
+
+    #[derive_from]
     IoError(io::Error),
+
+    #[derive_from]
     ArgParseError(String),
+
     SubscriptionError(zmq::Error),
+
     PublishingError(zmq::Error),
+
+    #[derive_from]
     MultithreadError(JoinError),
-    MonitorSocketError(Box<dyn std::error::Error>),
+
+    #[derive_from]
+    SerializeError(serialize::Error),
 }
 
-impl std::error::Error for BootstrapError { }
+impl std::error::Error for Error { }
 
-impl From<BootstrapError> for String {
-    fn from(err: BootstrapError) -> Self { format!("{}", err) }
+impl From<Error> for String {
+    fn from(err: Error) -> Self { format!("{}", err) }
 }
 
-impl From<&str> for BootstrapError {
+impl From<&str> for Error {
     fn from(err: &str) -> Self {
-        BootstrapError::ArgParseError(err.to_string())
-    }
-}
-
-impl From<String> for BootstrapError {
-    fn from(err: String) -> Self {
-        BootstrapError::ArgParseError(err)
-    }
-}
-
-impl From<io::Error> for BootstrapError {
-    fn from(err: io::Error) -> Self {
-        BootstrapError::IoError(err)
-    }
-}
-
-impl From<JoinError> for BootstrapError {
-    fn from(err: JoinError) -> Self {
-        BootstrapError::MultithreadError(err)
+        Error::ArgParseError(err.to_string())
     }
 }

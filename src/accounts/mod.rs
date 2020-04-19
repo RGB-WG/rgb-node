@@ -20,21 +20,12 @@ use rand::{thread_rng, RngCore};
 
 use lnpbp::bitcoin;
 use bitcoin::secp256k1;
-use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath};
+use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, ChildNumber};
 use bitcoin_wallet::{account::Seed, context::SecpContext};
 
 use lnpbp::csv::serialize::{self, network::*, storage::*};
 
-
-#[derive(From, Debug, Display)]
-#[display_from(Debug)]
-pub enum Error {
-    #[derive_from]
-    IoError(io::Error),
-
-    #[derive_from]
-    SerializeError(serialize::Error),
-}
+use crate::error::Error;
 
 
 #[derive(Debug, Display)]
@@ -44,6 +35,17 @@ pub struct KeyringManager {
 }
 
 impl KeyringManager {
+    pub fn setup(file_name: PathBuf, passphrase: &str) -> Result<Self, Error> {
+        let main = Keyring::new(passphrase);
+        let me = Self { keyrings: vec![main] };
+
+        let file = fs::File::create(file_name)?;
+        let mut writer = io::BufWriter::new(file);
+        me.storage_serialize(&mut writer)?;
+
+        Ok(me)
+    }
+
     pub fn load(file_name: PathBuf) -> Result<Self, Error> {
         let file = fs::File::open(file_name)?;
         let mut reader = io::BufReader::new(file);
@@ -104,7 +106,12 @@ impl Keyring {
         Keyring::Hierarchical {
             xpubkey,
             encrypted,
-            accounts: vec![]
+            accounts: vec![Account {
+                name: "bitcoin_default".to_string(),
+                description: "Bitcoin transactions signatures".to_string(),
+                derivation_path: Some("m/44'/0'/0'/0'/0".parse()
+                    .expect("Compile-time default derivation path error"))
+            }]
         }
     }
 

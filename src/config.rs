@@ -35,7 +35,7 @@ pub struct Opts {
     pub verbose: u8,
 
     /// Data directory for keeping information about keyrings, assets etc
-    #[clap(global=true, long, default_value="~/.kaleidoscope", env="KALEIDOSCOPE_DATA_DIR")]
+    #[clap(global=true, long, default_value=DATA_DIR, env="KALEIDOSCOPE_DATA_DIR")]
     pub data_dir: PathBuf,
 
     /// IPC connection string for bp daemon API
@@ -64,6 +64,7 @@ pub struct Opts {
 pub struct Config {
     pub verbose: u8,
     pub network: lnpbp::bitcoin::Network,
+    pub data_dir: PathBuf,
     pub bpd_api: String,
     pub bpd_subscr: String,
 }
@@ -73,6 +74,7 @@ impl From<Opts> for Config {
         Self {
             verbose: opts.verbose,
             network: opts.network,
+            data_dir: opts.data_dir,
             bpd_api: opts.bpd_api,
             bpd_subscr: opts.bpd_subscr,
 
@@ -86,8 +88,25 @@ impl Default for Config {
         Self {
             verbose: 0,
             network: lnpbp::bitcoin::Network::Testnet,
+            data_dir: DATA_DIR.parse().expect("Parse of DATA_DIR constant has failed"),
             bpd_api: BPD_API_ADDR.to_string(),
             bpd_subscr: BPD_PUSH_ADDR.to_string()
         }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
+#[display_from(Debug)]
+pub enum DataItem {
+    KeyringVault,
+}
+
+impl Config {
+    pub fn data_path(&self, item: DataItem) -> PathBuf {
+        let mut path = self.data_dir.clone();
+        match item {
+            DataItem::KeyringVault => path.push("vault.dat"),
+        }
+        path
     }
 }

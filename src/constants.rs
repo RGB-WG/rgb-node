@@ -18,5 +18,7 @@ pub const BPD_PUSH_ADDR: &str = "ipc://bp.queryd.push";
 
 pub const WALLET_FILE: &str = "./wallet.dat";
 
+pub const DATA_DIR: &str = "~/.kaleidoscope";
+
 pub const HD_PURPOSE: u32 = 0x84;
 pub const HD_COIN: u32 = 0x524742; // Base16 encoding for "RGB"

@@ -26,27 +26,9 @@ use bitcoin_wallet::{account::*, context::*};
 
 use super::*;
 use crate::constants::*;
-use crate::error::BootstrapError;
+use crate::error::Error;
 use crate::accounts::KeyringManager;
 
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-struct Error(String);
-impl Error {
-    fn from(str: &str) -> Self {
-        return Error(String::from(str))
-    }
-}
-impl<E: ToString> From<E> for Error {
-    fn from(err: E) -> Self {
-        Error(err.to_string())
-    }
-}
-impl Into<io::Error> for Error {
-    fn into(self) -> io::Error {
-        io::Error::new(io::ErrorKind::Other, self.0)
-    }
-}
 
 pub struct Runtime {
     config: Config,
@@ -56,24 +38,29 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub async fn init(config: Config) -> Result<Self, BootstrapError> {
+    pub async fn init(config: Config) -> Result<Self, Error> {
         let context = zmq::Context::new();
 
         debug!("Opening API socket to bpd on {} ...", config.bpd_api);
         let api_socket = context.socket(zmq::REQ)
-            .map_err(|e| BootstrapError::PublishingError(e))?;
+            .map_err(|e| Error::PublishingError(e))?;
         api_socket.bind(&config.bpd_api)
-            .map_err(|e| BootstrapError::PublishingError(e))?;
+            .map_err(|e| Error::PublishingError(e))?;
 
         debug!("Subscribing to bpd notifications on {} ...", config.bpd_subscr);
         let sub_socket = context.socket(zmq::SUB)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .map_err(|e| Error::SubscriptionError(e))?;
         sub_socket.connect(&config.bpd_subscr)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .map_err(|e| Error::SubscriptionError(e))?;
         sub_socket.set_subscribe("".as_bytes())
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .map_err(|e| Error::SubscriptionError(e))?;
 
-
+        if !config.data_dir.exists() {
+            panic!("Data directory does not exist: wrong configuration or you have not initialized data directory
+                    Try running
+                        `kaleidoscope init`
+                    ");
+        }
 
         debug!("Initialization is completed");
         Ok(Self {

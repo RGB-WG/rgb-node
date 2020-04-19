@@ -43,6 +43,7 @@ extern crate env_logger;
 extern crate dotenv;
 extern crate chrono;
 extern crate rand;
+extern crate rpassword;
 
 extern crate lnpbp;
 extern crate rgb;
@@ -57,16 +58,19 @@ mod runtime;
 mod accounts;
 
 
-use std::env;
+use std::{env, fs};
 use log::*;
 use clap::derive::Clap;
 
 use config::*;
 use runtime::*;
-
+use commands::*;
+use error::Error;
+use std::process::exit;
+use accounts::*;
 
 #[tokio::main]
-async fn main() -> Result<(), String> {
+async fn main() -> Result<(), Error> {
     // TODO: Parse config file as well
     let opts: Opts = Opts::parse();
     let config: Config = opts.clone().into();
@@ -83,6 +87,20 @@ async fn main() -> Result<(), String> {
     }
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
+
+    if let Command::Init = opts.command {
+        if !config.data_dir.exists() {
+            panic!("Data directory already initialized, exiting");
+        }
+        fs::create_dir_all(config.data_dir.clone())?;
+        let password = rpassword::prompt_password_stderr("Password for private keys vault encryption: ")?;
+        if !(8..256).contains(&password.len()) {
+            return Err(Error::from("The length of the password must be at least 8 and no more than 256 characters"));
+        }
+        info!("Generating seed phrase ...");
+        KeyringManager::setup(config.data_path(DataItem::KeyringVault), &password)?;
+        return Ok(())
+    }
 
     let runtime = Runtime::init(config).await?;
 
