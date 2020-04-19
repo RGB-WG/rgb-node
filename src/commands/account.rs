@@ -15,7 +15,7 @@
 
 use std::path::PathBuf;
 use clap::Clap;
-use bitcoin::util::bip32::ExtendedPubKey;
+use lnpbp::bitcoin::util::bip32::ExtendedPubKey;
 
 use crate::constants::*;
 

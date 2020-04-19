@@ -35,8 +35,6 @@ extern crate diesel;
 extern crate clap;
 #[macro_use]
 extern crate derive_wrapper;
-extern crate num_derive;
-extern crate num_traits;
 #[macro_use]
 extern crate async_trait;
 #[macro_use]
@@ -46,7 +44,6 @@ extern crate dotenv;
 extern crate chrono;
 extern crate rand;
 
-extern crate bitcoin;
 extern crate lnpbp;
 extern crate rgb;
 

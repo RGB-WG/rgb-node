@@ -9,8 +9,7 @@ readme = "README.md"
 edition = "2018"
 
 [dependencies]
-bitcoin = "~0.21"
-bitcoin-wallet = "~1.1"
+bitcoin-wallet = { git = "https://github.com/rgb-org/rust-wallet", branch = "staging" }
 serde = "~1.0"
 serde_derive = "~1.0"
 rpassword = "~4.0"
@@ -18,8 +17,6 @@ dotenv = "~0.15"
 clap = { git = "https://github.com/clap-rs/clap.git" }
 chrono = "~0.4"
 derive_wrapper = "~0.1"
-num-traits = "0.2.11"
-num-derive = "0.3.0"
 async-trait = "~0.1"
 rand = "~0.7"
 log = { version = "~0.4", features = ["max_level_trace", "release_max_level_debug"] }
@@ -32,4 +29,5 @@ rgb = { git = "https://github.com/rgb-org/rgb-sdk" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
+branch = "feat-wallet"
 features = ["use-tor", "use-tokio", "use-log", "use-daemons", "use-rgb"]

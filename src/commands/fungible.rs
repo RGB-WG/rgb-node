@@ -15,7 +15,10 @@
 
 use std::{path::PathBuf, str::FromStr};
 use clap::Clap;
-use lnpbp::bitcoin::{TxIn, OutPoint};
+
+use lnpbp::bitcoin;
+use bitcoin::{TxIn, OutPoint};
+
 use lnpbp::{bp, rgb};
 use ::rgb::fungible;
 
