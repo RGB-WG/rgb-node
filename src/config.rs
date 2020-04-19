@@ -48,7 +48,7 @@ pub struct Opts {
     pub bpd_subscr: String,
 
     /// Network to use
-    #[clap(global=true, short, long, default_value="Testnet", env="KALEIDOSCOPE_NETWORK")]
+    #[clap(global=true, short, long, default_value="testnet", env="KALEIDOSCOPE_NETWORK")]
     pub network: lnpbp::bitcoin::Network,
 
     #[clap(subcommand)]
@@ -71,10 +71,14 @@ pub struct Config {
 
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
+        let data_str = opts.data_dir.to_str().unwrap();
+        let repl = shellexpand::tilde(data_str);
+        let mut data_dir = PathBuf::from(repl.into_owned());
+
         Self {
             verbose: opts.verbose,
             network: opts.network,
-            data_dir: opts.data_dir,
+            data_dir: data_dir,
             bpd_api: opts.bpd_api,
             bpd_subscr: opts.bpd_subscr,
 
@@ -98,6 +102,7 @@ impl Default for Config {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub enum DataItem {
+    Root,
     KeyringVault,
 }
 
@@ -105,6 +110,7 @@ impl Config {
     pub fn data_path(&self, item: DataItem) -> PathBuf {
         let mut path = self.data_dir.clone();
         match item {
+            DataItem::Root => (),
             DataItem::KeyringVault => path.push("vault.dat"),
         }
         path

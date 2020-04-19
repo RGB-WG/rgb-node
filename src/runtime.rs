@@ -55,11 +55,10 @@ impl Runtime {
         sub_socket.set_subscribe("".as_bytes())
             .map_err(|e| Error::SubscriptionError(e))?;
 
-        if !config.data_dir.exists() {
-            panic!("Data directory does not exist: wrong configuration or you have not initialized data directory
-                    Try running
-                        `kaleidoscope init`
-                    ");
+        if !config.data_path(DataItem::Root).exists() {
+            Err(Error::from("Data directory does not exist: \
+                    wrong configuration or you have not initialized data directory \
+                    Try running `kaleidoscope init`"))?;
         }
 
         debug!("Initialization is completed");
