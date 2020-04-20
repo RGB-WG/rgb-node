@@ -17,20 +17,20 @@ use std::collections::{BTreeMap, HashMap};
 use std::convert::TryInto;
 use std::net::SocketAddr;
 
+use bitcoin::secp256k1;
 use bitcoin::{TxIn, TxOut, Transaction};
 use bitcoin::util::bip143;
 use bitcoin::hashes::Hash;
-use bitcoin::util::bip32::{DerivationPath, ChildNumber};
+use bitcoin::util::bip32::{self, ExtendedPrivKey, ExtendedPubKey, DerivationPath, ChildNumber};
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
+use bitcoin_wallet::{account::Seed, context::SecpContext};
 use electrum_client as electrum;
 
 use lnpbp::service::*;
 use lnpbp::bitcoin;
-use lnpbp::bp;
 use lnpbp::cmt::*;
 use lnpbp::csv::Storage;
 use lnpbp::rgb::commit::Identifiable;
-use lnpbp::rgb::data::amount;
 use lnpbp::rgb::Rgb1;
 use lnpbp::rgb::ContractId;
 use rgb::fungible::invoice::SealDefinition;
@@ -295,13 +295,13 @@ impl Runtime {
         /*
          * Act 1: Find asset outputs to spend
          */
-        let contract_id = payment.invoice.contract_id;
+        let contract_id = payment.contract_id;
         let existing_allocations = self.get_asset_allocations()?;
         let existing_allocations = existing_allocations.seals
             .get(&contract_id)
             .unwrap_or_else(|| { panic!("You do not have any spendable assets for {}", contract_id) });
         // "Coinselection"
-        let required_amount = payment.invoice.amount;
+        let required_amount = payment.amount;
         let mut found_amount = 0;
         let mut bitcoin_amount = 0;
         let mut required_bitcoins = 0;
@@ -326,7 +326,7 @@ impl Runtime {
             .collect();
         let found_amount = found_amount;
         if found_amount < required_amount {
-            panic!("You own only {} of asset, it's impossible to pay {} required by invoice", required_amount, found_amount);
+            panic!("You own only {} of asset, it's impossible to pay {} required by invoice", found_amount, required_amount);
         }
         if bitcoin_amount < required_bitcoins {
             panic!("We ned at least {} bitcoins to cover fees and dust limit, however found only {}", required_bitcoins, bitcoin_amount);
@@ -348,7 +348,9 @@ impl Runtime {
         /*
          * Act 2: Generate state transition
          */
-        let mut seal = match payment.invoice.assign_to {
+        let mut outpoint_hash = payment.receiver;
+        // TODO: Support payments to a newly generated txout
+        /*match payment.receiver {
             SealDefinition::NewUtxo(supplied_psbt, vout) => {
                 // According to BIP-174, PSBT provided by creator must not contain
                 // non-transactional input or output fields
@@ -360,13 +362,13 @@ impl Runtime {
             },
             SealDefinition::ExistingUtxo(blind_outpoint) =>
                 lnpbp::rgb::Seal::BlindedTxout(blind_outpoint),
-        };
+        };*/
 
         // The receiver is not accounted for in balances!
         let mut allocations = payment.allocate;
         let mut balances = rgb::fungible::allocations_to_balances(allocations);
         let confidential_amount = lnpbp::rgb::data::amount::Confidential::from(
-            payment.amount.unwrap_or(payment.invoice.amount)
+            payment.amount // FIXME once invoices will be working: `.unwrap_or(payment.invoice.amount)`
         );
 
         let mut transfer = Rgb1::transfer(balances, change)?;
@@ -374,7 +376,7 @@ impl Runtime {
         state.push(lnpbp::rgb::state::Partial::State(lnpbp::rgb::state::Bound {
             // FIXME: Change into a proper RGB1 constant to reflect balance seal type
             id: lnpbp::rgb::seal::Type(1),
-            seal,
+            seal: lnpbp::rgb::Seal::BlindedTxout(outpoint_hash),
             val: lnpbp::rgb::Data::Balance(confidential_amount.commitment)
         }));
         transfer.state = state.into();
@@ -420,9 +422,54 @@ impl Runtime {
         let tf_commitment = transfer.commitment()?;
         let tx_commitment = lnpbp::cmt::TxCommitment::commit_to(container, &tf_commitment)?;
 
-        let witness_tx = tx_commitment.tx;
+        let mut witness_tx = tx_commitment.tx;
 
-        // TODO: Now sign the transaction!
+        // Now sign the transaction
+        let secp = secp256k1::Secp256k1::new();
+        let hasher = bip143::SighashComponents::new(&witness_tx);
+        let keyring = self.keyrings
+            .get_main_keyring();
+        let account = keyring.get_account(&payment.account)?;
+        let password = rpassword::prompt_password_stderr("Password for unlocking private key: ").unwrap();
+        let mut enc = vec![];
+        if let Keyring::Hierarchical { encrypted, .. } = keyring {
+            enc = encrypted.clone();
+        } else {
+            panic!()
+        }
+        let encrypted = enc;
+        let seed = Seed::decrypt(&encrypted, &password).expect("Wrong password");
+        let xprivkey = ExtendedPrivKey::new_master(bitcoin::Network::Bitcoin, &seed.0).expect("Wrong password");
+        let witness_tx_clone = witness_tx.clone();
+
+        /*
+        Some((offset..to).map(|_| {
+            let dp = dp_iter.next().unwrap();
+            let sk = xprivkey.derive_priv(&secp, &dp).unwrap().private_key;
+        */
+        for (ix, input) in witness_tx.input.iter_mut().enumerate() {
+            let deposit_term = deposits.get(&input.previous_output)
+                .expect("Previously found deposit terminal disappeared");
+            let spent_amount = deposit_term.bitcoins.as_sat();
+            let dp = account.derivation_path.clone().unwrap()
+                .child(ChildNumber::Normal { index: deposit_term.derivation_index as u32 });
+            let sk = xprivkey.derive_priv(&secp, &dp).unwrap().private_key;
+            let seckey = sk.key;
+            let pubkey = sk.public_key(&secp);
+            let script_sig = bitcoin::Script::new();
+            let prev_script = bitcoin::Address::p2wpkh(&pubkey, bitcoin::Network::Bitcoin).script_pubkey();
+            let sighash = hasher.sighash_all(
+                &witness_tx_clone.input[ix],
+                &prev_script,
+                spent_amount,
+            );
+            let signature = secp.sign(&secp256k1::Message::from_slice(&sighash[..])?, &seckey).serialize_der();
+            let mut with_hashtype = signature.to_vec();
+            with_hashtype.push(bitcoin::SigHashType::All.as_u32() as u8);
+            input.witness.clear();
+            input.witness.push(with_hashtype);
+            input.witness.push(pubkey.to_bytes());
+        }
 
         Ok(())
     }

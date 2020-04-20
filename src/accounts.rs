@@ -23,7 +23,7 @@ use bitcoin::secp256k1;
 use bitcoin::util::bip32::{self, ExtendedPrivKey, ExtendedPubKey, DerivationPath, ChildNumber};
 use bitcoin_wallet::{account::Seed, context::SecpContext};
 
-use lnpbp::csv::serialize::{self, network::*, storage::*};
+use lnpbp::csv::serialize::{self, storage::*};
 
 use crate::error::Error;
 

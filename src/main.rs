@@ -27,11 +27,9 @@
 #![feature(repr_transparent)]
 #![feature(try_trait)]
 
-#[macro_use]
 extern crate tokio;
 extern crate futures;
 extern crate zmq;
-#[macro_use]
 extern crate diesel;
 #[macro_use]
 extern crate clap;
@@ -39,7 +37,6 @@ extern crate clap;
 extern crate derive_wrapper;
 #[macro_use]
 extern crate async_trait;
-#[macro_use]
 extern crate log;
 extern crate env_logger;
 extern crate dotenv;

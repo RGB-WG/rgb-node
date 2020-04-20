@@ -19,8 +19,10 @@ use regex::Regex;
 
 use lnpbp::bitcoin;
 use bitcoin::{TxIn, OutPoint};
+use bitcoin::hashes::hex::FromHex;
 
 use lnpbp::{bp, rgb};
+use lnpbp::rgb::ContractId;
 use ::rgb::fungible;
 
 
@@ -157,9 +159,17 @@ pub struct Pay  {
     /// Tag name of the account for controlling transaciton outputs
     pub account: String,
 
-    /// Invoice to pay
-    pub invoice: fungible::Invoice,
+    /// Amount
+    pub amount: rgb::data::Amount,
 
-    /// Overrides amount provided in the invoice
-    pub amount: Option<rgb::data::Amount>,
+    /// Assets
+    #[clap(parse(try_from_str=ContractId::from_hex))]
+    pub contract_id: ContractId,
+
+    /// Receiver
+    #[clap(parse(try_from_str=bp::blind::OutpointHash::from_hex))]
+    pub receiver: bp::blind::OutpointHash,
+
+    // / Invoice to pay
+    //pub invoice: fungible::Invoice,
 }

@@ -18,6 +18,7 @@ use std::option::NoneError;
 use tokio::task::JoinError;
 use electrum_client as electrum;
 
+use lnpbp::bitcoin::secp256k1;
 use lnpbp::csv::serialize;
 use lnpbp::rgb;
 
@@ -62,6 +63,9 @@ pub enum Error {
 
     #[derive_from]
     CommitmentError(lnpbp::cmt::Error),
+
+    #[derive_from]
+    SignatureError(secp256k1::Error),
 
     #[derive_from(NoneError)]
     Other,

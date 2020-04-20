@@ -13,17 +13,14 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::fmt;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 
 use lnpbp::bitcoin;
-use bitcoin::{OutPoint, util::bip32};
-use lnpbp::bp;
+use bitcoin::OutPoint;
 use lnpbp::rgb::ContractId;
 use lnpbp::rgb::data::Amount as AssetAmount;
 use lnpbp::rgb::transition::TransitionId;
-use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
 
 
 #[derive(Clone, PartialEq, Eq, Debug)]
