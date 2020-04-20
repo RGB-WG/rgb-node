@@ -132,31 +132,31 @@ pub struct Issue {
 pub struct Pay  {
     /// Use custom commitment output for generated witness transaction
     #[clap(long)]
-    commit_txout: Option<Output>,
+    pub commit_txout: Option<Output>,
 
     /// Adds output(s) to generated witness transaction
     #[clap(long)]
-    txout: Vec<Output>,
+    pub txout: Vec<Output>,
 
     /// Adds input(s) to generated witness transaction
     #[clap(long)]
-    txin: Vec<Input>,
+    pub txin: Vec<Input>,
 
     /// Allocates other assets to custom outputs
     #[clap(short, long)]
-    allocate: Vec<fungible::Allocation>,
+    pub allocate: Vec<fungible::Allocation>,
 
     /// Saves witness transaction to a file instead of publishing it
     #[clap(short, long)]
-    transaction: Option<PathBuf>,
+    pub transaction: Option<PathBuf>,
 
     /// Saves proof data to a file instead of sending it to the remote party
     #[clap(short, long)]
-    proof: Option<PathBuf>,
+    pub proof: Option<PathBuf>,
 
     /// Invoice to pay
-    invoice: fungible::Invoice,
+    pub invoice: fungible::Invoice,
 
     /// Overrides amount provided in the invoice
-    amount: rgb::data::Amount,
+    pub amount: Option<rgb::data::Amount>,
 }

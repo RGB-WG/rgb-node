@@ -13,22 +13,26 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
+use std::collections::BTreeMap;
 use std::convert::TryInto;
+use std::net::SocketAddr;
+
+use bitcoin::Transaction;
+use bitcoin::util::bip32::{DerivationPath};
+use bitcoin::util::psbt::{self, PartiallySignedTransaction};
+use electrum_client as electrum;
 
 use lnpbp::service::*;
 use lnpbp::bitcoin;
-use bitcoin::util::bip32::{DerivationPath};
-use electrum_client as electrum;
-
-use crate::lnpbp::rgb::commit::Identifiable;
+use lnpbp::csv::Storage;
+use lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::data::amount;
 use lnpbp::rgb::Rgb1;
+use rgb::fungible::invoice::SealDefinition;
 
 use super::*;
 use crate::error::Error;
 use crate::accounts::{KeyringManager, Account};
-use lnpbp::csv::Storage;
-use std::net::SocketAddr;
 
 
 pub struct Runtime {
@@ -185,10 +189,7 @@ impl Runtime {
 
     pub fn fungible_issue(mut self, issue: commands::fungible::Issue) -> Result<(), Error> {
         info!("Issuing asset with parameters {}", issue);
-        let balances = issue.allocate.iter().map(|alloc| {
-            let confidential = amount::Confidential::from(alloc.amount);
-            (alloc.seal, confidential.commitment)
-        }).collect();
+        let balances = rgb::fungible::allocations_to_balances(issue.allocate);
         let genesis = Rgb1::issue(
             self.config.network,
             &issue.ticker,
@@ -205,6 +206,65 @@ impl Runtime {
         println!("New asset {} is issued with ContractId={}", issue.ticker, asset_id);
 
         genesis.storage_serialize(self.config.data_writer(DataItem::ContractGenesis(asset_id))?)?;
+
+        Ok(())
+    }
+
+    pub fn fungible_pay(mut self, payment: commands::fungible::Pay) -> Result<(), Error> {
+        let mut psbt = PartiallySignedTransaction {
+            // TODO: Replace with Transaction::default when the new version of
+            //       bitcoin crate is released
+            global: psbt::Global { unsigned_tx: Transaction {
+                version: 0,
+                lock_time: 0,
+                input: vec![],
+                output: vec![]
+            }, unknown: BTreeMap::new() },
+            inputs: vec![],
+            outputs: vec![]
+        };
+
+        /*
+         * Act 1: Generate state transition
+         */
+        let mut seal = match payment.invoice.assign_to {
+            SealDefinition::NewUtxo(supplied_psbt, vout) => {
+                // According to BIP-174, PSBT provided by creator must not contain
+                // non-transactional input or output fields
+                if !psbt.inputs.is_empty() || !psbt.outputs.is_empty() {
+                    return Err(Error::WrongInvoicePsbtStructure)
+                }
+                psbt = supplied_psbt;
+                lnpbp::rgb::Seal::WitnessTxout(vout)
+            },
+            SealDefinition::ExistingUtxo(blind_outpoint) =>
+                lnpbp::rgb::Seal::BlindedTxout(blind_outpoint),
+        };
+
+        // The receiver is not accounted for in balances!
+        let balances = rgb::fungible::allocations_to_balances(payment.allocate);
+        let confidential_amount = lnpbp::rgb::data::amount::Confidential::from(
+            payment.amount.unwrap_or(payment.invoice.amount)
+        );
+
+        let mut transfer = Rgb1::transfer(balances)?;
+        let mut state = transfer.state.into_inner();
+        state.push(lnpbp::rgb::state::Partial::State(lnpbp::rgb::state::Bound {
+            // FIXME: Change into a proper RGB1 constant to reflect balance seal type
+            id: lnpbp::rgb::seal::Type(1),
+            seal: seal,
+            val: lnpbp::rgb::Data::Balance(confidential_amount.commitment)
+        }));
+        transfer.state = state.into();
+
+        /*
+         * Act 2: Find asset outputs to spend
+         */
+
+
+        /*
+         * Act 3: Generate witness transaction
+         */
 
         Ok(())
     }

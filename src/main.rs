@@ -128,6 +128,8 @@ async fn main() -> Result<(), Error> {
         Command::Fungible(subcommand) => match subcommand {
             fungible::Command::Issue(issue) =>
                 runtime.fungible_issue(issue),
+            fungible::Command::Pay(payment) =>
+                runtime.fungible_pay(payment),
             _ => unimplemented!()
         }
         //Command::Query { query } => runtime.command_query(query).await?,

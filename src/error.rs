@@ -53,6 +53,8 @@ pub enum Error {
 
     #[derive_from]
     ElectrumError(electrum::Error),
+
+    WrongInvoicePsbtStructure,
 }
 
 impl std::error::Error for Error { }
