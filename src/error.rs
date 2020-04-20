@@ -14,6 +14,7 @@
 
 
 use std::io;
+use std::option::NoneError;
 use tokio::task::JoinError;
 use electrum_client as electrum;
 
@@ -55,6 +56,9 @@ pub enum Error {
     ElectrumError(electrum::Error),
 
     WrongInvoicePsbtStructure,
+
+    #[derive_from(NoneError)]
+    Other,
 }
 
 impl std::error::Error for Error { }

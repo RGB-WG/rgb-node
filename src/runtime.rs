@@ -13,17 +13,18 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::convert::TryInto;
 use std::net::SocketAddr;
 
 use bitcoin::Transaction;
-use bitcoin::util::bip32::{DerivationPath};
+use bitcoin::util::bip32::{DerivationPath, ChildNumber};
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
 use electrum_client as electrum;
 
 use lnpbp::service::*;
 use lnpbp::bitcoin;
+use lnpbp::bp;
 use lnpbp::csv::Storage;
 use lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::data::amount;
@@ -32,6 +33,7 @@ use rgb::fungible::invoice::SealDefinition;
 
 use super::*;
 use crate::error::Error;
+use crate::data::{DepositTerminal, SpendingStructure};
 use crate::accounts::{KeyringManager, Account};
 
 
@@ -99,6 +101,64 @@ impl Runtime {
             .expect("Keyring manager contains no accounts")
     }
 
+    async fn get_deposits(&self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>, offset: u32, no: u8) -> Result<Vec<DepositTerminal>, Error> {
+        use commands::bitcoin::DepositType::*;
+
+        let socket_addr: SocketAddr = self.config.electrum_endpoint
+            .try_into()
+            .map_err(|_| Error::TorNotYetSupported)?;
+        let mut ec = electrum::Client::new(socket_addr).await?;
+
+        let index = offset;
+        let network: bitcoin::Network = self.config.network.try_into().unwrap_or(bitcoin::Network::Testnet).into();
+        let keyring = self.keyrings
+            .get_main_keyring();
+        let account = keyring.get_account(&account_tag)?;
+        let base_derivation = account.derivation_path?;
+        let depo_boxes = keyring
+            .list_deposit_boxes(&account_tag, offset, no)
+            .ok_or(Error::AccountNotFound)?;
+        let data: HashMap<bitcoin::Script, usize> = depo_boxes
+            .iter()
+            .enumerate()
+            .map(|(idx, depo)| -> Vec<(bitcoin::Script, usize)> {
+                let mut s = vec![];
+                if deposit_types.contains(&PKH) { s.push(depo.get_p2pkh_addr(network)) }
+                if deposit_types.contains(&WPKH) { s.push(depo.get_p2wpkh_addr(network)) }
+                s.into_iter().map(|addr| -> (bitcoin::Script, usize) {
+                    (addr.clone().payload
+                        .script_pubkey()
+                        .into_script(),
+                    idx)
+                }).collect()
+            })
+            .flatten()
+            .collect();
+
+        let res = ec.batch_script_list_unspent(data.keys()).await?;
+
+        Ok(data.into_iter().zip(res.into_iter())
+            .map(|((script, index), list)| {
+                if list.is_empty() { return vec![] }
+                list.into_iter().map(|info| {
+                    DepositTerminal {
+                        outpoint: bitcoin::OutPoint { txid: info.tx_hash, vout: info.tx_pos as u32 },
+                        derivation_index: index,
+                        spending_structure: match &script {
+                            s if s.is_p2pkh() => SpendingStructure::P2PKH,
+                            s if s.is_v0_p2wpkh() => SpendingStructure::P2WPKH,
+                            _ => panic!("Unknown spending structure"),
+                        },
+                        bitcoins: bitcoin::Amount::from_sat(info.value),
+                        fungibles: Default::default()
+                    }
+                })
+                .collect()
+            })
+            .flatten()
+            .collect())
+    }
+
     pub fn account_list(self) -> Result<(), Error> {
         info!("Listing known accounts");
         println!("{}", self.keyrings);
@@ -126,7 +186,7 @@ impl Runtime {
         println!("{:>4}:  {:64}    {:32}    {:48}", "ID", "PUBKEY", "P2WPKH ADDRESS", "P2PKH ADDRESS");
         self.keyrings
             .get_main_keyring()
-            .list_deposit_boxes(account_tag, offset, no)
+            .list_deposit_boxes(&account_tag, offset, no)
             .ok_or(Error::AccountNotFound)?
             .iter()
             .for_each(|depo| {
@@ -138,50 +198,19 @@ impl Runtime {
     }
 
     pub async fn bitcoin_funds(self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>, offset: u32, no: u8) -> Result<(), Error> {
-        use commands::bitcoin::DepositType::*;
         info!("Listing bitcoin funds");
+        let deposits = self.get_deposits(account_tag, deposit_types, offset, no)
+            .await?;
 
-        let socket_addr: SocketAddr = self.config.electrum_endpoint
-            .try_into()
-            .map_err(|_| Error::TorNotYetSupported)?;
-        let mut ec = electrum::Client::new(socket_addr).await?;
-
-        let index = offset;
-        let network: bitcoin::Network = self.config.network.try_into().unwrap_or(bitcoin::Network::Testnet).into();
-        let depo_boxes = self.keyrings
-            .get_main_keyring()
-            .list_deposit_boxes(account_tag, offset, no)
-            .ok_or(Error::AccountNotFound)?;
-        let req: Vec<(bitcoin::Address, bitcoin::Script)> = depo_boxes
-            .iter()
-            .map(|depo| -> Vec<(bitcoin::Address, bitcoin::Script)> {
-                let mut s = vec![];
-                if deposit_types.contains(&PKH) { s.push(depo.get_p2pkh_addr(network)) }
-                if deposit_types.contains(&WPKH) { s.push(depo.get_p2wpkh_addr(network)) }
-                s.into_iter().map(|addr| {
-                    (addr.clone(),
-                     addr.payload
-                        .script_pubkey()
-                        .into_script())
-                }).collect()
-            })
-            .flatten()
-            .collect();
-
-        let (addresses, scripts): (Vec<_>, Vec<bitcoin::Script>) = req.into_iter().unzip();
-        let scripts = scripts.iter().collect::<Vec<&bitcoin::Script>>();
-        let res = ec.batch_script_list_unspent(scripts).await?;
-
-        addresses.into_iter().zip(res.into_iter())
-            .for_each(|(addr, list)| {
-                if list.is_empty() { return; }
-                println!(" {}:", addr);
-                println!(" ------------------------------------------------------------------------------------------------------------------------- ");
-                list.into_iter().for_each(|item| {
-                    println!("\t{:4.6} BTC  |  {:64}:{:<5}  |  height: {:>6}",
-                             (item.value as f32) / 100_000_000.0,
-                             item.tx_hash, item.tx_pos, item.height);
-                });
+        println!("{:>4}:   {:^16}  |  {:^64}  |  {:^5}  |  {}", "ID", "VALUE", "TXID", "VOUT", "TYPE");
+        deposits
+            .into_iter()
+            .for_each(|depo| {
+                let btc = format!("{}", depo.bitcoins);
+                println!("{:>4}:   {:>16}  |  {:64}  |  {:>5}  |  {}",
+                         depo.derivation_index,
+                         btc,
+                         depo.outpoint.txid, depo.outpoint.vout, depo.spending_structure);
             });
 
         Ok(())

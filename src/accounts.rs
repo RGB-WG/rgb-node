@@ -155,7 +155,7 @@ impl Keyring {
         }
     }
 
-    pub fn list_deposit_boxes(&self, account_tag: String, offset: u32, no: u8) -> Option<Vec<DepositBox>> {
+    pub fn list_deposit_boxes(&self, account_tag: &String, offset: u32, no: u8) -> Option<Vec<DepositBox>> {
         if let Keyring::Hierarchical { xpubkey, encrypted, .. } = self {
             let account = self.get_account(account_tag)?;
             let mut dp = account.derivation_path.as_ref().unwrap().clone();
@@ -193,8 +193,8 @@ impl Keyring {
         }
     }
 
-    fn get_account(&self, account_tag: String) -> Option<Account> {
-        self.get_accounts().into_iter().find(|a| a.name == account_tag)
+    pub fn get_account(&self, account_tag: &String) -> Option<Account> {
+        self.get_accounts().into_iter().find(|a| a.name == *account_tag)
     }
 }
 
