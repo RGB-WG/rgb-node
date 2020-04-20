@@ -154,6 +154,9 @@ pub struct Pay  {
     #[clap(short, long)]
     pub proof: Option<PathBuf>,
 
+    /// Tag name of the account for controlling transaciton outputs
+    pub account: String,
+
     /// Invoice to pay
     pub invoice: fungible::Invoice,
 

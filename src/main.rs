@@ -135,7 +135,7 @@ async fn main() -> Result<(), Error> {
             fungible::Command::Issue(issue) =>
                 runtime.fungible_issue(issue),
             fungible::Command::Pay(payment) =>
-                runtime.fungible_pay(payment),
+                runtime.fungible_pay(payment).await,
             _ => unimplemented!()
         }
         //Command::Query { query } => runtime.command_query(query).await?,

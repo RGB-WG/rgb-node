@@ -60,6 +60,9 @@ pub enum Error {
     #[derive_from]
     StorageError(serde_json::Error),
 
+    #[derive_from]
+    CommitmentError(lnpbp::cmt::Error),
+
     #[derive_from(NoneError)]
     Other,
 }

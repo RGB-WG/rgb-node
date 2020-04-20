@@ -17,7 +17,8 @@ use std::collections::{BTreeMap, HashMap};
 use std::convert::TryInto;
 use std::net::SocketAddr;
 
-use bitcoin::Transaction;
+use bitcoin::{TxIn, TxOut, Transaction};
+use bitcoin::util::bip143;
 use bitcoin::hashes::Hash;
 use bitcoin::util::bip32::{DerivationPath, ChildNumber};
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
@@ -26,6 +27,7 @@ use electrum_client as electrum;
 use lnpbp::service::*;
 use lnpbp::bitcoin;
 use lnpbp::bp;
+use lnpbp::cmt::*;
 use lnpbp::csv::Storage;
 use lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::data::amount;
@@ -35,7 +37,7 @@ use rgb::fungible::invoice::SealDefinition;
 
 use super::*;
 use crate::error::Error;
-use crate::data::{DepositTerminal, SpendingStructure, AssetAllocations};
+use crate::data::{DepositTerminal, AssetAllocations};
 use crate::accounts::{KeyringManager, Account};
 
 
@@ -103,7 +105,7 @@ impl Runtime {
             .expect("Keyring manager contains no accounts")
     }
 
-    async fn get_deposits(&self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>, offset: u32, no: u8) -> Result<Vec<DepositTerminal>, Error> {
+    async fn get_deposits(&self, account_tag: &String, deposit_types: Vec<commands::bitcoin::DepositType>, offset: u32, no: u8) -> Result<Vec<DepositTerminal>, Error> {
         use commands::bitcoin::DepositType::*;
 
         let socket_addr: SocketAddr = self.config.electrum_endpoint
@@ -147,8 +149,8 @@ impl Runtime {
                         outpoint: bitcoin::OutPoint { txid: info.tx_hash, vout: info.tx_pos as u32 },
                         derivation_index: index,
                         spending_structure: match &script {
-                            s if s.is_p2pkh() => SpendingStructure::P2PKH,
-                            s if s.is_v0_p2wpkh() => SpendingStructure::P2WPKH,
+                            s if s.is_p2pkh() => bitcoin::AddressType::P2pkh,
+                            s if s.is_v0_p2wpkh() => bitcoin::AddressType::P2wpkh,
                             _ => panic!("Unknown spending structure"),
                         },
                         bitcoins: bitcoin::Amount::from_sat(info.value),
@@ -159,6 +161,13 @@ impl Runtime {
             })
             .flatten()
             .collect())
+    }
+
+    fn get_asset_allocations(&self) -> Result<AssetAllocations, Error> {
+        Ok(match self.config.data_reader(DataItem::FungibleSeals) {
+            Ok(mut reader) => serde_json::from_reader(reader)?,
+            _ => AssetAllocations::new()
+        })
     }
 
     pub fn account_list(self) -> Result<(), Error> {
@@ -201,7 +210,7 @@ impl Runtime {
 
     pub async fn bitcoin_funds(self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>, offset: u32, no: u8) -> Result<(), Error> {
         info!("Listing bitcoin funds");
-        let deposits = self.get_deposits(account_tag, deposit_types, offset, no)
+        let deposits = self.get_deposits(&account_tag, deposit_types, offset, no)
             .await?;
 
         println!("{:>4}:   {:^16}  |  {:^64}  |  {:^5}  |  {}", "ID", "VALUE", "TXID", "VOUT", "TYPE");
@@ -244,10 +253,7 @@ impl Runtime {
 
         genesis.storage_serialize(self.config.data_writer(DataItem::ContractGenesis(asset_id))?)?;
 
-        let mut assets: AssetAllocations = match self.config.data_reader(DataItem::FungibleSeals) {
-            Ok(mut reader) => serde_json::from_reader(reader)?,
-            _ => AssetAllocations::new()
-        };
+        let mut assets = self.get_asset_allocations()?;
         assets.seals.insert(asset_id, allocations);
         let mut writer = self.config.data_writer(DataItem::FungibleSeals)?;
         serde_json::to_writer(writer, &assets)?;
@@ -255,7 +261,11 @@ impl Runtime {
         Ok(())
     }
 
-    pub fn fungible_pay(mut self, payment: commands::fungible::Pay) -> Result<(), Error> {
+    pub async fn fungible_pay(mut self, payment: commands::fungible::Pay) -> Result<(), Error> {
+        const FEE: u64 = 1000;
+        const DUST_LIMIT: u64 = 1000;
+
+        // TODO: Use PSBT supplied by payee
         let mut psbt = PartiallySignedTransaction {
             // TODO: Replace with Transaction::default when the new version of
             //       bitcoin crate is released
@@ -270,7 +280,73 @@ impl Runtime {
         };
 
         /*
-         * Act 1: Generate state transition
+         * Act 0: Know our outputs
+         */
+        let deposits = self
+            .get_deposits(&payment.account, vec![commands::bitcoin::DepositType::WPKH], 0, 10)
+            .await?;
+        let deposits = deposits
+            .into_iter()
+            .map(|depo| {
+                (depo.outpoint, depo)
+            })
+            .collect::<HashMap<bitcoin::OutPoint, DepositTerminal>>();
+
+        /*
+         * Act 1: Find asset outputs to spend
+         */
+        let contract_id = payment.invoice.contract_id;
+        let existing_allocations = self.get_asset_allocations()?;
+        let existing_allocations = existing_allocations.seals
+            .get(&contract_id)
+            .unwrap_or_else(|| { panic!("You do not have any spendable assets for {}", contract_id) });
+        // "Coinselection"
+        let required_amount = payment.invoice.amount;
+        let mut found_amount = 0;
+        let mut bitcoin_amount = 0;
+        let mut required_bitcoins = 0;
+        let seals_to_close: Vec<bitcoin::OutPoint> = existing_allocations
+            .into_iter()
+            .filter(|alloc| {
+                deposits.get(&alloc.seal).is_some()
+            })
+            .filter(|alloc| {
+                if found_amount < required_amount ||
+                   bitcoin_amount <= required_bitcoins {
+                    bitcoin_amount += deposits.get(&alloc.seal).unwrap().bitcoins.as_sat();
+                    found_amount += alloc.amount;
+                    true
+                } else {
+                    false
+                }
+            })
+            .map(|alloc| {
+                alloc.seal
+            })
+            .collect();
+        let found_amount = found_amount;
+        if found_amount < required_amount {
+            panic!("You own only {} of asset, it's impossible to pay {} required by invoice", required_amount, found_amount);
+        }
+        if bitcoin_amount < required_bitcoins {
+            panic!("We ned at least {} bitcoins to cover fees and dust limit, however found only {}", required_bitcoins, bitcoin_amount);
+        }
+        let fee = FEE;
+        let mut bitcoins_minus_fee = bitcoin_amount - fee;
+        let mut change = HashMap::new();
+        // TODO: Use confidential amounts for keeping track of owned value
+        let mut confidential_change = None;
+        if found_amount > required_amount {
+            confidential_change = Some(lnpbp::rgb::data::amount::Confidential::from(found_amount - required_amount));
+            change.insert(
+                // We use first output always
+                0,
+                confidential_change.unwrap().commitment
+            );
+        }
+
+        /*
+         * Act 2: Generate state transition
          */
         let mut seal = match payment.invoice.assign_to {
             SealDefinition::NewUtxo(supplied_psbt, vout) => {
@@ -287,29 +363,66 @@ impl Runtime {
         };
 
         // The receiver is not accounted for in balances!
-        let balances = rgb::fungible::allocations_to_balances(payment.allocate);
+        let mut allocations = payment.allocate;
+        let mut balances = rgb::fungible::allocations_to_balances(allocations);
         let confidential_amount = lnpbp::rgb::data::amount::Confidential::from(
             payment.amount.unwrap_or(payment.invoice.amount)
         );
 
-        let mut transfer = Rgb1::transfer(balances)?;
+        let mut transfer = Rgb1::transfer(balances, change)?;
         let mut state = transfer.state.into_inner();
         state.push(lnpbp::rgb::state::Partial::State(lnpbp::rgb::state::Bound {
             // FIXME: Change into a proper RGB1 constant to reflect balance seal type
             id: lnpbp::rgb::seal::Type(1),
-            seal: seal,
+            seal,
             val: lnpbp::rgb::Data::Balance(confidential_amount.commitment)
         }));
         transfer.state = state.into();
 
         /*
-         * Act 2: Find asset outputs to spend
-         */
-
-
-        /*
          * Act 3: Generate witness transaction
          */
+        let txins = seals_to_close.into_iter().map(|seal| {
+            TxIn {
+                previous_output: seal,
+                script_sig: bitcoin::Script::new(),
+                sequence: 0,
+                witness: vec![]
+            }
+        }).collect();
+
+        let change_box = *self.keyrings
+            .get_main_keyring()
+            .list_deposit_boxes(&payment.account, 0, 1)?
+            .first()
+            .unwrap();
+        let change_address = change_box
+            .get_p2wpkh_addr(bitcoin::Network::Bitcoin);
+        let witness_tx = Transaction {
+            version: 2,
+            lock_time: 0,
+            input: txins,
+            output: vec![
+                TxOut {
+                    value: bitcoins_minus_fee,
+                    script_pubkey: change_address.script_pubkey()
+                }
+            ]
+        };
+
+        let container = lnpbp::cmt::TxContainer {
+            entropy: 0,
+            fee: bitcoin::Amount::from_sat(fee),
+            tx: witness_tx,
+            txout_container: lnpbp::cmt::TxoutContainer::PubkeyHash(change_box.get_pubkey().key)
+        };
+        // TODO: Use multimessage commitment instead of transition commitment
+        let tf_commitment = transfer.commitment()?;
+        let tx_commitment = lnpbp::cmt::TxCommitment::commit_to(container, &tf_commitment)?;
+
+        let witness_tx = tx_commitment.tx;
+
+        // TODO: Now sign the transaction!
 
         Ok(())
     }

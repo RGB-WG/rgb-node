@@ -26,27 +26,11 @@ use lnpbp::rgb::transition::TransitionId;
 use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
 
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-#[non_exhaustive]
-pub enum SpendingStructure {
-    P2PKH, P2WPKH
-}
-
-impl fmt::Display for SpendingStructure {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{}", match self {
-            SpendingStructure::P2PKH => "P2PKH",
-            SpendingStructure::P2WPKH => "P2WPKH",
-            _ => "Unsupported"
-        })
-    }
-}
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct DepositTerminal {
     pub outpoint: OutPoint,
     pub derivation_index: usize,
-    pub spending_structure: SpendingStructure,
+    pub spending_structure: bitcoin::AddressType,
     pub bitcoins: bitcoin::Amount,
     pub fungibles: HashMap<TransitionId, Vec<(AssetAmount, TransitionId)>>
 }

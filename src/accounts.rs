@@ -283,7 +283,7 @@ impl serialize::Network for Account {
 }
 
 
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub struct DepositBox(secp256k1::PublicKey);
 
