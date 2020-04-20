@@ -27,6 +27,7 @@ diesel = { version = "~1.4", features = ["sqlite", "uuid", "numeric", "chrono"] 
 tokio = { version = "~0.2", features = ["full"] }
 futures = "~0.3"
 zmq = "~0.9"
+electrum-client = "0.1.0-beta.6"
 rgb = { git = "https://github.com/rgb-org/rgb-sdk" }
 
 [dependencies.lnpbp]

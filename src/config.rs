@@ -16,6 +16,7 @@
 use std::{io, fs, path::PathBuf};
 use clap::Clap;
 use lnpbp::bp;
+use lnpbp::common::internet::InetSocketAddr;
 use lnpbp::rgb::commit::TransitionCommitment;
 
 use crate::constants::*;
@@ -39,6 +40,10 @@ pub struct Opts {
     /// Data directory for keeping information about keyrings, assets etc
     #[clap(global=true, long, default_value=DATA_DIR, env="KALEIDOSCOPE_DATA_DIR")]
     pub data_dir: PathBuf,
+
+    /// Electrum server RPC endpoint
+    #[clap(global=true, long, default_value=ELECTRUM_ENDPOINT, env="KALEIDOSCOPE_ELECTRUM_ENDPOINT")]
+    pub electrum_endpoint: InetSocketAddr,
 
     /// IPC connection string for bp daemon API
     #[clap(global=true, long, default_value=BPD_API_ADDR, env="KALEIDOSCOPE_BPD_API")]
@@ -67,6 +72,7 @@ pub struct Config {
     pub verbose: u8,
     pub network: bp::Network,
     pub data_dir: PathBuf,
+    pub electrum_endpoint: InetSocketAddr,
     pub bpd_api: String,
     pub bpd_subscr: String,
 }
@@ -81,6 +87,7 @@ impl From<Opts> for Config {
             verbose: opts.verbose,
             network: opts.network,
             data_dir: data_dir,
+            electrum_endpoint: opts.electrum_endpoint,
             bpd_api: opts.bpd_api,
             bpd_subscr: opts.bpd_subscr,
 
@@ -95,6 +102,7 @@ impl Default for Config {
             verbose: 0,
             network: bp::Network::Signet,
             data_dir: DATA_DIR.parse().expect("Parse of DATA_DIR constant has failed"),
+            electrum_endpoint: ELECTRUM_ENDPOINT.parse().expect("Parse of ELECTRUM_ENDPOINT onstant has failed"),
             bpd_api: BPD_API_ADDR.to_string(),
             bpd_subscr: BPD_PUSH_ADDR.to_string()
         }
