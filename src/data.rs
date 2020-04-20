@@ -15,9 +15,12 @@
 
 use std::fmt;
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
+
 use lnpbp::bitcoin;
 use bitcoin::{OutPoint, util::bip32};
 use lnpbp::bp;
+use lnpbp::rgb::ContractId;
 use lnpbp::rgb::data::Amount as AssetAmount;
 use lnpbp::rgb::transition::TransitionId;
 use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
@@ -48,3 +51,13 @@ pub struct DepositTerminal {
     pub fungibles: HashMap<TransitionId, Vec<(AssetAmount, TransitionId)>>
 }
 
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct AssetAllocations {
+    pub seals: HashMap<ContractId, Vec<rgb::fungible::Allocation>>,
+}
+
+impl AssetAllocations {
+    pub fn new() -> Self {
+        Self { seals: HashMap::new() }
+    }
+}

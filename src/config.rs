@@ -17,7 +17,7 @@ use std::{io, fs, path::PathBuf};
 use clap::Clap;
 use lnpbp::bp;
 use lnpbp::common::internet::InetSocketAddr;
-use lnpbp::rgb::commit::TransitionCommitment;
+use lnpbp::rgb::ContractId;
 
 use crate::constants::*;
 use crate::commands::*;
@@ -111,11 +111,13 @@ impl Default for Config {
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
+#[non_exhaustive]
 pub enum DataItem {
     Root,
     KeyringVault,
     ContractsVault,
-    ContractGenesis(TransitionCommitment)
+    ContractGenesis(ContractId),
+    FungibleSeals,
 }
 
 impl Config {
@@ -135,8 +137,16 @@ impl Config {
                 path.push(format!("{}", cmt));
                 path.set_extension("rgb");
             },
+            DataItem::FungibleSeals => path.push("fungible_seals.json"),
+            _ => panic!("Unsupported data type item"),
         }
         path
+    }
+
+    pub fn data_reader(&self, item: DataItem) -> Result<impl io::Read, io::Error> {
+        let file_name = self.data_path(item);
+        let file = fs::File::open(file_name)?;
+        Ok(io::BufReader::new(file))
     }
 
     pub fn data_writer(&self, item: DataItem) -> Result<impl io::Write, io::Error> {

@@ -48,6 +48,9 @@ extern crate chrono;
 extern crate rand;
 extern crate rpassword;
 extern crate shellexpand;
+extern crate serde;
+extern crate serde_derive;
+extern crate serde_json;
 
 extern crate electrum_client;
 extern crate lnpbp;
@@ -62,7 +65,6 @@ mod runtime;
 mod data;
 
 mod accounts;
-mod fungible;
 
 use std::{env, fs};
 use log::*;
@@ -129,7 +131,7 @@ async fn main() -> Result<(), Error> {
         },
         Command::Fungible(subcommand) => match subcommand {
             fungible::Command::List { only_owned } =>
-                runtime.fungible_list(owned),
+                runtime.fungible_list(only_owned),
             fungible::Command::Issue(issue) =>
                 runtime.fungible_issue(issue),
             fungible::Command::Pay(payment) =>

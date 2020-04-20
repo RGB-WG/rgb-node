@@ -12,6 +12,7 @@ edition = "2018"
 bitcoin-wallet = { git = "https://github.com/rgb-org/rust-wallet", branch = "staging" }
 serde = "~1.0"
 serde_derive = "~1.0"
+serde_json = "~1.0"
 rpassword = "~4.0"
 dotenv = "~0.15"
 shellexpand = "~2.0"

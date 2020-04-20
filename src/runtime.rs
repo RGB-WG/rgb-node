@@ -18,6 +18,7 @@ use std::convert::TryInto;
 use std::net::SocketAddr;
 
 use bitcoin::Transaction;
+use bitcoin::hashes::Hash;
 use bitcoin::util::bip32::{DerivationPath, ChildNumber};
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
 use electrum_client as electrum;
@@ -29,11 +30,12 @@ use lnpbp::csv::Storage;
 use lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::data::amount;
 use lnpbp::rgb::Rgb1;
+use lnpbp::rgb::ContractId;
 use rgb::fungible::invoice::SealDefinition;
 
 use super::*;
 use crate::error::Error;
-use crate::data::{DepositTerminal, SpendingStructure};
+use crate::data::{DepositTerminal, SpendingStructure, AssetAllocations};
 use crate::accounts::{KeyringManager, Account};
 
 
@@ -217,11 +219,12 @@ impl Runtime {
     }
 
     pub fn fungible_list(mut self, only_owned: bool) -> Result<(), Error> {
-
+        Ok(())
     }
 
     pub fn fungible_issue(mut self, issue: commands::fungible::Issue) -> Result<(), Error> {
         info!("Issuing asset with parameters {}", issue);
+        let allocations = issue.allocate.clone();
         let balances = rgb::fungible::allocations_to_balances(issue.allocate);
         let genesis = Rgb1::issue(
             self.config.network,
@@ -234,11 +237,20 @@ impl Runtime {
             issue.dust_limit
         )?;
 
-        let asset_id = genesis.commitment()
+        let asset_id = genesis.transition_id()
             .expect("Probability of the commitment generation failure is less than negligible");
+        let asset_id = ContractId::from_inner(asset_id.into_inner());
         println!("New asset {} is issued with ContractId={}", issue.ticker, asset_id);
 
         genesis.storage_serialize(self.config.data_writer(DataItem::ContractGenesis(asset_id))?)?;
+
+        let mut assets: AssetAllocations = match self.config.data_reader(DataItem::FungibleSeals) {
+            Ok(mut reader) => serde_json::from_reader(reader)?,
+            _ => AssetAllocations::new()
+        };
+        assets.seals.insert(asset_id, allocations);
+        let mut writer = self.config.data_writer(DataItem::FungibleSeals)?;
+        serde_json::to_writer(writer, &assets)?;
 
         Ok(())
     }
