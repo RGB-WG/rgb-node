@@ -15,9 +15,11 @@ pub mod invoice;
 mod error;
 mod stock;
 pub mod selection;
+mod accountant;
 
 pub use invoice::Invoice;
 pub use error::Error;
 pub use stock::*;
+pub use accountant::*;
 
 pub type Amount = u64;

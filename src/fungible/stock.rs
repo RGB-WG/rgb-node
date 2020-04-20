@@ -12,8 +12,9 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::{str::FromStr, collections::HashMap};
+use std::{io, str::FromStr, collections::HashMap};
 use std::num::ParseIntError;
+use serde::{Serialize, Deserialize};
 use regex::Regex;
 use chrono::NaiveDateTime;
 use bitcoin::hashes::hex::{self, FromHex};
@@ -21,6 +22,7 @@ use lnpbp::{bp, bitcoin, bitcoin::secp256k1, rgb::*, rgb::data::amount};
 use lnpbp::bitcoin::{Txid, OutPoint};
 use lnpbp::miniscript::Miniscript;
 use lnpbp::rgb::schemata::fungible::Balances;
+use lnpbp::csv::serialize;
 
 use super::{Amount, Error, Invoice, selection};
 
@@ -36,7 +38,7 @@ impl From<ParseIntError> for ParseError { fn from(err: ParseIntError) -> Self { 
 impl From<hex::Error> for ParseError { fn from(err: hex::Error) -> Self { Self } }
 
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub enum Supply {
     Unknown,
@@ -44,7 +46,7 @@ pub enum Supply {
     Known(Amount)
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub struct Stock {
     pub ticker: String,
@@ -89,7 +91,7 @@ impl Iterator for IssueIter {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[display_from(Debug)]
 pub enum NextIssuance {
     Prohibited,
@@ -97,14 +99,14 @@ pub enum NextIssuance {
     Known(Box<Issue>)
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[display_from(Debug)]
 pub struct Issue {
     pub supply: Amount,
     pub next: NextIssuance,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[display_from(Debug)]
 pub struct Allocation {
     pub amount: Amount,
@@ -143,9 +145,11 @@ pub fn allocations_to_balances(allocations: Vec<Allocation>) -> Balances {
     }).collect()
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[display_from(Debug)]
+#[non_exhaustive]
 pub enum Payer {
+    Genesis(ContractId),
     BitcoinPubkey(bitcoin::PublicKey),
     BitcoinMultisig(Vec<bitcoin::PublicKey>, u8),
     BitcoinScript(Miniscript<bitcoin::PublicKey>),
@@ -153,7 +157,7 @@ pub enum Payer {
     LightningNode(secp256k1::PublicKey),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[display_from(Debug)]
 pub struct Payment {
     pub date: NaiveDateTime,

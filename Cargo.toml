@@ -11,7 +11,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "~0.4"
+chrono = { version = "~0.4", features = [ "serde" ] }
+serde = { version = "~1.0", features = ["derive"] }
 regex = "~1.3"
 derive_wrapper = "~0.1"
 # TODO: Move this dependency to LNP/BP core library
@@ -20,4 +21,4 @@ lightning-invoice = "~0.2"
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
 branch = "develop"
-features = ["use-tor", "use-lightning", "use-rgb"]
+features = ["use-tor", "use-lightning", "use-rgb", "serde"]
