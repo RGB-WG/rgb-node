@@ -17,9 +17,10 @@ use std::num::ParseIntError;
 use regex::Regex;
 use chrono::NaiveDateTime;
 use bitcoin::hashes::hex::{self, FromHex};
-use lnpbp::{bp, bitcoin, bitcoin::secp256k1, rgb::*};
+use lnpbp::{bp, bitcoin, bitcoin::secp256k1, rgb::*, rgb::data::amount};
 use lnpbp::bitcoin::{Txid, OutPoint};
 use lnpbp::miniscript::Miniscript;
+use lnpbp::rgb::schemata::fungible::Balances;
 
 use super::{Amount, Error, Invoice, selection};
 
@@ -135,9 +136,12 @@ impl FromStr for Allocation {
     }
 }
 
-impl Allocation {
+pub fn allocations_to_balances(allocations: Vec<Allocation>) -> Balances {
+    allocations.iter().map(|alloc| {
+        let confidential = amount::Confidential::from(alloc.amount);
+        (alloc.seal, confidential.commitment)
+    }).collect()
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Display)]
 #[display_from(Debug)]

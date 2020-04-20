@@ -19,5 +19,5 @@ lightning-invoice = "~0.2"
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
-branch = "feat-wallet"
+branch = "develop"
 features = ["use-tor", "use-lightning", "use-rgb"]
