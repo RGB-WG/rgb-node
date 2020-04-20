@@ -13,9 +13,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::{io, fs, fmt, hash::Hash, convert::TryInto};
+use std::{io, fs, fmt, convert::TryInto};
 use std::path::PathBuf;
-use std::collections::HashMap;
 use rand::{thread_rng, RngCore};
 
 use lnpbp::bp;
@@ -27,7 +26,6 @@ use bitcoin_wallet::{account::Seed, context::SecpContext};
 use lnpbp::csv::serialize::{self, network::*, storage::*};
 
 use crate::error::Error;
-use lnpbp::miniscript::bitcoin::secp256k1::PublicKey;
 
 
 #[derive(Debug)]

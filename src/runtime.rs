@@ -13,26 +13,22 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::fs::File;
-use std::io::{self, prelude::*};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 
 use lnpbp::service::*;
 use lnpbp::bitcoin;
-use bitcoin::util::bip32::{ExtendedPubKey, DerivationPath, ChildNumber};
-use bitcoin::network::constants::Network;
-use bitcoin::Address;
-use bitcoin_wallet::{account::*, context::*};
+use bitcoin::util::bip32::{DerivationPath};
+use electrum_client as electrum;
 
 use crate::lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::data::amount;
 use lnpbp::rgb::Rgb1;
 
 use super::*;
-use crate::constants::*;
 use crate::error::Error;
 use crate::accounts::{KeyringManager, Account};
 use lnpbp::csv::Storage;
+use std::net::SocketAddr;
 
 
 pub struct Runtime {
@@ -134,6 +130,56 @@ impl Runtime {
                          index, depo.get_pubkey(), depo.get_p2wpkh_addr(network), depo.get_p2pkh_addr(network));
                 index += 1;
             });
+        Ok(())
+    }
+
+    pub async fn bitcoin_funds(self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>, offset: u32, no: u8) -> Result<(), Error> {
+        use commands::bitcoin::DepositType::*;
+        info!("Listing bitcoin funds");
+
+        let socket_addr: SocketAddr = self.config.electrum_endpoint
+            .try_into()
+            .map_err(|_| Error::TorNotYetSupported)?;
+        let mut ec = electrum::Client::new(socket_addr).await?;
+
+        let index = offset;
+        let network: bitcoin::Network = self.config.network.try_into().unwrap_or(bitcoin::Network::Testnet).into();
+        let depo_boxes = self.keyrings
+            .get_main_keyring()
+            .list_deposit_boxes(account_tag, offset, no)
+            .ok_or(Error::AccountNotFound)?;
+        let req: Vec<(bitcoin::Address, bitcoin::Script)> = depo_boxes
+            .iter()
+            .map(|depo| -> Vec<(bitcoin::Address, bitcoin::Script)> {
+                let mut s = vec![];
+                if deposit_types.contains(&PKH) { s.push(depo.get_p2pkh_addr(network)) }
+                if deposit_types.contains(&WPKH) { s.push(depo.get_p2wpkh_addr(network)) }
+                s.into_iter().map(|addr| {
+                    (addr.clone(),
+                     addr.payload
+                        .script_pubkey()
+                        .into_script())
+                }).collect()
+            })
+            .flatten()
+            .collect();
+
+        let (addresses, scripts): (Vec<_>, Vec<bitcoin::Script>) = req.into_iter().unzip();
+        let scripts = scripts.iter().collect::<Vec<&bitcoin::Script>>();
+        let res = ec.batch_script_list_unspent(scripts).await?;
+
+        addresses.into_iter().zip(res.into_iter())
+            .for_each(|(addr, list)| {
+                if list.is_empty() { return; }
+                println!(" {}:", addr);
+                println!(" ------------------------------------------------------------------------------------------------------------------------- ");
+                list.into_iter().for_each(|item| {
+                    println!("\t{:4.6} BTC  |  {:64}:{:<5}  |  height: {:>6}",
+                             (item.value as f32) / 100_000_000.0,
+                             item.tx_hash, item.tx_pos, item.height);
+                });
+            });
+
         Ok(())
     }
 

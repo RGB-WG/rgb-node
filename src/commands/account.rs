@@ -13,12 +13,9 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::path::PathBuf;
 use regex::Regex;
 use clap::Clap;
 use lnpbp::bitcoin::util::bip32::DerivationPath;
-
-use crate::constants::*;
 
 
 fn name_validator(name: String) -> Result<(), String> {

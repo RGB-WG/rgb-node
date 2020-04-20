@@ -32,6 +32,7 @@ extern crate futures;
 extern crate zmq;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate derive_wrapper;
@@ -69,7 +70,6 @@ use config::*;
 use runtime::*;
 use commands::*;
 use error::Error;
-use std::process::exit;
 use accounts::*;
 
 #[tokio::main]
@@ -120,6 +120,10 @@ async fn main() -> Result<(), Error> {
             account::Command::DepositBoxes { no, offset, account } =>
                 runtime.account_deposit_boxes(account, offset, no),
             _ => unimplemented!()
+        },
+        Command::Bitcoin(subcommand) => match subcommand {
+            bitcoin::Command::Funds { no, offset, deposit_types, account } =>
+                runtime.bitcoin_funds(account, deposit_types, offset, no).await,
         },
         Command::Fungible(subcommand) => match subcommand {
             fungible::Command::Issue(issue) =>

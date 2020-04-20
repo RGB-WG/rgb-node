@@ -15,7 +15,7 @@
 
 pub const BPD_API_ADDR: &str = "tcp://0.0.0.0:66601";
 pub const BPD_PUSH_ADDR: &str = "tcp://0.0.0.0:66602";
-pub const ELECTRUM_ENDPOINT: &str = "31.14.40.19:606010";
+pub const ELECTRUM_ENDPOINT: &str = "31.14.40.19:60601";
 
 pub const WALLET_FILE: &str = "./wallet.dat";
 

@@ -15,6 +15,7 @@
 
 use std::io;
 use tokio::task::JoinError;
+use electrum_client as electrum;
 
 use lnpbp::csv::serialize;
 use lnpbp::rgb;
@@ -49,6 +50,9 @@ pub enum Error {
     FungibleSchemataError(rgb::schemata::fungible::Error),
 
     AccountNotFound,
+
+    #[derive_from]
+    ElectrumError(electrum::Error),
 }
 
 impl std::error::Error for Error { }
