@@ -76,7 +76,7 @@ pub enum Command {
     List {
         /// Include only the assets which are owned by the known accounts
         #[clap(short, long)]
-        owned: bool
+        only_owned: bool
     },
 
     /// Creates a new asset

@@ -60,6 +60,7 @@ mod commands;
 mod runtime;
 
 mod accounts;
+mod fungible;
 
 
 use std::{env, fs};
@@ -126,6 +127,8 @@ async fn main() -> Result<(), Error> {
                 runtime.bitcoin_funds(account, deposit_types, offset, no).await,
         },
         Command::Fungible(subcommand) => match subcommand {
+            fungible::Command::List { only_owned } =>
+                runtime.fungible_list(owned),
             fungible::Command::Issue(issue) =>
                 runtime.fungible_issue(issue),
             fungible::Command::Pay(payment) =>

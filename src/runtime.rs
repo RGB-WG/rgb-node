@@ -187,6 +187,10 @@ impl Runtime {
         Ok(())
     }
 
+    pub fn fungible_list(mut self, only_owned: bool) -> Result<(), Error> {
+
+    }
+
     pub fn fungible_issue(mut self, issue: commands::fungible::Issue) -> Result<(), Error> {
         info!("Issuing asset with parameters {}", issue);
         let balances = rgb::fungible::allocations_to_balances(issue.allocate);
