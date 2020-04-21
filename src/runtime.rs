@@ -34,7 +34,7 @@ use lnpbp::csv::network_serialize;
 use lnpbp::csv::Storage;
 use lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::Rgb1;
-use lnpbp::rgb::ContractId;
+use lnpbp::rgb::{Transition, ContractId};
 use rgb::fungible::invoice::SealDefinition;
 
 use super::*;
@@ -133,9 +133,9 @@ impl Runtime {
                 if deposit_types.contains(&WPKH) { s.push(depo.get_p2wpkh_addr(network)) }
                 s.into_iter().map(|addr| -> (bitcoin::Script, usize) {
                     (addr.clone().payload
-                        .script_pubkey()
-                        .into_script(),
-                    idx)
+                         .script_pubkey()
+                         .into_script(),
+                     idx)
                 }).collect()
             })
             .flatten()
@@ -159,10 +159,15 @@ impl Runtime {
                         fungibles: Default::default()
                     }
                 })
-                .collect()
+                    .collect()
             })
             .flatten()
             .collect())
+    }
+
+    fn get_genesis_data(&self, contract_id: ContractId) -> Result<Transition, Error> {
+        let reader = self.config.data_reader(DataItem::ContractGenesis(contract_id))?;
+        Ok(Transition::storage_deserialize(reader)?)
     }
 
     fn get_asset_allocations(&self) -> Result<AssetAllocations, Error> {
@@ -171,7 +176,9 @@ impl Runtime {
             _ => AssetAllocations::new()
         })
     }
+}
 
+impl Runtime {
     pub fn account_list(self) -> Result<(), Error> {
         info!("Listing known accounts");
         println!("{}", self.keyrings);
@@ -229,7 +236,27 @@ impl Runtime {
         Ok(())
     }
 
-    pub async fn fungible_list(mut self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>,
+    pub fn fungible_list(self) -> Result<(), Error> {
+        println!("{:^8}  |  {:^32}  |  {:^5}  |  {:^64}", "TICKER", "NAME", "SEALS", "CONTRACT ID");
+        self.get_asset_allocations()?.seals
+            .into_iter()
+            .try_for_each(|(asset_id, allocations)| {
+                let genesis = self.get_genesis_data(asset_id)?;
+                if let lnpbp::rgb::metadata::Value::Str(ticker) = &genesis.meta.get(0)?.val {
+                    if let lnpbp::rgb::metadata::Value::Str(title) = &genesis.meta.get(1)?.val {
+                        println!("{:>8}  |  {:<32}  |  {:>5}  |  {:^64}", ticker, title, allocations.len(), asset_id);
+                        Ok(())
+                    } else {
+                        Err(Error::Other)
+                    }
+                } else {
+                    Err(Error::Other)
+                }
+            })?;
+        Ok(())
+    }
+
+    pub async fn fungible_funds(mut self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>,
                          contract_id: ContractId, only_owned: bool) -> Result<(), Error> {
         let deposits = self
             .get_deposits(&account_tag, deposit_types, 0, 10)
@@ -245,6 +272,7 @@ impl Runtime {
         let existing_allocations = existing_allocations.seals
             .get(&contract_id)
             .unwrap_or_else(|| { panic!("You do not have any spendable assets for {}", contract_id) });
+        println!("{:>8} {:>12} on {}:{}", "STATUS", "VALUE", "TXID", "VOUT");
         existing_allocations.into_iter()
             .for_each(|allocation| {
                 let spent = deposits.get(&allocation.seal).is_some();

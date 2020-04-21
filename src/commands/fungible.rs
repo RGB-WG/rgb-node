@@ -76,8 +76,11 @@ impl FromStr for Input {
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
 pub enum Command {
-    /// Lists all known asset ids
-    List {
+    /// Lists all known assets
+    List,
+
+    /// Lists all known funds for a given asset
+    Funds {
         /// Include only the assets which are owned by the known accounts
         #[clap(short, long)]
         only_owned: bool,
