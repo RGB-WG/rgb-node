@@ -268,17 +268,31 @@ impl Runtime {
             })
             .collect::<HashMap<bitcoin::OutPoint, DepositTerminal>>();
 
+        let genesis = self.get_genesis_data(contract_id)?;
+        if let lnpbp::rgb::metadata::Value::Str(ticker) = &genesis.meta.get(0)?.val {
+            if let lnpbp::rgb::metadata::Value::Str(title) = &genesis.meta.get(1)?.val {
+                println!("Listing {} ({}) allocations:", ticker, title);
+            }
+        }
+
         let existing_allocations = self.get_asset_allocations()?;
         let existing_allocations = existing_allocations.seals
             .get(&contract_id)
             .unwrap_or_else(|| { panic!("You do not have any spendable assets for {}", contract_id) });
-        println!("{:>8} {:>12} on {}:{}", "STATUS", "VALUE", "TXID", "VOUT");
+        println!("{:^8}  |  {:^12}  |  {:^6}  |  {:^64}  |  {:>6}", "STATUS", "VALUE", "EXISTS", "TXID", "VOUT");
         existing_allocations.into_iter()
             .for_each(|allocation| {
-                let spent = deposits.get(&allocation.seal).is_some();
-                println!("{:>8} {:>12} on {}:{}",
-                         if spent{"spent"} else {"unspent"},
-                         allocation.amount, allocation.seal.txid, allocation.seal.vout);
+                let depo = deposits.get(&allocation.seal);
+                let missed = if let Some(depo) = depo {
+                    depo.outpoint != allocation.seal
+                } else {
+                    false
+                };
+                println!("{:>8}  |  {:>12}  |  {:^6}  |  {:<64}  |  {:>6}",
+                         if depo.is_some() {"spent"} else {"unspent"},
+                         allocation.amount,
+                         if missed {"no"} else {"yes"},
+                         allocation.seal.txid, allocation.seal.vout);
             });
 
         Ok(())
