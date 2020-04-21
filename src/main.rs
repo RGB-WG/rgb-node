@@ -127,8 +127,8 @@ async fn main() -> Result<(), Error> {
                 runtime.bitcoin_funds(account, deposit_types, offset, no).await,
         },
         Command::Fungible(subcommand) => match subcommand {
-            fungible::Command::List { only_owned } =>
-                runtime.fungible_list(only_owned),
+            fungible::Command::List { account, contract_id, only_owned, deposit_types } =>
+                runtime.fungible_list(account, deposit_types, contract_id, only_owned).await,
             fungible::Command::Issue(issue) =>
                 runtime.fungible_issue(issue),
             fungible::Command::Pay(payment) =>

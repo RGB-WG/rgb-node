@@ -25,6 +25,8 @@ use lnpbp::{bp, rgb};
 use lnpbp::rgb::ContractId;
 use ::rgb::fungible;
 
+use crate::commands::bitcoin::DepositType;
+
 
 fn ticker_validator(name: String) -> Result<(), String> {
     let re = Regex::new(r"^[A-Z]{3,8}$").expect("Regex parse failure");
@@ -78,7 +80,18 @@ pub enum Command {
     List {
         /// Include only the assets which are owned by the known accounts
         #[clap(short, long)]
-        only_owned: bool
+        only_owned: bool,
+
+        /// Tag name of the account to list deposit boxes
+        account: String,
+
+        /// Assets
+        #[clap(parse(try_from_str=ContractId::from_hex))]
+        contract_id: ContractId,
+
+        /// Request funds on the specified deposit types only
+        #[clap(default_value="WPKH")]
+        deposit_types: Vec<DepositType>,
     },
 
     /// Creates a new asset

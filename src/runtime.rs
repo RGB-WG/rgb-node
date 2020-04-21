@@ -20,7 +20,8 @@ use std::net::SocketAddr;
 use bitcoin::secp256k1;
 use bitcoin::{TxIn, TxOut, Transaction};
 use bitcoin::util::bip143;
-use bitcoin::hashes::Hash;
+use bitcoin::hashes::{Hash, hex::ToHex};
+use bitcoin::consensus::encode;
 use bitcoin::util::bip32::{self, ExtendedPrivKey, ExtendedPubKey, DerivationPath, ChildNumber};
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
 use bitcoin_wallet::{account::Seed, context::SecpContext};
@@ -29,6 +30,7 @@ use electrum_client as electrum;
 use lnpbp::service::*;
 use lnpbp::bitcoin;
 use lnpbp::cmt::*;
+use lnpbp::csv::network_serialize;
 use lnpbp::csv::Storage;
 use lnpbp::rgb::commit::Identifiable;
 use lnpbp::rgb::Rgb1;
@@ -227,7 +229,30 @@ impl Runtime {
         Ok(())
     }
 
-    pub fn fungible_list(mut self, only_owned: bool) -> Result<(), Error> {
+    pub async fn fungible_list(mut self, account_tag: String, deposit_types: Vec<commands::bitcoin::DepositType>,
+                         contract_id: ContractId, only_owned: bool) -> Result<(), Error> {
+        let deposits = self
+            .get_deposits(&account_tag, deposit_types, 0, 10)
+            .await?;
+        let deposits = deposits
+            .into_iter()
+            .map(|depo| {
+                (depo.outpoint, depo)
+            })
+            .collect::<HashMap<bitcoin::OutPoint, DepositTerminal>>();
+
+        let existing_allocations = self.get_asset_allocations()?;
+        let existing_allocations = existing_allocations.seals
+            .get(&contract_id)
+            .unwrap_or_else(|| { panic!("You do not have any spendable assets for {}", contract_id) });
+        existing_allocations.into_iter()
+            .for_each(|allocation| {
+                let spent = deposits.get(&allocation.seal).is_some();
+                println!("{:>8} {:>12} on {}:{}",
+                         if spent{"spent"} else {"unspent"},
+                         allocation.amount, allocation.seal.txid, allocation.seal.vout);
+            });
+
         Ok(())
     }
 
@@ -262,8 +287,8 @@ impl Runtime {
     }
 
     pub async fn fungible_pay(mut self, payment: commands::fungible::Pay) -> Result<(), Error> {
-        const FEE: u64 = 1000;
-        const DUST_LIMIT: u64 = 1000;
+        const FEE: u64 = 100000;
+        const DUST_LIMIT: u64 = 100000;
 
         // TODO: Use PSBT supplied by payee
         let mut psbt = PartiallySignedTransaction {
@@ -282,6 +307,7 @@ impl Runtime {
         /*
          * Act 0: Know our outputs
          */
+        let network = self.config.network.try_into().expect("Unsupported bitcoin network");
         let deposits = self
             .get_deposits(&payment.account, vec![commands::bitcoin::DepositType::WPKH], 0, 10)
             .await?;
@@ -412,8 +438,10 @@ impl Runtime {
             ]
         };
 
+        let mut entropy = [0u8; 4];
+        entropy.copy_from_slice(&contract_id[..][0..4]);
         let container = lnpbp::cmt::TxContainer {
-            entropy: 0,
+            entropy: u32::from_be_bytes(entropy),
             fee: bitcoin::Amount::from_sat(fee),
             tx: witness_tx,
             txout_container: lnpbp::cmt::TxoutContainer::PubkeyHash(change_box.get_pubkey().key)
@@ -426,7 +454,8 @@ impl Runtime {
 
         // Now sign the transaction
         let secp = secp256k1::Secp256k1::new();
-        let hasher = bip143::SighashComponents::new(&witness_tx);
+        let witness_tx_clone = witness_tx.clone();
+        let mut hasher = bip143::SigHashCache::new(&witness_tx_clone);
         let keyring = self.keyrings
             .get_main_keyring();
         let account = keyring.get_account(&payment.account)?;
@@ -439,14 +468,14 @@ impl Runtime {
         }
         let encrypted = enc;
         let seed = Seed::decrypt(&encrypted, &password).expect("Wrong password");
-        let xprivkey = ExtendedPrivKey::new_master(bitcoin::Network::Bitcoin, &seed.0).expect("Wrong password");
-        let witness_tx_clone = witness_tx.clone();
+        let xprivkey = ExtendedPrivKey::new_master(network, &seed.0).expect("Wrong password");
 
         /*
         Some((offset..to).map(|_| {
             let dp = dp_iter.next().unwrap();
             let sk = xprivkey.derive_priv(&secp, &dp).unwrap().private_key;
         */
+        println!("{}", encode::serialize(&witness_tx).to_hex());
         for (ix, input) in witness_tx.input.iter_mut().enumerate() {
             let deposit_term = deposits.get(&input.previous_output)
                 .expect("Previously found deposit terminal disappeared");
@@ -456,20 +485,30 @@ impl Runtime {
             let sk = xprivkey.derive_priv(&secp, &dp).unwrap().private_key;
             let seckey = sk.key;
             let pubkey = sk.public_key(&secp);
+            println!("{}", sk);
             let script_sig = bitcoin::Script::new();
-            let prev_script = bitcoin::Address::p2wpkh(&pubkey, bitcoin::Network::Bitcoin).script_pubkey();
-            let sighash = hasher.sighash_all(
-                &witness_tx_clone.input[ix],
-                &prev_script,
-                spent_amount,
-            );
+            let prev_script = bitcoin::Address::p2wpkh(&pubkey, network).script_pubkey();
+            let hash_type = bitcoin::SigHashType::All;
+            let sighash = hasher.signature_hash(ix, &prev_script, spent_amount, hash_type);
             let signature = secp.sign(&secp256k1::Message::from_slice(&sighash[..])?, &seckey).serialize_der();
             let mut with_hashtype = signature.to_vec();
-            with_hashtype.push(bitcoin::SigHashType::All.as_u32() as u8);
+            with_hashtype.push(hash_type.as_u32() as u8);
             input.witness.clear();
             input.witness.push(with_hashtype);
             input.witness.push(pubkey.to_bytes());
         }
+
+        println!("{:?}\n\n", witness_tx);
+        println!("Witness Transaction:\n{}\n\nState transition:\n{}\n\nConfidential proofs:\n{}\n\n",
+                 encode::serialize(&witness_tx).to_hex(),
+                 network_serialize(&transfer)?.to_hex(),
+                 confidential_amount.proof);
+
+        let socket_addr: SocketAddr = self.config.electrum_endpoint
+            .try_into()
+            .map_err(|_| Error::TorNotYetSupported)?;
+        let mut ec = electrum::Client::new(socket_addr).await?;
+        ec.transaction_broadcast(&witness_tx).await?;
 
         Ok(())
     }
