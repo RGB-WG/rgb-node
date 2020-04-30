@@ -12,9 +12,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
 use clap::Clap;
-
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -22,28 +20,27 @@ pub enum Command {
     /// Lists available funds within a given scope of accounts and deposit boxes
     Funds {
         /// Amount of deposit boxes to list
-        #[clap(short="N", long, default_value="10")]
+        #[clap(short = "N", long, default_value = "10")]
         no: u8,
 
         /// Offset for the first deposit box
-        #[clap(short="O", long, default_value="0")]
+        #[clap(short = "O", long, default_value = "0")]
         offset: u32,
 
         /// Tag name of the account to list deposit boxes
         account: String,
 
         /// Request funds on the specified deposit types only
-        #[clap(default_value="WPKH")]
+        #[clap(arg_enum)]
+        #[clap(default_value = "WPKH")]
         deposit_types: Vec<DepositType>,
-    }
+    },
 }
 
-arg_enum! {
-    #[derive(Clone, PartialEq, Eq, Debug)]
-    pub enum DepositType {
-        PK,
-        PKH,
-        WPKH,
-        TPK,
-    }
+#[derive(Clap, Clone, PartialEq, Eq, Debug)]
+pub enum DepositType {
+    PK,
+    PKH,
+    WPKH,
+    TPK,
 }

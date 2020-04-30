@@ -12,17 +12,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
 pub mod account;
 pub mod bitcoin;
 pub mod lightning;
-pub mod fungible;
+//pub mod fungible;
 pub mod collectible;
 pub mod identity;
 
-
 use clap::Clap;
-
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -39,9 +36,8 @@ pub enum Command {
     /// Ligthning operations
     Lightning(lightning::Command),
 
-    /// Operations with fungible assets (RGB-1 standard)
-    Fungible(fungible::Command),
-
+    //    /// Operations with fungible assets (RGB-1 standard)
+    //    Fungible(fungible::Command),
     /// Operations with non-funcible/collectible assets (RGB-2 standard)
     Collectible(collectible::Command),
 

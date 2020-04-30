@@ -12,16 +12,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-
-use lnpbp::bitcoin;
 use bitcoin::OutPoint;
-use lnpbp::rgb::ContractId;
-use lnpbp::rgb::data::Amount as AssetAmount;
-use lnpbp::rgb::transition::TransitionId;
-
+use lnpbp::bitcoin;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct DepositTerminal {
@@ -29,9 +21,10 @@ pub struct DepositTerminal {
     pub derivation_index: usize,
     pub spending_structure: bitcoin::AddressType,
     pub bitcoins: bitcoin::Amount,
-    pub fungibles: HashMap<TransitionId, Vec<(AssetAmount, TransitionId)>>
+    //pub fungibles: HashMap<TransitionId, Vec<(AssetAmount, TransitionId)>>
 }
 
+/*
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct AssetAllocations {
     pub seals: HashMap<ContractId, Vec<rgb::fungible::Allocation>>,
@@ -42,3 +35,4 @@ impl AssetAllocations {
         Self { seals: HashMap::new() }
     }
 }
+*/

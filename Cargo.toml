@@ -29,9 +29,8 @@ tokio = { version = "~0.2", features = ["full"] }
 futures = "~0.3"
 zmq = "~0.9"
 electrum-client = { git = "https://github.com/lnp-bp/rust-electrum-client", branch = "staging" }
-rgb = { git = "https://github.com/rgb-org/rgb-sdk" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
 branch = "develop"
-features = ["use-tor", "use-tokio", "use-log", "use-daemons", "use-rgb"]
+features = ["all"]

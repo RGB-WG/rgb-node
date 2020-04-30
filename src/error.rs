@@ -12,16 +12,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
+use electrum_client as electrum;
 use std::io;
 use std::option::NoneError;
 use tokio::task::JoinError;
-use electrum_client as electrum;
 
 use lnpbp::bitcoin::secp256k1;
-use lnpbp::csv::serialize;
-use lnpbp::rgb;
-
+use lnpbp::strict_encoding;
+//use lnpbp::rgb;
 
 #[derive(Debug, Display, From)]
 #[display_from(Debug)]
@@ -42,15 +40,13 @@ pub enum Error {
     MultithreadError(JoinError),
 
     #[derive_from]
-    SerializeError(serialize::Error),
-
+    SerializeError(strict_encoding::Error),
     OperationNotSupported(String),
 
     UnknownKeyring(usize),
 
-    #[derive_from]
-    FungibleSchemataError(rgb::schemata::fungible::Error),
-
+    //#[derive_from]
+    //FungibleSchemataError(rgb::schemata::fungible::Error),
     AccountNotFound,
 
     #[derive_from]
@@ -61,9 +57,8 @@ pub enum Error {
     #[derive_from]
     StorageError(serde_json::Error),
 
-    #[derive_from]
-    CommitmentError(lnpbp::cmt::Error),
-
+    //#[derive_from]
+    //CommitmentError(lnpbp::cmt::Error),
     #[derive_from]
     SignatureError(secp256k1::Error),
 
@@ -71,10 +66,12 @@ pub enum Error {
     Other,
 }
 
-impl std::error::Error for Error { }
+impl std::error::Error for Error {}
 
 impl From<Error> for String {
-    fn from(err: Error) -> Self { format!("{}", err) }
+    fn from(err: Error) -> Self {
+        format!("{}", err)
+    }
 }
 
 impl From<&str> for Error {

@@ -12,16 +12,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
-use std::{io, fs, path::PathBuf};
 use clap::Clap;
 use lnpbp::bp;
-use lnpbp::common::internet::InetSocketAddr;
-use lnpbp::rgb::ContractId;
+use lnpbp::internet::InetSocketAddr;
+use std::{fs, io, path::PathBuf};
 
-use crate::constants::*;
 use crate::commands::*;
-
+use crate::constants::*;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -29,12 +26,18 @@ use crate::commands::*;
     name = "kaleidoscope",
     version = "0.2.0",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>, Alekos Filini <alekos.filini@gmail.com>",
-    about =  "Kaleidoscope: RGB command-line wallet utility"
+    about = "Kaleidoscope: RGB command-line wallet utility"
 )]
 pub struct Opts {
     /// Sets verbosity level; can be used multiple times to increase verbosity
-    #[clap(global=true, short, long,
-      min_values=0, max_values=4, parse(from_occurrences))]
+    #[clap(
+        global = true,
+        short,
+        long,
+        min_values = 0,
+        max_values = 4,
+        parse(from_occurrences)
+    )]
     pub verbose: u8,
 
     /// Data directory for keeping information about keyrings, assets etc
@@ -55,13 +58,18 @@ pub struct Opts {
     pub bpd_subscr: String,
 
     /// Network to use
-    #[clap(global=true, short, long, default_value="signet", env="KALEIDOSCOPE_NETWORK")]
+    #[clap(
+        global = true,
+        short,
+        long,
+        default_value = "signet",
+        env = "KALEIDOSCOPE_NETWORK"
+    )]
     pub network: bp::Network,
 
     #[clap(subcommand)]
-    pub command: Command
+    pub command: Command,
 }
-
 
 // We need config structure since not all of the parameters can be specified
 // via environment and command-line arguments. Thus we need a config file and
@@ -81,7 +89,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         let data_str = opts.data_dir.to_str().unwrap();
         let repl = shellexpand::tilde(data_str);
-        let mut data_dir = PathBuf::from(repl.into_owned());
+        let data_dir = PathBuf::from(repl.into_owned());
 
         Self {
             verbose: opts.verbose,
@@ -101,10 +109,14 @@ impl Default for Config {
         Self {
             verbose: 0,
             network: bp::Network::Signet,
-            data_dir: DATA_DIR.parse().expect("Parse of DATA_DIR constant has failed"),
-            electrum_endpoint: ELECTRUM_ENDPOINT.parse().expect("Parse of ELECTRUM_ENDPOINT onstant has failed"),
+            data_dir: DATA_DIR
+                .parse()
+                .expect("Parse of DATA_DIR constant has failed"),
+            electrum_endpoint: ELECTRUM_ENDPOINT
+                .parse()
+                .expect("Parse of ELECTRUM_ENDPOINT onstant has failed"),
             bpd_api: BPD_API_ADDR.to_string(),
-            bpd_subscr: BPD_PUSH_ADDR.to_string()
+            bpd_subscr: BPD_PUSH_ADDR.to_string(),
         }
     }
 }
@@ -116,7 +128,7 @@ pub enum DataItem {
     Root,
     KeyringVault,
     ContractsVault,
-    ContractGenesis(ContractId),
+    //    ContractGenesis(ContractId),
     FungibleSeals,
 }
 
@@ -131,14 +143,15 @@ impl Config {
                 if !path.exists() {
                     fs::create_dir_all(path.clone()).unwrap();
                 }
-            },
+            }
+            /*
             DataItem::ContractGenesis(cmt) => {
                 path = self.data_path(DataItem::ContractsVault);
                 path.push(format!("{}", cmt));
                 path.set_extension("rgb");
-            },
+            }
+             */
             DataItem::FungibleSeals => path.push("fungible_seals.json"),
-            _ => panic!("Unsupported data type item"),
         }
         path
     }
