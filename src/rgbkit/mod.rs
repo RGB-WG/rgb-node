@@ -1,12 +1,10 @@
 // For now this is a mod, but later will be a library
 
-pub use lnpbp::rgb::{self, prelude::*};
-
-// FIXME: Temporary, remove after lnpbp update for prelude imports
-pub use rgb::contract::Genesis;
-pub use rgb::{anchor, consignment, contract, schema, stash};
+pub use lnpbp::rgb;
+pub use rgb::prelude::*;
 
 pub mod fungible {
+    use super::*;
     use core::convert::TryFrom;
 
     #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, Default)]
@@ -17,8 +15,8 @@ pub mod fungible {
         #[inline]
         pub fn with_asset_coins(asset: &Asset, coins: f32) -> Self {
             let bits = asset.fractional_bits;
-            let full = (sats.trunc() as u64) << bits as u64;
-            let fract = sats.fract() as u64;
+            let full = (coins.trunc() as u64) << bits as u64;
+            let fract = coins.fract() as u64;
             Self(full + fract, asset.fractional_bits)
         }
 
@@ -31,7 +29,7 @@ pub mod fungible {
         pub fn coins(&self) -> f32 {
             let full = self.0 >> self.1;
             let fract = self.0 ^ (full << self.1);
-            full as f32 + fract as f32 / 10u64.pow(self.1) as f32
+            full as f32 + fract as f32 / 10u64.pow(self.1 as u32) as f32
         }
 
         #[inline]
@@ -52,7 +50,7 @@ pub mod fungible {
     }
 
     impl TryFrom<Genesis> for Asset {
-        type Error = schema::ValidationError;
+        type Error = String; //schema::ValidationError;
 
         fn try_from(genesis: Genesis) -> Result<Self, Self::Error> {
             unimplemented!()
@@ -61,7 +59,8 @@ pub mod fungible {
 
     impl Asset {
         fn issue() -> Self {
-            Genesis {}
+            unimplemented!()
+            //Genesis {}
         }
 
         #[inline]
@@ -76,7 +75,10 @@ pub mod fungible {
 
         #[inline]
         fn description(&self) -> Option<&str> {
-            self.description.map(|s| s.as_str())
+            match &self.description {
+                None => None,
+                Some(s) => Some(s.as_str()),
+            }
         }
 
         #[inline]

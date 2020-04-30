@@ -47,7 +47,7 @@ extern crate shellexpand;
 
 extern crate electrum_client;
 extern crate lnpbp;
-//mod rgbkit;
+mod rgbkit;
 
 mod commands;
 mod config;
