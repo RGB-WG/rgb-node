@@ -37,6 +37,8 @@ extern crate chrono;
 extern crate dotenv;
 extern crate env_logger;
 extern crate log;
+extern crate num_derive;
+extern crate num_traits;
 extern crate rand;
 extern crate regex;
 extern crate rpassword;
@@ -47,6 +49,7 @@ extern crate shellexpand;
 
 extern crate electrum_client;
 extern crate lnpbp;
+#[macro_use]
 mod rgbkit;
 
 mod commands;

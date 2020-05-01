@@ -12,19 +12,20 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
-use regex::Regex;
 use clap::Clap;
 use lnpbp::bitcoin::util::bip32::DerivationPath;
+use regex::Regex;
 
-
-fn name_validator(name: String) -> Result<(), String> {
+fn name_validator(name: &str) -> Result<(), String> {
     let re = Regex::new(r"^\w[\w\d_\-]{0,23}$").expect("Regex parse failure");
     if !re.is_match(&name) {
-        Err("Account name must be <24 chars, contain no spaces, consist only of \
+        Err(
+            "Account name must be <24 chars, contain no spaces, consist only of \
             alphanumeric characters, dashes and underscores and start with \
             a letter\
-            ".to_string())
+            "
+            .to_string(),
+        )
     } else {
         Ok(())
     }
@@ -46,21 +47,21 @@ pub enum Command {
         derivation_path: DerivationPath,
 
         /// Additional account information, like purpose
-        description: Option<String>
+        description: Option<String>,
     },
 
     /// Lists detailed information about account-controlled "deposit boxes":
     /// items that may be managed with account private keys
     DepositBoxes {
         /// Amount of deposit boxes to list
-        #[clap(short="N", long, default_value="10")]
+        #[clap(short = "N", long, default_value = "10")]
         no: u8,
 
         /// Offset for the first deposit box
-        #[clap(short="O", long, default_value="0")]
+        #[clap(short = "O", long, default_value = "0")]
         offset: u32,
 
         /// Tag name of the account to list deposit boxes
-        account: String
-    }
+        account: String,
+    },
 }
