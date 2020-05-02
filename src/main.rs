@@ -48,6 +48,7 @@ extern crate serde_json;
 extern crate shellexpand;
 
 extern crate electrum_client;
+#[macro_use]
 extern crate lnpbp;
 #[macro_use]
 mod rgbkit;

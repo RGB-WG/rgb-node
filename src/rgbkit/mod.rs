@@ -6,4 +6,3 @@ mod macros;
 
 pub use lnpbp::rgb;
 pub use rgb::prelude::*;
-pub use rgb::schema::script;

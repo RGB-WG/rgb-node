@@ -18,7 +18,7 @@ dotenv = "~0.15"
 shellexpand = "~2.0"
 clap = { git = "https://github.com/clap-rs/clap.git" }
 regex = "~1.3"
-chrono = "~0.4"
+chrono = { version = "~0.4", features = ["serde"] }
 derive_wrapper = "0.1.5"
 async-trait = "~0.1"
 num-traits = "~0.2.11"

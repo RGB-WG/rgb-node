@@ -18,6 +18,7 @@ pub enum FieldType {
     DustLimit = 5,
     FractionalBits = 6,
     PruneProof = 7,
+    Timestamp = 8,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
@@ -45,12 +46,13 @@ pub fn schema() -> Schema {
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::DustLimit => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
-            FieldType::PruneProof => DataFormat::Bytes(core::u16::MAX)
+            FieldType::PruneProof => DataFormat::Bytes(core::u16::MAX),
+            FieldType::Timestamp => DataFormat::Unsigned(Bits::Bit32, 0, core::u32::MAX as u128)
         },
         assignment_types: type_map! {
-            AssignmentsType::Issue => StateFormat::Empty,
+            AssignmentsType::Issue => StateFormat::Void,
             AssignmentsType::Assets => StateFormat::Homomorphic(HomomorphicFormat::Amount),
-            AssignmentsType::Prune => StateFormat::Empty
+            AssignmentsType::Prune => StateFormat::Void
         },
         genesis: GenesisSchema {
             metadata: type_map! {
