@@ -23,6 +23,7 @@
 #![feature(unwrap_infallible)]
 #![feature(in_band_lifetimes)]
 #![feature(try_trait)]
+#![feature(with_options)]
 
 extern crate clap;
 extern crate diesel;
@@ -36,6 +37,7 @@ extern crate async_trait;
 extern crate chrono;
 extern crate dotenv;
 extern crate env_logger;
+#[macro_use]
 extern crate log;
 extern crate num_derive;
 extern crate num_traits;

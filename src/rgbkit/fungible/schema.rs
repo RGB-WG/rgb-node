@@ -1,9 +1,12 @@
-use super::*;
 use crate::type_map;
+use core::ops::Neg;
 use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::ToPrimitive;
+
+use lnpbp::rgb;
 use rgb::schema::{
-    Bits, DataFormat, GenesisSchema, HomomorphicFormat, Occurences, Scripting, StateFormat,
-    TransitionSchema,
+    script, Bits, DataFormat, GenesisSchema, HomomorphicFormat, Occurences, Schema, Scripting,
+    StateFormat, TransitionSchema,
 };
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
@@ -125,5 +128,29 @@ pub fn schema() -> Schema {
         },
         script_library: vec![],
         script_extensions: script::Extensions::ScriptsDenied,
+    }
+}
+
+impl Neg for FieldType {
+    type Output = usize;
+
+    fn neg(self) -> Self::Output {
+        self.to_usize().unwrap()
+    }
+}
+
+impl Neg for AssignmentsType {
+    type Output = usize;
+
+    fn neg(self) -> Self::Output {
+        self.to_usize().unwrap()
+    }
+}
+
+impl Neg for TransitionType {
+    type Output = usize;
+
+    fn neg(self) -> Self::Output {
+        self.to_usize().unwrap()
     }
 }
