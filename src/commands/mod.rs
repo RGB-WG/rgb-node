@@ -14,10 +14,10 @@
 
 pub mod account;
 pub mod bitcoin;
-pub mod lightning;
-//pub mod fungible;
 pub mod collectible;
+pub mod fungible;
 pub mod identity;
+pub mod lightning;
 
 use clap::Clap;
 
@@ -36,8 +36,9 @@ pub enum Command {
     /// Ligthning operations
     Lightning(lightning::Command),
 
-    //    /// Operations with fungible assets (RGB-1 standard)
-    //    Fungible(fungible::Command),
+    /// Operations with fungible assets (RGB-1 standard)
+    Fungible(fungible::Command),
+
     /// Operations with non-funcible/collectible assets (RGB-2 standard)
     Collectible(collectible::Command),
 

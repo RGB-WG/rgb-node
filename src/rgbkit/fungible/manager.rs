@@ -5,22 +5,17 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use lnpbp::bp;
-use lnpbp::rgb;
-use rgb::prelude::*;
+use lnpbp::rgb::prelude::*;
 
-use super::storage::Error as AssetStoreError;
-use super::{schema, Allocations, Asset, Coins, Error, Store as AssetStore};
-use crate::rgbkit::fungible::schema::{AssignmentsType, FieldType};
-use crate::rgbkit::{Error as RgbStoreError, MagicNumber, Store as RgbStore};
+use super::schema::{self, AssignmentsType, FieldType};
+use super::{Asset, Coins, Outcoins, Store as AssetStore};
+
+use crate::rgbkit::{InteroperableError, MagicNumber, SealSpec, Store as RgbStore};
 use crate::{field, type_map};
 
-pub struct Manager<'inner, E1, E2>
-where
-    E1: RgbStoreError,
-    E2: AssetStoreError,
-{
-    rgb_storage: Arc<dyn RgbStore<Error = E1> + 'inner>,
-    asset_storage: Arc<dyn AssetStore<Error = E2> + 'inner>,
+pub struct Manager<'inner> {
+    rgb_storage: Arc<dyn RgbStore + 'inner>,
+    asset_storage: Arc<dyn AssetStore + 'inner>,
 }
 
 pub enum ExchangableData {
@@ -31,20 +26,16 @@ pub enum ExchangableData {
 pub enum IssueStructure {
     SingleIssue,
     MultipleIssues {
-        max_supply: Coins,
-        reissue_control: SealDefinition,
+        max_supply: f32,
+        reissue_control: SealSpec,
     },
 }
 
-impl<'inner, E1, E2> Manager<'inner, E1, E2>
-where
-    E1: RgbStoreError,
-    E2: AssetStoreError,
-{
+impl<'inner> Manager<'inner> {
     pub fn new(
-        rgb_storage: Arc<impl RgbStore<Error = E1> + 'inner>,
-        asset_storage: Arc<impl AssetStore<Error = E2> + 'inner>,
-    ) -> Result<Self, Error<E1, E2>> {
+        rgb_storage: Arc<impl RgbStore + 'inner>,
+        asset_storage: Arc<impl AssetStore + 'inner>,
+    ) -> Result<Self, InteroperableError> {
         debug!("Instantiating RGB asset manager ...");
 
         let storage = rgb_storage.clone();
@@ -68,14 +59,16 @@ where
         name: String,
         description: Option<String>,
         issue_structure: IssueStructure,
-        allocations: Allocations,
-        prune_seals: Vec<SealDefinition>,
-        dust_limit: Option<rgb::Amount>,
-    ) -> Result<Asset, Error<E1, E2>> {
+        allocations: Vec<Outcoins>,
+        precision: u8,
+        prune_seals: Vec<SealSpec>,
+        dust_limit: Option<Amount>,
+    ) -> Result<(Asset, Genesis), InteroperableError> {
         let now = Utc::now().timestamp();
         let mut metadata = type_map! {
             FieldType::Ticker => field!(String, ticker),
             FieldType::Name => field!(String, name),
+            FieldType::FractionalBits => field!(U8, precision),
             FieldType::DustLimit => field!(U64, dust_limit.unwrap_or(0)),
             FieldType::Timestamp => field!(U32, now as u32)
         };
@@ -84,60 +77,20 @@ where
         }
 
         let mut issued_supply = 0u64;
-
-        // Zero-knowledge black magic :)
-        let allocations = {
-            use lnpbp::rand;
-            use lnpbp::secp256k1zkp;
-            use secp256k1zkp::*;
-
-            let secp = secp256k1zkp::Secp256k1::with_caps(ContextFlag::Commit);
-
-            let mut blinding_factors = vec![];
-            let mut assignments = allocations
-                .iter()
-                .map(|(seal_definition, coins)| {
-                    let blinding = amount::BlindingFactor::new(&secp, &mut rand::thread_rng());
-                    blinding_factors.push(blinding.clone());
-                    issued_supply += coins.sats();
-                    (
-                        seal_definition,
-                        amount::Revealed {
-                            amount: coins.sats(),
-                            blinding,
-                        },
-                    )
-                })
-                .collect::<Vec<_>>();
-
-            let mut blinding_correction = secp
-                .blind_sum(vec![secp256k1zkp::key::ZERO_KEY], blinding_factors)
-                .unwrap();
-            blinding_correction.neg_assign(&secp)?;
-            if let Some(assign) = assignments.last_mut() {
-                let amount = assign.1.amount;
-                let blinding = &mut assign.1.blinding;
-                blinding.add_assign(&secp, &blinding_correction)?;
-            }
-
-            assignments
-        };
-
-        metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
-
+        let allocations = allocations
+            .into_iter()
+            .map(|outcoins| {
+                let amount = Coins::transmutate(outcoins.coins, precision);
+                issued_supply += amount;
+                (outcoins.seal_definition(), amount)
+            })
+            .collect();
         let mut assignments = BTreeMap::new();
         assignments.insert(
             -AssignmentsType::Assets,
-            AssignmentsVariant::Homomorphic(
-                allocations
-                    .into_iter()
-                    .map(|assign| Assignment::Revealed {
-                        seal_definition: assign.0.clone(),
-                        assigned_state: assign.1,
-                    })
-                    .collect(),
-            ),
+            AssignmentsVariant::zero_balanced(allocations),
         );
+        metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
 
         let mut total_supply = issued_supply;
         if let IssueStructure::MultipleIssues {
@@ -145,26 +98,32 @@ where
             reissue_control,
         } = issue_structure
         {
-            metadata.insert(-FieldType::TotalSupply, field!(U64, max_supply.sats()));
+            total_supply = Coins::transmutate(max_supply, precision);
+            if total_supply < issued_supply {
+                Err(InteroperableError(format!(
+                    "Total supply ({}) should be greater than the issued supply ({})",
+                    total_supply, issued_supply
+                )))?;
+            }
+            metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
             assignments.insert(
                 -AssignmentsType::Issue,
                 AssignmentsVariant::Void(bset![Assignment::Revealed {
-                    seal_definition: reissue_control,
+                    seal_definition: reissue_control.seal_definition(),
                     assigned_state: data::Void
                 }]),
             );
-            total_supply = max_supply.sats();
+        } else {
+            metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
         }
-
-        metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
 
         assignments.insert(
             -AssignmentsType::Prune,
             AssignmentsVariant::Void(
                 prune_seals
                     .into_iter()
-                    .map(|seal_definition| Assignment::Revealed {
-                        seal_definition,
+                    .map(|seal_spec| Assignment::Revealed {
+                        seal_definition: seal_spec.seal_definition(),
                         assigned_state: data::Void,
                     })
                     .collect(),
@@ -180,13 +139,13 @@ where
         );
         self.rgb_storage.add_genesis(&genesis)?;
 
-        let asset = Asset::try_from(genesis)?;
+        let asset = Asset::try_from(genesis.clone())?;
         //self.asset_storage.add_asset(&asset);
 
-        Ok(asset)
+        Ok((asset, genesis))
     }
 
-    pub fn import(&self, data: ExchangableData) -> Result<MagicNumber, Error<E1, E2>> {
+    pub fn import(&self, data: ExchangableData) -> Result<MagicNumber, InteroperableError> {
         unimplemented!()
     }
 }

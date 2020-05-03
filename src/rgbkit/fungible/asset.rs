@@ -3,21 +3,26 @@ use core::convert::TryFrom;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
 
+use bitcoin::secp256k1;
 use lnpbp::bitcoin;
-use lnpbp::bitcoin::secp256k1;
+
 use lnpbp::bp;
 use lnpbp::miniscript::Miniscript;
-use lnpbp::rgb;
+use lnpbp::rgb::prelude::*;
 
 use super::schema::{AssignmentsType, FieldType};
 use super::{schema, SchemaError};
-use rgb::prelude::*;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
 #[display_from(Display)]
-pub struct Coins(rgb::Amount, u8);
+pub struct Coins(Amount, u8);
 
 impl Coins {
+    #[inline]
+    pub fn transmutate(coins: f32, precision: u8) -> Amount {
+        Coins::with_value_precision(coins, precision).sats()
+    }
+
     #[inline]
     pub fn with_asset_coins(asset: &Asset, coins: f32) -> Self {
         let bits = asset.fractional_bits;
@@ -27,12 +32,18 @@ impl Coins {
     }
 
     #[inline]
-    fn with_sats_precision(sats: u64, fractional_bits: u8) -> Self {
+    fn with_sats_precision(sats: Amount, fractional_bits: u8) -> Self {
         Self(sats, fractional_bits)
     }
 
     #[inline]
-    fn with_asset_sats(asset: &Asset, sats: u64) -> Self {
+    pub(crate) fn with_value_precision(value: f32, fractional_bits: u8) -> Self {
+        let fract = (value.fract() * 10u64.pow(fractional_bits as u32) as f32) as u64;
+        Self(value.trunc() as u64 + fract, fractional_bits)
+    }
+
+    #[inline]
+    fn with_asset_sats(asset: &Asset, sats: Amount) -> Self {
         Self(sats, asset.fractional_bits)
     }
 
@@ -54,14 +65,7 @@ impl Coins {
     }
 }
 
-wrapper!(
-    Allocations,
-    Vec<(SealDefinition, Coins)>,
-    doc = "Allocation of coins to seal definitions",
-    derive = [PartialEq, Eq]
-);
-
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug, Display)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Display)]
 #[display_from(Display)]
 pub struct Asset {
     id: ContractId,
@@ -94,10 +98,19 @@ pub struct Issue {
     pub supply: Coins,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
+/*
+wrapper!(
+    Allocations,
+    Vec<Allocation>,
+    doc = "Allocation of coins to seal definitions",
+    derive = [PartialEq]
+);
+*/
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
 #[display_from(Debug)]
 pub struct Allocation {
-    pub amount: Coins,
+    pub value: Coins,
     pub seal: bitcoin::OutPoint,
     pub payment: Option<Payment>,
 }
@@ -216,11 +229,11 @@ impl TryFrom<Genesis> for Asset {
                     AssignmentsVariant::Homomorphic(tree) => Some(
                         tree.iter()
                             .filter_map(|assign| match assign {
-                                rgb::Assignment::Revealed {
-                                    seal_definition: rgb::seal::Revealed::TxOutpoint(outpoint),
+                                Assignment::Revealed {
+                                    seal_definition: seal::Revealed::TxOutpoint(outpoint),
                                     assigned_state,
                                 } => Some(Allocation {
-                                    amount: Coins::with_sats_precision(
+                                    value: Coins::with_sats_precision(
                                         assigned_state.amount,
                                         fractional_bits,
                                     ),

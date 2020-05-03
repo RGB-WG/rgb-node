@@ -17,6 +17,7 @@ use std::io;
 use std::option::NoneError;
 use tokio::task::JoinError;
 
+use crate::rgbkit::InteroperableError;
 use lnpbp::bitcoin::secp256k1;
 use lnpbp::strict_encoding;
 //use lnpbp::rgb;
@@ -64,6 +65,9 @@ pub enum Error {
 
     #[derive_from(NoneError)]
     Other,
+
+    #[derive_from]
+    InteroperableError(InteroperableError),
 }
 
 impl std::error::Error for Error {}

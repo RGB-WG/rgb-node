@@ -12,66 +12,25 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-
-use std::{path::PathBuf, str::FromStr};
+use bech32::{self, ToBase32};
 use clap::Clap;
 use regex::Regex;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use bitcoin::hashes::hex::FromHex;
+use bitcoin::TxIn;
 
 use lnpbp::bitcoin;
-use bitcoin::{TxIn, OutPoint};
-use bitcoin::hashes::hex::FromHex;
-
-use lnpbp::{bp, rgb};
-use lnpbp::rgb::ContractId;
-use ::rgb::fungible;
+use lnpbp::bp;
+use lnpbp::rgb::prelude::*;
+use lnpbp::strict_encoding::strict_encode;
 
 use crate::commands::bitcoin::DepositType;
+use crate::config::{Config, DataItem};
 
-
-fn ticker_validator(name: String) -> Result<(), String> {
-    let re = Regex::new(r"^[A-Z]{3,8}$").expect("Regex parse failure");
-    if !re.is_match(&name) {
-        Err("Ticker name must be between 2 and 8 chars, contain no spaces and \
-            consist only of capital letters\
-            ".to_string())
-    } else {
-        Ok(())
-    }
-}
-
-
-/// Defines information required to generate bitcoin transaction output from
-/// command-line argument
-#[derive(Clone, Debug, Display)]
-#[display_from(Debug)]
-pub struct Output {
-    pub amount: bitcoin::Amount,
-    pub lock: bp::PubkeyScriptSource,
-}
-
-impl FromStr for Output {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        unimplemented!()
-    }
-}
-
-/// Defines information required to generate bitcoin transaction input from
-/// command-line argument
-#[derive(Clone, Debug, Display)]
-#[display_from(Debug)]
-pub struct Input {
-    pub txin: TxIn,
-    pub unlock: bp::PubkeyScriptSource,
-}
-
-impl FromStr for Input {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        unimplemented!()
-    }
-}
-
+use crate::rgbkit::fungible::{IssueStructure, Manager, Outcoins};
+use crate::rgbkit::{self, fungible, DiskStorage, DiskStorageConfig, InteroperableError, SealSpec};
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -93,7 +52,8 @@ pub enum Command {
         contract_id: ContractId,
 
         /// Request funds on the specified deposit types only
-        #[clap(default_value="WPKH")]
+        #[clap(arg_enum)]
+        #[clap(default_value = "WPKH")]
         deposit_types: Vec<DepositType>,
     },
 
@@ -101,28 +61,46 @@ pub enum Command {
     Issue(Issue),
 
     /// Transfers some asset to another party
-    Pay(Pay)
+    Pay(Pay),
+}
+
+impl Command {
+    pub fn exec(self, global: &Config) -> Result<(), InteroperableError> {
+        let rgb_storage = DiskStorage::new(DiskStorageConfig {
+            data_dir: global.data_path(DataItem::Root),
+        })?;
+        let asset_storage = fungible::DiskStorage {};
+
+        let manager = Manager::new(Arc::new(rgb_storage), Arc::new(asset_storage))?;
+
+        match self {
+            Command::List => unimplemented!(),
+            Command::Funds { .. } => unimplemented!(),
+            Command::Issue(issue) => issue.exec(global, &manager),
+            Command::Pay(_) => unimplemented!(),
+        }
+    }
 }
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
 pub struct Issue {
-    /// Limit for the total supply (by default equals to the `amount`
+    /// Limit for the total supply; ignored if the asset can't be inflated
     #[clap(short, long)]
-    pub supply: Option<rgb::data::Amount>,
+    pub supply: Option<f32>,
 
     /// Enables secondary issuance/inflation; takes UTXO seal definition
     /// as its value
     #[clap(short, long, requires("supply"))]
-    pub inflatable: Option<OutPoint>,
+    pub inflatable: Option<SealSpec>,
 
     /// Precision, i.e. number of digits reserved for fractional part
-    #[clap(short, long, default_value="0")]
+    #[clap(short, long, default_value = "0")]
     pub precision: u8,
 
     /// Dust limit for asset transfers; defaults to no limit
-    #[clap(short="D", long)]
-    pub dust_limit: Option<rgb::data::Amount>,
+    #[clap(short = "D", long)]
+    pub dust_limit: Option<Amount>,
 
     /// Filename to export asset genesis to;
     /// saves into data dir if not provided
@@ -141,13 +119,56 @@ pub struct Issue {
     pub description: Option<String>,
 
     /// Asset allocation, in form of <amount>@<txid>:<vout>
-    #[clap(required=true)]
-    pub allocate: Vec<fungible::Allocation>,
+    #[clap(required = true)]
+    pub allocate: Vec<Outcoins>,
+}
+
+impl Issue {
+    pub fn exec(
+        self,
+        global: &Config,
+        manager: &fungible::Manager,
+    ) -> Result<(), InteroperableError> {
+        let issue_structure = match self.inflatable {
+            None => IssueStructure::SingleIssue,
+            Some(seal_spec) => IssueStructure::MultipleIssues {
+                max_supply: self.supply.expect("Clap is broken"),
+                reissue_control: seal_spec,
+            },
+        };
+
+        info!("Issuing asset ...");
+        let (asset, genesis) = manager.issue(
+            global.network,
+            self.ticker,
+            self.title,
+            self.description,
+            issue_structure,
+            self.allocate,
+            self.precision,
+            vec![], // we do not support pruning yet
+            self.dust_limit,
+        )?;
+
+        debug!("Asset information:\n {}\n", asset);
+        trace!("Genesis contract:\n {}\n", genesis);
+
+        let bech = bech32::encode(
+            rgbkit::RGB_BECH32_HRP_GENESIS,
+            strict_encode(&genesis).to_base32(),
+        )
+        .unwrap();
+        info!(
+            "Use this string to send information about the issued asset:\n{}\n",
+            bech
+        );
+        Ok(())
+    }
 }
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
-pub struct Pay  {
+pub struct Pay {
     /// Use custom commitment output for generated witness transaction
     #[clap(long)]
     pub commit_txout: Option<Output>,
@@ -162,7 +183,7 @@ pub struct Pay  {
 
     /// Allocates other assets to custom outputs
     #[clap(short, long)]
-    pub allocate: Vec<fungible::Allocation>,
+    pub allocate: Vec<Outcoins>,
 
     /// Saves witness transaction to a file instead of publishing it
     #[clap(short, long)]
@@ -176,7 +197,7 @@ pub struct Pay  {
     pub account: String,
 
     /// Amount
-    pub amount: rgb::data::Amount,
+    pub amount: Amount,
 
     /// Assets
     #[clap(parse(try_from_str=ContractId::from_hex))]
@@ -185,7 +206,60 @@ pub struct Pay  {
     /// Receiver
     #[clap(parse(try_from_str=bp::blind::OutpointHash::from_hex))]
     pub receiver: bp::blind::OutpointHash,
-
     // / Invoice to pay
     //pub invoice: fungible::Invoice,
 }
+
+fn ticker_validator(name: &str) -> Result<(), String> {
+    let re = Regex::new(r"^[A-Z]{3,8}$").expect("Regex parse failure");
+    if !re.is_match(&name) {
+        Err(
+            "Ticker name must be between 2 and 8 chars, contain no spaces and \
+            consist only of capital letters\
+            "
+            .to_string(),
+        )
+    } else {
+        Ok(())
+    }
+}
+
+// Helper data structures
+
+mod helpers {
+    use super::*;
+    use core::str::FromStr;
+
+    /// Defines information required to generate bitcoin transaction output from
+    /// command-line argument
+    #[derive(Clone, Debug, Display)]
+    #[display_from(Debug)]
+    pub struct Output {
+        pub amount: bitcoin::Amount,
+        pub lock: bp::LockScript,
+    }
+
+    impl FromStr for Output {
+        type Err = String;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            unimplemented!()
+        }
+    }
+
+    /// Defines information required to generate bitcoin transaction input from
+    /// command-line argument
+    #[derive(Clone, Debug, Display)]
+    #[display_from(Debug)]
+    pub struct Input {
+        pub txin: TxIn,
+        pub unlock: bp::LockScript,
+    }
+
+    impl FromStr for Input {
+        type Err = String;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            unimplemented!()
+        }
+    }
+}
+pub use helpers::*;

@@ -118,7 +118,7 @@ async fn main() -> Result<(), Error> {
         return Ok(());
     }
 
-    let runtime = Runtime::init(config).await?;
+    let runtime = Runtime::init(config.clone()).await?;
 
     // Non-interactive command processing:
     debug!("Parsing and processing a command");
@@ -148,8 +148,8 @@ async fn main() -> Result<(), Error> {
                     .await
             }
         },
-        /*
-        Command::Fungible(subcommand) => match subcommand {
+        Command::Fungible(subcommand) => Ok(subcommand.exec(&config)?),
+        /*match subcommand {
             fungible::Command::List =>
                 runtime.fungible_list(),
             fungible::Command::Funds { account, contract_id, only_owned, deposit_types } =>

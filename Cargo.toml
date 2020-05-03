@@ -24,6 +24,7 @@ async-trait = "~0.1"
 num-traits = "~0.2.11"
 num-derive = "~0.3.0"
 rand = "~0.7"
+bech32 = "~0.7.2"
 log = { version = "~0.4", features = ["max_level_trace", "release_max_level_debug"] }
 env_logger = "~0.7"
 diesel = { version = "~1.4", features = ["sqlite", "uuid", "numeric", "chrono"] }

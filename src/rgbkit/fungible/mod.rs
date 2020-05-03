@@ -1,14 +1,15 @@
 mod asset;
 mod manager;
+mod outcoins;
 pub mod schema;
 mod storage;
 
 pub use asset::*;
 pub use manager::*;
+pub use outcoins::Outcoins;
 pub use storage::{DiskStorage, Store};
 
-use crate::rgbkit::storage::Error as RgbStoreError;
-use storage::Error as AssetStoreError;
+use super::InteroperableError;
 
 #[derive(Debug, Display, Error, From)]
 #[display_from(Display)]
@@ -19,14 +20,8 @@ pub enum SchemaError {
 
 #[derive(Debug, Display, Error, From)]
 #[display_from(Display)]
-pub enum Error<E1, E2>
-where
-    E1: RgbStoreError,
-    E2: AssetStoreError,
-{
-    RgbStorage(E1),
-
-    AssetStorage(E2),
+pub enum Error {
+    InteroperableError(String),
 
     #[derive_from]
     Secp(lnpbp::secp256k1zkp::Error),
@@ -35,23 +30,8 @@ where
     SchemaError(SchemaError),
 }
 
-impl<E1, E2> From<E1> for Error<E1, E2>
-where
-    E1: RgbStoreError,
-    E2: AssetStoreError,
-{
-    fn from(err: E1) -> Self {
-        Self::RgbStorage(err)
+impl From<InteroperableError> for Error {
+    fn from(err: InteroperableError) -> Self {
+        Self::InteroperableError(err.0)
     }
 }
-/*
-impl<E1, E2> From<E2> for Error<E1, E2>
-where
-    E1: RgbStoreError,
-    E2: AssetStoreError,
-{
-    fn from(err: E2) -> Self {
-        Self::AssetStorage(err)
-    }
-}
-*/
