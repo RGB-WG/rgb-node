@@ -32,7 +32,7 @@ pub enum Command {
 
         /// Request funds on the specified deposit types only
         #[clap(arg_enum)]
-        #[clap(default_value = "WPKH")]
+        #[clap(default_value = "wpkh")]
         deposit_types: Vec<DepositType>,
     },
 }

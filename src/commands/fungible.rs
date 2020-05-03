@@ -16,7 +16,7 @@ use bech32::{self, ToBase32};
 use clap::Clap;
 use regex::Regex;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::TxIn;
@@ -66,17 +66,29 @@ pub enum Command {
 
 impl Command {
     pub fn exec(self, global: &Config) -> Result<(), InteroperableError> {
+        let mut data_dir = global.data_path(DataItem::Root);
         let rgb_storage = DiskStorage::new(DiskStorageConfig {
-            data_dir: global.data_path(DataItem::Root),
+            data_dir: data_dir.clone(),
         })?;
-        let asset_storage = fungible::DiskStorage {};
+        data_dir.push("fungible");
+        let asset_storage = fungible::DiskStorage::new(fungible::DiskStorageConfig { data_dir })?;
 
-        let manager = Manager::new(Arc::new(rgb_storage), Arc::new(asset_storage))?;
+        let mut manager = Manager::new(
+            Arc::new(Mutex::new(rgb_storage)),
+            Arc::new(Mutex::new(asset_storage)),
+        )?;
 
         match self {
-            Command::List => unimplemented!(),
+            Command::List => {
+                println!("\nKnown assets:\n\n");
+                manager
+                    .assets()?
+                    .iter()
+                    .for_each(|asset| println!("{}", asset));
+                Ok(())
+            }
             Command::Funds { .. } => unimplemented!(),
-            Command::Issue(issue) => issue.exec(global, &manager),
+            Command::Issue(issue) => issue.exec(global, &mut manager),
             Command::Pay(_) => unimplemented!(),
         }
     }
@@ -127,8 +139,11 @@ impl Issue {
     pub fn exec(
         self,
         global: &Config,
-        manager: &fungible::Manager,
+        manager: &mut fungible::Manager,
     ) -> Result<(), InteroperableError> {
+        info!("Issuing asset ...");
+        debug!("{}", self.clone());
+
         let issue_structure = match self.inflatable {
             None => IssueStructure::SingleIssue,
             Some(seal_spec) => IssueStructure::MultipleIssues {
@@ -137,7 +152,6 @@ impl Issue {
             },
         };
 
-        info!("Issuing asset ...");
         let (asset, genesis) = manager.issue(
             global.network,
             self.ticker,

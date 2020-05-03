@@ -66,7 +66,7 @@ impl Coins {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Display)]
-#[display_from(Display)]
+#[display_from(Debug)]
 pub struct Asset {
     id: ContractId,
     ticker: String,
@@ -83,7 +83,7 @@ pub struct Asset {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
-#[display_from(Display)]
+#[display_from(Debug)]
 pub struct Supply {
     pub known_circulating: Coins,
     pub total: Option<Coins>,
@@ -144,6 +144,11 @@ impl Asset {
     }
 
     #[inline]
+    pub fn id(&self) -> ContractId {
+        self.id
+    }
+
+    #[inline]
     pub fn ticker(&self) -> &str {
         self.ticker.as_str()
     }
@@ -192,6 +197,7 @@ impl TryFrom<Genesis> for Asset {
         let fractional_bits = genesis.u8(-FieldType::FractionalBits)?;
         let supply =
             Coins::with_sats_precision(genesis.u64(-FieldType::IssuedSupply)?, fractional_bits);
+
         Ok(Self {
             id: genesis.contract_id(),
             network: genesis.network().as_magic(),
@@ -214,7 +220,8 @@ impl TryFrom<Genesis> for Asset {
             unspent_issue_txo: None,
             known_issues: vec![list! { Issue {
                 id: genesis.contract_id(),
-                txo: genesis.defined_seals(-AssignmentsType::Issue)?
+                txo: genesis.defined_seals(-AssignmentsType::Issue)
+                    .unwrap_or(vec![])
                     .first()
                     .and_then(|i| bitcoin::OutPoint::try_from(i.clone()).ok()),
                 supply

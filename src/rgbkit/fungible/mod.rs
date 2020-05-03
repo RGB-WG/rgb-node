@@ -7,7 +7,7 @@ mod storage;
 pub use asset::*;
 pub use manager::*;
 pub use outcoins::Outcoins;
-pub use storage::{DiskStorage, Store};
+pub use storage::{DiskStorage, DiskStorageConfig, DiskStorageError, Store};
 
 use super::InteroperableError;
 

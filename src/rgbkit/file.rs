@@ -20,7 +20,7 @@ pub enum FileMode {
 pub fn file(filename: PathBuf, mode: FileMode) -> Result<fs::File, io::Error> {
     fs::File::with_options()
         .read(true)
-        .write(mode == FileMode::Write)
+        .write(mode == FileMode::Write || mode == FileMode::Create)
         .create(mode == FileMode::Create)
         .open(filename)
 }

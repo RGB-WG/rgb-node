@@ -22,8 +22,6 @@ pub trait Store {
     fn remove_genesis(&self, id: ContractId) -> Result<bool, InteroperableError>;
 }
 
-pub trait Error: std::error::Error + Sized {}
-
 #[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum DiskStorageError {
@@ -39,8 +37,6 @@ pub enum DiskStorageError {
     #[derive_from(bitcoin::hashes::hex::Error)]
     BrokenHexFilenames,
 }
-
-impl Error for DiskStorageError {}
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display_from(Debug)]
@@ -70,7 +66,7 @@ impl DiskStorageConfig {
 
     #[inline]
     pub fn genesis_filename(&self, contract_id: ContractId) -> PathBuf {
-        self.schemata_dir()
+        self.geneses_dir()
             .join(contract_id.to_hex())
             .with_extension(Self::RGB_EXTENSION)
     }

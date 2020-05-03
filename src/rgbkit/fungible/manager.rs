@@ -2,7 +2,7 @@ use chrono::Utc;
 use core::convert::TryFrom;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
@@ -14,8 +14,8 @@ use crate::rgbkit::{InteroperableError, MagicNumber, SealSpec, Store as RgbStore
 use crate::{field, type_map};
 
 pub struct Manager<'inner> {
-    rgb_storage: Arc<dyn RgbStore + 'inner>,
-    asset_storage: Arc<dyn AssetStore + 'inner>,
+    rgb_storage: Arc<Mutex<dyn RgbStore + 'inner>>,
+    asset_storage: Arc<Mutex<dyn AssetStore + 'inner>>,
 }
 
 pub enum ExchangableData {
@@ -33,8 +33,8 @@ pub enum IssueStructure {
 
 impl<'inner> Manager<'inner> {
     pub fn new(
-        rgb_storage: Arc<impl RgbStore + 'inner>,
-        asset_storage: Arc<impl AssetStore + 'inner>,
+        rgb_storage: Arc<Mutex<impl RgbStore + 'inner>>,
+        asset_storage: Arc<Mutex<impl AssetStore + 'inner>>,
     ) -> Result<Self, InteroperableError> {
         debug!("Instantiating RGB asset manager ...");
 
@@ -44,16 +44,16 @@ impl<'inner> Manager<'inner> {
             asset_storage,
         };
         let schema = schema::schema();
-        if !me.rgb_storage.has_schema(schema.schema_id())? {
+        if !me.rgb_storage.lock()?.has_schema(schema.schema_id())? {
             info!("RGB fungible assets schema file not found, creating one");
-            storage.add_schema(&schema)?;
+            storage.lock()?.add_schema(&schema)?;
         }
 
         Ok(me)
     }
 
     pub fn issue(
-        &self,
+        &mut self,
         network: bp::Network,
         ticker: String,
         name: String,
@@ -137,15 +137,29 @@ impl<'inner> Manager<'inner> {
             assignments,
             vec![],
         );
-        self.rgb_storage.add_genesis(&genesis)?;
+        self.rgb_storage.lock()?.add_genesis(&genesis)?;
 
         let asset = Asset::try_from(genesis.clone())?;
-        //self.asset_storage.add_asset(&asset);
+        self.asset_storage.lock()?.add_asset(asset.clone())?;
 
         Ok((asset, genesis))
     }
 
+    pub fn assets(&self) -> Result<Vec<Asset>, InteroperableError> {
+        Ok(self
+            .asset_storage
+            .lock()?
+            .assets()?
+            .into_iter()
+            .map(Asset::clone)
+            .collect())
+    }
+
     pub fn import(&self, data: ExchangableData) -> Result<MagicNumber, InteroperableError> {
         unimplemented!()
+    }
+
+    pub fn pay(&self, invoice: Invoice) -> Result<(), InteroperableError> {
+        let assets = self.asset_storage.lock()?.assets()?;
     }
 }

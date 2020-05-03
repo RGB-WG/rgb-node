@@ -12,6 +12,6 @@ mod storage;
 pub use error::{InteroperableError, ParseError};
 pub use magic_numbers::MagicNumber;
 pub use seal_spec::SealSpec;
-pub use storage::{DiskStorage, DiskStorageConfig, DiskStorageError, Error as StoreError, Store};
+pub use storage::{DiskStorage, DiskStorageConfig, DiskStorageError, Store};
 
 pub const RGB_BECH32_HRP_GENESIS: &'static str = "rgb:genesis";
