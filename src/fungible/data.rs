@@ -48,7 +48,7 @@ pub enum Supply {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
-pub struct Stock {
+pub struct Asset {
     pub ticker: String,
     pub title: String,
     pub description: Option<String>,
@@ -61,7 +61,7 @@ pub struct Stock {
     pub allocations: Vec<Allocation>,
 }
 
-impl Stock {
+impl Asset {
     pub fn init(genesis: Transition) -> Result<Self, Error> { unimplemented!() }
     pub fn extend(&mut self, history: HistoryGraph, payment: Option<Payment>) -> Result<Vec<Allocation>, Error> { unimplemented!() }
 

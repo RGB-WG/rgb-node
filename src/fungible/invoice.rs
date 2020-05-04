@@ -12,13 +12,16 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
+use regex::Regex;
+use lightning_invoice::Invoice as LightningInvoice;
+
 use lnpbp::{bp, rgb};
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
-use lightning_invoice::Invoice as LightningInvoice;
 use lnpbp::common::internet::InetSocketAddr;
 
 use crate::marker;
+use lnpbp::miniscript::bitcoin::hashes::core::fmt::Formatter;
 
 
 /// API endpoint for extra-transaction proof transfer
@@ -65,7 +68,33 @@ pub struct Invoice {
 impl FromStr for Invoice {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        unimplemented!()
+        let re = Regex::new(r"^rgb:([\w\d]{64}):(\d+)@()/(.*)$").expect("Regex parse failure");
+        if let Some(m) = re.captures(&s.to_ascii_lowercase()) {
+            match (m.get(1), m.get(2), m.get(3), m.get(4)) {
+                (Some(id), Some(amount), Some(seal), _) => {
+                    Ok(Self {
+                        contract_id: id.as_str().parse()?,
+                        assign_to: seal.as_str().parse()?,
+                        amount: amount.as_str().parse()?,
+                        endpoints: vec![],
+                        provide_txids: false
+                    })
+                },
+                _ => Err("Wrong invoice format".to_string()),
+            }
+        } else {
+            Err("Wrong invoice format".to_string())
+        }
+    }
+}
+
+impl fmt::Display for Invoice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "rgb:{}:{}@{}",
+            self.contract_id,
+            self.amount,
+            self.assign_to
+        )
     }
 }
 
