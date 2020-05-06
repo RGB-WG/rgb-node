@@ -12,6 +12,7 @@ pub mod sendtoaddress;
 pub mod getnewaddress;
 pub mod sync;
 pub mod burn;
+pub mod deserialize;
 
 pub trait RGBSubCommand<'a> {
     fn run(matches: &'a ArgMatches<'a>, config: &Config, database: &mut Database, client: &mut jsonrpc::client::Client) -> Result<(), jsonrpc::Error>;

@@ -17,6 +17,7 @@ use kaleidoscope::listunspent::ListUnspent;
 use kaleidoscope::RGBSubCommand;
 use kaleidoscope::sendtoaddress::SendToAddress;
 use kaleidoscope::sync::Sync;
+use kaleidoscope::deserialize::Deserialize;
 
 pub mod kaleidoscope;
 pub mod database;
@@ -117,6 +118,12 @@ fn main() {
                 .value_name("AMOUNT")
                 .required(true)
                 .help("Set the amount")))
+        .subcommand(SubCommand::with_name("deserialize")
+            .about("Deserialize a proof")
+            .arg(Arg::with_name("path")
+                .value_name("PATH")
+                .required(true)
+                .help("the path to the proof")))
         .get_matches();
 
     let default_rgb_dir = home_dir().unwrap().join(".rgb");
@@ -141,6 +148,8 @@ fn main() {
         GetNewAddress::run(&sub_matches, &config, &mut database, &mut client);
     } else if let Some(sub_matches) = matches.subcommand_matches("sync") {
         Sync::run(&sub_matches, &config, &mut database, &mut client);
+    } else if let Some(sub_matches) = matches.subcommand_matches("deserialize") {
+        Deserialize::run(&sub_matches, &config, &mut database, &mut client);
     } else {
         println!("{}", matches.usage());
     }
