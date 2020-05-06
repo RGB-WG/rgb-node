@@ -33,6 +33,7 @@ fn verify() {
         network: Network::Testnet,
         tx_committing_to_this: None,
         total_supply: 12,
+        original_commitment_pk: None
     };
     let void_tx = Transaction {version: 1, lock_time: 0, input: vec![], output: vec![]};
 
