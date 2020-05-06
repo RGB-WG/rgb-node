@@ -26,10 +26,12 @@ fn output_entry() {
 fn verify() {
     let issuance_utxo = OutPoint {txid: Sha256dHash::default(), vout: 1000};
     let contract = Contract {
+        version: 0,
         title: String::from("title"),
         issuance_utxo,
         initial_owner_utxo: issuance_utxo,
         network: Network::Testnet,
+        tx_committing_to_this: None,
         total_supply: 12,
     };
     let void_tx = Transaction {version: 1, lock_time: 0, input: vec![], output: vec![]};
