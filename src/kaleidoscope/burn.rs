@@ -25,7 +25,7 @@ use lib::tx_builder::spend_proofs;
 
 pub struct Burn {}
 
-pub fn burn_tokens(server: &str, asset_id: Sha256dHash, amount: u32, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
+pub fn burn_tokens(server: &str, asset_id: Sha256dHash, amount: u64, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
     const FEE: u64 = 2000;
     let change_address = rpc_getnewaddress(client).unwrap();
 
@@ -36,8 +36,8 @@ pub fn burn_tokens(server: &str, asset_id: Sha256dHash, amount: u32, config: &Co
     let mut chosen_outpoints = Vec::new();
     let mut chosen_proofs = Vec::new();
     let mut total_btc_amount: u64 = 0;
-    let mut total_asset_amount: u32 = 0;
-    let mut to_self: HashMap<Sha256dHash, u32> = HashMap::new();
+    let mut total_asset_amount: u64 = 0;
+    let mut to_self: HashMap<Sha256dHash, u64> = HashMap::new();
 
     let mut used_proofs = HashMap::new();
 
@@ -153,7 +153,7 @@ pub fn burn_tokens(server: &str, asset_id: Sha256dHash, amount: u32, config: &Co
 impl<'a> RGBSubCommand<'a> for Burn {
     fn run(matches: &'a ArgMatches<'a>, config: &Config, database: &mut Database, client: &mut Client) -> Result<(), jsonrpc::Error> {
         let asset_id = Sha256dHash::from_hex(matches.value_of("asset_id").unwrap()).unwrap();
-        let amount: u32 = matches.value_of("amount").unwrap().parse().unwrap();
+        let amount: u64 = matches.value_of("amount").unwrap().parse().unwrap();
 
         let unspent_utxos = rpc_list_unspent(client).unwrap();
         let our_address = rpc_getnewaddress(client).unwrap();

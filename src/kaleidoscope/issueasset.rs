@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use bitcoin::network::constants::Network;
 use bitcoin::OutPoint;
+use bitcoin::Privkey;
 use bitcoin::util::hash::Sha256dHash;
 use clap::ArgMatches;
 use jsonrpc;
@@ -9,11 +10,13 @@ use jsonrpc::client::Client;
 use rgb::contract::Contract;
 use rgb::output_entry::OutputEntry;
 use rgb::proof::Proof;
+use secp256k1::PublicKey;
+use secp256k1::Secp256k1;
 
 use chain::wallet::*;
 use database::Database;
 use kaleidoscope::{Config, RGBSubCommand};
-use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to};
+use lib::tx_builder::{build_issuance_tx, raw_tx_commit_to, raw_tx_commit_to_p2c};
 
 pub struct IssueAsset {}
 
@@ -68,49 +71,74 @@ impl<'a> RGBSubCommand<'a> for IssueAsset {
 
         // -------------------------------------
 
-        let contract = Contract {
+        let s = Secp256k1::new();
+
+        let burn_address = rpc_getnewaddress(client).unwrap();
+
+        let mut contract = Contract {
             title: matches.value_of("title").unwrap().to_string(),
             total_supply: matches.value_of("total_supply").unwrap().parse().unwrap(),
             network,
             issuance_utxo,
             initial_owner_utxo,
+            original_commitment_pk: None
         };
 
-        println!("Asset ID: {}", contract.get_asset_id());
-
         let change_address = rpc_getnewaddress(client).unwrap();
+        let change_privkey = rpc_dumpprivkey(client, &change_address).unwrap();
+        let change_pubkey = PublicKey::from_secret_key(&s, &change_privkey.key);
         let change_amount = unspent_utxos.get(&contract.issuance_utxo).unwrap() - FEE;
 
         let mut commit_tx_outputs = HashMap::new();
-        commit_tx_outputs.insert(change_address, change_amount);
 
-        let issuance_tx = build_issuance_tx(&contract, &commit_tx_outputs);
+        let (issuance_tx, tweak_factor) = build_issuance_tx(&mut contract, &change_pubkey, change_amount, &commit_tx_outputs);
         let issuance_tx = rpc_sign_transaction(client, &issuance_tx).unwrap();
 
+        println!("Asset ID: {}", contract.get_asset_id());
         println!("Spending the issuance_utxo {} in {}", contract.issuance_utxo, issuance_tx.txid());
+
+        let mut tweaked_sk = change_privkey.key.clone();
+        tweaked_sk.add_assign(&s, &tweak_factor.as_inner());
+        let tweaked_privkey = Privkey::from_secret_key(tweaked_sk, true, change_privkey.network);
+
+        rpc_importprivkey(client, &tweaked_privkey);
+
+        println!("Importing the tweaked private key for the contract commitment...");
 
         // -------------------------------------
 
-        let root_proof = Proof::new(
+        let mut root_proof = Proof::new(
             vec![contract.initial_owner_utxo.clone()],
             vec![],
             vec![OutputEntry::new(contract.get_asset_id(), contract.total_supply, Some(0))],
-            Some(&contract));
+            Some(&contract),
+            None);
 
         let root_proof_change_address = rpc_getnewaddress(client).unwrap();
-        let root_proof_change_amounts = unspent_utxos.get(&contract.initial_owner_utxo).unwrap() - FEE;
+        let root_proof_change_privkey = rpc_dumpprivkey(client, &root_proof_change_address).unwrap();
+        let root_proof_change_pubkey = PublicKey::from_secret_key(&s, &root_proof_change_privkey.key);
+        let root_proof_change_amount = unspent_utxos.get(&contract.initial_owner_utxo).unwrap() - FEE;
 
         let mut proof_commit_tx_outputs = HashMap::new();
-        proof_commit_tx_outputs.insert(root_proof_change_address, root_proof_change_amounts);
 
-        let root_proof_tx = raw_tx_commit_to(
-            &root_proof,
+        let (root_proof_tx, root_proof_tweak_factor) = raw_tx_commit_to_p2c(
+            &mut root_proof,
             vec![contract.initial_owner_utxo.clone()],
+            &root_proof_change_pubkey,
+            root_proof_change_amount,
             &proof_commit_tx_outputs,
         );
         let root_proof_tx = rpc_sign_transaction(client, &root_proof_tx).unwrap();
 
         println!("Spending the initial_owner_utxo {} in {}", contract.initial_owner_utxo, root_proof_tx.txid());
+
+        let mut tweaked_sk = root_proof_change_privkey.key.clone();
+        tweaked_sk.add_assign(&s, &root_proof_tweak_factor.as_inner());
+        let tweaked_privkey = Privkey::from_secret_key(tweaked_sk, true, root_proof_change_privkey.network);
+
+        rpc_importprivkey(client, &tweaked_privkey);
+
+        println!("Importing the tweaked private key for the root proof commitment...");
 
         database.save_proof(&root_proof, &root_proof_tx.txid());
 

@@ -5,6 +5,7 @@ extern crate hyper;
 extern crate jsonrpc;
 extern crate regex;
 extern crate rgb;
+extern crate secp256k1;
 
 use std::env::home_dir;
 use std::path::Path;
