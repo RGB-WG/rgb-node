@@ -21,7 +21,7 @@ use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::SealDefinition;
 
-use crate::rgbkit::ParseError;
+use crate::error::ParseError;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
 #[display_from(Debug)]

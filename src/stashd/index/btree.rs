@@ -16,12 +16,15 @@ use std::collections::BTreeMap;
 use super::Index;
 
 #[derive(Display, Debug)]
+#[display_from(Debug)]
 pub struct BtreeIndex {
-    index: BTreeMap<Vec<u8>, Vec<u8>>
+    index: BTreeMap<Vec<u8>, Vec<u8>>,
 }
 
 impl BtreeIndex {
-    pub fn new() -> Self,
+    pub fn new() -> Self {
+        unimplemented!()
+    }
 }
 
 impl Index for BtreeIndex {}

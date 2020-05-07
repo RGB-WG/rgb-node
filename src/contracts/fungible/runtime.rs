@@ -15,15 +15,17 @@ use core::convert::TryFrom;
 use futures::TryFutureExt;
 use std::path::PathBuf;
 
-use lnpbp::api::{Error, Multipart};
 use lnpbp::service::*;
 
-use super::Config;
+use super::{Config, Request};
+use crate::api::{self, Multipart, Reply};
+use crate::error::{
+    ApiErrorType, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
+    ServiceSocketType,
+};
 use crate::BootstrapError;
 
-use super::index::{BtreeIndex, Index};
-#[cfg(not(store_hammersbald))] // Default store
-use super::storage::{DiskStorage, DiskStorageConfig, Store};
+use super::cache::{Cache, FileCache, FileCacheConfig, FileCacheError};
 
 pub struct Runtime {
     /// Original configuration object
@@ -43,7 +45,7 @@ pub struct Runtime {
 
     /// RGB fungible assets data cache: relational database sharing the client-
     /// friendly asset information with clients
-    cacher: Cache,
+    cacher: FileCache,
 }
 
 impl Runtime {
@@ -55,22 +57,39 @@ impl Runtime {
         &self.cacher
     }
 
-    pub fn init(config: Config) -> Result<Self, BootstrapError> {
-        let indexer = BtreeIndex::new()?;
-
+    pub fn init(config: Config, context: &mut zmq::Context) -> Result<Self, BootstrapError> {
         let api_rep = context
             .socket(zmq::REP)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
         api_rep
-            .connect(&config.socket_req)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .connect(&config.socket_rep)
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
 
         let api_pub = context
             .socket(zmq::PUB)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
         api_pub
-            .connect(&config.socket_sub)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+            .connect(&config.socket_pub)
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
+
+        let stash_req = context
+            .socket(zmq::REQ)
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
+        stash_req
+            .connect(&config.stash_req)
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
+
+        let stash_sub = context
+            .socket(zmq::SUB)
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
+        stash_sub
+            .connect(&config.stash_sub)
+            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
+
+        let cacher = FileCache::new(FileCacheConfig {
+            data_dir: PathBuf::from(&config.cache),
+        })
+        .map_err(|err| BootstrapError::Other)?;
 
         Ok(Self {
             config,
@@ -85,15 +104,9 @@ impl Runtime {
 
 #[async_trait]
 impl TryService for Runtime {
-    async fn run_loop(self) -> ! {
-        loop {
-            self.run().await?
-        }
-    }
+    type ErrorType = RuntimeError;
 
-    type ErrorType = Error;
-
-    async fn try_run_loop(self) -> Result<!, Self::ErrorType> {
+    async fn try_run_loop(mut self) -> Result<!, RuntimeError> {
         loop {
             match self.run().await {
                 Ok(_) => debug!("API request processing complete"),
@@ -107,11 +120,11 @@ impl TryService for Runtime {
 }
 
 impl Runtime {
-    fn run(&self) -> Result<(), Error> {
+    async fn run(&mut self) -> Result<(), RuntimeError> {
         let req: Multipart = self
-            .subscriber
+            .api_rep
             .recv_multipart(0)
-            .map_err(|err| Error::SocketError(err))?
+            .map_err(|err| RuntimeError::zmq_reply(&self.config.socket_rep, err))?
             .into_iter()
             .map(zmq::Message::from)
             .collect();
@@ -119,35 +132,37 @@ impl Runtime {
 
         trace!("Received API request {:x?}, processing ... ", req[0]);
         let reply = self
-            .proc_command(req)
+            .proc_request(req)
+            .map_err(|domain| ServiceError::contract(domain, "fungible"))
             .inspect_err(|err| error!("Error processing request: {}", err))
             .await
-            .unwrap_or(Reply::Failure);
+            .unwrap_or_else(Reply::Failure);
 
         trace!(
             "Received response from command processor: `{}`; replying to client",
             reply
         );
-        self.subscriber
-            .send_multipart(Multipart::from(Reply::Success), 0)?;
-        debug!("Sent reply {}", Reply::Success);
+        self.api_rep
+            .send_multipart(Multipart::from(reply), 0)
+            .map_err(|err| RuntimeError::zmq_reply(&self.config.socket_rep, err))?;
 
         Ok(())
     }
 
-    async fn proc_command(&mut self, req: Multipart) -> Result<Reply, Error> {
-        use Request::*;
-
+    async fn proc_request(&mut self, req: Multipart) -> Result<Reply, ServiceErrorDomain> {
         let command = Request::try_from(req)?;
 
         match command {
-            Query(query) => self.command_query(query).await,
-            _ => Err(Error::UnknownCommand),
+            Request::Issue(issue_request) => self.request_issue(issue_request).await,
+            unknown_command => Err(ServiceErrorDomain::Api(ApiErrorType::UnimplementedCommand)),
         }
     }
 
-    async fn command_query(&mut self, query: Query) -> Result<Reply, Error> {
-        debug!("Got QUERY {}", query);
+    async fn request_issue(
+        &mut self,
+        issue: api::fungible::Issue,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ISSUE {}", issue);
 
         // TODO: Do query processing
 

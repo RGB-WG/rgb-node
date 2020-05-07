@@ -246,7 +246,7 @@ impl TryFrom<Genesis> for Asset {
                 .get(&-AssignmentsType::Assets)
                 .iter()
                 .filter_map(|variant| match variant {
-                    AssignmentsVariant::Homomorphic(tree) => Some(
+                    AssignmentsVariant::Homomorphic(0, tree) => Some(
                         tree.iter()
                             .filter_map(|assign| match assign {
                                 Assignment::Revealed {

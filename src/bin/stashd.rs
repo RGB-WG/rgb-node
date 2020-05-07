@@ -11,12 +11,12 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#![feature(never_type)]
-
 use clap::derive::Clap;
 use log::*;
 use std::env;
 
+fn main() {}
+/*
 use rgb::stashd::{Config, Runtime};
 
 #[tokio::main]
@@ -41,6 +41,8 @@ async fn main() -> Result<(), BootstrapError> {
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    let runtime = Runtime::init(config).await?;
+    let mut context = zmq::Context::new();
+    let runtime = Runtime::init(config, &mut context).await?;
     runtime.run_or_panic("Stashd runtime").await
 }
+*/

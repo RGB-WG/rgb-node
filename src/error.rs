@@ -11,24 +11,48 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-// TODO: Move this file to common daemon modules (LNP/BP)
+// TODO: Move parts of this file to common daemon modules (LNP/BP)
 
+use std::collections::HashMap;
 use std::io;
 use tokio::task::JoinError;
 
-#[derive(Debug, Display)]
+// FIXME: Replace this error type with ServiceError
+/// Error used to communicate across FFI & WASM calls
+#[derive(Clone, Debug, Display)]
+#[display_from(Debug)]
+pub struct InteroperableError(pub String);
+
+impl<T> From<T> for InteroperableError
+where
+    T: std::error::Error,
+{
+    fn from(err: T) -> Self {
+        Self(format!("{}", err))
+    }
+}
+
+#[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum BootstrapError {
     TorNotYetSupported,
-    IoError(io::Error),
-    ArgParseError(String),
-    SubscriptionError(zmq::Error),
-    PublishingError(zmq::Error),
-    MultithreadError(JoinError),
-    MonitorSocketError(Box<dyn std::error::Error>),
-}
 
-impl std::error::Error for BootstrapError {}
+    #[derive_from]
+    IoError(io::Error),
+
+    #[derive_from]
+    ArgParseError(String),
+
+    #[derive_from]
+    ZmqSocketError(zmq::Error),
+
+    #[derive_from]
+    MultithreadError(JoinError),
+
+    MonitorSocketError(Box<dyn std::error::Error>),
+
+    Other,
+}
 
 impl From<BootstrapError> for String {
     fn from(err: BootstrapError) -> Self {
@@ -42,20 +66,133 @@ impl From<&str> for BootstrapError {
     }
 }
 
-impl From<String> for BootstrapError {
-    fn from(err: String) -> Self {
-        BootstrapError::ArgParseError(err)
+use lnpbp::bitcoin::hashes::hex;
+use std::num::{ParseFloatError, ParseIntError};
+
+#[derive(Clone, Copy, Debug, Display, Error)]
+#[display_from(Debug)]
+pub struct ParseError;
+
+impl From<ParseFloatError> for ParseError {
+    fn from(err: ParseFloatError) -> Self {
+        Self
     }
 }
 
-impl From<io::Error> for BootstrapError {
-    fn from(err: io::Error) -> Self {
-        BootstrapError::IoError(err)
+impl From<ParseIntError> for ParseError {
+    fn from(err: ParseIntError) -> Self {
+        Self
     }
 }
 
-impl From<JoinError> for BootstrapError {
-    fn from(err: JoinError) -> Self {
-        BootstrapError::MultithreadError(err)
+impl From<hex::Error> for ParseError {
+    fn from(err: hex::Error) -> Self {
+        Self
     }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[display_from(Debug)]
+pub enum RuntimeError {
+    Zmq(ServiceSocketType, String, zmq::Error),
+}
+
+impl RuntimeError {
+    pub fn zmq_request(socket: &str, err: zmq::Error) -> Self {
+        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+    }
+
+    pub fn zmq_reply(socket: &str, err: zmq::Error) -> Self {
+        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+    }
+
+    pub fn zmq_publish(socket: &str, err: zmq::Error) -> Self {
+        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+    }
+
+    pub fn zmq_subscribe(socket: &str, err: zmq::Error) -> Self {
+        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[display_from(Debug)]
+pub enum RoutedError {
+    Global(RuntimeError),
+    RequestSpecific(ServiceError),
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
+#[display_from(Debug)]
+pub enum ServiceErrorDomain {
+    Io,
+    Storage,
+    Index,
+    Cache,
+    Multithreading,
+    P2pwire,
+    #[derive_from]
+    Api(ApiErrorType),
+    Monitoring,
+    Bifrost,
+    BpNode,
+    LnpNode,
+    Bitcoin,
+    Lightning,
+    Schema,
+    Internal,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[display_from(Debug)]
+pub enum ServiceErrorSource {
+    Broker,
+    Stash,
+    Contract(String),
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[display_from(Debug)]
+pub enum ServiceSocketType {
+    Request,
+    Reply,
+    Publish,
+    Subscribe,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[display_from(Debug)]
+pub enum ApiErrorType {
+    MalformedRequest { request: String },
+    UnknownCommand { command: String },
+    UnimplementedCommand,
+    MissedArgument { request: String, argument: String },
+    UnknownArgument { request: String, argument: String },
+    MalformedArgument { request: String, argument: String },
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[display_from(Debug)]
+pub struct ServiceError {
+    pub domain: ServiceErrorDomain,
+    pub service: ServiceErrorSource,
+}
+
+impl ServiceError {
+    pub fn contract(domain: ServiceErrorDomain, contract_name: &str) -> Self {
+        Self {
+            domain,
+            service: ServiceErrorSource::Contract(contract_name.to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Display, Error)]
+#[display_from(Debug)]
+pub struct ServiceErrorRepresentation {
+    pub domain: String,
+    pub service: String,
+    pub name: String,
+    pub description: String,
+    pub info: HashMap<String, String>,
 }

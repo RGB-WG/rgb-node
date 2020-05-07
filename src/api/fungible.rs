@@ -15,8 +15,8 @@
 use bech32::{self, ToBase32};
 use clap::Clap;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::TxIn;
@@ -26,13 +26,10 @@ use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 use lnpbp::strict_encoding::strict_encode;
 
-use crate::commands::bitcoin::DepositType;
-use crate::config::{Config, DataItem};
+use crate::fungible::{IssueStructure, Outcoins};
+use crate::util::SealSpec;
 
-use crate::rgbkit::fungible::{IssueStructure, Manager, Outcoins};
-use crate::rgbkit::{self, fungible, DiskStorage, DiskStorageConfig, InteroperableError, SealSpec};
-
-#[derive(Clap, Clone, Serialize, Deserialize, Debug, Display)]
+#[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]
 #[display_from(Debug)]
 pub struct Issue {
     /// Limit for the total supply; ignored if the asset can't be inflated
@@ -73,7 +70,7 @@ pub struct Issue {
     pub allocate: Vec<Outcoins>,
 }
 
-#[derive(Clap, Clone, Debug, Display)]
+#[derive(Clap, Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
 pub struct Transfer {
     /// Use custom commitment output for generated witness transaction
@@ -99,9 +96,6 @@ pub struct Transfer {
     /// Saves proof data to a file instead of sending it to the remote party
     #[clap(short, long)]
     pub proof: Option<PathBuf>,
-
-    /// Tag name of the account for controlling transaciton outputs
-    pub account: String,
 
     /// Amount
     pub amount: Amount,
@@ -139,7 +133,7 @@ mod helpers {
 
     /// Defines information required to generate bitcoin transaction output from
     /// command-line argument
-    #[derive(Clone, Debug, Display)]
+    #[derive(Clone, PartialEq, Debug, Display)]
     #[display_from(Debug)]
     pub struct Output {
         pub amount: bitcoin::Amount,
@@ -155,7 +149,7 @@ mod helpers {
 
     /// Defines information required to generate bitcoin transaction input from
     /// command-line argument
-    #[derive(Clone, Debug, Display)]
+    #[derive(Clone, PartialEq, Debug, Display)]
     #[display_from(Debug)]
     pub struct Input {
         pub txin: TxIn,

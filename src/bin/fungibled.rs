@@ -11,13 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#![feature(never_type)]
-
 use clap::derive::Clap;
 use log::*;
 use std::env;
 
-use rgb::fungible::{Config, Runtime};
+use lnpbp::service::TryService;
+use rgb::fungible::{Config, Opts, Runtime};
+use rgb::BootstrapError;
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
@@ -41,6 +41,7 @@ async fn main() -> Result<(), BootstrapError> {
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    let runtime = Runtime::init(config).await?;
+    let mut context = zmq::Context::new();
+    let runtime = Runtime::init(config, &mut context)?;
     runtime.run_or_panic("Fungible contract runtime").await
 }

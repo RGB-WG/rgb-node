@@ -22,6 +22,13 @@ use rgb::schema::{
     StateFormat, TransitionSchema,
 };
 
+#[derive(Debug, Display, Error, From)]
+#[display_from(Display)]
+pub enum SchemaError {
+    #[derive_from(core::option::NoneError)]
+    NotAllFieldsPresent,
+}
+
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
 #[display_from(Display)]
 #[repr(u8)]

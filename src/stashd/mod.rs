@@ -12,18 +12,16 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod config;
-mod index;
 mod request;
 mod runtime;
-mod storage;
 
-pub use config::Config;
+pub(self) mod index;
+pub(self) mod storage;
+
+pub use config::{Config, Opts};
 pub use runtime::Runtime;
 
 pub(self) use request::Request;
 
 pub(self) use index::Index;
 pub(self) use storage::Store;
-
-pub(self) use index::BtreeIndex;
-pub(self) use storage::HammersbaldStorage;

@@ -49,7 +49,7 @@ pub struct Runtime {
     /// access.
     #[cfg(not(store_hammersbald))] // Default store
     storage: DiskStorage,
-    #[cfg(and(store_hammersbald, not(any(store_disk))))]
+    #[cfg(all(store_hammersbald, not(any(store_disk))))]
     storage: HammersbaldStore,
 }
 
@@ -66,7 +66,7 @@ impl Runtime {
         &self.storage
     }
 
-    pub fn init(config: Config) -> Result<Self, BootstrapError> {
+    pub fn init(config: Config, context: &mut zmq::Context) -> Result<Self, BootstrapError> {
         #[cfg(not(store_hammersbald))] // Default store
         let storage = DiskStorage::new(DiskStorageConfig {
             data_dir: PathBuf::from(config.stash.clone()),

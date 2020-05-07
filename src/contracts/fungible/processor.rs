@@ -21,15 +21,13 @@ use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
 use super::schema::{self, AssignmentsType, FieldType};
-use super::{Asset, Coins, Outcoins, Store as AssetStore};
+use super::{Asset, Coins, Outcoins};
 
-use crate::rgbkit::{InteroperableError, MagicNumber, SealSpec, Store as RgbStore};
+use crate::error::InteroperableError;
+use crate::util::{MagicNumber, SealSpec};
 use crate::{field, type_map};
 
-pub struct Manager<'inner> {
-    rgb_storage: Arc<Mutex<dyn RgbStore + 'inner>>,
-    asset_storage: Arc<Mutex<dyn AssetStore + 'inner>>,
-}
+pub struct Processor {}
 
 pub enum ExchangableData {
     File(PathBuf),
@@ -44,23 +42,23 @@ pub enum IssueStructure {
     },
 }
 
-impl<'inner> Manager<'inner> {
-    pub fn new(
-        rgb_storage: Arc<Mutex<impl RgbStore + 'inner>>,
-        asset_storage: Arc<Mutex<impl AssetStore + 'inner>>,
-    ) -> Result<Self, InteroperableError> {
+impl Processor {
+    pub fn new() -> Result<Self, InteroperableError> {
         debug!("Instantiating RGB asset manager ...");
 
+        let me = Self {};
+        /*
         let storage = rgb_storage.clone();
         let me = Self {
             rgb_storage,
             asset_storage,
         };
+         */
         let schema = schema::schema();
-        if !me.rgb_storage.lock()?.has_schema(schema.schema_id())? {
-            info!("RGB fungible assets schema file not found, creating one");
-            storage.lock()?.add_schema(&schema)?;
-        }
+        //if !me.rgb_storage.lock()?.has_schema(schema.schema_id())? {
+        info!("RGB fungible assets schema file not found, creating one");
+        //storage.lock()?.add_schema(&schema)?;
+        //}
 
         Ok(me)
     }
@@ -101,7 +99,7 @@ impl<'inner> Manager<'inner> {
         let mut assignments = BTreeMap::new();
         assignments.insert(
             -AssignmentsType::Assets,
-            AssignmentsVariant::zero_balanced(allocations),
+            AssignmentsVariant::zero_balanced(allocations, 0),
         );
         metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
 
@@ -150,14 +148,15 @@ impl<'inner> Manager<'inner> {
             assignments,
             vec![],
         );
-        self.rgb_storage.lock()?.add_genesis(&genesis)?;
+        //self.rgb_storage.lock()?.add_genesis(&genesis)?;
 
         let asset = Asset::try_from(genesis.clone())?;
-        self.asset_storage.lock()?.add_asset(asset.clone())?;
+        //self.asset_storage.lock()?.add_asset(asset.clone())?;
 
         Ok((asset, genesis))
     }
 
+    /*
     pub fn assets(&self) -> Result<Vec<Asset>, InteroperableError> {
         Ok(self
             .asset_storage
@@ -175,4 +174,6 @@ impl<'inner> Manager<'inner> {
     pub fn pay(&self, invoice: Invoice) -> Result<(), InteroperableError> {
         let assets = self.asset_storage.lock()?.assets()?;
     }
+
+     */
 }

@@ -19,20 +19,14 @@ use std::{fs, io, io::Read, io::Write};
 use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
 
-use super::Asset;
-use crate::rgbkit::{file::*, InteroperableError};
-
-pub trait Store {
-    fn assets(&self) -> Result<Vec<&Asset>, InteroperableError>;
-    fn asset(&self, id: ContractId) -> Result<&Asset, InteroperableError>;
-    fn has_asset(&self, id: ContractId) -> Result<bool, InteroperableError>;
-    fn add_asset(&mut self, asset: Asset) -> Result<bool, InteroperableError>;
-    fn remove_asset(&mut self, id: ContractId) -> Result<bool, InteroperableError>;
-}
+use super::Cache;
+use crate::error::InteroperableError;
+use crate::fungible::Asset;
+use crate::util::file::*;
 
 #[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
-pub enum DiskStorageError {
+pub enum FileCacheError {
     #[derive_from]
     Io(io::Error),
 
@@ -54,11 +48,11 @@ pub enum DiskStorageError {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display_from(Debug)]
-pub struct DiskStorageConfig {
+pub struct FileCacheConfig {
     pub data_dir: PathBuf,
 }
 
-impl DiskStorageConfig {
+impl FileCacheConfig {
     pub const RGB_FA_EXTENSION: &'static str = "dat";
 
     #[inline]
@@ -77,13 +71,13 @@ impl DiskStorageConfig {
 /// Keeps all source/binary RGB contract data, stash etc
 #[derive(Debug, Display)]
 #[display_from(Debug)]
-pub struct DiskStorage {
-    config: DiskStorageConfig,
+pub struct FileCache {
+    config: FileCacheConfig,
     assets: HashMap<ContractId, Asset>,
 }
 
-impl DiskStorage {
-    pub fn new(config: DiskStorageConfig) -> Result<Self, DiskStorageError> {
+impl FileCache {
+    pub fn new(config: FileCacheConfig) -> Result<Self, FileCacheError> {
         debug!("Instantiating RGB fungible assets storage (disk storage) ...");
 
         let data_dir = config.data_dir.clone();
@@ -123,7 +117,7 @@ impl DiskStorage {
         Ok(Self { config, assets })
     }
 
-    pub fn save(&self) -> Result<(), DiskStorageError> {
+    pub fn save(&self) -> Result<(), FileCacheError> {
         trace!("Saving updated asset information ...");
         let filename = self.config.assets_filename();
         let mut f = file(filename, FileMode::Create)?;
@@ -133,7 +127,7 @@ impl DiskStorage {
     }
 }
 
-impl Store for DiskStorage {
+impl Cache for FileCache {
     fn assets(&self) -> Result<Vec<&Asset>, InteroperableError> {
         Ok(self.assets.values().collect())
     }

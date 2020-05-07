@@ -13,6 +13,7 @@
 
 #[macro_use]
 mod macros;
+pub mod file;
 mod magic_numbers;
 mod seal_spec;
 
