@@ -11,21 +11,20 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#[macro_use]
-extern crate derive_wrapper;
-extern crate chrono;
-extern crate lightning_invoice;
-extern crate regex;
-#[macro_use]
-extern crate lnpbp;
+mod store;
 
-pub(in crate::bin::stashd) mod stashd;
+#[cfg(not(store_hammersbald))] // Default store
+mod disk;
+#[cfg(and(store_hammersbald, not(any(store_disk))))]
+mod hammersbald;
 
-mod contracts;
-mod error;
+pub(super) use error::Error;
+pub(super) use store::Store;
 
-pub use contracts::*;
-pub use error::BootstrapError;
+#[cfg(not(store_hammersbald))] // Default store
+pub(super) use disk::DiskStorage;
+#[cfg(not(store_hammersbald))]
+pub(super) use disk::DiskStorageConfig;
 
-// Re-exports
-pub use lnpbp::rgb as std;
+#[cfg(and(store_hammersbald, not(any(store_disk))))]
+pub(super) use hammersbald::HammersbaldStorage;

@@ -11,21 +11,17 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#[macro_use]
-extern crate derive_wrapper;
-extern crate chrono;
-extern crate lightning_invoice;
-extern crate regex;
-#[macro_use]
-extern crate lnpbp;
+use std::collections::BTreeMap;
 
-pub(in crate::bin::stashd) mod stashd;
+use super::Index;
 
-mod contracts;
-mod error;
+#[derive(Display, Debug)]
+pub struct BtreeIndex {
+    index: BTreeMap<Vec<u8>, Vec<u8>>
+}
 
-pub use contracts::*;
-pub use error::BootstrapError;
+impl BtreeIndex {
+    pub fn new() -> Self,
+}
 
-// Re-exports
-pub use lnpbp::rgb as std;
+impl Index for BtreeIndex {}

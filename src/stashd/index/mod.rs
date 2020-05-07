@@ -11,21 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#[macro_use]
-extern crate derive_wrapper;
-extern crate chrono;
-extern crate lightning_invoice;
-extern crate regex;
-#[macro_use]
-extern crate lnpbp;
+mod index;
 
-pub(in crate::bin::stashd) mod stashd;
+mod btree;
 
-mod contracts;
-mod error;
+pub(super) use index::Index;
 
-pub use contracts::*;
-pub use error::BootstrapError;
-
-// Re-exports
-pub use lnpbp::rgb as std;
+pub(super) use btree::BtreeIndex;
