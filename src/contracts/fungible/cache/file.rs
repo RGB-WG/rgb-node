@@ -20,7 +20,7 @@ use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
 
 use super::Cache;
-use crate::error::InteroperableError;
+use crate::fungible::cache::CacheError;
 use crate::fungible::Asset;
 use crate::util::file::*;
 
@@ -128,31 +128,30 @@ impl FileCache {
 }
 
 impl Cache for FileCache {
-    fn assets(&self) -> Result<Vec<&Asset>, InteroperableError> {
+    fn assets(&self) -> Result<Vec<&Asset>, CacheError> {
         Ok(self.assets.values().collect())
     }
 
     #[inline]
-    fn asset(&self, id: ContractId) -> Result<&Asset, InteroperableError> {
-        Ok(self
-            .assets
-            .get(&id)
-            .ok_or(InteroperableError(format!("Asset {} s not known", id)))?)
+    fn asset(&self, id: ContractId) -> Result<&Asset, CacheError> {
+        Ok(self.assets.get(&id).ok_or(CacheError::DataIntegrityError(
+            "Asset is not known".to_string(),
+        ))?)
     }
 
     #[inline]
-    fn has_asset(&self, id: ContractId) -> Result<bool, InteroperableError> {
+    fn has_asset(&self, id: ContractId) -> Result<bool, CacheError> {
         Ok(self.assets.contains_key(&id))
     }
 
-    fn add_asset(&mut self, asset: Asset) -> Result<bool, InteroperableError> {
+    fn add_asset(&mut self, asset: Asset) -> Result<bool, CacheError> {
         let exists = self.assets.insert(asset.id(), asset).is_some();
         self.save()?;
         Ok(exists)
     }
 
     #[inline]
-    fn remove_asset(&mut self, id: ContractId) -> Result<bool, InteroperableError> {
+    fn remove_asset(&mut self, id: ContractId) -> Result<bool, CacheError> {
         Ok(self.assets.remove(&id).is_some())
     }
 }

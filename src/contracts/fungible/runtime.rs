@@ -19,13 +19,10 @@ use lnpbp::service::*;
 
 use super::{Config, Request};
 use crate::api::{self, Multipart, Reply};
-use crate::error::{
-    ApiErrorType, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
-    ServiceSocketType,
-};
+use crate::error::{ApiErrorType, RuntimeError, ServiceError, ServiceErrorDomain};
 use crate::BootstrapError;
 
-use super::cache::{Cache, FileCache, FileCacheConfig, FileCacheError};
+use super::cache::{Cache, FileCache, FileCacheConfig};
 
 pub struct Runtime {
     /// Original configuration object

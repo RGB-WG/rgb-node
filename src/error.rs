@@ -74,19 +74,19 @@ use std::num::{ParseFloatError, ParseIntError};
 pub struct ParseError;
 
 impl From<ParseFloatError> for ParseError {
-    fn from(err: ParseFloatError) -> Self {
+    fn from(_: ParseFloatError) -> Self {
         Self
     }
 }
 
 impl From<ParseIntError> for ParseError {
-    fn from(err: ParseIntError) -> Self {
+    fn from(_: ParseIntError) -> Self {
         Self
     }
 }
 
 impl From<hex::Error> for ParseError {
-    fn from(err: hex::Error) -> Self {
+    fn from(_: hex::Error) -> Self {
         Self
     }
 }

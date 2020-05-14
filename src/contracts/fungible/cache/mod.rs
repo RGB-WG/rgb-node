@@ -14,5 +14,5 @@
 mod cache;
 mod file;
 
-pub use cache::Cache;
+pub use cache::{Cache, CacheError};
 pub use file::{FileCache, FileCacheConfig, FileCacheError};

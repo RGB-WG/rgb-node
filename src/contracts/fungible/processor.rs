@@ -14,8 +14,6 @@
 use chrono::Utc;
 use core::convert::TryFrom;
 use std::collections::BTreeMap;
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
@@ -24,15 +22,10 @@ use super::schema::{self, AssignmentsType, FieldType};
 use super::{Asset, Coins, Outcoins};
 
 use crate::error::InteroperableError;
-use crate::util::{MagicNumber, SealSpec};
+use crate::util::SealSpec;
 use crate::{field, type_map};
 
 pub struct Processor {}
-
-pub enum ExchangableData {
-    File(PathBuf),
-    Bech32(String),
-}
 
 pub enum IssueStructure {
     SingleIssue,

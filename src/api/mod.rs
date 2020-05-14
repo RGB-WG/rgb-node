@@ -23,8 +23,10 @@ impl From<Reply> for Multipart {
     fn from(reply: Reply) -> Self {
         match reply {
             Reply::Success => vec![zmq::Message::from("success")],
-            // TODO: Return detailed error information
-            Reply::Failure(err) => vec![zmq::Message::from("failure")],
+            Reply::Failure(err) => vec![
+                zmq::Message::from("failure"),
+                zmq::Message::from(format!("{:?}", err).as_str()),
+            ],
         }
     }
 }

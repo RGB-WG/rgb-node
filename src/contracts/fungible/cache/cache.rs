@@ -11,14 +11,49 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::error::InteroperableError;
+use super::FileCacheError;
 use crate::fungible::Asset;
+use crate::util::file::FileMode;
 use lnpbp::rgb::prelude::*;
 
 pub trait Cache {
-    fn assets(&self) -> Result<Vec<&Asset>, InteroperableError>;
-    fn asset(&self, id: ContractId) -> Result<&Asset, InteroperableError>;
-    fn has_asset(&self, id: ContractId) -> Result<bool, InteroperableError>;
-    fn add_asset(&mut self, asset: Asset) -> Result<bool, InteroperableError>;
-    fn remove_asset(&mut self, id: ContractId) -> Result<bool, InteroperableError>;
+    fn assets(&self) -> Result<Vec<&Asset>, CacheError>;
+    fn asset(&self, id: ContractId) -> Result<&Asset, CacheError>;
+    fn has_asset(&self, id: ContractId) -> Result<bool, CacheError>;
+    fn add_asset(&mut self, asset: Asset) -> Result<bool, CacheError>;
+    fn remove_asset(&mut self, id: ContractId) -> Result<bool, CacheError>;
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[display_from(Debug)]
+pub enum CacheError {
+    Io(String),
+    NotFound {
+        id: String,
+    },
+    DataAccessError {
+        id: String,
+        mode: FileMode,
+        details: Option<String>,
+    },
+    DataIntegrityError(String),
+}
+
+impl From<FileCacheError> for CacheError {
+    fn from(err: FileCacheError) -> Self {
+        match err {
+            FileCacheError::Io(e) => Self::Io(format!("{:?}", e)),
+            FileCacheError::HashName => {
+                Self::DataIntegrityError("File for a given hash id is not found".to_string())
+            }
+            FileCacheError::Encoding(e) => Self::DataIntegrityError(format!("{:?}", e)),
+            FileCacheError::BrokenHexFilenames => {
+                Self::DataIntegrityError("Broken filename structure in storage".to_string())
+            }
+            FileCacheError::SerdeJson(e) => Self::DataIntegrityError(format!("{:?}", e)),
+            FileCacheError::NotFound => {
+                Self::DataIntegrityError("Data file is not found".to_string())
+            }
+        }
+    }
 }

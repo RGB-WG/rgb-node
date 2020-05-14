@@ -12,7 +12,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use bech32::{self, ToBase32};
 use clap::Clap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -24,9 +23,8 @@ use bitcoin::TxIn;
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::strict_encode;
 
-use crate::fungible::{IssueStructure, Outcoins};
+use crate::fungible::Outcoins;
 use crate::util::SealSpec;
 
 #[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]

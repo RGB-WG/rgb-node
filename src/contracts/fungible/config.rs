@@ -12,9 +12,6 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::Clap;
-use std::net::SocketAddr;
-
-use lnpbp::internet::{InetAddr, InetSocketAddr};
 
 const FUNGIBLED_CACHE: &'static str = "rgb-cache.sqlite";
 const FUNGIBLED_SOCKET_REP: &'static str = "tcp://0.0.0.0:13801";
@@ -50,7 +47,7 @@ pub struct Opts {
 
     /// ZMQ socket address string for REQ/REP API
     #[clap(
-        long = "socket-rep",
+        long,
         default_value = FUNGIBLED_SOCKET_REP,
         env = "RGB_FUNGIBLED_SOCKET_REP",
         parse(try_from_str)
@@ -59,7 +56,7 @@ pub struct Opts {
 
     /// ZMQ socket address string for PUB/SUb API
     #[clap(
-        long = "socket-pub",
+        long,
         default_value = FUNGIBLED_SOCKET_PUB,
         env = "RGB_FUNGIBLED_SOCKET_PUB",
         parse(try_from_str)
@@ -68,7 +65,7 @@ pub struct Opts {
 
     /// ZMQ socket address string for REQ/REP API
     #[clap(
-        long = "socket-req",
+        long,
         default_value = FUNGIBLED_STASHD_REQ,
         env = "RGB_STASHD_STASHD_REQ",
         parse(try_from_str)
@@ -77,7 +74,7 @@ pub struct Opts {
 
     /// ZMQ socket address string for PUB/SUb API
     #[clap(
-        long = "socket-req",
+        long,
         default_value = FUNGIBLED_STASHD_SUB,
         env = "RGB_STASHD_API_SUB",
         parse(try_from_str)
