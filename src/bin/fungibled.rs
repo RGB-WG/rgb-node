@@ -15,7 +15,7 @@ use clap::derive::Clap;
 use log::*;
 use std::env;
 
-use lnpbp::service::TryService;
+use lnpbp::TryService;
 use rgb::fungible::{Config, Opts, Runtime};
 use rgb::BootstrapError;
 

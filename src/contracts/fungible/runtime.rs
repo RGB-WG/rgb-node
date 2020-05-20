@@ -15,7 +15,7 @@ use core::convert::TryFrom;
 use futures::TryFutureExt;
 use std::path::PathBuf;
 
-use lnpbp::service::*;
+use lnpbp::TryService;
 
 use super::{Config, Request};
 use crate::api::{self, Multipart, Reply};
