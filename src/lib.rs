@@ -45,6 +45,7 @@ mod api;
 pub mod cli;
 mod contracts;
 mod error;
+pub mod i9n;
 pub mod stashd;
 pub mod util;
 
