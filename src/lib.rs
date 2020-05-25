@@ -46,7 +46,8 @@ pub mod cli;
 mod contracts;
 mod error;
 pub mod i9n;
-pub mod stashd;
+pub mod rgbd;
+pub mod stash;
 pub mod util;
 
 pub use contracts::*;

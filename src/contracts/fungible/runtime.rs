@@ -12,13 +12,12 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use core::convert::TryFrom;
-use futures::TryFutureExt;
 use std::path::PathBuf;
 
 use lnpbp::TryService;
 
 use super::{Config, IssueStructure, Processor, Request};
-use crate::api::{self, Multipart, Reply};
+use crate::api::{self, Reply};
 use crate::error::{ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
@@ -152,6 +151,7 @@ impl Runtime {
         Ok(())
     }
 
+    /*
     async fn proc_request(&mut self, req: Multipart) -> Result<(), ServiceErrorDomain> {
         let command = Request::try_from(req)?;
 
@@ -168,6 +168,7 @@ impl Runtime {
 
         Ok(())
     }
+     */
 
     async fn request_issue(
         &mut self,

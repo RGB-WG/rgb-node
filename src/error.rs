@@ -98,9 +98,11 @@ impl From<hex::Error> for ParseError {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum RuntimeError {
+    #[derive_from(std::io::Error)]
+    Io,
     Zmq(ServiceSocketType, String, zmq::Error),
 }
 
