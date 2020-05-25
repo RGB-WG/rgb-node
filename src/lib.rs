@@ -38,7 +38,7 @@ extern crate dotenv;
 extern crate env_logger;
 
 #[macro_use]
-extern crate lnpbp;
+pub extern crate lnpbp;
 extern crate bech32;
 
 mod api;

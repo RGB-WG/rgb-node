@@ -1,0 +1,20 @@
+[package]
+name = "ffi"
+version = "0.1.0"
+authors = ["Alekos Filini <alekos.filini@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[build-dependencies]
+cbindgen = "^0.14"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rgb_node = { path = "../" }
+serde = { version = "~1.0", features = ["derive"] }
+serde_with = "1.4"
+serde_json = "~1.0"

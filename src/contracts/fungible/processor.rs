@@ -15,6 +15,8 @@ use chrono::Utc;
 use core::convert::TryFrom;
 use std::collections::BTreeMap;
 
+use serde::Deserialize;
+
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
@@ -27,6 +29,7 @@ use crate::{field, type_map};
 
 pub struct Processor {}
 
+#[derive(Debug, Deserialize)]
 pub enum IssueStructure {
     SingleIssue,
     MultipleIssues {
