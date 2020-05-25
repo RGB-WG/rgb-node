@@ -32,7 +32,7 @@ tiny_http = "~0.6"
 prometheus = "~0.8"
 derive_wrapper = "~0.1"
 # TODO: Move this dependency to LNP/BP core library
-lightning-invoice = "~0.2"
+lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
@@ -46,3 +46,6 @@ cli = []
 fungibles = []
 collectibles = []
 identities = []
+
+[workspace]
+members = ["ffi"]
