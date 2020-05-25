@@ -21,21 +21,6 @@ use lnpbp::lnp::transport;
 
 use crate::contracts::fungible;
 
-// FIXME: Replace this error type with ServiceError
-/// Error used to communicate across FFI & WASM calls
-#[derive(Clone, Debug, Display)]
-#[display_from(Debug)]
-pub struct InteroperableError(pub String);
-
-impl<T> From<T> for InteroperableError
-where
-    T: std::error::Error,
-{
-    fn from(err: T) -> Self {
-        Self(format!("{}", err))
-    }
-}
-
 #[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum BootstrapError {

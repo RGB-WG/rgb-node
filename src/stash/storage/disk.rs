@@ -19,7 +19,7 @@ use lnpbp::bitcoin::hashes::hex::{FromHex, ToHex};
 use lnpbp::rgb::prelude::*;
 
 use super::Store;
-use crate::error::InteroperableError;
+use crate::error::ServiceErrorDomain;
 use crate::util::file::*;
 
 #[derive(Debug, Display, Error, From)]
@@ -36,6 +36,12 @@ pub enum DiskStorageError {
 
     #[derive_from(bitcoin::hashes::hex::Error)]
     BrokenHexFilenames,
+}
+
+impl From<DiskStorageError> for ServiceErrorDomain {
+    fn from(_: DiskStorageError) -> Self {
+        ServiceErrorDomain::Storage
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
@@ -133,7 +139,9 @@ impl DiskStorage {
 }
 
 impl Store for DiskStorage {
-    fn schema_ids(&self) -> Result<Vec<SchemaId>, InteroperableError> {
+    type Error = DiskStorageError;
+
+    fn schema_ids(&self) -> Result<Vec<SchemaId>, Self::Error> {
         self.config
             .schema_names()?
             .into_iter()
@@ -144,30 +152,30 @@ impl Store for DiskStorage {
     }
 
     #[inline]
-    fn schema(&self, id: SchemaId) -> Result<Schema, InteroperableError> {
+    fn schema(&self, id: SchemaId) -> Result<Schema, Self::Error> {
         Ok(Schema::read_file(self.config.schema_filename(id))?)
     }
 
     #[inline]
-    fn has_schema(&self, id: SchemaId) -> Result<bool, InteroperableError> {
+    fn has_schema(&self, id: SchemaId) -> Result<bool, Self::Error> {
         Ok(self.config.schema_filename(id).as_path().exists())
     }
 
-    fn add_schema(&self, schema: &Schema) -> Result<bool, InteroperableError> {
+    fn add_schema(&self, schema: &Schema) -> Result<bool, Self::Error> {
         let filename = self.config.schema_filename(schema.schema_id());
         let exists = filename.as_path().exists();
         schema.write_file(filename)?;
         Ok(exists)
     }
 
-    fn remove_schema(&self, id: SchemaId) -> Result<bool, InteroperableError> {
+    fn remove_schema(&self, id: SchemaId) -> Result<bool, Self::Error> {
         let filename = self.config.schema_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
         Ok(existed)
     }
 
-    fn contract_ids(&self) -> Result<Vec<ContractId>, InteroperableError> {
+    fn contract_ids(&self) -> Result<Vec<ContractId>, Self::Error> {
         self.config
             .genesis_names()?
             .into_iter()
@@ -178,16 +186,16 @@ impl Store for DiskStorage {
     }
 
     #[inline]
-    fn genesis(&self, id: ContractId) -> Result<Genesis, InteroperableError> {
+    fn genesis(&self, id: ContractId) -> Result<Genesis, Self::Error> {
         Ok(Genesis::read_file(self.config.genesis_filename(id))?)
     }
 
     #[inline]
-    fn has_genesis(&self, id: ContractId) -> Result<bool, InteroperableError> {
+    fn has_genesis(&self, id: ContractId) -> Result<bool, Self::Error> {
         Ok(self.config.genesis_filename(id).as_path().exists())
     }
 
-    fn add_genesis(&self, genesis: &Genesis) -> Result<bool, InteroperableError> {
+    fn add_genesis(&self, genesis: &Genesis) -> Result<bool, Self::Error> {
         let filename = self.config.genesis_filename(genesis.contract_id());
         let exists = filename.as_path().exists();
         genesis.write_file(filename)?;
@@ -195,7 +203,7 @@ impl Store for DiskStorage {
     }
 
     #[inline]
-    fn remove_genesis(&self, id: ContractId) -> Result<bool, InteroperableError> {
+    fn remove_genesis(&self, id: ContractId) -> Result<bool, Self::Error> {
         let filename = self.config.genesis_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
