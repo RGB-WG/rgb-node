@@ -11,15 +11,9 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::path::PathBuf;
-use std::{fs, io};
-
-use lnpbp::bitcoin;
-use lnpbp::bitcoin::hashes::hex::{FromHex, ToHex};
 use lnpbp::rgb::prelude::*;
 
-use super::file::*;
-use super::InteroperableError;
+use crate::error::InteroperableError;
 
 pub trait Store {
     fn schema_ids(&self) -> Result<Vec<SchemaId>, InteroperableError>;

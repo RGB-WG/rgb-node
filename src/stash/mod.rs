@@ -14,11 +14,11 @@
 mod config;
 mod runtime;
 
-//pub(self) mod index;
-//pub(self) mod storage;
+pub(self) mod index;
+pub(self) mod storage;
 
 pub use config::{Config, Opts};
 pub use runtime::Runtime;
 
-//pub(self) use index::Index;
-//pub(self) use storage::Store;
+pub(self) use index::Index;
+pub(self) use storage::Store;

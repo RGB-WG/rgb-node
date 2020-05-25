@@ -18,7 +18,6 @@ mod disk;
 #[cfg(all(store_hammersbald, not(any(store_disk))))]
 mod hammersbald;
 
-pub(super) use error::Error;
 pub(super) use store::Store;
 
 #[cfg(not(store_hammersbald))] // Default store

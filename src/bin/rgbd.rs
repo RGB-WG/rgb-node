@@ -22,7 +22,7 @@ use rgb::BootstrapError;
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
-    // TODO: Parse config file as well
+    // TODO: Move on configure_me
     let opts: Opts = Opts::parse();
     let config: Config = opts.into();
 
@@ -43,5 +43,5 @@ async fn main() -> Result<(), BootstrapError> {
     log::set_max_level(LevelFilter::Trace);
 
     let runtime = Runtime::init(config).await?;
-    runtime.run_or_panic("Stashd runtime").await
+    runtime.run_or_panic("RGBd runtime").await
 }
