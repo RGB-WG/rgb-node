@@ -15,9 +15,10 @@ use super::{fungible, Runtime};
 use crate::BootstrapError;
 use clap::Clap;
 
+use lnpbp::bp;
 use lnpbp::lnp::transport::zmq::SocketLocator;
 
-const RGB_CLI_ENDPOINT: &'static str = "ipc:///var/lib/rgb/fungible.rpc";
+use crate::constants::*;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -28,15 +29,6 @@ const RGB_CLI_ENDPOINT: &'static str = "ipc:///var/lib/rgb/fungible.rpc";
     about = "RGB node command-line interface; part of Lightning network protocol suite"
 )]
 pub struct Opts {
-    /// Path and name of the configuration file
-    #[clap(
-        global = true,
-        short = "c",
-        long = "config",
-        default_value = "./cli.toml"
-    )]
-    pub config: String,
-
     /// Sets verbosity level; can be used multiple times to increase verbosity
     #[clap(
         global = true,
@@ -48,11 +40,17 @@ pub struct Opts {
     )]
     pub verbose: u8,
 
-    #[clap(global = true, default_value = RGB_CLI_ENDPOINT)]
-    pub endpoint: SocketLocator,
+    /// RPC endpoint of contracts service
+    #[clap(short, long, default_value = FUNGIBLED_RPC_ENDPOINT)]
+    endpoint: SocketLocator,
 
+    /// Command to execute
     #[clap(subcommand)]
     pub command: Command,
+
+    /// Bitcoin network to use
+    #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
+    pub network: bp::Network,
 }
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -74,6 +72,7 @@ pub enum Command {
 pub struct Config {
     pub verbose: u8,
     pub endpoint: SocketLocator,
+    pub network: bp::Network,
 }
 
 impl From<Opts> for Config {
@@ -81,6 +80,7 @@ impl From<Opts> for Config {
         Self {
             verbose: opts.verbose,
             endpoint: opts.endpoint,
+            network: opts.network,
             ..Config::default()
         }
     }
@@ -90,9 +90,12 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
-            endpoint: RGB_CLI_ENDPOINT
+            endpoint: FUNGIBLED_RPC_ENDPOINT
                 .parse()
-                .expect("Broken RGB_CLI_ENDPOINT value"),
+                .expect("Broken FUNGIBLED_RPC_ENDPOINT value"),
+            network: RGB_NETWORK
+                .parse()
+                .expect("Error in RGB_NETWORK constant value"),
         }
     }
 }

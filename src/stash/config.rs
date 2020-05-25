@@ -12,14 +12,17 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::Clap;
-use std::net::SocketAddr;
+use core::fmt::Display;
+use core::str::FromStr;
+use num_traits::real::Real;
+use std::path::PathBuf;
 
+use lnpbp::bp;
 use lnpbp::internet::{InetAddr, InetSocketAddr};
+use lnpbp::lnp::transport::zmq::SocketLocator;
+use lnpbp::lnp::NodeLocator;
 
-const STASHD_STASH: &'static str = "/var/lib/rgb/stash/main";
-const STASHD_INDEX: &'static str = "";
-const STASHD_SOCKET_REP: &'static str = "tcp://0.0.0.0:13000";
-const STASHD_SOCKET_PUB: &'static str = "tcp://0.0.0.0:13300";
+use crate::constants::*;
 
 #[derive(Clap)]
 #[clap(
@@ -29,10 +32,6 @@ const STASHD_SOCKET_PUB: &'static str = "tcp://0.0.0.0:13300";
     about = "RGB stashd: daemon managing RGB smart contract stash; part of RGB suite"
 )]
 pub struct Opts {
-    /// Path and name of the configuration file
-    #[clap(short = "c", long = "config", default_value = "stashd.toml")]
-    pub config: String,
-
     /// Sets verbosity level; can be used multiple times to increase verbosity
     #[clap(
         short = "v",
@@ -43,31 +42,45 @@ pub struct Opts {
     )]
     pub verbose: u8,
 
+    /// Data directory path
+    #[clap(short, long, default_value = RGB_DATA_DIR, env = "RGB_DATA_DIR")]
+    pub data_dir: String,
+
     /// Connection string to stash (exact format depends on used storage engine)
-    #[clap(short = "s", long = "stash", default_value = STASHD_STASH, env = "RGB_STASHD_STASH")]
+    #[clap(short, long, default_value = STASHD_STASH, env = "RGB_STASHD_STASH")]
     pub stash: String,
 
     /// Connection string to indexing service
-    #[clap(short = "i", long = "index", default_value = STASHD_INDEX, env = "RGB_STASHD_INDEX")]
+    #[clap(short, long, default_value = STASHD_INDEX, env = "RGB_STASHD_INDEX")]
     pub index: String,
 
-    /// ZMQ socket address string for REQ/REP API
+    /// LNP socket address string for P2P API
     #[clap(
-        long = "socket-req",
-        default_value = STASHD_SOCKET_REP,
-        env = "RGB_STASHD_API_REQ",
-        parse(try_from_str)
+        long = "bind",
+        default_value = STASHD_P2P_ENDPOINT,
+        env = "RGB_STASHD_BIND"
     )]
-    pub socket_rep: String,
+    pub p2p_endpoint: String,
 
-    /// ZMQ socket address string for PUB/SUb API
+    /// ZMQ socket address string for RPC API
     #[clap(
-        long = "socket-req",
-        default_value = STASHD_SOCKET_PUB,
-        env = "RGB_STASHD_API_SUB",
-        parse(try_from_str)
+        long = "rpc",
+        default_value = STASHD_RPC_ENDPOINT,
+        env = "RGB_STASHD_RPC"
     )]
-    pub socket_pub: String,
+    pub rpc_endpoint: String,
+
+    /// ZMQ socket address string for PUB/SUB API
+    #[clap(
+        long = "pub",
+        default_value = STASHD_PUB_ENDPOINT,
+        env = "RGB_STASHD_PUB",
+    )]
+    pub pub_endpoint: String,
+
+    /// Bitcoin network to use
+    #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
+    pub network: bp::Network,
 }
 
 // We need config structure since not all of the parameters can be specified
@@ -77,22 +90,27 @@ pub struct Opts {
 #[display_from(Debug)]
 pub struct Config {
     pub verbose: u8,
+    pub data_dir: PathBuf,
     pub stash: String,
     pub index: String,
-    pub socket_rep: String,
-    pub socket_pub: String,
+    pub p2p_endpoint: NodeLocator,
+    pub rpc_endpoint: SocketLocator,
+    pub pub_endpoint: SocketLocator,
+    pub network: bp::Network,
 }
 
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
-        Self {
+        let mut me = Self {
             verbose: opts.verbose,
             stash: opts.stash,
             index: opts.index,
-            socket_rep: opts.socket_rep,
-            socket_pub: opts.socket_pub,
             ..Config::default()
-        }
+        };
+        me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
+        me.pub_endpoint = me.parse_param(opts.pub_endpoint);
+        me.p2p_endpoint = me.parse_param(opts.p2p_endpoint);
+        me
     }
 }
 
@@ -100,10 +118,37 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
+            data_dir: RGB_DATA_DIR
+                .parse()
+                .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            socket_rep: STASHD_SOCKET_REP.to_string(),
-            socket_pub: STASHD_SOCKET_PUB.to_string(),
+            p2p_endpoint: STASHD_P2P_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_P2P_ENDPOINT constant value"),
+            rpc_endpoint: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
+            pub_endpoint: STASHD_PUB_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
+            network: RGB_NETWORK
+                .parse()
+                .expect("Error in RGB_NETWORK constant value"),
         }
+    }
+}
+
+impl Config {
+    pub fn parse_param<T>(&self, param: String) -> T
+    where
+        T: FromStr,
+        T::Err: Display,
+    {
+        param
+            .replace("{network}", &self.network.to_string())
+            .replace("{data_dir}", self.data_dir.to_str().unwrap())
+            .parse()
+            .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
     }
 }

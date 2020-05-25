@@ -14,5 +14,5 @@
 mod config;
 mod runtime;
 
-pub use config::{Config, Opts};
+pub use config::{Config, ContractName, Opts};
 pub use runtime::Runtime;

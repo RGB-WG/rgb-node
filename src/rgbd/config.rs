@@ -19,8 +19,7 @@ use std::path::PathBuf;
 use super::Runtime;
 use crate::BootstrapError;
 
-const RGB_BIN_DIR: &'static str = "/usr/local/bin";
-const RGB_CONTRACTS: &'static str = "fungible";
+use crate::constants::*;
 
 #[derive(Clap)]
 #[clap(
@@ -30,14 +29,6 @@ const RGB_CONTRACTS: &'static str = "fungible";
     about = "RGB main daemon; part of RGB suite"
 )]
 pub struct Opts {
-    /// Path to the directory containing daemon executables
-    #[clap(long, default_value = RGB_BIN_DIR, env = "RGB_BIN_DIR")]
-    pub bin_dir: PathBuf,
-
-    /// Contract daemons to launch
-    #[clap(arg_enum, long, default_value = RGB_CONTRACTS, env = "RGB_CONTRACTS")]
-    pub contract: Vec<ContractName>,
-
     /// Sets verbosity level; can be used multiple times to increase verbosity
     #[clap(
         short = "v",
@@ -48,13 +39,31 @@ pub struct Opts {
     )]
     pub verbose: u8,
 
+    /// Path to the directory containing daemon executables
+    #[clap(short, long, default_value = RGB_BIN_DIR, env = "RGB_BIN_DIR")]
+    pub bin_dir: String,
+
+    /// Data directory path
+    #[clap(short, long, default_value = RGB_DATA_DIR, env = "RGB_DATA_DIR")]
+    pub data_dir: String,
+
+    /// Contract daemons to launch
+    #[clap(arg_enum, long = "contract", default_value = RGB_CONTRACTS, env = "RGB_CONTRACTS")]
+    pub contracts: Vec<ContractName>,
+
+    /// Run services as threads instead of daemons
+    #[clap(short, long)]
+    pub threaded: bool,
+
     /// Bitcoin network to use
-    #[clap(default_value = "bitcoin", env = "RGB_NETWORK")]
+    #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
     pub network: bp::Network,
 }
 
-#[derive(Clap, Clone, PartialEq, Eq, Debug, Display)]
+#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display_from(Debug)]
+#[repr(u8)]
+#[non_exhaustive]
 pub enum ContractName {
     Fungible,
     Collectible,
@@ -74,17 +83,23 @@ impl ContractName {
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub struct Config {
-    pub verbose: u8,
+    pub data_dir: PathBuf,
     pub bin_dir: PathBuf,
-    pub contract: Vec<ContractName>,
+    pub threaded: bool,
+    pub contracts: Vec<ContractName>,
+    pub network: bp::Network,
+    pub verbose: u8,
 }
 
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Self {
+            data_dir: format!("{}/{}", opts.data_dir, opts.network).into(),
+            bin_dir: opts.bin_dir.into(),
+            threaded: opts.threaded,
+            network: opts.network,
+            contracts: opts.contracts,
             verbose: opts.verbose,
-            bin_dir: opts.bin_dir,
-            contract: opts.contract,
             ..Config::default()
         }
     }
@@ -93,12 +108,19 @@ impl From<Opts> for Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            verbose: 0,
+            data_dir: RGB_DATA_DIR
+                .parse()
+                .expect("Error in RGB_DATA_DIR constant value"),
             bin_dir: RGB_BIN_DIR
                 .parse()
                 .expect("Error in RGB_BIN_DIR constant value"),
-            contract: vec![ContractName::from_str(RGB_CONTRACTS, false)
+            threaded: false,
+            contracts: vec![ContractName::from_str(RGB_CONTRACTS, false)
                 .expect("Error in RGB_CONTRACTS constant value")],
+            network: RGB_NETWORK
+                .parse()
+                .expect("Error in RGB_NETWORK constant value"),
+            verbose: 0,
         }
     }
 }

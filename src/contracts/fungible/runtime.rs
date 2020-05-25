@@ -61,28 +61,28 @@ impl Runtime {
             .socket(zmq::REP)
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
         api_rep
-            .connect(&config.socket_rep)
+            .connect(&config.rpc_endpoint.to_string())
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
 
         let api_pub = context
             .socket(zmq::PUB)
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
         api_pub
-            .connect(&config.socket_pub)
+            .connect(&config.rpc_endpoint.to_string())
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
 
         let stash_req = context
             .socket(zmq::REQ)
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
         stash_req
-            .connect(&config.stash_req)
+            .connect(&config.rpc_endpoint.to_string())
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
 
         let stash_sub = context
             .socket(zmq::SUB)
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
         stash_sub
-            .connect(&config.stash_sub)
+            .connect(&config.rpc_endpoint.to_string())
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
 
         let cacher = FileCache::new(FileCacheConfig {

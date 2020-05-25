@@ -11,21 +11,39 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use super::{fungible, Runtime};
-use crate::BootstrapError;
+use std::collections::HashMap;
 
+use lnpbp::bp;
 use lnpbp::lnp::transport::zmq::SocketLocator;
+
+use super::{fungible, Runtime};
+use crate::constants::*;
+use crate::rgbd::ContractName;
+use crate::BootstrapError;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub struct Config {
-    pub endpoint: SocketLocator,
+    pub stash_endpoint: SocketLocator,
+    pub contract_endpoints: HashMap<ContractName, SocketLocator>,
+    pub network: bp::Network,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            endpoint: SocketLocator::Inproc("fungible".to_string()),
+            stash_endpoint: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
+            contract_endpoints: map! {
+                ContractName::Fungible
+                    => FUNGIBLED_RPC_ENDPOINT
+                        .parse()
+                        .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value")
+            },
+            network: RGB_NETWORK
+                .parse()
+                .expect("Error in RGB_NETWORK constant value"),
         }
     }
 }

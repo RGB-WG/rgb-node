@@ -43,6 +43,7 @@ extern crate bech32;
 
 mod api;
 pub mod cli;
+pub mod constants;
 mod contracts;
 mod error;
 pub mod i9n;
@@ -52,5 +53,3 @@ pub mod util;
 
 pub use contracts::*;
 pub use error::BootstrapError;
-
-pub const RGB_BECH32_HRP_GENESIS: &'static str = "rgb:genesis";

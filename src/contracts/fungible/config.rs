@@ -12,14 +12,14 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::Clap;
+use core::fmt::Display;
+use core::str::FromStr;
+use std::path::PathBuf;
 
 use lnpbp::bp;
+use lnpbp::lnp::transport::zmq::SocketLocator;
 
-const FUNGIBLED_CACHE: &'static str = "rgb-cache.sqlite";
-const FUNGIBLED_SOCKET_REP: &'static str = "tcp://0.0.0.0:13801";
-const FUNGIBLED_SOCKET_PUB: &'static str = "tcp://0.0.0.0:13901";
-const FUNGIBLED_STASHD_REQ: &'static str = "tcp://0.0.0.0:13000";
-const FUNGIBLED_STASHD_SUB: &'static str = "tcp://0.0.0.0:13300";
+use crate::constants::*;
 
 #[derive(Clap)]
 #[clap(
@@ -29,10 +29,6 @@ const FUNGIBLED_STASHD_SUB: &'static str = "tcp://0.0.0.0:13300";
     about = "RGB fungible contract daemon; part of RGB suite"
 )]
 pub struct Opts {
-    /// Path and name of the configuration file
-    #[clap(short = "c", long = "config", default_value = "fungibled.toml")]
-    pub config: String,
-
     /// Sets verbosity level; can be used multiple times to increase verbosity
     #[clap(
         short = "v",
@@ -43,9 +39,9 @@ pub struct Opts {
     )]
     pub verbose: u8,
 
-    /// Bitcoin network to use
-    #[clap(default_value = "bitcoin", env = "RGB_NETWORK")]
-    pub network: bp::Network,
+    /// Data directory path
+    #[clap(short, long, default_value = RGB_DATA_DIR, env = "RGB_DATA_DIR")]
+    pub data_dir: String,
 
     /// Connection string to stash (exact format depends on used storage engine)
     #[clap(short = "s", long = "stash", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
@@ -53,39 +49,39 @@ pub struct Opts {
 
     /// ZMQ socket address string for REQ/REP API
     #[clap(
-        long,
-        default_value = FUNGIBLED_SOCKET_REP,
-        env = "RGB_FUNGIBLED_SOCKET_REP",
-        parse(try_from_str)
+        long = "rpc",
+        default_value = FUNGIBLED_RPC_ENDPOINT,
+        env = "RGB_FUNGIBLED_RPC"
     )]
-    pub socket_rep: String,
+    pub rpc_endpoint: String,
 
     /// ZMQ socket address string for PUB/SUb API
     #[clap(
-        long,
-        default_value = FUNGIBLED_SOCKET_PUB,
-        env = "RGB_FUNGIBLED_SOCKET_PUB",
-        parse(try_from_str)
+        long = "pub",
+        default_value = FUNGIBLED_PUB_ENDPOINT,
+        env = "RGB_FUNGIBLED_PUB"
     )]
-    pub socket_pub: String,
+    pub pub_endpoint: String,
 
     /// ZMQ socket address string for REQ/REP API
     #[clap(
         long,
-        default_value = FUNGIBLED_STASHD_REQ,
-        env = "RGB_STASHD_STASHD_REQ",
-        parse(try_from_str)
+        default_value = STASHD_RPC_ENDPOINT,
+        env = "RGB_STASHD_RPC"
     )]
-    pub stash_req: String,
+    pub stash_rpc: String,
 
     /// ZMQ socket address string for PUB/SUb API
     #[clap(
         long,
-        default_value = FUNGIBLED_STASHD_SUB,
-        env = "RGB_STASHD_API_SUB",
-        parse(try_from_str)
+        default_value = STASHD_PUB_ENDPOINT,
+        env = "RGB_STASHD_PUB"
     )]
     pub stash_sub: String,
+
+    /// Bitcoin network to use
+    #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
+    pub network: bp::Network,
 }
 
 // We need config structure since not all of the parameters can be specified
@@ -95,26 +91,28 @@ pub struct Opts {
 #[display_from(Debug)]
 pub struct Config {
     pub verbose: u8,
-    pub network: bp::Network,
+    pub data_dir: PathBuf,
     pub cache: String,
-    pub socket_rep: String,
-    pub socket_pub: String,
-    pub stash_req: String,
-    pub stash_sub: String,
+    pub rpc_endpoint: SocketLocator,
+    pub pub_endpoint: SocketLocator,
+    pub stash_rpc: SocketLocator,
+    pub stash_sub: SocketLocator,
+    pub network: bp::Network,
 }
 
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
-        Self {
+        let mut me = Self {
             verbose: opts.verbose,
-            network: opts.network,
             cache: opts.cache,
-            socket_rep: opts.socket_rep,
-            socket_pub: opts.socket_pub,
-            stash_req: opts.stash_req,
-            stash_sub: opts.stash_sub,
+            network: opts.network,
             ..Config::default()
-        }
+        };
+        me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
+        me.pub_endpoint = me.parse_param(opts.pub_endpoint);
+        me.stash_rpc = me.parse_param(opts.stash_rpc);
+        me.stash_sub = me.parse_param(opts.stash_sub);
+        me
     }
 }
 
@@ -122,12 +120,39 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
-            network: bp::Network::Mainnet,
+            data_dir: RGB_DATA_DIR
+                .parse()
+                .expect("Error in RGB_DATA_DIR constant value"),
             cache: FUNGIBLED_CACHE.to_string(),
-            socket_rep: FUNGIBLED_SOCKET_REP.to_string(),
-            socket_pub: FUNGIBLED_SOCKET_PUB.to_string(),
-            stash_req: FUNGIBLED_STASHD_REQ.to_string(),
-            stash_sub: FUNGIBLED_STASHD_SUB.to_string(),
+            rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
+                .parse()
+                .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),
+            pub_endpoint: FUNGIBLED_PUB_ENDPOINT
+                .parse()
+                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
+            stash_rpc: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
+            stash_sub: STASHD_PUB_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
+            network: RGB_NETWORK
+                .parse()
+                .expect("Error in RGB_NETWORK constant value"),
         }
+    }
+}
+
+impl Config {
+    pub fn parse_param<T>(&self, param: String) -> T
+    where
+        T: FromStr,
+        T::Err: Display,
+    {
+        param
+            .replace("{network}", &self.network.to_string())
+            .replace("{data_dir}", self.data_dir.to_str().unwrap())
+            .parse()
+            .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
     }
 }

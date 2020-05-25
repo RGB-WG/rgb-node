@@ -18,6 +18,7 @@ use lnpbp::lnp::{transport, NoEncryption, NodeAddr, Session};
 use lnpbp::TryService;
 
 use super::Config;
+use crate::rgbd::ContractName;
 use crate::BootstrapError;
 
 pub struct Runtime {
@@ -32,7 +33,11 @@ impl Runtime {
         let session_rpc = Session::new_zmq_unencrypted(
             ApiType::Client,
             &mut context,
-            config.endpoint.clone(),
+            config
+                .contract_endpoints
+                .get(&ContractName::Fungible)
+                .expect("Fungible engine is not connected in the configuration")
+                .clone(),
             None,
         )?;
         Ok(Self {

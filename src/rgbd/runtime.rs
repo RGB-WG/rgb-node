@@ -44,7 +44,7 @@ impl TryService for Runtime {
         handlers.push(process::Command::new(daemon).spawn()?);
 
         self.config
-            .contract
+            .contracts
             .iter()
             .try_for_each(|contract_name| -> Result<(), RuntimeError> {
                 let mut daemon = self.config.bin_dir.clone();
