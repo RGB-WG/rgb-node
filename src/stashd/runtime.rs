@@ -15,20 +15,19 @@ use core::convert::TryFrom;
 use futures::TryFutureExt;
 use std::path::PathBuf;
 
-use lnpbp::api::{Error, Multipart};
-use lnpbp::service::*;
+use lnpbp::TryService;
 
 use super::Config;
-use crate::BootstrapError;
+use crate::error::{BootstrapError, RuntimeError};
 
-use super::index::{BtreeIndex, Index};
-#[cfg(not(store_hammersbald))] // Default store
-use super::storage::{DiskStorage, DiskStorageConfig, Store};
+//use super::index::{BtreeIndex, Index};
+//#[cfg(not(store_hammersbald))] // Default store
+//use super::storage::{DiskStorage, DiskStorageConfig, Store};
 
 pub struct Runtime {
     /// Original configuration object
     config: Config,
-
+    /*
     /// Request-response API socket
     api_rep: zmq::Socket,
 
@@ -51,6 +50,7 @@ pub struct Runtime {
     storage: DiskStorage,
     #[cfg(all(store_hammersbald, not(any(store_disk))))]
     storage: HammersbaldStore,
+     */
 }
 
 impl Runtime {
@@ -58,6 +58,7 @@ impl Runtime {
     /// use and reduce number of errors. Indexer may be switched with compile
     /// configuration options and, thus, we need to make sure that the sturcture
     /// we use corresponds to certain trait and not specific type.
+    /*
     fn indexer(&self) -> &impl Index {
         &self.indexer
     }
@@ -65,8 +66,10 @@ impl Runtime {
     fn storage(&self) -> &impl Store {
         &self.storage
     }
+     */
 
     pub fn init(config: Config, context: &mut zmq::Context) -> Result<Self, BootstrapError> {
+        /*
         #[cfg(not(store_hammersbald))] // Default store
         let storage = DiskStorage::new(DiskStorageConfig {
             data_dir: PathBuf::from(config.stash.clone()),
@@ -87,26 +90,21 @@ impl Runtime {
         api_pub
             .connect(&config.socket_sub)
             .map_err(|e| BootstrapError::SubscriptionError(e))?;
+         */
 
         Ok(Self {
             config,
-            api_rep,
-            api_pub,
-            indexer,
-            storage,
+            //api_rep,
+            //api_pub,
+            //indexer,
+            //storage,
         })
     }
 }
 
 #[async_trait]
 impl TryService for Runtime {
-    async fn run_loop(self) -> ! {
-        loop {
-            self.run().await?
-        }
-    }
-
-    type ErrorType = Error;
+    type ErrorType = RuntimeError;
 
     async fn try_run_loop(self) -> Result<!, Self::ErrorType> {
         loop {
@@ -122,7 +120,8 @@ impl TryService for Runtime {
 }
 
 impl Runtime {
-    fn run(&self) -> Result<(), Error> {
+    async fn run(&self) -> Result<(), RuntimeError> {
+        /*
         let req: Multipart = self
             .subscriber
             .recv_multipart(0)
@@ -147,9 +146,12 @@ impl Runtime {
             .send_multipart(Multipart::from(Reply::Success), 0)?;
         debug!("Sent reply {}", Reply::Success);
 
+         */
+
         Ok(())
     }
 
+    /*
     async fn proc_command(&mut self, req: Multipart) -> Result<Reply, Error> {
         use Request::*;
 
@@ -168,4 +170,6 @@ impl Runtime {
 
         Ok(Reply::Success)
     }
+
+     */
 }

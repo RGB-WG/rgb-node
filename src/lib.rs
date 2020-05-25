@@ -41,12 +41,14 @@ extern crate env_logger;
 extern crate lnpbp;
 extern crate bech32;
 
-//pub(crate) mod stashd;
-
 mod api;
+pub mod cli;
 mod contracts;
 mod error;
+pub mod stashd;
 pub mod util;
 
 pub use contracts::*;
 pub use error::BootstrapError;
+
+pub const RGB_BECH32_HRP_GENESIS: &'static str = "rgb:genesis";

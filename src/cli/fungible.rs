@@ -1,7 +1,6 @@
-// Kaleidoscope: RGB command-line wallet utility
-// Written in 2019-2020 by
+// RGB standard library
+// Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
-//     Alekos Filini <alekos.filini@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -15,7 +14,6 @@
 use bech32::{self, ToBase32};
 use clap::Clap;
 use regex::Regex;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use bitcoin::hashes::hex::FromHex;
@@ -26,11 +24,10 @@ use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 use lnpbp::strict_encoding::strict_encode;
 
-use crate::commands::bitcoin::DepositType;
-use crate::config::{Config, DataItem};
-
-use crate::rgbkit::fungible::{IssueStructure, Manager, Outcoins};
-use crate::rgbkit::{self, fungible, DiskStorage, DiskStorageConfig, InteroperableError, SealSpec};
+use super::Runtime;
+use crate::api::fungible::{Issue, Transfer};
+use crate::fungible::IssueStructure;
+use crate::BootstrapError;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -38,6 +35,7 @@ pub enum Command {
     /// Lists all known assets
     List,
 
+    /*
     /// Lists all known funds for a given asset
     Funds {
         /// Include only the assets which are owned by the known accounts
@@ -56,7 +54,7 @@ pub enum Command {
         #[clap(default_value = "WPKH")]
         deposit_types: Vec<DepositType>,
     },
-
+     */
     /// Creates a new asset
     Issue(Issue),
 
@@ -65,7 +63,8 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn exec(self, global: &Config) -> Result<(), InteroperableError> {
+    pub fn exec(self, runtime: &Runtime) -> Result<(), BootstrapError> {
+        /*
         let mut data_dir = global.data_path(DataItem::Root);
         let rgb_storage = DiskStorage::new(DiskStorageConfig {
             data_dir: data_dir.clone(),
@@ -88,18 +87,16 @@ impl Command {
                 Ok(())
             }
             Command::Funds { .. } => unimplemented!(),
-            Command::Issue(issue) => issue.exec(global, &mut manager),
+            Command::Issue(issue) => issue.exec(&runtime),
             Command::Pay(_) => unimplemented!(),
         }
+         */
+        Ok(())
     }
 }
 
 impl Issue {
-    pub fn exec(
-        self,
-        global: &Config,
-        manager: &mut fungible::Manager,
-    ) -> Result<(), InteroperableError> {
+    pub fn exec(self, runtime: &Runtime) -> Result<(), BootstrapError> {
         info!("Issuing asset ...");
         debug!("{}", self.clone());
 
@@ -111,8 +108,8 @@ impl Issue {
             },
         };
 
-        let (asset, genesis) = manager.issue(
-            global.network,
+        /*
+        let (asset, genesis) = runtime.issue(
             self.ticker,
             self.title,
             self.description,
@@ -127,7 +124,7 @@ impl Issue {
         trace!("Genesis contract:\n {}\n", genesis);
 
         let bech = bech32::encode(
-            rgbkit::RGB_BECH32_HRP_GENESIS,
+            crate::RGB_BECH32_HRP_GENESIS,
             strict_encode(&genesis).to_base32(),
         )
         .unwrap();
@@ -135,6 +132,8 @@ impl Issue {
             "Use this string to send information about the issued asset:\n{}\n",
             bech
         );
+         */
+
         Ok(())
     }
 }

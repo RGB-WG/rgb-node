@@ -15,6 +15,7 @@
 use clap::Clap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::io;
 use std::path::PathBuf;
 
 use bitcoin::hashes::hex::FromHex;
@@ -26,6 +27,7 @@ use lnpbp::rgb::prelude::*;
 
 use crate::fungible::Outcoins;
 use crate::util::SealSpec;
+use lnpbp::strict_encoding::{Error, StrictDecode};
 
 #[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]
 #[display_from(Debug)]
@@ -66,6 +68,14 @@ pub struct Issue {
     /// Asset allocation, in form of <amount>@<txid>:<vout>
     #[clap(required = true)]
     pub allocate: Vec<Outcoins>,
+}
+
+impl StrictDecode for Issue {
+    type Error = Error;
+
+    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Self::Error> {
+        unimplemented!()
+    }
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]

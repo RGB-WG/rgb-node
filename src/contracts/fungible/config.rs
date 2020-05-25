@@ -13,6 +13,8 @@
 
 use clap::Clap;
 
+use lnpbp::bp;
+
 const FUNGIBLED_CACHE: &'static str = "rgb-cache.sqlite";
 const FUNGIBLED_SOCKET_REP: &'static str = "tcp://0.0.0.0:13801";
 const FUNGIBLED_SOCKET_PUB: &'static str = "tcp://0.0.0.0:13901";
@@ -40,6 +42,10 @@ pub struct Opts {
         parse(from_occurrences)
     )]
     pub verbose: u8,
+
+    /// Bitcoin network to use
+    #[clap(default_value = "bitcoin", env = "RGB_NETWORK")]
+    pub network: bp::Network,
 
     /// Connection string to stash (exact format depends on used storage engine)
     #[clap(short = "s", long = "stash", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
@@ -89,6 +95,7 @@ pub struct Opts {
 #[display_from(Debug)]
 pub struct Config {
     pub verbose: u8,
+    pub network: bp::Network,
     pub cache: String,
     pub socket_rep: String,
     pub socket_pub: String,
@@ -100,6 +107,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Self {
             verbose: opts.verbose,
+            network: opts.network,
             cache: opts.cache,
             socket_rep: opts.socket_rep,
             socket_pub: opts.socket_pub,
@@ -114,6 +122,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             verbose: 0,
+            network: bp::Network::Mainnet,
             cache: FUNGIBLED_CACHE.to_string(),
             socket_rep: FUNGIBLED_SOCKET_REP.to_string(),
             socket_pub: FUNGIBLED_SOCKET_PUB.to_string(),

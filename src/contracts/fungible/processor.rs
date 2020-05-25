@@ -21,7 +21,7 @@ use lnpbp::rgb::prelude::*;
 use super::schema::{self, AssignmentsType, FieldType};
 use super::{Asset, Coins, Outcoins};
 
-use crate::error::InteroperableError;
+use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::SealSpec;
 use crate::{field, type_map};
 
@@ -36,7 +36,7 @@ pub enum IssueStructure {
 }
 
 impl Processor {
-    pub fn new() -> Result<Self, InteroperableError> {
+    pub fn new() -> Result<Self, BootstrapError> {
         debug!("Instantiating RGB asset manager ...");
 
         let me = Self {};
@@ -67,7 +67,7 @@ impl Processor {
         precision: u8,
         prune_seals: Vec<SealSpec>,
         dust_limit: Option<Amount>,
-    ) -> Result<(Asset, Genesis), InteroperableError> {
+    ) -> Result<(Asset, Genesis), ServiceErrorDomain> {
         let now = Utc::now().timestamp();
         let mut metadata = type_map! {
             FieldType::Ticker => field!(String, ticker),
@@ -104,7 +104,7 @@ impl Processor {
         {
             total_supply = Coins::transmutate(max_supply, precision);
             if total_supply < issued_supply {
-                Err(InteroperableError(format!(
+                Err(ServiceErrorDomain::Schema(format!(
                     "Total supply ({}) should be greater than the issued supply ({})",
                     total_supply, issued_supply
                 )))?;

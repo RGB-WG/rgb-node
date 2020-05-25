@@ -102,7 +102,7 @@ pub struct Supply {
     pub total: Option<Coins>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Display)]
 #[display_from(Debug)]
 pub struct Issue {
     pub id: ContractId,

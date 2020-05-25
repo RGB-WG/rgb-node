@@ -17,6 +17,10 @@ use std::collections::HashMap;
 use std::io;
 use tokio::task::JoinError;
 
+use lnpbp::lnp::transport;
+
+use crate::contracts::fungible;
+
 // FIXME: Replace this error type with ServiceError
 /// Error used to communicate across FFI & WASM calls
 #[derive(Clone, Debug, Display)]
@@ -50,6 +54,9 @@ pub enum BootstrapError {
     MultithreadError(JoinError),
 
     MonitorSocketError(Box<dyn std::error::Error>),
+
+    #[derive_from]
+    MessageBusError(transport::Error),
 
     Other,
 }
@@ -128,6 +135,7 @@ pub enum ServiceErrorDomain {
     Io,
     Storage,
     Index,
+    #[derive_from(fungible::CacheError)]
     Cache,
     Multithreading,
     P2pwire,
@@ -139,7 +147,7 @@ pub enum ServiceErrorDomain {
     LnpNode,
     Bitcoin,
     Lightning,
-    Schema,
+    Schema(String),
     Internal,
 }
 

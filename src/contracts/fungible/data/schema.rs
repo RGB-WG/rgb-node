@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::type_map;
 use core::ops::Neg;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
@@ -22,11 +21,20 @@ use rgb::schema::{
     StateFormat, TransitionSchema,
 };
 
+use crate::error::ServiceErrorDomain;
+use crate::type_map;
+
 #[derive(Debug, Display, Error, From)]
 #[display_from(Display)]
 pub enum SchemaError {
     #[derive_from(core::option::NoneError)]
     NotAllFieldsPresent,
+}
+
+impl From<SchemaError> for ServiceErrorDomain {
+    fn from(err: SchemaError) -> Self {
+        ServiceErrorDomain::Schema(format!("{}", err))
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]

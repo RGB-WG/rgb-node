@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+mod api;
 mod config;
 mod data;
 mod processor;
@@ -21,9 +22,11 @@ pub(self) mod cache;
 
 pub use data::*;
 
+pub use api::Api;
 pub use config::{Config, Opts};
 pub use runtime::Runtime;
 
+pub use cache::CacheError;
 pub use processor::IssueStructure;
 pub(self) use processor::Processor;
 pub(self) use request::Request;

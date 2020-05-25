@@ -12,16 +12,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod config;
-mod request;
 mod runtime;
 
-pub(self) mod index;
-pub(self) mod storage;
+//pub(self) mod index;
+//pub(self) mod storage;
 
 pub use config::{Config, Opts};
 pub use runtime::Runtime;
 
-pub(self) use request::Request;
-
-pub(self) use index::Index;
-pub(self) use storage::Store;
+//pub(self) use index::Index;
+//pub(self) use storage::Store;

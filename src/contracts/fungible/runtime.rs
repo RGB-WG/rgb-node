@@ -17,10 +17,9 @@ use std::path::PathBuf;
 
 use lnpbp::TryService;
 
-use super::{Config, Request};
+use super::{Config, IssueStructure, Processor, Request};
 use crate::api::{self, Multipart, Reply};
-use crate::error::{ApiErrorType, RuntimeError, ServiceError, ServiceErrorDomain};
-use crate::BootstrapError;
+use crate::error::{ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 
@@ -43,6 +42,8 @@ pub struct Runtime {
     /// RGB fungible assets data cache: relational database sharing the client-
     /// friendly asset information with clients
     cacher: FileCache,
+
+    processor: Processor,
 }
 
 impl Runtime {
@@ -55,6 +56,8 @@ impl Runtime {
     }
 
     pub fn init(config: Config, context: &mut zmq::Context) -> Result<Self, BootstrapError> {
+        let processor = Processor::new()?;
+
         let api_rep = context
             .socket(zmq::REP)
             .map_err(|e| BootstrapError::ZmqSocketError(e))?;
@@ -95,6 +98,7 @@ impl Runtime {
             stash_req,
             stash_sub,
             cacher,
+            processor,
         })
     }
 }
@@ -118,6 +122,7 @@ impl TryService for Runtime {
 
 impl Runtime {
     async fn run(&mut self) -> Result<(), RuntimeError> {
+        /*
         let req: Multipart = self
             .api_rep
             .recv_multipart(0)
@@ -142,27 +147,64 @@ impl Runtime {
         self.api_rep
             .send_multipart(Multipart::from(reply), 0)
             .map_err(|err| RuntimeError::zmq_reply(&self.config.socket_rep, err))?;
+         */
 
         Ok(())
     }
 
-    async fn proc_request(&mut self, req: Multipart) -> Result<Reply, ServiceErrorDomain> {
+    async fn proc_request(&mut self, req: Multipart) -> Result<(), ServiceErrorDomain> {
         let command = Request::try_from(req)?;
 
-        match command {
-            Request::Issue(issue_request) => self.request_issue(issue_request).await,
-            unknown_command => Err(ServiceErrorDomain::Api(ApiErrorType::UnimplementedCommand)),
+        let future = match command {
+            Request::Issue(issue_request) => self.request_issue(issue_request),
+            unknown_command => Err(ServiceErrorDomain::Api(ApiErrorType::UnimplementedCommand))?,
+        };
+
+        // TODO: Respond to client
+        match future.await {
+            Ok(_) => {}
+            Err(err) => {}
         }
+
+        Ok(())
     }
 
     async fn request_issue(
         &mut self,
         issue: api::fungible::Issue,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    ) -> Result<(), ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
-        // TODO: Do query processing
+        let issue_structure = match issue.inflatable {
+            None => IssueStructure::SingleIssue,
+            Some(seal_spec) => IssueStructure::MultipleIssues {
+                max_supply: issue.supply.ok_or(ServiceErrorDomain::Api(
+                    ApiErrorType::MissedArgument {
+                        request: "Issue".to_string(),
+                        argument: "supply".to_string(),
+                    },
+                ))?,
+                reissue_control: seal_spec,
+            },
+        };
 
-        Ok(Reply::Success)
+        let (asset, genesis) = self.processor.issue(
+            self.config.network,
+            issue.ticker,
+            issue.title,
+            issue.description,
+            issue_structure,
+            issue.allocate,
+            issue.precision,
+            vec![],
+            issue.dust_limit,
+        )?;
+
+        // TODO: Save asset and genesis by sending a message to stashd
+        self.cacher.add_asset(asset)?;
+
+        // TODO: Send push request to client informing about cache update
+
+        Ok(())
     }
 }
