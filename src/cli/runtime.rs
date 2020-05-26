@@ -11,16 +11,24 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::io;
+
+use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, Session};
+use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
+use lnpbp::rgb::Genesis;
 
 use super::Config;
-use crate::BootstrapError;
+use crate::api::fungible::Issue;
+use crate::api::Reply;
+use crate::error::{BootstrapError, ServiceErrorDomain};
+use crate::fungible::{Asset, Command};
 
 pub struct Runtime {
     config: Config,
     context: zmq::Context,
     session_rpc: Session<NoEncryption, transport::zmq::Connection>,
+    unmarshaller: Unmarshaller<Reply>,
 }
 
 impl Runtime {
@@ -36,6 +44,20 @@ impl Runtime {
             config,
             context,
             session_rpc,
+            unmarshaller: Reply::create_unmarshaller(),
         })
+    }
+
+    pub fn issue(&mut self, issue: Issue) -> Result<(), ServiceErrorDomain> {
+        let command = Command::Issue(issue);
+        let mut cursor = io::Cursor::new(vec![]);
+        command.encode(&mut cursor)?;
+        let data = cursor.into_inner();
+        self.session_rpc.send_raw_message(data)?;
+        let raw = self.session_rpc.recv_raw_message()?;
+        let mut cursor = io::Cursor::new(raw);
+        let reply = &*self.unmarshaller.unmarshall(&mut cursor)?;
+        info!("{}", reply);
+        Ok(())
     }
 }

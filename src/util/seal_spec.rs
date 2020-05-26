@@ -14,12 +14,14 @@
 use core::str::FromStr;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::io;
 
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::Txid;
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::SealDefinition;
+use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 
 use crate::error::ParseError;
 
@@ -46,6 +48,25 @@ impl SealSpec {
                 blinding: entropy,
             },
         }
+    }
+}
+
+impl StrictEncode for SealSpec {
+    type Error = strict_encoding::Error;
+
+    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
+        Ok(strict_encode_list!(e; self.vout, self.txid))
+    }
+}
+
+impl StrictDecode for SealSpec {
+    type Error = strict_encoding::Error;
+
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
+        Ok(Self {
+            vout: u16::strict_decode(&mut d)?,
+            txid: Option::<Txid>::strict_decode(&mut d)?,
+        })
     }
 }
 

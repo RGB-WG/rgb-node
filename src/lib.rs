@@ -45,11 +45,10 @@ mod api;
 pub mod cli;
 pub mod constants;
 mod contracts;
-mod error;
+pub mod error;
 pub mod i9n;
 pub mod rgbd;
 pub mod stash;
 pub mod util;
 
 pub use contracts::*;
-pub use error::BootstrapError;

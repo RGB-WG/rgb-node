@@ -17,8 +17,8 @@ use std::env;
 
 use lnpbp::TryService;
 
+use rgb::error::BootstrapError;
 use rgb::stash::{Config, Opts, Runtime};
-use rgb::BootstrapError;
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {

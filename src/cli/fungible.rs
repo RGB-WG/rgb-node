@@ -14,10 +14,12 @@
 use bech32::{self, ToBase32};
 use clap::Clap;
 
+use lnpbp::strict_encoding::strict_encode;
+
 use super::Runtime;
 use crate::api::fungible::{Issue, Transfer};
+use crate::error::ServiceErrorDomain;
 use crate::fungible::IssueStructure;
-use crate::BootstrapError;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -33,64 +35,28 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn exec(self, _runtime: &Runtime) -> Result<(), BootstrapError> {
-        /*
-        let mut data_dir = global.data_path(DataItem::Root);
-        let rgb_storage = DiskStorage::new(DiskStorageConfig {
-            data_dir: data_dir.clone(),
-        })?;
-        data_dir.push("fungible");
-        let asset_storage = fungible::DiskStorage::new(fungible::DiskStorageConfig { data_dir })?;
-
-        let mut manager = Manager::new(
-            Arc::new(Mutex::new(rgb_storage)),
-            Arc::new(Mutex::new(asset_storage)),
-        )?;
-
+    pub fn exec(self, runtime: Runtime) -> Result<(), ServiceErrorDomain> {
         match self {
             Command::List => {
                 println!("\nKnown assets:\n\n");
-                manager
-                    .assets()?
-                    .iter()
-                    .for_each(|asset| println!("{}", asset));
+                unimplemented!();
                 Ok(())
             }
-            Command::Funds { .. } => unimplemented!(),
-            Command::Issue(issue) => issue.exec(&runtime),
-            Command::Pay(_) => unimplemented!(),
+            Command::Issue(issue) => issue.exec(runtime),
+            Command::Transfer(_) => unimplemented!(),
         }
-         */
-        Ok(())
     }
 }
 
 impl Issue {
-    pub fn exec(self, _runtime: &Runtime) -> Result<(), BootstrapError> {
+    pub fn exec(self, mut runtime: Runtime) -> Result<(), ServiceErrorDomain> {
         info!("Issuing asset ...");
         debug!("{}", self.clone());
 
-        let _issue_structure = match self.inflatable {
-            None => IssueStructure::SingleIssue,
-            Some(seal_spec) => IssueStructure::MultipleIssues {
-                max_supply: self.supply.expect("Clap is broken"),
-                reissue_control: seal_spec,
-            },
-        };
+        runtime.issue(self)?;
+        // TODO: Wait for the information from push notification
 
-        /*
-        let (asset, genesis) = runtime.issue(
-            self.ticker,
-            self.title,
-            self.description,
-            issue_structure,
-            self.allocate,
-            self.precision,
-            vec![], // we do not support pruning yet
-            self.dust_limit,
-        )?;
-
-        debug!("Asset information:\n {}\n", asset);
+        /*let (asset, genesis) = debug!("Asset information:\n {}\n", asset);
         trace!("Genesis contract:\n {}\n", genesis);
 
         let bech = bech32::encode(

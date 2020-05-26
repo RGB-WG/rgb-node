@@ -18,7 +18,7 @@ use log::*;
 use std::env;
 
 use rgb::cli::{Config, Opts, Runtime};
-use rgb::BootstrapError;
+use rgb::error::BootstrapError;
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
@@ -43,5 +43,8 @@ async fn main() -> Result<(), BootstrapError> {
     log::set_max_level(LevelFilter::Trace);
 
     let runtime = Runtime::init(config).await?;
-    opts.command.exec(&runtime)
+    opts.command
+        .exec(runtime)
+        .unwrap_or_else(|err| error!("{}", err));
+    Ok(())
 }

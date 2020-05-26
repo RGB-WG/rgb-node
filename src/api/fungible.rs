@@ -23,14 +23,25 @@ use bitcoin::TxIn;
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
+use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
 
 use crate::fungible::Outcoins;
 use crate::util::SealSpec;
-use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
 
 #[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]
 #[display_from(Debug)]
 pub struct Issue {
+    /// Asset ticker
+    #[clap(validator=ticker_validator)]
+    pub ticker: String,
+
+    /// Asset title
+    pub title: String,
+
+    /// Asset description
+    #[clap(short, long)]
+    pub description: Option<String>,
+
     /// Limit for the total supply; ignored if the asset can't be inflated
     #[clap(short, long)]
     pub supply: Option<f32>,
@@ -48,22 +59,6 @@ pub struct Issue {
     #[clap(short = "D", long)]
     pub dust_limit: Option<Amount>,
 
-    /// Filename to export asset genesis to;
-    /// saves into data dir if not provided
-    #[clap(short, long)]
-    pub output: Option<PathBuf>,
-
-    /// Asset ticker
-    #[clap(validator=ticker_validator)]
-    pub ticker: String,
-
-    /// Asset title
-    pub title: String,
-
-    /// Asset description
-    #[clap(short, long)]
-    pub description: Option<String>,
-
     /// Asset allocation, in form of <amount>@<txid>:<vout>
     #[clap(required = true)]
     pub allocate: Vec<Outcoins>,
@@ -72,16 +67,34 @@ pub struct Issue {
 impl StrictEncode for Issue {
     type Error = Error;
 
-    fn strict_encode<E: io::Write>(&self, _e: E) -> Result<usize, Self::Error> {
-        unimplemented!()
+    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
+        Ok(strict_encode_list!(e;
+            self.ticker,
+            self.title,
+            self.description,
+            self.supply,
+            self.inflatable,
+            self.precision,
+            self.dust_limit,
+            self.allocate
+        ))
     }
 }
 
 impl StrictDecode for Issue {
     type Error = Error;
 
-    fn strict_decode<D: io::Read>(_d: D) -> Result<Self, Self::Error> {
-        unimplemented!()
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
+        Ok(Self {
+            ticker: String::strict_decode(&mut d)?,
+            title: String::strict_decode(&mut d)?,
+            description: Option::<String>::strict_decode(&mut d)?,
+            supply: Option::<f32>::strict_decode(&mut d)?,
+            inflatable: Option::<SealSpec>::strict_decode(&mut d)?,
+            precision: u8::strict_decode(&mut d)?,
+            dust_limit: Option::<Amount>::strict_decode(&mut d)?,
+            allocate: Vec::<Outcoins>::strict_decode(&mut d)?,
+        })
     }
 }
 

@@ -132,7 +132,9 @@ pub enum ServiceErrorDomain {
     Multithreading,
     P2pwire,
     #[derive_from]
-    Lnp(lnp::presentation::Error),
+    LnpRpc(lnp::presentation::Error),
+    #[derive_from]
+    LnpTransport(lnp::transport::Error),
     Api(ApiErrorType),
     Monitoring,
     Bifrost,
