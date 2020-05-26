@@ -17,9 +17,11 @@ use std::sync::Arc;
 
 use lnpbp::lnp::presentation::{Error, UnknownTypeError};
 use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
-use lnpbp::rgb::Genesis;
+use lnpbp::rgb::{Consignment, ContractId, Genesis, Schema, SchemaId, TransitionId};
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
 use lnpbp::Wrapper;
+
+use crate::api::stash::ConsignRequest;
 
 const TYPE_ADD_GENESIS: u16 = 1000;
 
@@ -27,7 +29,18 @@ const TYPE_ADD_GENESIS: u16 = 1000;
 #[display_from(Debug)]
 #[non_exhaustive]
 pub enum Command {
+    AddSchema(Schema),
+    //ListSchemata(),
+    //ReadSchemata(Vec<SchemaId>),
     AddGenesis(Genesis),
+    //ListGeneses(),
+    //ReadGeneses(Vec<ContractId>),
+
+    //ReadTransitions(Vec<TransitionId>),
+    Consign(ConsignRequest),
+    MergeConsignment(Consignment),
+    VerifyConsignment(Consignment),
+    ForgetConsignment(Consignment),
 }
 
 impl TypedEnum for Command {
@@ -48,6 +61,7 @@ impl TypedEnum for Command {
     fn get_type(&self) -> Type {
         Type::from_inner(match self {
             Command::AddGenesis(_) => TYPE_ADD_GENESIS,
+            _ => unimplemented!(),
         })
     }
 
@@ -56,6 +70,7 @@ impl TypedEnum for Command {
             Command::AddGenesis(genesis) => {
                 strict_encode(genesis).expect("Strict encoding for genesis has failed")
             }
+            _ => unimplemented!(),
         }
     }
 }

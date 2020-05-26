@@ -20,7 +20,7 @@ use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
 use lnpbp::Wrapper;
 
-use crate::api::fungible::Issue;
+use crate::api::fungible::{Issue, Transfer};
 
 const TYPE_ISSUE: u16 = 1000;
 
@@ -29,6 +29,8 @@ const TYPE_ISSUE: u16 = 1000;
 #[non_exhaustive]
 pub enum Command {
     Issue(Issue),
+    Transfer(Transfer),
+    //Receive(Receive),
 }
 
 impl TypedEnum for Command {
@@ -46,6 +48,7 @@ impl TypedEnum for Command {
     fn get_type(&self) -> Type {
         Type::from_inner(match self {
             Command::Issue(_) => TYPE_ISSUE,
+            _ => unimplemented!(),
         })
     }
 
@@ -54,6 +57,7 @@ impl TypedEnum for Command {
             Command::Issue(issue) => {
                 strict_encode(issue).expect("Strict encoding for issue structure has failed")
             }
+            _ => unimplemented!(),
         }
     }
 }

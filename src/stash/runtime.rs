@@ -147,6 +147,7 @@ impl Runtime {
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
             Command::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
+            _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
             domain: err,

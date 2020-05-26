@@ -155,6 +155,7 @@ impl Runtime {
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
             Command::Issue(issue) => self.rpc_issue(issue).await,
+            _ => unimplemented!(),
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))
     }
