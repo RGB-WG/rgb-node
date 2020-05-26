@@ -140,18 +140,15 @@ impl Runtime {
             Ok(_) => Reply::Success,
             Err(err) => Reply::Failure(format!("{}", err)),
         };
-        let mut cursor = io::Cursor::new(vec![]);
-        reply.encode(&mut cursor)?;
-        let data = cursor.into_inner();
+        let data = reply.encode()?;
         self.session_rpc.send_raw_message(data)?;
         Ok(())
     }
 
     async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<(), ServiceError> {
-        let mut cursor = io::Cursor::new(raw);
         let message = &*self
             .unmarshaller
-            .unmarshall(&mut cursor)
+            .unmarshall(&raw)
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
             Command::Issue(issue) => self.rpc_issue(issue).await,

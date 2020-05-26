@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::Genesis;
+use lnpbp::rgb::{Genesis, Schema};
 use lnpbp::TryService;
 
 use super::Command;
@@ -132,27 +132,30 @@ impl Runtime {
             Ok(_) => Reply::Success,
             Err(err) => Reply::Failure(format!("{}", err)),
         };
-        let mut cursor = io::Cursor::new(vec![]);
-        reply.encode(&mut cursor)?;
-        let data = cursor.into_inner();
+        let data = reply.encode()?;
         self.session_rpc.send_raw_message(data)?;
         Ok(())
     }
 
     async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<(), ServiceError> {
-        let mut cursor = io::Cursor::new(raw);
         let message = &*self
             .unmarshaller
-            .unmarshall(&mut cursor)
+            .unmarshall(&raw)
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
             Command::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
+            Command::AddSchema(schema) => self.rpc_add_schema(schema).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
             domain: err,
             service: ServiceErrorSource::Stash,
         })
+    }
+
+    async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<(), ServiceErrorDomain> {
+        self.storage.add_schema(schema)?;
+        Ok(())
     }
 
     async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<(), ServiceErrorDomain> {

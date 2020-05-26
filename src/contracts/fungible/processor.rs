@@ -144,7 +144,6 @@ impl Processor {
             assignments,
             vec![],
         );
-        //self.rgb_storage.lock()?.add_genesis(&genesis)?;
 
         let asset = Asset::try_from(genesis.clone())?;
         //self.asset_storage.lock()?.add_asset(asset.clone())?;

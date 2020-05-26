@@ -50,13 +50,10 @@ impl Runtime {
 
     pub fn issue(&mut self, issue: Issue) -> Result<(), ServiceErrorDomain> {
         let command = Command::Issue(issue);
-        let mut cursor = io::Cursor::new(vec![]);
-        command.encode(&mut cursor)?;
-        let data = cursor.into_inner();
+        let data = command.encode()?;
         self.session_rpc.send_raw_message(data)?;
         let raw = self.session_rpc.recv_raw_message()?;
-        let mut cursor = io::Cursor::new(raw);
-        let reply = &*self.unmarshaller.unmarshall(&mut cursor)?;
+        let reply = &*self.unmarshaller.unmarshall(&raw)?;
         info!("{}", reply);
         Ok(())
     }
