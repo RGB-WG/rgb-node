@@ -15,9 +15,10 @@ use clap::derive::Clap;
 use log::*;
 use std::env;
 
-fn main() {}
-/*
-use rgb::stashd::{Config, Runtime};
+use lnpbp::TryService;
+
+use rgb::stash::{Config, Opts, Runtime};
+use rgb::BootstrapError;
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
@@ -42,7 +43,7 @@ async fn main() -> Result<(), BootstrapError> {
     log::set_max_level(LevelFilter::Trace);
 
     let mut context = zmq::Context::new();
-    let runtime = Runtime::init(config, &mut context).await?;
-    runtime.run_or_panic("Stashd runtime").await
+    let runtime = Runtime::init(config, &mut context)?;
+    runtime.run_or_panic("Stashd runtime").await;
+    Ok(())
 }
-*/

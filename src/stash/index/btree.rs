@@ -23,7 +23,7 @@ pub struct BtreeIndex {
 
 impl BtreeIndex {
     pub fn new() -> Self {
-        unimplemented!()
+        Self { index: bmap! {} }
     }
 }
 

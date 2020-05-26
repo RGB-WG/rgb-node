@@ -18,7 +18,7 @@ use std::path::PathBuf;
 
 use lnpbp::bp;
 use lnpbp::lnp::transport::zmq::SocketLocator;
-use lnpbp::lnp::NodeLocator;
+use lnpbp::lnp::{LocalNode, NodeLocator};
 
 use crate::constants::*;
 
@@ -87,6 +87,7 @@ pub struct Opts {
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
 pub struct Config {
+    pub node_auth: LocalNode,
     pub verbose: u8,
     pub data_dir: PathBuf,
     pub stash: String,
@@ -101,10 +102,11 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         let mut me = Self {
             verbose: opts.verbose,
-            stash: opts.stash,
-            index: opts.index,
             ..Config::default()
         };
+        me.data_dir = me.parse_param(opts.data_dir);
+        me.stash = me.parse_param(opts.stash);
+        me.index = me.parse_param(opts.index);
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
         me.pub_endpoint = me.parse_param(opts.pub_endpoint);
         me.p2p_endpoint = me.parse_param(opts.p2p_endpoint);
@@ -115,19 +117,20 @@ impl From<Opts> for Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            node_auth: LocalNode::new(),
             verbose: 0,
             data_dir: RGB_DATA_DIR
                 .parse()
                 .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: STASHD_P2P_ENDPOINT
+            p2p_endpoint: "lnp-zmq:///tmp?api=rpc#1"
                 .parse()
                 .expect("Error in STASHD_P2P_ENDPOINT constant value"),
-            rpc_endpoint: STASHD_RPC_ENDPOINT
+            rpc_endpoint: "ipc:/tmp"
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            pub_endpoint: STASHD_PUB_ENDPOINT
+            pub_endpoint: "ipc:/tmp"
                 .parse()
                 .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK
@@ -144,8 +147,10 @@ impl Config {
         T::Err: Display,
     {
         param
+            .replace("{id}", "default")
             .replace("{network}", &self.network.to_string())
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
+            .replace("{node_id}", &self.node_auth.node_id().to_string())
             .parse()
             .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
     }
