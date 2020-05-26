@@ -12,16 +12,18 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use lnpbp::lnp::transport::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, Session};
+use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshaller};
 
 use super::Config;
+use crate::api::Reply;
 use crate::error::BootstrapError;
 use crate::rgbd::ContractName;
 
 pub struct Runtime {
-    config: Config,
-    context: zmq::Context,
-    session_rpc: Session<NoEncryption, transport::zmq::Connection>,
+    pub(super) config: Config,
+    pub(super) context: zmq::Context,
+    pub(super) session_rpc: Session<NoEncryption, transport::zmq::Connection>,
+    pub(super) unmarshaller: Unmarshaller<Reply>,
 }
 
 impl Runtime {
@@ -41,6 +43,7 @@ impl Runtime {
             config,
             context,
             session_rpc,
+            unmarshaller: Reply::create_unmarshaller(),
         })
     }
 }

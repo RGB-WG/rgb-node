@@ -12,26 +12,60 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use lnpbp::bp;
+use lnpbp::lnp::presentation::Encode;
+use lnpbp::lnp::Unmarshall;
 use lnpbp::rgb::Amount;
 
 use super::Runtime;
-use crate::fungible::{IssueStructure, Outcoins};
+use crate::api::{fungible::Issue, Reply};
+use crate::fungible::{Command, IssueStructure, Outcoins};
 use crate::util::SealSpec;
 
 impl Runtime {
     pub fn issue(
-        &self,
-        _network: bp::Network,
-        _ticker: String,
-        _name: String,
-        _description: Option<String>,
-        _issue_structure: IssueStructure,
-        _allocations: Vec<Outcoins>,
-        _precision: u8,
-        _prune_seals: Vec<SealSpec>,
-        _dust_limit: Option<Amount>,
+        &mut self,
+        network: bp::Network,
+        ticker: String,
+        title: String,
+        description: Option<String>,
+        issue_structure: IssueStructure,
+        allocate: Vec<Outcoins>,
+        precision: u8,
+        prune_seals: Vec<SealSpec>,
+        dust_limit: Option<Amount>,
     ) -> Result<(), String> {
-        // TODO: pass RPC call via ZMQ inproc socket
-        Ok(())
+        let (supply, inflatable) = match issue_structure {
+            IssueStructure::SingleIssue => (None, None),
+            IssueStructure::MultipleIssues {
+                max_supply,
+                reissue_control,
+            } => (Some(max_supply), Some(reissue_control)),
+        };
+        let command = Command::Issue(Issue {
+            ticker,
+            title,
+            description,
+            supply,
+            inflatable,
+            precision,
+            dust_limit,
+            allocate,
+        });
+        let data = command.encode().map_err(|err| err.to_string())?;
+        self.session_rpc
+            .send_raw_message(data)
+            .map_err(|err| err.to_string())?;
+        let raw = self
+            .session_rpc
+            .recv_raw_message()
+            .map_err(|err| err.to_string())?;
+        let reply = &*self
+            .unmarshaller
+            .unmarshall(&raw)
+            .map_err(|err| err.to_string())?;
+        match reply {
+            Reply::Success => Ok(()),
+            Reply::Failure(failmsg) => Err(failmsg.clone()),
+        }
     }
 }
