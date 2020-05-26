@@ -11,17 +11,21 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use super::FileCacheError;
-use crate::fungible::Asset;
-use crate::util::file::FileMode;
 use lnpbp::rgb::prelude::*;
 
+use super::FileCacheError;
+use crate::error::{BootstrapError, ServiceErrorDomain};
+use crate::fungible::Asset;
+use crate::util::file::FileMode;
+
 pub trait Cache {
-    fn assets(&self) -> Result<Vec<&Asset>, CacheError>;
-    fn asset(&self, id: ContractId) -> Result<&Asset, CacheError>;
-    fn has_asset(&self, id: ContractId) -> Result<bool, CacheError>;
-    fn add_asset(&mut self, asset: Asset) -> Result<bool, CacheError>;
-    fn remove_asset(&mut self, id: ContractId) -> Result<bool, CacheError>;
+    type Error: ::std::error::Error + Into<ServiceErrorDomain>;
+
+    fn assets(&self) -> Result<Vec<&Asset>, Self::Error>;
+    fn asset(&self, id: ContractId) -> Result<&Asset, Self::Error>;
+    fn has_asset(&self, id: ContractId) -> Result<bool, Self::Error>;
+    fn add_asset(&mut self, asset: Asset) -> Result<bool, Self::Error>;
+    fn remove_asset(&mut self, id: ContractId) -> Result<bool, Self::Error>;
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
@@ -37,6 +41,18 @@ pub enum CacheError {
         details: Option<String>,
     },
     DataIntegrityError(String),
+}
+
+impl From<CacheError> for ServiceErrorDomain {
+    fn from(_: CacheError) -> Self {
+        ServiceErrorDomain::Cache
+    }
+}
+
+impl From<CacheError> for BootstrapError {
+    fn from(_: CacheError) -> Self {
+        BootstrapError::CacheError
+    }
 }
 
 impl From<FileCacheError> for CacheError {

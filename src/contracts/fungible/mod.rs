@@ -11,19 +11,19 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-mod api;
 mod config;
 mod data;
 mod processor;
 mod request;
+mod rpc;
 mod runtime;
 
 pub(self) mod cache;
 
 pub use data::*;
 
-pub use api::Api;
 pub use config::{Config, Opts};
+pub use rpc::Command;
 pub use runtime::Runtime;
 
 pub use cache::CacheError;

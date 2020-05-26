@@ -11,37 +11,48 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::io;
 use std::path::PathBuf;
 
+use lnpbp::lnp::presentation::Encode;
+use lnpbp::lnp::zmq::ApiType;
+use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::TryService;
 
-use super::{Config, IssueStructure, Processor};
-use crate::api;
-use crate::error::{ApiErrorType, BootstrapError, RuntimeError, ServiceErrorDomain};
-
 use super::cache::{Cache, FileCache, FileCacheConfig};
+use super::{Command, Config, Processor};
+use crate::api::{fungible::Issue, Reply};
+use crate::error::{
+    ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
+    ServiceErrorSource,
+};
+use crate::fungible::IssueStructure;
 
 pub struct Runtime {
     /// Original configuration object
     config: Config,
 
-    /// Request-response API socket
-    api_rep: zmq::Socket,
+    /// Request-response API session
+    session_rpc: Session<NoEncryption, transport::zmq::Connection>,
+
+    /// Publish-subscribe API session
+    session_pub: Session<NoEncryption, transport::zmq::Connection>,
+
+    /// Stash RPC client session
+    stash_rpc: Session<NoEncryption, transport::zmq::Connection>,
 
     /// Publish-subscribe API socket
-    api_pub: zmq::Socket,
-
-    /// Stash REQ API socket
-    stash_req: zmq::Socket,
-
-    /// Stash PUB API socket
-    stash_sub: zmq::Socket,
+    stash_sub: Session<NoEncryption, transport::zmq::Connection>,
 
     /// RGB fungible assets data cache: relational database sharing the client-
     /// friendly asset information with clients
     cacher: FileCache,
 
+    /// Processor instance: handles business logic outside of stash scope
     processor: Processor,
+
+    /// Unmarshaller instance used for parsing RPC request
+    unmarshaller: Unmarshaller<Command>,
 }
 
 impl Runtime {
@@ -53,50 +64,54 @@ impl Runtime {
         &self.cacher
     }
 
-    pub fn init(config: Config, context: &mut zmq::Context) -> Result<Self, BootstrapError> {
+    pub fn init(config: Config, mut context: &mut zmq::Context) -> Result<Self, BootstrapError> {
         let processor = Processor::new()?;
-
-        let api_rep = context
-            .socket(zmq::REP)
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-        api_rep
-            .connect(&config.rpc_endpoint.to_string())
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-
-        let api_pub = context
-            .socket(zmq::PUB)
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-        api_pub
-            .connect(&config.rpc_endpoint.to_string())
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-
-        let stash_req = context
-            .socket(zmq::REQ)
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-        stash_req
-            .connect(&config.rpc_endpoint.to_string())
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-
-        let stash_sub = context
-            .socket(zmq::SUB)
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
-        stash_sub
-            .connect(&config.rpc_endpoint.to_string())
-            .map_err(|e| BootstrapError::ZmqSocketError(e))?;
 
         let cacher = FileCache::new(FileCacheConfig {
             data_dir: PathBuf::from(&config.cache),
         })
-        .map_err(|_| BootstrapError::Other)?;
+        .map_err(|err| {
+            error!("{}", err);
+            err
+        })?;
+
+        let session_rpc = Session::new_zmq_unencrypted(
+            ApiType::Server,
+            &mut context,
+            config.rpc_endpoint.clone(),
+            None,
+        )?;
+
+        let session_pub = Session::new_zmq_unencrypted(
+            ApiType::Publish,
+            &mut context,
+            config.pub_endpoint.clone(),
+            None,
+        )?;
+
+        let stash_rpc = Session::new_zmq_unencrypted(
+            ApiType::Client,
+            &mut context,
+            config.stash_rpc.clone(),
+            None,
+        )?;
+
+        let stash_sub = Session::new_zmq_unencrypted(
+            ApiType::Subscribe,
+            &mut context,
+            config.stash_sub.clone(),
+            None,
+        )?;
 
         Ok(Self {
             config,
-            api_rep,
-            api_pub,
-            stash_req,
+            session_rpc,
+            session_pub,
+            stash_rpc,
             stash_sub,
             cacher,
             processor,
+            unmarshaller: Command::create_unmarshaller(),
         })
     }
 }
@@ -120,81 +135,53 @@ impl TryService for Runtime {
 
 impl Runtime {
     async fn run(&mut self) -> Result<(), RuntimeError> {
-        /*
-        let req: Multipart = self
-            .api_rep
-            .recv_multipart(0)
-            .map_err(|err| RuntimeError::zmq_reply(&self.config.socket_rep, err))?
-            .into_iter()
-            .map(zmq::Message::from)
-            .collect();
-        trace!("New API request");
-
-        trace!("Received API request {:x?}, processing ... ", req[0]);
-        let reply = self
-            .proc_request(req)
-            .map_err(|domain| ServiceError::contract(domain, "fungible"))
-            .inspect_err(|err| error!("Error processing request: {}", err))
-            .await
-            .unwrap_or_else(Reply::Failure);
-
-        trace!(
-            "Received response from command processor: `{}`; replying to client",
-            reply
-        );
-        self.api_rep
-            .send_multipart(Multipart::from(reply), 0)
-            .map_err(|err| RuntimeError::zmq_reply(&self.config.socket_rep, err))?;
-         */
-
-        Ok(())
-    }
-
-    /*
-    async fn proc_request(&mut self, req: Multipart) -> Result<(), ServiceErrorDomain> {
-        let command = Request::try_from(req)?;
-
-        let future = match command {
-            Request::Issue(issue_request) => self.request_issue(issue_request),
-            unknown_command => Err(ServiceErrorDomain::Api(ApiErrorType::UnimplementedCommand))?,
+        let raw = self.session_rpc.recv_raw_message()?;
+        let reply = match self.rpc_process(raw).await {
+            Ok(_) => Reply::Success,
+            Err(err) => Reply::Failure(format!("{}", err)),
         };
-
-        // TODO: Respond to client
-        match future.await {
-            Ok(_) => {}
-            Err(err) => {}
-        }
-
+        let mut cursor = io::Cursor::new(vec![]);
+        reply.encode(&mut cursor)?;
+        let data = cursor.into_inner();
+        self.session_rpc.send_raw_message(data)?;
         Ok(())
     }
-     */
 
-    async fn request_issue(
-        &mut self,
-        issue: api::fungible::Issue,
-    ) -> Result<(), ServiceErrorDomain> {
+    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<(), ServiceError> {
+        let mut cursor = io::Cursor::new(raw);
+        let message = &*self
+            .unmarshaller
+            .unmarshall(&mut cursor)
+            .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
+        match message {
+            Command::Issue(issue) => self.rpc_issue(issue).await,
+        }
+        .map_err(|err| ServiceError::contract(err, "fungible"))
+    }
+
+    async fn rpc_issue(&mut self, issue: &Issue) -> Result<(), ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
         let issue_structure = match issue.inflatable {
             None => IssueStructure::SingleIssue,
-            Some(seal_spec) => IssueStructure::MultipleIssues {
+            Some(ref seal_spec) => IssueStructure::MultipleIssues {
                 max_supply: issue.supply.ok_or(ServiceErrorDomain::Api(
                     ApiErrorType::MissedArgument {
                         request: "Issue".to_string(),
                         argument: "supply".to_string(),
                     },
                 ))?,
-                reissue_control: seal_spec,
+                reissue_control: seal_spec.clone(),
             },
         };
 
         let (asset, _genesis) = self.processor.issue(
             self.config.network,
-            issue.ticker,
-            issue.title,
-            issue.description,
+            issue.ticker.clone(),
+            issue.title.clone(),
+            issue.description.clone(),
             issue_structure,
-            issue.allocate,
+            issue.allocate.clone(),
             issue.precision,
             vec![],
             issue.dust_limit,

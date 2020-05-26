@@ -27,11 +27,11 @@ const TYPE_ISSUE: u16 = 1000;
 #[derive(Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
 #[non_exhaustive]
-pub enum Api {
+pub enum Command {
     Issue(Issue),
 }
 
-impl TypedEnum for Api {
+impl TypedEnum for Command {
     fn try_from_type(type_id: Type, data: &dyn Any) -> Result<Self, UnknownTypeError> {
         Ok(match type_id.into_inner() {
             TYPE_ISSUE => Self::Issue(
@@ -45,23 +45,23 @@ impl TypedEnum for Api {
 
     fn get_type(&self) -> Type {
         Type::from_inner(match self {
-            Api::Issue(_) => TYPE_ISSUE,
+            Command::Issue(_) => TYPE_ISSUE,
         })
     }
 
     fn get_payload(&self) -> Vec<u8> {
         match self {
-            Api::Issue(issue) => {
+            Command::Issue(issue) => {
                 strict_encode(issue).expect("Strict encoding for issue structure has failed")
             }
         }
     }
 }
 
-impl Api {
+impl Command {
     pub fn create_unmarshaller() -> Unmarshaller<Self> {
         Unmarshaller::new(bmap! {
-            TYPE_ISSUE => Api::parse_issue as UnmarshallFn<_>
+            TYPE_ISSUE => Self::parse_issue as UnmarshallFn<_>
         })
     }
 

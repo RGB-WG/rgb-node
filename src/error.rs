@@ -19,8 +19,6 @@ use tokio::task::JoinError;
 
 use lnpbp::lnp;
 
-use crate::contracts::fungible;
-
 #[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum BootstrapError {
@@ -44,6 +42,8 @@ pub enum BootstrapError {
     MessageBusError(lnp::transport::Error),
 
     StorageError,
+
+    CacheError,
 
     Other,
 }
@@ -128,7 +128,6 @@ pub enum ServiceErrorDomain {
     Io,
     Storage,
     Index,
-    #[derive_from(fungible::CacheError)]
     Cache,
     Multithreading,
     P2pwire,

@@ -104,10 +104,11 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         let mut me = Self {
             verbose: opts.verbose,
-            cache: opts.cache,
             network: opts.network,
             ..Config::default()
         };
+        me.data_dir = me.parse_param(opts.data_dir);
+        me.cache = me.parse_param(opts.cache);
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
         me.pub_endpoint = me.parse_param(opts.pub_endpoint);
         me.stash_rpc = me.parse_param(opts.stash_rpc);
@@ -124,16 +125,16 @@ impl Default for Config {
                 .parse()
                 .expect("Error in RGB_DATA_DIR constant value"),
             cache: FUNGIBLED_CACHE.to_string(),
-            rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
-                .parse()
-                .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),
-            pub_endpoint: FUNGIBLED_PUB_ENDPOINT
-                .parse()
-                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
-            stash_rpc: STASHD_RPC_ENDPOINT
+            rpc_endpoint: "ipc:/tmp"
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            stash_sub: STASHD_PUB_ENDPOINT
+            pub_endpoint: "ipc:/tmp"
+                .parse()
+                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
+            stash_rpc: "ipc:/tmp"
+                .parse()
+                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
+            stash_sub: "ipc:/tmp"
                 .parse()
                 .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK

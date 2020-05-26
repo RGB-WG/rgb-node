@@ -102,6 +102,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         let mut me = Self {
             verbose: opts.verbose,
+            network: opts.network,
             ..Config::default()
         };
         me.data_dir = me.parse_param(opts.data_dir);

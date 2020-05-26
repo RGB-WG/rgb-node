@@ -23,7 +23,9 @@ use lnpbp::TryService;
 use super::Command;
 use super::Config;
 use crate::api::Reply;
-use crate::error::{BootstrapError, RuntimeError, ServiceError, ServiceErrorSource};
+use crate::error::{
+    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
+};
 
 use super::index::{BtreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
@@ -56,6 +58,7 @@ pub struct Runtime {
     #[cfg(all(store_hammersbald, not(any(store_disk))))]
     storage: HammersbaldStore,
 
+    /// Unmarshaller instance used for parsing RPC request
     unmarshaller: Unmarshaller<Command>,
 }
 
@@ -145,9 +148,14 @@ impl Runtime {
         match message {
             Command::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
         }
+        .map_err(|err| ServiceError {
+            domain: err,
+            service: ServiceErrorSource::Stash,
+        })
     }
 
-    async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<(), ServiceError> {
+    async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<(), ServiceErrorDomain> {
+        self.storage.add_genesis(genesis)?;
         Ok(())
     }
 }
