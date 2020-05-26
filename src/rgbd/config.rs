@@ -91,7 +91,7 @@ pub struct Config {
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Self {
-            data_dir: format!("{}/{}", opts.data_dir, opts.network).into(),
+            data_dir: opts.data_dir.into(),
             bin_dir: opts.bin_dir.into(),
             threaded: opts.threaded,
             network: opts.network,

@@ -27,6 +27,21 @@ impl Runtime {
     pub async fn init(config: Config) -> Result<Self, BootstrapError> {
         Ok(Self { config })
     }
+
+    fn daemon(&self, bin: &str) -> process::Command {
+        let mut daemon = self.config.bin_dir.clone();
+        daemon.push(bin);
+        let mut cmd = process::Command::new(daemon);
+        cmd.args(&[
+            "-v",
+            "-v",
+            "-v",
+            "-v",
+            "--data-dir",
+            self.config.data_dir.to_str().expect("Binary path is wrong"),
+        ]);
+        cmd
+    }
 }
 
 #[async_trait]
@@ -36,17 +51,13 @@ impl TryService for Runtime {
     async fn try_run_loop(mut self) -> Result<!, RuntimeError> {
         let mut handlers = vec![];
 
-        let mut daemon = self.config.bin_dir.clone();
-        daemon.push("stashd");
-        handlers.push(process::Command::new(daemon).spawn()?);
+        handlers.push(self.daemon("stashd").spawn()?);
 
         self.config
             .contracts
             .iter()
             .try_for_each(|contract_name| -> Result<(), RuntimeError> {
-                let mut daemon = self.config.bin_dir.clone();
-                daemon.push(contract_name.daemon_name());
-                handlers.push(process::Command::new(daemon).spawn()?);
+                handlers.push(self.daemon(contract_name.daemon_name()).spawn()?);
                 Ok(())
             })?;
 
