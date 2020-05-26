@@ -36,7 +36,7 @@ lightning-invoice = "~0.2"
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
-branch = "develop"
+branch = "master"
 features = ["all"]
 
 [features]
