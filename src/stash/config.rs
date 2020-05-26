@@ -14,11 +14,9 @@
 use clap::Clap;
 use core::fmt::Display;
 use core::str::FromStr;
-use num_traits::real::Real;
 use std::path::PathBuf;
 
 use lnpbp::bp;
-use lnpbp::internet::{InetAddr, InetSocketAddr};
 use lnpbp::lnp::transport::zmq::SocketLocator;
 use lnpbp::lnp::NodeLocator;
 

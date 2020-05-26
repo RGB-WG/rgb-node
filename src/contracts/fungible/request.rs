@@ -11,9 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::api::{self, Multipart};
-use crate::error::ApiErrorType;
-use core::convert::TryFrom;
+use crate::api;
 
 #[derive(Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
@@ -21,12 +19,4 @@ use core::convert::TryFrom;
 pub enum Request {
     Issue(api::fungible::Issue),
     Transfer(api::fungible::Transfer),
-}
-
-impl TryFrom<Multipart> for Request {
-    type Error = ApiErrorType;
-
-    fn try_from(value: Multipart) -> Result<Self, Self::Error> {
-        unimplemented!()
-    }
 }

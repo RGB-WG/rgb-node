@@ -11,11 +11,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::convert::TryFrom;
-
 use lnpbp::lnp::transport::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, NodeAddr, Session};
-use lnpbp::TryService;
+use lnpbp::lnp::{transport, NoEncryption, Session};
 
 use super::Config;
 use crate::BootstrapError;

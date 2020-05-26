@@ -21,15 +21,15 @@ use crate::util::SealSpec;
 impl Runtime {
     pub fn issue(
         &self,
-        network: bp::Network,
-        ticker: String,
-        name: String,
-        description: Option<String>,
-        issue_structure: IssueStructure,
-        allocations: Vec<Outcoins>,
-        precision: u8,
-        prune_seals: Vec<SealSpec>,
-        dust_limit: Option<Amount>,
+        _network: bp::Network,
+        _ticker: String,
+        _name: String,
+        _description: Option<String>,
+        _issue_structure: IssueStructure,
+        _allocations: Vec<Outcoins>,
+        _precision: u8,
+        _prune_seals: Vec<SealSpec>,
+        _dust_limit: Option<Amount>,
     ) -> Result<(), String> {
         // TODO: pass RPC call via ZMQ inproc socket
         Ok(())

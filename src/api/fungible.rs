@@ -1,7 +1,6 @@
-// Kaleidoscope: RGB command-line wallet utility
-// Written in 2019-2020 by
+// RGB standard library
+// Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
-//     Alekos Filini <alekos.filini@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -27,7 +26,7 @@ use lnpbp::rgb::prelude::*;
 
 use crate::fungible::Outcoins;
 use crate::util::SealSpec;
-use lnpbp::strict_encoding::{Error, StrictDecode};
+use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
 
 #[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]
 #[display_from(Debug)]
@@ -70,10 +69,18 @@ pub struct Issue {
     pub allocate: Vec<Outcoins>,
 }
 
+impl StrictEncode for Issue {
+    type Error = Error;
+
+    fn strict_encode<E: io::Write>(&self, _e: E) -> Result<usize, Self::Error> {
+        unimplemented!()
+    }
+}
+
 impl StrictDecode for Issue {
     type Error = Error;
 
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Self::Error> {
+    fn strict_decode<D: io::Read>(_d: D) -> Result<Self, Self::Error> {
         unimplemented!()
     }
 }
@@ -150,7 +157,7 @@ mod helpers {
 
     impl FromStr for Output {
         type Err = String;
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
+        fn from_str(_s: &str) -> Result<Self, Self::Err> {
             unimplemented!()
         }
     }
@@ -166,7 +173,7 @@ mod helpers {
 
     impl FromStr for Input {
         type Err = String;
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
+        fn from_str(_s: &str) -> Result<Self, Self::Err> {
             unimplemented!()
         }
     }

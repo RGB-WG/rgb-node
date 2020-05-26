@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use std::io;
 use tokio::task::JoinError;
 
-use lnpbp::lnp::transport;
+use lnpbp::lnp;
 
 use crate::contracts::fungible;
 
@@ -41,7 +41,9 @@ pub enum BootstrapError {
     MonitorSocketError(Box<dyn std::error::Error>),
 
     #[derive_from]
-    MessageBusError(transport::Error),
+    MessageBusError(lnp::transport::Error),
+
+    StorageError,
 
     Other,
 }
@@ -89,6 +91,10 @@ pub enum RuntimeError {
     #[derive_from(std::io::Error)]
     Io,
     Zmq(ServiceSocketType, String, zmq::Error),
+    #[derive_from]
+    Lnp(lnp::transport::Error),
+    #[derive_from(lnp::presentation::Error)]
+    BrokenTransport,
 }
 
 impl RuntimeError {
@@ -127,6 +133,7 @@ pub enum ServiceErrorDomain {
     Multithreading,
     P2pwire,
     #[derive_from]
+    Lnp(lnp::presentation::Error),
     Api(ApiErrorType),
     Monitoring,
     Bifrost,
@@ -178,6 +185,13 @@ impl ServiceError {
         Self {
             domain,
             service: ServiceErrorSource::Contract(contract_name.to_string()),
+        }
+    }
+
+    pub fn from_rpc(service: ServiceErrorSource, err: lnp::presentation::Error) -> Self {
+        Self {
+            domain: ServiceErrorDomain::from(err),
+            service,
         }
     }
 }

@@ -11,12 +11,9 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use core::convert::TryFrom;
 use futures::future::join_all;
 use tokio::process;
 
-use lnpbp::lnp::transport::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, NodeAddr, Session};
 use lnpbp::TryService;
 
 use super::Config;

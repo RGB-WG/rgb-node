@@ -19,7 +19,7 @@ use lnpbp::bitcoin::hashes::hex::{FromHex, ToHex};
 use lnpbp::rgb::prelude::*;
 
 use super::Store;
-use crate::error::ServiceErrorDomain;
+use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::file::*;
 
 #[derive(Debug, Display, Error, From)]
@@ -41,6 +41,12 @@ pub enum DiskStorageError {
 impl From<DiskStorageError> for ServiceErrorDomain {
     fn from(_: DiskStorageError) -> Self {
         ServiceErrorDomain::Storage
+    }
+}
+
+impl From<DiskStorageError> for BootstrapError {
+    fn from(_: DiskStorageError) -> Self {
+        BootstrapError::StorageError
     }
 }
 

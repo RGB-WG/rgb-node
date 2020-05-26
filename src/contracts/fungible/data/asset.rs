@@ -152,7 +152,7 @@ impl Asset {
         bp::Network::from_magic(self.network)
     }
 
-    pub fn add_issue(&self, issue: Transition) -> Supply {
+    pub fn add_issue(&self, _issue: Transition) -> Supply {
         unimplemented!()
     }
 

@@ -17,55 +17,57 @@ use std::sync::Arc;
 
 use lnpbp::lnp::presentation::{Error, UnknownTypeError};
 use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
+use lnpbp::rgb::Genesis;
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
 use lnpbp::Wrapper;
 
-use crate::api::fungible::Issue;
+const TYPE_ADD_GENESIS: u16 = 1000;
 
-const TYPE_ISSUE: u16 = 1000;
-
-#[derive(Clone, PartialEq, Debug, Display)]
+#[derive(Clone, Debug, Display)]
 #[display_from(Debug)]
 #[non_exhaustive]
-pub enum Api {
-    Issue(Issue),
+pub enum Command {
+    AddGenesis(Genesis),
 }
 
-impl TypedEnum for Api {
+impl TypedEnum for Command {
     fn try_from_type(type_id: Type, data: &dyn Any) -> Result<Self, UnknownTypeError> {
         Ok(match type_id.into_inner() {
-            TYPE_ISSUE => Self::Issue(
-                data.downcast_ref::<Issue>()
+            TYPE_ADD_GENESIS => Self::AddGenesis(
+                data.downcast_ref::<Genesis>()
                     .expect("Internal API parser inconsistency")
                     .clone(),
             ),
+            // Here we receive odd-numbered messages. However, in terms of RPC,
+            // there is no "upstream processor", so we return error (but do not
+            // break connection).
             _ => Err(UnknownTypeError)?,
         })
     }
 
     fn get_type(&self) -> Type {
         Type::from_inner(match self {
-            Api::Issue(_) => TYPE_ISSUE,
+            Command::AddGenesis(_) => TYPE_ADD_GENESIS,
         })
     }
 
     fn get_payload(&self) -> Vec<u8> {
         match self {
-            Api::Issue(issue) => {
-                strict_encode(issue).expect("Strict encoding for issue structure has failed")
+            Command::AddGenesis(genesis) => {
+                strict_encode(genesis).expect("Strict encoding for genesis has failed")
             }
         }
     }
 }
 
-impl Api {
+impl Command {
     pub fn create_unmarshaller() -> Unmarshaller<Self> {
         Unmarshaller::new(bmap! {
-            TYPE_ISSUE => Api::parse_issue as UnmarshallFn<_>
+            TYPE_ADD_GENESIS => Self::parse_genesis as UnmarshallFn<_>
         })
     }
 
-    fn parse_issue(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
-        Ok(Arc::new(Issue::strict_decode(&mut reader)?))
+    fn parse_genesis(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
+        Ok(Arc::new(Genesis::strict_decode(&mut reader)?))
     }
 }

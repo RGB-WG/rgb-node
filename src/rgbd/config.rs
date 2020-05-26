@@ -16,9 +16,6 @@ use clap::Clap;
 use lnpbp::bp;
 use std::path::PathBuf;
 
-use super::Runtime;
-use crate::BootstrapError;
-
 use crate::constants::*;
 
 #[derive(Clap)]

@@ -11,14 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use core::convert::TryFrom;
 use std::path::PathBuf;
 
 use lnpbp::TryService;
 
-use super::{Config, IssueStructure, Processor, Request};
-use crate::api::{self, Reply};
-use crate::error::{ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain};
+use super::{Config, IssueStructure, Processor};
+use crate::api;
+use crate::error::{ApiErrorType, BootstrapError, RuntimeError, ServiceErrorDomain};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 
@@ -88,7 +87,7 @@ impl Runtime {
         let cacher = FileCache::new(FileCacheConfig {
             data_dir: PathBuf::from(&config.cache),
         })
-        .map_err(|err| BootstrapError::Other)?;
+        .map_err(|_| BootstrapError::Other)?;
 
         Ok(Self {
             config,
@@ -189,7 +188,7 @@ impl Runtime {
             },
         };
 
-        let (asset, genesis) = self.processor.issue(
+        let (asset, _genesis) = self.processor.issue(
             self.config.network,
             issue.ticker,
             issue.title,

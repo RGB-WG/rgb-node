@@ -11,28 +11,33 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use core::convert::TryFrom;
-use futures::TryFutureExt;
+use std::io;
 use std::path::PathBuf;
 
+use lnpbp::lnp::presentation::Encode;
+use lnpbp::lnp::zmq::ApiType;
+use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
+use lnpbp::rgb::Genesis;
 use lnpbp::TryService;
 
+use super::Command;
 use super::Config;
-use crate::error::{BootstrapError, RuntimeError};
+use crate::api::Reply;
+use crate::error::{BootstrapError, RuntimeError, ServiceError, ServiceErrorSource};
 
-//use super::index::{BtreeIndex, Index};
-//#[cfg(not(store_hammersbald))] // Default store
-//use super::storage::{DiskStorage, DiskStorageConfig, Store};
+use super::index::{BtreeIndex, Index};
+#[cfg(not(store_hammersbald))] // Default store
+use super::storage::{DiskStorage, DiskStorageConfig, Store};
 
 pub struct Runtime {
     /// Original configuration object
     config: Config,
-    /*
+
     /// Request-response API socket
-    api_rep: zmq::Socket,
+    session_rpc: Session<NoEncryption, transport::zmq::Connection>,
 
     /// Publish-subscribe API socket
-    api_pub: zmq::Socket,
+    session_pub: Session<NoEncryption, transport::zmq::Connection>,
 
     /// RGB Index: fast, mostly in-memory key-value indexing service.
     /// Must be exclusive for the current service
@@ -50,7 +55,8 @@ pub struct Runtime {
     storage: DiskStorage,
     #[cfg(all(store_hammersbald, not(any(store_disk))))]
     storage: HammersbaldStore,
-     */
+
+    unmarshaller: Unmarshaller<Command>,
 }
 
 impl Runtime {
@@ -58,7 +64,6 @@ impl Runtime {
     /// use and reduce number of errors. Indexer may be switched with compile
     /// configuration options and, thus, we need to make sure that the sturcture
     /// we use corresponds to certain trait and not specific type.
-    /*
     fn indexer(&self) -> &impl Index {
         &self.indexer
     }
@@ -66,38 +71,36 @@ impl Runtime {
     fn storage(&self) -> &impl Store {
         &self.storage
     }
-     */
 
-    pub fn init(config: Config, context: &mut zmq::Context) -> Result<Self, BootstrapError> {
-        /*
+    pub fn init(config: Config, mut context: &mut zmq::Context) -> Result<Self, BootstrapError> {
         #[cfg(not(store_hammersbald))] // Default store
         let storage = DiskStorage::new(DiskStorageConfig {
             data_dir: PathBuf::from(config.stash.clone()),
         })?;
 
-        let indexer = BtreeIndex::new()?;
+        let indexer = BtreeIndex::new();
 
-        let api_rep = context
-            .socket(zmq::REP)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
-        api_rep
-            .connect(&config.socket_req)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
+        let session_rpc = Session::new_zmq_unencrypted(
+            ApiType::Server,
+            &mut context,
+            config.rpc_endpoint.clone(),
+            None,
+        )?;
 
-        let api_pub = context
-            .socket(zmq::PUB)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
-        api_pub
-            .connect(&config.socket_sub)
-            .map_err(|e| BootstrapError::SubscriptionError(e))?;
-         */
+        let session_pub = Session::new_zmq_unencrypted(
+            ApiType::Publish,
+            &mut context,
+            config.pub_endpoint.clone(),
+            None,
+        )?;
 
         Ok(Self {
             config,
-            //api_rep,
-            //api_pub,
-            //indexer,
-            //storage,
+            session_rpc,
+            session_pub,
+            indexer,
+            storage,
+            unmarshaller: Command::create_unmarshaller(),
         })
     }
 }
@@ -106,7 +109,7 @@ impl Runtime {
 impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
-    async fn try_run_loop(self) -> Result<!, Self::ErrorType> {
+    async fn try_run_loop(mut self) -> Result<!, Self::ErrorType> {
         loop {
             match self.run().await {
                 Ok(_) => debug!("API request processing complete"),
@@ -120,56 +123,31 @@ impl TryService for Runtime {
 }
 
 impl Runtime {
-    async fn run(&self) -> Result<(), RuntimeError> {
-        /*
-        let req: Multipart = self
-            .subscriber
-            .recv_multipart(0)
-            .map_err(|err| Error::SocketError(err))?
-            .into_iter()
-            .map(zmq::Message::from)
-            .collect();
-        trace!("New API request");
-
-        trace!("Received API request {:x?}, processing ... ", req[0]);
-        let reply = self
-            .proc_command(req)
-            .inspect_err(|err| error!("Error processing request: {}", err))
-            .await
-            .unwrap_or(Reply::Failure);
-
-        trace!(
-            "Received response from command processor: `{}`; replying to client",
-            reply
-        );
-        self.subscriber
-            .send_multipart(Multipart::from(Reply::Success), 0)?;
-        debug!("Sent reply {}", Reply::Success);
-
-         */
-
+    async fn run(&mut self) -> Result<(), RuntimeError> {
+        let raw = self.session_rpc.recv_raw_message()?;
+        let reply = match self.rpc_process(raw).await {
+            Ok(_) => Reply::Success,
+            Err(err) => Reply::Failure(format!("{}", err)),
+        };
+        let mut cursor = io::Cursor::new(vec![]);
+        reply.encode(&mut cursor)?;
+        let data = cursor.into_inner();
+        self.session_rpc.send_raw_message(data)?;
         Ok(())
     }
 
-    /*
-    async fn proc_command(&mut self, req: Multipart) -> Result<Reply, Error> {
-        use Request::*;
-
-        let command = Request::try_from(req)?;
-
-        match command {
-            Query(query) => self.command_query(query).await,
-            _ => Err(Error::UnknownCommand),
+    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<(), ServiceError> {
+        let mut cursor = io::Cursor::new(raw);
+        let message = &*self
+            .unmarshaller
+            .unmarshall(&mut cursor)
+            .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
+        match message {
+            Command::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
         }
     }
 
-    async fn command_query(&mut self, query: Query) -> Result<Reply, Error> {
-        debug!("Got QUERY {}", query);
-
-        // TODO: Do query processing
-
-        Ok(Reply::Success)
+    async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<(), ServiceError> {
+        Ok(())
     }
-
-     */
 }

@@ -13,16 +13,6 @@
 
 use bech32::{self, ToBase32};
 use clap::Clap;
-use regex::Regex;
-use std::sync::{Arc, Mutex};
-
-use bitcoin::hashes::hex::FromHex;
-use bitcoin::TxIn;
-
-use lnpbp::bitcoin;
-use lnpbp::bp;
-use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::strict_encode;
 
 use super::Runtime;
 use crate::api::fungible::{Issue, Transfer};
@@ -35,26 +25,6 @@ pub enum Command {
     /// Lists all known assets
     List,
 
-    /*
-    /// Lists all known funds for a given asset
-    Funds {
-        /// Include only the assets which are owned by the known accounts
-        #[clap(short, long)]
-        only_owned: bool,
-
-        /// Tag name of the account to list deposit boxes
-        account: String,
-
-        /// Assets
-        #[clap(parse(try_from_str=ContractId::from_hex))]
-        contract_id: ContractId,
-
-        /// Request funds on the specified deposit types only
-        #[clap(arg_enum)]
-        #[clap(default_value = "WPKH")]
-        deposit_types: Vec<DepositType>,
-    },
-     */
     /// Creates a new asset
     Issue(Issue),
 
@@ -63,7 +33,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn exec(self, runtime: &Runtime) -> Result<(), BootstrapError> {
+    pub fn exec(self, _runtime: &Runtime) -> Result<(), BootstrapError> {
         /*
         let mut data_dir = global.data_path(DataItem::Root);
         let rgb_storage = DiskStorage::new(DiskStorageConfig {
@@ -96,11 +66,11 @@ impl Command {
 }
 
 impl Issue {
-    pub fn exec(self, runtime: &Runtime) -> Result<(), BootstrapError> {
+    pub fn exec(self, _runtime: &Runtime) -> Result<(), BootstrapError> {
         info!("Issuing asset ...");
         debug!("{}", self.clone());
 
-        let issue_structure = match self.inflatable {
+        let _issue_structure = match self.inflatable {
             None => IssueStructure::SingleIssue,
             Some(seal_spec) => IssueStructure::MultipleIssues {
                 max_supply: self.supply.expect("Clap is broken"),

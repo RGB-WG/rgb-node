@@ -47,7 +47,7 @@ impl Processor {
             asset_storage,
         };
          */
-        let schema = schema::schema();
+        let _schema = schema::schema();
         //if !me.rgb_storage.lock()?.has_schema(schema.schema_id())? {
         info!("RGB fungible assets schema file not found, creating one");
         //storage.lock()?.add_schema(&schema)?;

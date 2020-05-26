@@ -17,10 +17,11 @@ use clap::derive::Clap;
 use log::*;
 use std::env;
 
-use rgb_node::cli::{Config, Opts, Runtime};
+use rgb::cli::{Config, Opts, Runtime};
+use rgb::BootstrapError;
 
 #[tokio::main]
-async fn main() -> Result<(), String> {
+async fn main() -> Result<(), BootstrapError> {
     // TODO: Parse config file as well
     let opts: Opts = Opts::parse();
     let config: Config = opts.clone().into();
@@ -42,5 +43,5 @@ async fn main() -> Result<(), String> {
     log::set_max_level(LevelFilter::Trace);
 
     let runtime = Runtime::init(config).await?;
-    opts.command.exec(runtime)
+    opts.command.exec(&runtime)
 }

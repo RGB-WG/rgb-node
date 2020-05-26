@@ -16,10 +16,8 @@ use std::collections::HashMap;
 use lnpbp::bp;
 use lnpbp::lnp::transport::zmq::SocketLocator;
 
-use super::{fungible, Runtime};
 use crate::constants::*;
 use crate::rgbd::ContractName;
-use crate::BootstrapError;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display_from(Debug)]
