@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use core::borrow::Borrow;
 use std::io;
 use std::path::PathBuf;
 
@@ -27,6 +28,7 @@ use crate::error::{
     ServiceErrorSource,
 };
 use crate::fungible::IssueStructure;
+use crate::stash;
 
 pub struct Runtime {
     /// Original configuration object
@@ -53,6 +55,9 @@ pub struct Runtime {
 
     /// Unmarshaller instance used for parsing RPC request
     unmarshaller: Unmarshaller<Command>,
+
+    /// Unmarshaller instance used for parsing RPC request
+    reply_unmarshaller: Unmarshaller<Reply>,
 }
 
 impl Runtime {
@@ -112,6 +117,7 @@ impl Runtime {
             cacher,
             processor,
             unmarshaller: Command::create_unmarshaller(),
+            reply_unmarshaller: Reply::create_unmarshaller(),
         })
     }
 }
@@ -173,7 +179,7 @@ impl Runtime {
             },
         };
 
-        let (asset, _genesis) = self.processor.issue(
+        let (asset, genesis) = self.processor.issue(
             self.config.network,
             issue.ticker.clone(),
             issue.title.clone(),
@@ -185,7 +191,14 @@ impl Runtime {
             issue.dust_limit,
         )?;
 
-        // TODO: Save asset and genesis by sending a message to stashd
+        let data = stash::Command::AddGenesis(genesis).encode()?;
+        self.stash_rpc.send_raw_message(data.borrow())?;
+        let raw = self.stash_rpc.recv_raw_message()?;
+        if let Reply::Failure(failmsg) = &*self.reply_unmarshaller.unmarshall(&raw)? {
+            error!("Failed saving genesis data: {}", failmsg);
+            Err(ServiceErrorDomain::Storage)?
+        }
+
         self.cacher.add_asset(asset)?;
 
         // TODO: Send push request to client informing about cache update

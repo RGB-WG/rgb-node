@@ -19,5 +19,5 @@ pub(self) mod index;
 pub(self) mod storage;
 
 pub use config::{Config, Opts};
-pub(self) use rpc::Command;
+pub use rpc::Command;
 pub use runtime::Runtime;
