@@ -1,21 +1,21 @@
-use std::os::raw::{c_char, c_void};
-use std::ffi::{CStr, CString};
 use std::any::TypeId;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::convert::{TryFrom, TryInto};
+use std::ffi::{CStr, CString};
 use std::hash::{Hash, Hasher};
-use std::convert::{TryInto, TryFrom};
+use std::os::raw::{c_char, c_void};
 
 use serde::Deserialize;
 
 use rgb::lnpbp::bp;
+use rgb::lnpbp::lnp::transport::zmq::{SocketLocator, UrlError};
 use rgb::lnpbp::rgb::Amount;
-use rgb::lnpbp::lnp::transport::zmq::{UrlError, SocketLocator};
 
-use rgb::i9n::*;
 use rgb::fungible::{IssueStructure, Outcoins};
-use rgb::util::SealSpec;
+use rgb::i9n::*;
 use rgb::rgbd::ContractName;
+use rgb::util::SealSpec;
 
 trait CReturnType: Sized + 'static {
     fn from_opaque(other: &COpaqueStruct) -> Result<&mut Self, String> {
@@ -69,7 +69,10 @@ pub struct CErrorDetails {
 fn string_to_ptr(other: String) -> *const c_char {
     let cstr = match CString::new(other) {
         Ok(cstr) => cstr,
-        Err(_) => CString::new(String::from("Error converting string: contains a null-char")).unwrap(),
+        Err(_) => CString::new(String::from(
+            "Error converting string: contains a null-char",
+        ))
+        .unwrap(),
     };
 
     cstr.into_raw()
@@ -77,10 +80,12 @@ fn string_to_ptr(other: String) -> *const c_char {
 
 fn ptr_to_string(ptr: *mut c_char) -> Result<String, String> {
     unsafe {
-        CStr::from_ptr(ptr).to_str().map(|s| s.into()).map_err(|e| format!("{:?}", e))
+        CStr::from_ptr(ptr)
+            .to_str()
+            .map(|s| s.into())
+            .map_err(|e| format!("{:?}", e))
     }
 }
-
 
 #[repr(C)]
 pub enum CResultValue {
@@ -98,12 +103,18 @@ impl<T: 'static, E> From<Result<T, E>> for CResult
 where
     E: std::fmt::Debug,
 {
-	fn from(other: Result<T, E>) -> Self {
+    fn from(other: Result<T, E>) -> Self {
         match other {
-            Ok(d) => CResult { result: CResultValue::Ok, inner: COpaqueStruct::new(d) },
-            Err(e) => CResult { result: CResultValue::Err, inner: COpaqueStruct::raw(string_to_ptr(format!("{:?}", e))) },
+            Ok(d) => CResult {
+                result: CResultValue::Ok,
+                inner: COpaqueStruct::new(d),
+            },
+            Err(e) => CResult {
+                result: CResultValue::Err,
+                inner: COpaqueStruct::raw(string_to_ptr(format!("{:?}", e))),
+            },
         }
-	}
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -116,14 +127,17 @@ struct StartRgbArgs {
 }
 
 fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
-    let config: StartRgbArgs = serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
+    let config: StartRgbArgs =
+        serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
     let config = Config {
         network: config.network,
         stash_endpoint: config.stash_endpoint,
-        contract_endpoints: config.contract_endpoints.into_iter().map(|(k, v)| -> Result<_, UrlError> {
-            Ok((k, v.parse()?))
-        }).collect::<Result<_, _>>()
-        .map_err(|e| format!("{:?}", e))?,
+        contract_endpoints: config
+            .contract_endpoints
+            .into_iter()
+            .map(|(k, v)| -> Result<_, UrlError> { Ok((k, v.parse()?)) })
+            .collect::<Result<_, _>>()
+            .map_err(|e| format!("{:?}", e))?,
     };
 
     Runtime::init(config).map_err(|e| format!("{:?}", e))
@@ -156,20 +170,23 @@ struct IssueArgs {
 
 fn _issue(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
     let runtime = Runtime::from_opaque(runtime)?;
-    let data: IssueArgs = serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
+    let data: IssueArgs =
+        serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
     println!("{:?}", data);
 
-    runtime.issue(
-        data.network,
-        data.ticker,
-        data.name,
-        data.description,
-        data.issue_structure,
-        data.allocations,
-        data.precision,
-        data.prune_seals,
-        data.dust_limit,
-    ).map_err(|e| format!("{:?}", e))
+    runtime
+        .issue(
+            data.network,
+            data.ticker,
+            data.name,
+            data.description,
+            data.issue_structure,
+            data.allocations,
+            data.precision,
+            data.prune_seals,
+            data.dust_limit,
+        )
+        .map_err(|e| format!("{:?}", e))
 }
 
 #[no_mangle]
