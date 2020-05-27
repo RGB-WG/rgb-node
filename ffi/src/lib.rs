@@ -2,6 +2,7 @@ use std::os::raw::{c_char, c_void};
 use std::ffi::{CStr, CString};
 use std::any::TypeId;
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::convert::{TryInto, TryFrom};
 
@@ -9,10 +10,12 @@ use serde::Deserialize;
 
 use rgb::lnpbp::bp;
 use rgb::lnpbp::rgb::Amount;
+use rgb::lnpbp::lnp::transport::zmq::{UrlError, SocketLocator};
 
 use rgb::i9n::*;
 use rgb::fungible::{IssueStructure, Outcoins};
 use rgb::util::SealSpec;
+use rgb::rgbd::ContractName;
 
 trait CReturnType: Sized + 'static {
     fn from_opaque(other: &COpaqueStruct) -> Result<&mut Self, String> {
@@ -103,11 +106,34 @@ where
 	}
 }
 
+#[derive(Debug, Deserialize)]
+struct StartRgbArgs {
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    network: bp::Network,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    stash_endpoint: SocketLocator,
+    contract_endpoints: HashMap<ContractName, String>,
+}
+
+fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
+    let config: StartRgbArgs = serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
+    let config = Config {
+        network: config.network,
+        stash_endpoint: config.stash_endpoint,
+        contract_endpoints: config.contract_endpoints.into_iter().map(|(k, v)| -> Result<_, UrlError> {
+            Ok((k, v.parse()?))
+        }).collect::<Result<_, _>>()
+        .map_err(|e| format!("{:?}", e))?,
+    };
+
+    Runtime::init(config).map_err(|e| format!("{:?}", e))
+}
+
 #[no_mangle]
-pub extern "C" fn start_rgb() -> CResult {
+pub extern "C" fn start_rgb(json: *mut c_char) -> CResult {
     println!("Starting RGB...");
 
-    Runtime::init(Config::default()).into()
+    _start_rgb(json).into()
 }
 
 #[derive(Debug, Deserialize)]

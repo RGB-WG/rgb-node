@@ -16,6 +16,8 @@ use clap::Clap;
 use lnpbp::bp;
 use std::path::PathBuf;
 
+use serde::Deserialize;
+
 use crate::constants::*;
 
 #[derive(Clap)]
@@ -57,7 +59,7 @@ pub struct Opts {
     pub network: bp::Network,
 }
 
-#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
+#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Deserialize)]
 #[display_from(Debug)]
 #[repr(u8)]
 #[non_exhaustive]
