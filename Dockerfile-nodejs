@@ -1,0 +1,52 @@
+FROM rustlang/rust:nightly-slim as builder
+
+COPY . /rgb-node
+
+RUN apt-get update -y \
+    && apt-get install -y \
+        python3 \
+        pkg-config \
+        make \
+        perl \
+        g++ \
+        git \
+        wget \
+        libssl-dev \
+        libzmq3-dev \
+        libpcre3-dev \
+        libpq-dev
+
+RUN wget https://freefr.dl.sourceforge.net/project/swig/swig/swig-4.0.1/swig-4.0.1.tar.gz && \
+    tar xf swig-*.tar.gz && \
+    cd swig-* && \
+    ./configure && make -j12 && \
+    make install
+
+RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+    . $HOME/.nvm/nvm.sh && \
+    nvm install v10 --lts && \
+    nvm alias default v10
+
+WORKDIR /rgb-node/ffi/nodejs
+
+RUN . $HOME/.nvm/nvm.sh && npm install --unsafe-perm
+
+
+
+FROM node:10-buster-slim
+
+RUN apt-get update -y \
+    && apt-get install -y \
+        libzmq5 \
+        libssl1.1 \
+        libpq5 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN mkdir -pv /rgb-node/target/debug/
+RUN mkdir -pv /rgb-node/ffi/nodejs/
+
+COPY --from=builder /rgb-node/ffi/nodejs/build/Release/rgb_node.node /rgb-node
+COPY --from=builder /rgb-node/target/debug/libffi.so /rgb-node/target/debug/
+
+WORKDIR /rgb-node/
