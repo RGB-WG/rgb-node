@@ -1,6 +1,14 @@
 const ex = require('./build/Release/rgb_node');
 
-ex.start_rgb()
+const config = {
+    network: "bitcoin",
+    stash_endpoint: "ipc:{data_dir}/{network}/stashd.rpc",
+    contract_endpoints: {
+        Fungible: "ipc:{data_dir}/{network}/fungibled.rpc"
+    }
+};
+
+ex.start_rgb(JSON.stringify(config))
     .then(r => ex.issue(r, JSON.stringify({
         network: "bitcoin", 
         ticker: "USDT",
