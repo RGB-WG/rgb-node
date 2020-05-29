@@ -6,6 +6,8 @@ use std::ffi::{CStr, CString};
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_void};
 
+use log::info;
+
 use serde::Deserialize;
 
 use rgb::lnpbp::bp;
@@ -145,7 +147,13 @@ fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
 
 #[no_mangle]
 pub extern "C" fn start_rgb(json: *mut c_char) -> CResult {
-    println!("Starting RGB...");
+    if cfg!(target_os = "android") {
+        android_logger::init_once(
+            android_logger::Config::default().with_min_level(log::Level::Debug),
+        );
+    }
+
+    info!("Starting RGB...");
 
     _start_rgb(json).into()
 }
@@ -172,7 +180,7 @@ fn _issue(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
     let runtime = Runtime::from_opaque(runtime)?;
     let data: IssueArgs =
         serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
-    println!("{:?}", data);
+    info!("{:?}", data);
 
     runtime
         .issue(
