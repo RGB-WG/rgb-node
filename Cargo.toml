@@ -32,7 +32,7 @@ tiny_http = "~0.6"
 prometheus = "~0.8"
 derive_wrapper = "~0.1"
 # TODO: Move this dependency to LNP/BP core library
-lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git" }
+lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git", branch = "comment-systemtime-check" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
