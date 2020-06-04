@@ -13,20 +13,17 @@
 
 use clap::derive::Clap;
 use log::*;
-use std::env;
-
-use lnpbp::TryService;
+// use std::env;
 
 use rgb::error::BootstrapError;
-use rgb::stash::{Config, Opts, Runtime};
+use rgb::stash::{Opts, main_with_opts};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
     // TODO: Parse config file as well
     let opts: Opts = Opts::parse();
-    let config: Config = opts.into();
 
-    if env::var("RUST_LOG").is_err() {
+    /* if env::var("RUST_LOG").is_err() {
         env::set_var(
             "RUST_LOG",
             match config.verbose {
@@ -38,12 +35,9 @@ async fn main() -> Result<(), BootstrapError> {
                 _ => "trace",
             },
         );
-    }
+    } */
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    let mut context = zmq::Context::new();
-    let runtime = Runtime::init(config, &mut context)?;
-    runtime.run_or_panic("Stashd runtime").await;
-    Ok(())
+    main_with_opts(opts).await
 }

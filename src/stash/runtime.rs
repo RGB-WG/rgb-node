@@ -163,3 +163,12 @@ impl Runtime {
         Ok(())
     }
 }
+
+pub async fn main_with_opts(opts: super::Opts) -> Result<(), BootstrapError> {
+    let config: Config = opts.into();
+
+    let mut context = zmq::Context::new();
+    let runtime = Runtime::init(config, &mut context)?;
+    runtime.run_or_panic("Stashd runtime").await;
+    Ok(())
+}
