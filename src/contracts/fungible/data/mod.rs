@@ -16,5 +16,5 @@ mod outcoins;
 pub mod schema;
 
 pub use asset::*;
-pub use outcoins::Outcoins;
+pub use outcoins::{Outcoincealed, Outcoins};
 pub use schema::SchemaError;

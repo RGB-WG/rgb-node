@@ -14,20 +14,21 @@
 use clap::Clap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
 
 use bitcoin::consensus::encode::{Decodable, Encodable};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::util::psbt::PartiallySignedTransaction;
-use bitcoin::TxIn;
+use bitcoin::{OutPoint, TxIn};
 
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
 
-use crate::fungible::Outcoins;
+use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
 
 #[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]
@@ -103,32 +104,42 @@ impl StrictDecode for Issue {
 #[derive(Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
 pub struct TransferApi {
+    /// Asset contract id
+    pub contract_id: ContractId,
+
     /// Base layer transaction structure to use
     pub psbt: PartiallySignedTransaction,
 
-    /// Allocates other assets to custom outputs
-    pub allocate: Vec<Outcoins>,
+    /// Asset input: unspent transaction outputs
+    pub inputs: Vec<OutPoint>,
 
-    /// Amount
-    pub amount: Amount,
+    /// Asset change allocations
+    ///
+    /// Here we always know an explicit outpoint that will contain the assets
+    pub ours: Vec<Outcoins>,
 
-    /// Assets
-    pub contract_id: ContractId,
+    /// Receiver's allocations.
+    ///
+    /// They are kept separate from change allocations since here we do not
+    /// know the actual seals and only know hashes derived from seal data and
+    /// blinding entropy.
+    pub theirs: Vec<Outcoincealed>,
 
-    /// Receiver
-    pub receiver: bp::blind::OutpointHash,
+    /// Optional change output: the rest of assets will be allocated here
+    pub change: Option<OutPoint>,
 }
 
 impl StrictEncode for TransferApi {
     type Error = Error;
 
     fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
-        self.psbt.consensus_encode(&mut e)?;
-        Ok(strict_encode_list!(e;
-            self.allocate,
-            self.amount,
+        let mut len = self.psbt.consensus_encode(&mut e)?;
+        Ok(strict_encode_list!(e; len;
             self.contract_id,
-            self.receiver
+            self.inputs,
+            self.ours,
+            self.theirs,
+            self.change
         ))
     }
 }
@@ -140,10 +151,11 @@ impl StrictDecode for TransferApi {
         let psbt = PartiallySignedTransaction::consensus_decode(&mut d)?;
         Ok(Self {
             psbt,
-            allocate: Vec::<Outcoins>::strict_decode(&mut d)?,
-            amount: Amount::strict_decode(&mut d)?,
             contract_id: ContractId::strict_decode(&mut d)?,
-            receiver: bp::blind::OutpointHash::strict_decode(&mut d)?,
+            inputs: Vec::<OutPoint>::strict_decode(&mut d)?,
+            ours: Vec::<Outcoins>::strict_decode(&mut d)?,
+            theirs: Vec::<Outcoincealed>::strict_decode(&mut d)?,
+            change: Option::<OutPoint>::strict_decode(&mut d)?,
         })
     }
 }

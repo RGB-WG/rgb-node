@@ -19,7 +19,7 @@ use std::{fs, io};
 use bitcoin::consensus::Decodable;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
-use bitcoin::{Transaction, TxIn, TxOut};
+use bitcoin::{OutPoint, Transaction, TxIn, TxOut};
 
 use lnpbp::bitcoin;
 use lnpbp::bp;
@@ -29,7 +29,7 @@ use lnpbp::strict_encoding::strict_encode;
 use super::{Error, Runtime};
 use crate::api::fungible::{Issue, TransferApi};
 use crate::error::ServiceErrorDomain;
-use crate::fungible::{IssueStructure, Outcoins};
+use crate::fungible::{IssueStructure, Outcoincealed, Outcoins};
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -55,15 +55,20 @@ pub struct TransferCli {
     #[clap(short, long)]
     pub psbt: Option<PathBuf>,
 
+    /// Asset inputs
+    #[clap(short = "i", long, min_values = 1)]
+    pub inputs: Vec<OutPoint>,
+
     /// Adds output(s) to generated witness transaction
-    #[clap(short = "i", long)]
+    #[clap(long)]
     pub txout: Vec<Output>,
 
     /// Adds input(s) to generated witness transaction
-    #[clap(short = "o", long)]
+    #[clap(long)]
     pub txin: Vec<Input>,
 
-    /// Allocates other assets to custom outputs
+    /// Adds additional asset allocations; MUST use transaction inputs
+    /// controlled by the local party
     #[clap(short, long)]
     pub allocate: Vec<Outcoins>,
 
@@ -76,7 +81,7 @@ pub struct TransferCli {
     pub consignment: Option<PathBuf>,
 
     /// Amount
-    pub amount: Amount,
+    pub amount: f32,
 
     /// Assets
     #[clap(parse(try_from_str=ContractId::from_hex))]
@@ -85,6 +90,9 @@ pub struct TransferCli {
     /// Receiver
     #[clap(parse(try_from_str=bp::blind::OutpointHash::from_hex))]
     pub receiver: bp::blind::OutpointHash,
+
+    /// Change output
+    pub change: Option<OutPoint>,
     // / Invoice to pay
     //pub invoice: fungible::Invoice,
 }
@@ -174,10 +182,14 @@ impl TransferCli {
         };
         let api = TransferApi {
             psbt,
-            allocate: self.allocate,
-            amount: self.amount,
             contract_id: self.contract_id,
-            receiver: self.receiver,
+            inputs: self.inputs,
+            ours: self.allocate,
+            theirs: vec![Outcoincealed {
+                coins: self.amount,
+                seal_confidential: self.receiver,
+            }],
+            change: self.change,
         };
 
         let reply = runtime.transfer(api)?;

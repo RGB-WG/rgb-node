@@ -213,14 +213,19 @@ impl Runtime {
     async fn rpc_transfer(&mut self, transfer: &TransferApi) -> Result<(), ServiceErrorDomain> {
         debug!("Got TRANSFER {}", transfer);
 
+        // TODO: Check inputs that they really exist and have sufficient amount of
+        //       asset for the transfer operation
+
+        let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
         let mut psbt = transfer.psbt.clone();
         let consignment = self.processor.transfer(
+            &mut asset,
             &mut psbt,
-            transfer.allocate.clone(),
-            transfer.amount,
-            transfer.contract_id,
-            transfer.receiver,
+            transfer.inputs.clone(),
+            transfer.ours.clone(),
+            transfer.theirs.clone(),
         )?;
+        self.cacher.add_asset(asset)?;
 
         // TODO: Save consignment, send push request etc
 

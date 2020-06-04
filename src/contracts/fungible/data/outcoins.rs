@@ -19,6 +19,7 @@ use std::io;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::Txid;
 
+use bp::blind::OutpointHash;
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::SealDefinition;
@@ -32,6 +33,13 @@ pub struct Outcoins {
     pub coins: f32,
     pub vout: u16,
     pub txid: Option<Txid>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
+#[display_from(Debug)]
+pub struct Outcoincealed {
+    pub coins: f32,
+    pub seal_confidential: OutpointHash,
 }
 
 impl Outcoins {
@@ -73,6 +81,25 @@ impl StrictDecode for Outcoins {
     }
 }
 
+impl StrictEncode for Outcoincealed {
+    type Error = strict_encoding::Error;
+
+    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
+        Ok(strict_encode_list!(e; self.coins, self.seal_confidential))
+    }
+}
+
+impl StrictDecode for Outcoincealed {
+    type Error = strict_encoding::Error;
+
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
+        Ok(Self {
+            coins: f32::strict_decode(&mut d)?,
+            seal_confidential: OutpointHash::strict_decode(&mut d)?,
+        })
+    }
+}
+
 impl FromStr for Outcoins {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -97,6 +124,31 @@ impl FromStr for Outcoins {
                     coins: amount.as_str().parse()?,
                     vout: vout.as_str().parse()?,
                     txid: None,
+                }),
+                _ => Err(ParseError),
+            }
+        } else {
+            Err(ParseError)
+        }
+    }
+}
+
+impl FromStr for Outcoincealed {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let re = Regex::new(
+            r"(?x)
+                ^(?P<coins>[\d.,_']+) # float amount
+                @
+                ((?P<seal>[a-f\d]{64}))$ # Confidential seal: outpoint hash
+            ",
+        )
+        .expect("Regex parse failure");
+        if let Some(m) = re.captures(&s.to_ascii_lowercase()) {
+            match (m.name("coins"), m.name("seal")) {
+                (Some(amount), Some(seal)) => Ok(Self {
+                    coins: amount.as_str().parse()?,
+                    seal_confidential: OutpointHash::from_hex(seal.as_str())?,
                 }),
                 _ => Err(ParseError),
             }

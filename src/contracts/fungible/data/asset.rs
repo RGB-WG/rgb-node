@@ -14,9 +14,10 @@
 use chrono::NaiveDateTime;
 use core::convert::TryFrom;
 use serde::{Deserialize, Serialize};
-use std::collections::LinkedList;
+use std::collections::{BTreeMap, LinkedList};
 
 use bitcoin::secp256k1;
+use bitcoin::OutPoint;
 use lnpbp::bitcoin;
 
 use lnpbp::bp;
@@ -25,6 +26,8 @@ use lnpbp::rgb::prelude::*;
 
 use super::schema::{AssignmentsType, FieldType};
 use super::{schema, SchemaError};
+use lnpbp::rgb::prelude::amount::Revealed;
+use std::collections::btree_map::Entry;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
 #[display_from(Display)]
@@ -92,7 +95,7 @@ pub struct Asset {
     date: NaiveDateTime,
     unspent_issue_txo: Option<bitcoin::OutPoint>,
     known_issues: Vec<LinkedList<Issue>>,
-    known_allocations: Vec<Allocation>,
+    known_allocations: BTreeMap<bitcoin::OutPoint, Vec<amount::Revealed>>,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
@@ -109,42 +112,6 @@ pub struct Issue {
     /// A point that has to be monitored to detect next issuance
     pub txo: Option<bitcoin::OutPoint>,
     pub supply: Coins,
-}
-
-/*
-wrapper!(
-    Allocations,
-    Vec<Allocation>,
-    doc = "Allocation of coins to seal definitions",
-    derive = [PartialEq]
-);
-*/
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
-#[display_from(Debug)]
-pub struct Allocation {
-    pub value: Coins,
-    pub seal: bitcoin::OutPoint,
-    pub payment: Option<Payment>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
-#[display_from(Debug)]
-pub struct Payment {
-    pub date: NaiveDateTime,
-    pub payer: Payer,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Display)]
-#[display_from(Debug)]
-#[non_exhaustive]
-pub enum Payer {
-    Genesis(ContractId),
-    BitcoinPubkey(bitcoin::PublicKey),
-    BitcoinMultisig(Vec<bitcoin::PublicKey>, u8),
-    BitcoinScript(Miniscript<bitcoin::PublicKey>),
-    Tapscript(Miniscript<bitcoin::PublicKey>),
-    LightningNode(secp256k1::PublicKey),
 }
 
 impl Asset {
@@ -198,6 +165,11 @@ impl Asset {
     pub fn date(&self) -> NaiveDateTime {
         self.date
     }
+
+    #[inline]
+    pub fn allocations(&self, seal: &bitcoin::OutPoint) -> Option<&Vec<amount::Revealed>> {
+        self.known_allocations.get(seal)
+    }
 }
 
 impl TryFrom<Genesis> for Asset {
@@ -244,30 +216,23 @@ impl TryFrom<Genesis> for Asset {
             known_allocations: genesis
                 .assignments()
                 .get(&-AssignmentsType::Assets)
-                .iter()
-                .filter_map(|variant| match variant {
-                    AssignmentsVariant::Homomorphic(0, tree) => Some(
-                        tree.iter()
-                            .filter_map(|assign| match assign {
-                                Assignment::Revealed {
-                                    seal_definition: seal::Revealed::TxOutpoint(outpoint),
-                                    assigned_state,
-                                } => Some(Allocation {
-                                    value: Coins::with_sats_precision(
-                                        assigned_state.amount,
-                                        fractional_bits,
-                                    ),
-                                    seal: outpoint.clone().into(),
-                                    payment: None,
-                                }),
-                                _ => None,
-                            })
-                            .collect::<Vec<Allocation>>(),
-                    ),
-                    _ => None,
-                })
-                .flatten()
-                .collect(),
+                .into_iter()
+                .fold(Default::default(), |mut data, variant| {
+                    if let AssignmentsVariant::Homomorphic(tree) = variant {
+                        tree.iter().for_each(|assign| {
+                            if let Assignment::Revealed {
+                                seal_definition: seal::Revealed::TxOutpoint(outpoint_reveal),
+                                assigned_state,
+                            } = assign
+                            {
+                                data.entry(outpoint_reveal.clone().into())
+                                    .or_insert(vec![])
+                                    .push(assigned_state.clone())
+                            }
+                        });
+                    }
+                    data
+                }),
         })
     }
 }
