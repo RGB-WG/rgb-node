@@ -12,8 +12,10 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod config;
+mod error;
 pub mod fungible;
 mod runtime;
 
 pub use config::{Config, Opts};
+pub use error::Error;
 pub use runtime::Runtime;

@@ -22,7 +22,10 @@ use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::{Command, Config, Processor};
-use crate::api::{fungible::Issue, Reply};
+use crate::api::{
+    fungible::{Issue, TransferApi},
+    Reply,
+};
 use crate::error::{
     ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
     ServiceErrorSource,
@@ -158,6 +161,7 @@ impl Runtime {
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
             Command::Issue(issue) => self.rpc_issue(issue).await,
+            Command::Transfer(transfer) => self.rpc_transfer(transfer).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))
@@ -202,6 +206,23 @@ impl Runtime {
         self.cacher.add_asset(asset)?;
 
         // TODO: Send push request to client informing about cache update
+
+        Ok(())
+    }
+
+    async fn rpc_transfer(&mut self, transfer: &TransferApi) -> Result<(), ServiceErrorDomain> {
+        debug!("Got TRANSFER {}", transfer);
+
+        let mut psbt = transfer.psbt.clone();
+        let consignment = self.processor.transfer(
+            &mut psbt,
+            transfer.allocate.clone(),
+            transfer.amount,
+            transfer.contract_id,
+            transfer.receiver,
+        )?;
+
+        // TODO: Save consignment, send push request etc
 
         Ok(())
     }

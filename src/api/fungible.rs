@@ -17,7 +17,9 @@ use serde::{Deserialize, Serialize};
 use std::io;
 use std::path::PathBuf;
 
+use bitcoin::consensus::encode::{Decodable, Encodable};
 use bitcoin::hashes::hex::FromHex;
+use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::TxIn;
 
 use lnpbp::bitcoin;
@@ -98,45 +100,52 @@ impl StrictDecode for Issue {
     }
 }
 
-#[derive(Clap, Clone, PartialEq, Debug, Display)]
+#[derive(Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
-pub struct Transfer {
-    /// Use custom commitment output for generated witness transaction
-    #[clap(long)]
-    pub commit_txout: Option<Output>,
-
-    /// Adds output(s) to generated witness transaction
-    #[clap(long)]
-    pub txout: Vec<Output>,
-
-    /// Adds input(s) to generated witness transaction
-    #[clap(long)]
-    pub txin: Vec<Input>,
+pub struct TransferApi {
+    /// Base layer transaction structure to use
+    pub psbt: PartiallySignedTransaction,
 
     /// Allocates other assets to custom outputs
-    #[clap(short, long)]
     pub allocate: Vec<Outcoins>,
-
-    /// Saves witness transaction to a file instead of publishing it
-    #[clap(short, long)]
-    pub transaction: Option<PathBuf>,
-
-    /// Saves proof data to a file instead of sending it to the remote party
-    #[clap(short, long)]
-    pub proof: Option<PathBuf>,
 
     /// Amount
     pub amount: Amount,
 
     /// Assets
-    #[clap(parse(try_from_str=ContractId::from_hex))]
     pub contract_id: ContractId,
 
     /// Receiver
-    #[clap(parse(try_from_str=bp::blind::OutpointHash::from_hex))]
     pub receiver: bp::blind::OutpointHash,
-    // / Invoice to pay
-    //pub invoice: fungible::Invoice,
+}
+
+impl StrictEncode for TransferApi {
+    type Error = Error;
+
+    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
+        self.psbt.consensus_encode(&mut e)?;
+        Ok(strict_encode_list!(e;
+            self.allocate,
+            self.amount,
+            self.contract_id,
+            self.receiver
+        ))
+    }
+}
+
+impl StrictDecode for TransferApi {
+    type Error = Error;
+
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
+        let psbt = PartiallySignedTransaction::consensus_decode(&mut d)?;
+        Ok(Self {
+            psbt,
+            allocate: Vec::<Outcoins>::strict_decode(&mut d)?,
+            amount: Amount::strict_decode(&mut d)?,
+            contract_id: ContractId::strict_decode(&mut d)?,
+            receiver: bp::blind::OutpointHash::strict_decode(&mut d)?,
+        })
+    }
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {
@@ -152,43 +161,3 @@ fn ticker_validator(name: &str) -> Result<(), String> {
         Ok(())
     }
 }
-
-// Helper data structures
-
-mod helpers {
-    use super::*;
-    use core::str::FromStr;
-
-    /// Defines information required to generate bitcoin transaction output from
-    /// command-line argument
-    #[derive(Clone, PartialEq, Debug, Display)]
-    #[display_from(Debug)]
-    pub struct Output {
-        pub amount: bitcoin::Amount,
-        pub lock: bp::LockScript,
-    }
-
-    impl FromStr for Output {
-        type Err = String;
-        fn from_str(_s: &str) -> Result<Self, Self::Err> {
-            unimplemented!()
-        }
-    }
-
-    /// Defines information required to generate bitcoin transaction input from
-    /// command-line argument
-    #[derive(Clone, PartialEq, Debug, Display)]
-    #[display_from(Debug)]
-    pub struct Input {
-        pub txin: TxIn,
-        pub unlock: bp::LockScript,
-    }
-
-    impl FromStr for Input {
-        type Err = String;
-        fn from_str(_s: &str) -> Result<Self, Self::Err> {
-            unimplemented!()
-        }
-    }
-}
-pub use helpers::*;

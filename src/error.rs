@@ -125,6 +125,7 @@ pub enum RoutedError {
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum ServiceErrorDomain {
+    #[derive_from(::std::io::Error)]
     Io,
     Storage,
     Index,

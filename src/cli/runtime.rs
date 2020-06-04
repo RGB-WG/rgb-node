@@ -12,14 +12,15 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::io;
+use std::sync::Arc;
 
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::Genesis;
 
-use super::Config;
-use crate::api::fungible::Issue;
+use super::{Config, Error};
+use crate::api::fungible::{Issue, TransferApi};
 use crate::api::Reply;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::fungible::{Asset, Command};
@@ -48,13 +49,21 @@ impl Runtime {
         })
     }
 
-    pub fn issue(&mut self, issue: Issue) -> Result<(), ServiceErrorDomain> {
-        let command = Command::Issue(issue);
+    fn command(&mut self, command: Command) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.encode()?;
         self.session_rpc.send_raw_message(data)?;
         let raw = self.session_rpc.recv_raw_message()?;
-        let reply = &*self.unmarshaller.unmarshall(&raw)?;
-        info!("{}", reply);
-        Ok(())
+        let reply = self.unmarshaller.unmarshall(&raw)?;
+        Ok(reply)
+    }
+
+    #[inline]
+    pub fn issue(&mut self, issue: Issue) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Command::Issue(issue))?)
+    }
+
+    #[inline]
+    pub fn transfer(&mut self, transfer: TransferApi) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Command::Transfer(transfer))?)
     }
 }

@@ -13,13 +13,23 @@
 
 use bech32::{self, ToBase32};
 use clap::Clap;
+use std::path::PathBuf;
+use std::{fs, io};
 
+use bitcoin::consensus::Decodable;
+use bitcoin::hashes::hex::FromHex;
+use bitcoin::util::psbt::{self, PartiallySignedTransaction};
+use bitcoin::{Transaction, TxIn, TxOut};
+
+use lnpbp::bitcoin;
+use lnpbp::bp;
+use lnpbp::rgb::prelude::*;
 use lnpbp::strict_encoding::strict_encode;
 
-use super::Runtime;
-use crate::api::fungible::{Issue, Transfer};
+use super::{Error, Runtime};
+use crate::api::fungible::{Issue, TransferApi};
 use crate::error::ServiceErrorDomain;
-use crate::fungible::IssueStructure;
+use crate::fungible::{IssueStructure, Outcoins};
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -31,11 +41,56 @@ pub enum Command {
     Issue(Issue),
 
     /// Transfers some asset to another party
-    Transfer(Transfer),
+    Transfer(TransferCli),
+}
+
+#[derive(Clap, Clone, PartialEq, Debug, Display)]
+#[display_from(Debug)]
+pub struct TransferCli {
+    /// Use custom commitment output for generated witness transaction
+    #[clap(long)]
+    pub commit_txout: Option<Output>,
+
+    /// Read pastially-signed transaction prototype
+    #[clap(short, long)]
+    pub psbt: Option<PathBuf>,
+
+    /// Adds output(s) to generated witness transaction
+    #[clap(short = "i", long)]
+    pub txout: Vec<Output>,
+
+    /// Adds input(s) to generated witness transaction
+    #[clap(short = "o", long)]
+    pub txin: Vec<Input>,
+
+    /// Allocates other assets to custom outputs
+    #[clap(short, long)]
+    pub allocate: Vec<Outcoins>,
+
+    /// Saves witness transaction to a file instead of publishing it
+    #[clap(short, long)]
+    pub transaction: Option<PathBuf>,
+
+    /// Saves consignment data to a file
+    #[clap(long)]
+    pub consignment: Option<PathBuf>,
+
+    /// Amount
+    pub amount: Amount,
+
+    /// Assets
+    #[clap(parse(try_from_str=ContractId::from_hex))]
+    pub contract_id: ContractId,
+
+    /// Receiver
+    #[clap(parse(try_from_str=bp::blind::OutpointHash::from_hex))]
+    pub receiver: bp::blind::OutpointHash,
+    // / Invoice to pay
+    //pub invoice: fungible::Invoice,
 }
 
 impl Command {
-    pub fn exec(self, runtime: Runtime) -> Result<(), ServiceErrorDomain> {
+    pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
             Command::List => {
                 println!("\nKnown assets:\n\n");
@@ -43,17 +98,18 @@ impl Command {
                 Ok(())
             }
             Command::Issue(issue) => issue.exec(runtime),
-            Command::Transfer(_) => unimplemented!(),
+            Command::Transfer(transfer) => transfer.exec(runtime),
         }
     }
 }
 
 impl Issue {
-    pub fn exec(self, mut runtime: Runtime) -> Result<(), ServiceErrorDomain> {
+    pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
         info!("Issuing asset ...");
         debug!("{}", self.clone());
 
-        runtime.issue(self)?;
+        let reply = runtime.issue(self)?;
+        info!("Reply: {}", reply);
         // TODO: Wait for the information from push notification
 
         /*let (asset, genesis) = debug!("Asset information:\n {}\n", asset);
@@ -73,3 +129,102 @@ impl Issue {
         Ok(())
     }
 }
+
+impl TransferCli {
+    pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
+        info!("Transferring asset ...");
+        debug!("{}", self.clone());
+
+        let mut psbt = match self.psbt {
+            Some(filename) => {
+                debug!(
+                    "Reading partially-signed transaction from file {:?}",
+                    filename
+                );
+                let filepath = format!("{:?}", filename.clone());
+                let mut file = fs::File::open(filename)
+                    .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
+                let psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
+                    Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))
+                })?;
+                trace!("{:?}", psbt);
+                psbt
+            }
+            None => {
+                debug!("Generating transaction from arguments");
+                let tx = Transaction {
+                    version: 2,
+                    lock_time: 0,
+                    input: vec![],
+                    output: vec![],
+                };
+                // TODO: Add addition of custom tx inputs and outputs from
+                //       command-line arguments
+                let psbt = PartiallySignedTransaction {
+                    global: psbt::Global {
+                        unsigned_tx: tx,
+                        unknown: Default::default(),
+                    },
+                    inputs: vec![],
+                    outputs: vec![],
+                };
+                trace!("{:?}", psbt);
+                psbt
+            }
+        };
+        let api = TransferApi {
+            psbt,
+            allocate: self.allocate,
+            amount: self.amount,
+            contract_id: self.contract_id,
+            receiver: self.receiver,
+        };
+
+        let reply = runtime.transfer(api)?;
+        info!("Reply: {}", reply);
+
+        // TODO: Wait for the information from push notification
+
+        Ok(())
+    }
+}
+
+// Helper data structures
+
+mod helpers {
+    use super::*;
+    use core::str::FromStr;
+
+    /// Defines information required to generate bitcoin transaction output from
+    /// command-line argument
+    #[derive(Clone, PartialEq, Debug, Display)]
+    #[display_from(Debug)]
+    pub struct Output {
+        pub amount: bitcoin::Amount,
+        pub lock: bp::LockScript,
+    }
+
+    impl FromStr for Output {
+        type Err = String;
+        fn from_str(_s: &str) -> Result<Self, Self::Err> {
+            unimplemented!()
+        }
+    }
+
+    /// Defines information required to generate bitcoin transaction input from
+    /// command-line argument
+    #[derive(Clone, PartialEq, Debug, Display)]
+    #[display_from(Debug)]
+    pub struct Input {
+        pub txin: TxIn,
+        pub unlock: bp::LockScript,
+    }
+
+    impl FromStr for Input {
+        type Err = String;
+        fn from_str(_s: &str) -> Result<Self, Self::Err> {
+            unimplemented!()
+        }
+    }
+}
+pub use helpers::*;

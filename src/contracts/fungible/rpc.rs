@@ -20,16 +20,17 @@ use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
 use lnpbp::Wrapper;
 
-use crate::api::fungible::{Issue, Transfer};
+use crate::api::fungible::{Issue, TransferApi};
 
 const TYPE_ISSUE: u16 = 1000;
+const TYPE_TRANSFER: u16 = 1001;
 
 #[derive(Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
 #[non_exhaustive]
 pub enum Command {
     Issue(Issue),
-    Transfer(Transfer),
+    Transfer(TransferApi),
     //Receive(Receive),
 }
 
@@ -65,11 +66,16 @@ impl TypedEnum for Command {
 impl Command {
     pub fn create_unmarshaller() -> Unmarshaller<Self> {
         Unmarshaller::new(bmap! {
-            TYPE_ISSUE => Self::parse_issue as UnmarshallFn<_>
+            TYPE_ISSUE => Self::parse_issue as UnmarshallFn<_>,
+            TYPE_TRANSFER => Self::parse_transfer as UnmarshallFn<_>
         })
     }
 
     fn parse_issue(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
         Ok(Arc::new(Issue::strict_decode(&mut reader)?))
+    }
+
+    fn parse_transfer(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
+        Ok(Arc::new(TransferApi::strict_decode(&mut reader)?))
     }
 }

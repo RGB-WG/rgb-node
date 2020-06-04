@@ -11,12 +11,15 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::api;
+use crate::error::ServiceErrorDomain;
 
-#[derive(Clone, PartialEq, Debug, Display)]
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display_from(Debug)]
-#[non_exhaustive]
-pub enum Request {
-    Issue(api::fungible::Issue),
-    Transfer(api::fungible::TransferApi),
+pub enum Error {
+    InputFileIoError(String),
+
+    InputFileFormatError(String, String),
+
+    #[derive_from]
+    ServiceError(ServiceErrorDomain),
 }

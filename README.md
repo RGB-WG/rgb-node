@@ -19,7 +19,7 @@ Now, to run the node you can execute
 
 If you need NodeJS integration, you have to do the following:
     
-    sudo apt install -y swig
+    sudo apt install -y swig node-gyp
     cd ffi
     cargo build --release
     cd nodejs

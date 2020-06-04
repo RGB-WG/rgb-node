@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use lnpbp::bp;
 use lnpbp::lnp::transport::zmq::SocketLocator;
 
-use super::{fungible, Runtime};
+use super::{fungible, Error, Runtime};
 use crate::constants::*;
 use crate::error::ServiceErrorDomain;
 
@@ -114,7 +114,7 @@ impl Default for Config {
 }
 
 impl Command {
-    pub fn exec(self, runtime: Runtime) -> Result<(), ServiceErrorDomain> {
+    pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
             Command::Fungible { subcommand, .. } => subcommand.exec(runtime),
         }
