@@ -15,4 +15,4 @@ mod config;
 mod runtime;
 
 pub use config::{Config, ContractName, Opts};
-pub use runtime::Runtime;
+pub use runtime::{Runtime, main_with_config};

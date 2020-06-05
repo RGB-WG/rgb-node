@@ -29,10 +29,8 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.loadLibrary("rgb_node");
-
+                final COpaqueStruct runtime = ((DemoApp) getApplication()).runtime;
                 try {
-                    COpaqueStruct runtime = rgb_node.start_rgb("{\"network\":\"testnet\", \"stash_endpoint\":\"ipc:/home/orlovsky/repo/rgb-node/data/testnet/stashd.rpc\", \"contract_endpoints\":{\"Fungible\":\"ipc:/home/orlovsky/repo/rgb-node/data/testnet/fungibled.rpc\"}}");
                     rgb_node.issue(runtime, "{\"network\":\"bitcoin\",\"ticker\":\"USDT\",\"name\":\"USD Tether\",\"issue_structure\":\"SingleIssue\",\"allocations\":[{\"coins\":100,\"vout\":0,\"txid\":\"0313ba7cfcaa66029a1a63918ebc426259f00953016c461663315d1bf6b83ab4\"}],\"precision\":0}");
                 } catch (RuntimeException e) {
                     Log.e("RGB_NODE", e.getMessage());

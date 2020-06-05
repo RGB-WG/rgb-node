@@ -11,13 +11,15 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::thread;
+
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshaller};
 
 use super::Config;
 use crate::api::Reply;
 use crate::error::BootstrapError;
-use crate::rgbd::ContractName;
+use crate::rgbd::{self, ContractName};
 
 pub struct Runtime {
     pub(super) config: Config,
@@ -28,6 +30,25 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError> {
+        // Start rgbd on a separate thread
+        if config.threaded {
+            let rgbd_opts = rgbd::Opts {
+                verbose: 5,
+                bin_dir: String::new(),
+                data_dir: config.datadir.clone(),
+                contracts: config.contract_endpoints.iter().map(|(k, v)| k.clone()).collect(),
+                network: config.network,
+                threaded: true,
+            };
+
+            thread::spawn(move || {
+                let mut rt = tokio::runtime::Runtime::new().unwrap();
+                rt.block_on(async {
+                    rgbd::main_with_config(rgbd_opts.into()).await.unwrap();
+                });
+            });
+        }
+
         let mut context = zmq::Context::new();
         let session_rpc = Session::new_zmq_unencrypted(
             ApiType::Client,

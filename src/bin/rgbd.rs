@@ -15,10 +15,8 @@ use clap::derive::Clap;
 use log::*;
 use std::env;
 
-use lnpbp::TryService;
-
 use rgb::error::BootstrapError;
-use rgb::rgbd::{Config, Opts, Runtime};
+use rgb::rgbd::{Config, Opts, main_with_config};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
@@ -42,6 +40,5 @@ async fn main() -> Result<(), BootstrapError> {
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    let runtime = Runtime::init(config).await?;
-    runtime.run_or_panic("RGBd runtime").await
+    main_with_config(config).await
 }
