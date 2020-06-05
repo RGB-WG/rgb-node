@@ -15,8 +15,7 @@ use core::ops::Neg;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 
-use lnpbp::rgb;
-use rgb::schema::{
+use lnpbp::rgb::schema::{
     script, Bits, DataFormat, GenesisSchema, HomomorphicFormat, Occurences, Schema, Scripting,
     StateFormat, TransitionSchema,
 };
