@@ -1,5 +1,7 @@
 # RGB Node & SDK
 
+[![TravisCI](https://api.travis-ci.com/LNP-BP/rgb-node.svg?branch=master)](https://api.travis-ci.com/LNP-BP/rgb-node)
+
 This repository contains RGB node source code and SDK for wallet & server-side
 development.
 
