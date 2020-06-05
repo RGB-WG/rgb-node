@@ -9,4 +9,4 @@ Cargo.lock
 .idea
 
 # Temporary directory for debug data storage
-data/
+/data
