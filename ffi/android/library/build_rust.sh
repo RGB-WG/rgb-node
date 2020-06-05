@@ -9,6 +9,7 @@ CC="x86_64-linux-android21-clang" CFLAGS="--sysroot=$NDK_HOME/sysroot -I$NDK_HOM
 CC="armv7a-linux-androideabi21-clang" CFLAGS="--sysroot=$NDK_HOME/sysroot -I$NDK_HOME/sysroot/usr/include -I$NDK_HOME/sysroot/usr/include/arm-linux-androideabi" CXX="armv7a-linux-androideabi21-clang++" CXXFLAGS="$CFLAGS -nostdlib++ -I$NDK_HOME/sources/cxx-stl/llvm-libc++/include" LDFLAGS="--sysroot=$NDK_HOME/platforms/android-21/arch-arm -L$NDK_HOME/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a" cargo build --target=armv7-linux-androideabi
 CC="i686-linux-android21-clang" CFLAGS="--sysroot=$NDK_HOME/sysroot -I$NDK_HOME/sysroot/usr/include -I$NDK_HOME/sysroot/usr/include/i686-linux-android" CXX="i686-linux-android21-clang++" CXXFLAGS="$CFLAGS -nostdlib++ -I$NDK_HOME/sources/cxx-stl/llvm-libc++/include" LDFLAGS="--sysroot=$NDK_HOME/platforms/android-21/arch-x86" cargo build --target=i686-linux-android
 
+mkdir -pv library/src/main/java/org/lnpbp/rgbnode
 swig -java -c++ -package "org.lnpbp.rgbnode" -outdir library/src/main/java/org/lnpbp/rgbnode swig.i
 
 mkdir -p library/src/main/jniLibs/arm64-v8a library/src/main/jniLibs/x86_64 library/src/main/jniLibs/armeabi-v7a library/src/main/jniLibs/x86

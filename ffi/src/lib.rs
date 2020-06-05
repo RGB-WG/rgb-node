@@ -126,14 +126,20 @@ struct StartRgbArgs {
     #[serde(with = "serde_with::rust::display_fromstr")]
     stash_endpoint: SocketLocator,
     contract_endpoints: HashMap<ContractName, String>,
+    threaded: bool,
+    datadir: String,
 }
 
 fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
     let config: StartRgbArgs =
         serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
+    info!("Config: {:?}", config);
+
     let config = Config {
         network: config.network,
         stash_endpoint: config.stash_endpoint,
+        threaded: config.threaded,
+        datadir: config.datadir,
         contract_endpoints: config
             .contract_endpoints
             .into_iter()

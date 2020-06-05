@@ -61,7 +61,7 @@ impl Runtime {
             "-v",
             "-v",
             "--data-dir",
-            self.config.data_dir.to_str().expect("Binary path is wrong"),
+            self.config.data_dir.to_str().expect("Datadir path is wrong"),
         ];
 
         if self.config.threaded {
@@ -157,4 +157,9 @@ impl TryService for Runtime {
 
         unreachable!()
     }
+}
+
+pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
+    let runtime = Runtime::init(config).await?;
+    runtime.run_or_panic("RGBd runtime").await
 }
