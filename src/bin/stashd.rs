@@ -13,17 +13,18 @@
 
 use clap::derive::Clap;
 use log::*;
-// use std::env;
+use std::env;
 
 use rgb::error::BootstrapError;
-use rgb::stash::{Opts, main_with_opts};
+use rgb::stash::{Opts, Config, main_with_config};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
     // TODO: Parse config file as well
     let opts: Opts = Opts::parse();
+    let config: Config = opts.into();
 
-    /* if env::var("RUST_LOG").is_err() {
+    if env::var("RUST_LOG").is_err() {
         env::set_var(
             "RUST_LOG",
             match config.verbose {
@@ -35,9 +36,9 @@ async fn main() -> Result<(), BootstrapError> {
                 _ => "trace",
             },
         );
-    } */
+    }
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    main_with_opts(opts).await
+    main_with_config(config).await
 }

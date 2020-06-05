@@ -21,8 +21,8 @@ use lnpbp::TryService;
 use super::Config;
 use crate::error::{BootstrapError, RuntimeError};
 
-use crate::stash::Opts as StashOpts;
-use crate::stash::main_with_opts as stash_main;
+use crate::stash;
+use crate::contracts::fungible;
 
 pub struct Runtime {
     config: Config,
@@ -33,16 +33,21 @@ impl Runtime {
         Ok(Self { config })
     }
 
-    fn get_task_for(name: &str, args: &[&str]) -> Result<task::JoinHandle<()>, DaemonError> {
+    fn get_task_for(name: &str, args: &[&str]) -> Result<task::JoinHandle<Result<(), DaemonError>>, DaemonError> {
         match name {
             "stashd" => {
-                let opts = StashOpts::parse_from(args.into_iter());
+                let opts = stash::Opts::parse_from(args.into_iter());
                 Ok(task::spawn(async move {
-                    // TODO: errors should be Sync so that they can be sent between threads
-                    stash_main(opts).await;
+                    Ok(stash::main_with_config(opts.into()).await?)
                 }))
             },
-            _ => Err(DaemonError::UnknownDaemon)
+            "fungibled" => {
+                let opts = fungible::Opts::parse_from(args.into_iter());
+                Ok(task::spawn(async move {
+                    Ok(fungible::main_with_config(opts.into()).await?)
+                }))
+            },
+            _ => Err(DaemonError::UnknownDaemon(name.into()))
         }
     }
 
@@ -71,15 +76,23 @@ impl Runtime {
 #[derive(Debug)]
 enum DaemonHandle {
     Process(process::Child),
-    Task(task::JoinHandle<()>),
+    Task(task::JoinHandle<Result<(), DaemonError>>),
 }
 
-#[derive(Debug)]
-enum DaemonError {
+#[derive(Debug, Error)]
+pub enum DaemonError {
     Process(RuntimeError),
     Task(task::JoinError),
     IO(std::io::Error),
-    UnknownDaemon,
+    Bootstrap(BootstrapError),
+    UnknownDaemon(String),
+}
+
+
+impl std::fmt::Display for DaemonError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl From<RuntimeError> for DaemonError {
@@ -100,6 +113,12 @@ impl From<task::JoinError> for DaemonError {
     }
 }
 
+impl From<BootstrapError> for DaemonError {
+    fn from(other: BootstrapError) -> DaemonError {
+        DaemonError::Bootstrap(other)
+    }
+}
+
 impl DaemonHandle {
     async fn future(self) -> Result<(), DaemonError> {
         match self {
@@ -107,7 +126,7 @@ impl DaemonHandle {
                 Ok(child.await.map(|_| ())?)
             }
             DaemonHandle::Task(task) => {
-                Ok(task.await?)
+                Ok(task.await??)
             }
         }
     }
@@ -115,28 +134,26 @@ impl DaemonHandle {
 
 #[async_trait]
 impl TryService for Runtime {
-    type ErrorType = RuntimeError;
+    type ErrorType = DaemonError;
 
-    async fn try_run_loop(mut self) -> Result<!, RuntimeError> {
+    async fn try_run_loop(mut self) -> Result<!, DaemonError> {
         let mut handlers = vec![];
 
-        // TODO: return DaemonError
-        handlers.push(self.daemon("stashd").unwrap());
+        handlers.push(self.daemon("stashd")?);
 
         self.config
             .contracts
             .iter()
-            .try_for_each(|contract_name| -> Result<(), RuntimeError> {
-                // TODO: return DaemonError
-                handlers.push(self.daemon(contract_name.daemon_name()).unwrap());
+            .try_for_each(|contract_name| -> Result<(), DaemonError> {
+                handlers.push(self.daemon(contract_name.daemon_name())?);
                 Ok(())
             })?;
 
         join_all(handlers.into_iter().map(|d| d.future()))
             .await
             .into_iter()
-            .try_for_each(|res| -> Result<(), RuntimeError> {
-                // TODO: check `res` for errors, change return type to DaemonError
+            .try_for_each(|res| -> Result<(), DaemonError> {
+                res?;
                 Ok(())
             })?;
 

@@ -24,7 +24,7 @@ pub use data::*;
 
 pub use config::{Config, Opts};
 pub use rpc::Command;
-pub use runtime::Runtime;
+pub use runtime::{Runtime, main_with_config};
 
 pub use cache::CacheError;
 pub use processor::IssueStructure;
