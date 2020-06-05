@@ -232,3 +232,9 @@ impl Runtime {
         Ok(())
     }
 }
+
+pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
+    let mut context = zmq::Context::new();
+    let runtime = Runtime::init(config, &mut context)?;
+    runtime.run_or_panic("Fungible contract runtime").await
+}

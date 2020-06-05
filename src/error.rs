@@ -36,7 +36,7 @@ pub enum BootstrapError {
     #[derive_from]
     MultithreadError(JoinError),
 
-    MonitorSocketError(Box<dyn std::error::Error>),
+    MonitorSocketError(Box<dyn std::error::Error + Send>),
 
     #[derive_from]
     MessageBusError(lnp::transport::Error),

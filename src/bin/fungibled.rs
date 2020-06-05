@@ -15,9 +15,8 @@ use clap::derive::Clap;
 use log::*;
 use std::env;
 
-use lnpbp::TryService;
 use rgb::error::BootstrapError;
-use rgb::fungible::{Config, Opts, Runtime};
+use rgb::fungible::{Config, Opts, main_with_config};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
@@ -41,7 +40,5 @@ async fn main() -> Result<(), BootstrapError> {
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    let mut context = zmq::Context::new();
-    let runtime = Runtime::init(config, &mut context)?;
-    runtime.run_or_panic("Fungible contract runtime").await
+    main_with_config(config).await
 }
