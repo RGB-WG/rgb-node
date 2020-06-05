@@ -20,4 +20,4 @@ pub(self) mod storage;
 
 pub use config::{Config, Opts};
 pub use rpc::Command;
-pub use runtime::{Runtime, main_with_config};
+pub use runtime::{main_with_config, Runtime};

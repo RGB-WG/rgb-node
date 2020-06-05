@@ -21,8 +21,8 @@ use lnpbp::TryService;
 use super::Config;
 use crate::error::{BootstrapError, RuntimeError};
 
-use crate::stash;
 use crate::contracts::fungible;
+use crate::stash;
 
 pub struct Runtime {
     config: Config,
@@ -33,33 +33,36 @@ impl Runtime {
         Ok(Self { config })
     }
 
-    fn get_task_for(name: &str, args: &[&str]) -> Result<task::JoinHandle<Result<(), DaemonError>>, DaemonError> {
+    fn get_task_for(
+        name: &str,
+        args: &[&str],
+    ) -> Result<task::JoinHandle<Result<(), DaemonError>>, DaemonError> {
         match name {
             "stashd" => {
                 let opts = stash::Opts::parse_from(args.into_iter());
                 Ok(task::spawn(async move {
                     Ok(stash::main_with_config(opts.into()).await?)
                 }))
-            },
+            }
             "fungibled" => {
                 let opts = fungible::Opts::parse_from(args.into_iter());
                 Ok(task::spawn(async move {
                     Ok(fungible::main_with_config(opts.into()).await?)
                 }))
-            },
-            _ => Err(DaemonError::UnknownDaemon(name.into()))
+            }
+            _ => Err(DaemonError::UnknownDaemon(name.into())),
         }
     }
 
     fn daemon(&self, bin: &str) -> Result<DaemonHandle, DaemonError> {
         let args = [
-                "-v",
-                "-v",
-                "-v",
-                "-v",
-                "--data-dir",
-                self.config.data_dir.to_str().expect("Binary path is wrong"),
-            ];
+            "-v",
+            "-v",
+            "-v",
+            "-v",
+            "--data-dir",
+            self.config.data_dir.to_str().expect("Binary path is wrong"),
+        ];
 
         if self.config.threaded {
             Ok(DaemonHandle::Task(Self::get_task_for(bin, &args)?))
@@ -87,7 +90,6 @@ pub enum DaemonError {
     Bootstrap(BootstrapError),
     UnknownDaemon(String),
 }
-
 
 impl std::fmt::Display for DaemonError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -122,12 +124,8 @@ impl From<BootstrapError> for DaemonError {
 impl DaemonHandle {
     async fn future(self) -> Result<(), DaemonError> {
         match self {
-            DaemonHandle::Process(child) => {
-                Ok(child.await.map(|_| ())?)
-            }
-            DaemonHandle::Task(task) => {
-                Ok(task.await??)
-            }
+            DaemonHandle::Process(child) => Ok(child.await.map(|_| ())?),
+            DaemonHandle::Task(task) => Ok(task.await??),
         }
     }
 }
