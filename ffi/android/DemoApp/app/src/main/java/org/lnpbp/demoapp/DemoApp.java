@@ -3,11 +3,12 @@ package org.lnpbp.demoapp;
 import android.app.Application;
 import android.util.Log;
 
-import org.lnpbp.rgbnode.COpaqueStruct;
-import org.lnpbp.rgbnode.rgb_node;
+import org.lnpbp.rgbnode.Runtime;
+
+import java.util.HashMap;
 
 public class DemoApp extends Application {
-    public COpaqueStruct runtime;
+    private Runtime runtime;
 
     @Override
     public void onCreate() {
@@ -17,7 +18,14 @@ public class DemoApp extends Application {
         System.loadLibrary("rgb_node");
 
         final String datadir = getFilesDir().toString();
-        String network = "testnet";
-        this.runtime = rgb_node.start_rgb("{\"network\":\"" + network + "\", \"stash_endpoint\":\"ipc:" + datadir + "/" + network + "/stashd.rpc\", \"contract_endpoints\":{\"Fungible\":\"ipc:" + datadir + "/" + network + "/fungibled.rpc\"}, \"threaded\": true, \"datadir\":\"" + datadir + "\"}");
+        final String network = "testnet";
+
+        final HashMap contractEndpoints = new HashMap();
+        contractEndpoints.put("Fungible", String.format("ipc:%s/%s/fungibled.rpc", datadir, network));
+        this.runtime = new Runtime(network, String.format("ipc:%s/%s/stashd.rpc", datadir, network), contractEndpoints, true, datadir);
+   }
+
+    public Runtime getRuntime() {
+        return runtime;
     }
 }

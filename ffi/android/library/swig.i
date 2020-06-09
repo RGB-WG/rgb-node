@@ -7,8 +7,7 @@
 %typemap(javaout) CResult {
     return new COpaqueStruct($jnicall, $owner);
 }
-//  return new CResult(rgb_nodeJNI.issue(COpaqueStruct.getCPtr(runtime), runtime, json), true);
-// *(CResult **)&jresult = new CResult((const CResult &)result);
+
 %typemap(out) CResult %{
     switch ($1.result) {
         case CResultValue::Ok:
