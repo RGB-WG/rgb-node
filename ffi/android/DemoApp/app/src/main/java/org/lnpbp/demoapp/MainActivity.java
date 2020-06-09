@@ -3,7 +3,6 @@ package org.lnpbp.demoapp;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -13,8 +12,11 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import org.lnpbp.rgbnode.COpaqueStruct;
-import org.lnpbp.rgbnode.rgb_node;
+import org.lnpbp.rgbnode.Runtime;
+import org.lnpbp.rgbnode.model.IssueArgs;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,9 +31,10 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final COpaqueStruct runtime = ((DemoApp) getApplication()).runtime;
+                final Runtime runtime = ((DemoApp) getApplication()).getRuntime();
                 try {
-                    rgb_node.issue(runtime, "{\"network\":\"bitcoin\",\"ticker\":\"USDT\",\"name\":\"USD Tether\",\"issue_structure\":\"SingleIssue\",\"allocations\":[{\"coins\":100,\"vout\":0,\"txid\":\"0313ba7cfcaa66029a1a63918ebc426259f00953016c461663315d1bf6b83ab4\"}],\"precision\":0}");
+                    final IssueArgs.CoinAllocation allocation = new IssueArgs.CoinAllocation(100L, 0, "0313ba7cfcaa66029a1a63918ebc426259f00953016c461663315d1bf6b83ab4");
+                    runtime.issue("bitcoin", "USDT", "USD Tether", null, "SingleIssue", Arrays.asList(allocation), 8, new ArrayList(), null);
                 } catch (RuntimeException e) {
                     Log.e("RGB_NODE", e.getMessage());
                 }
