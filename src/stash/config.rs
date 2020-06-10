@@ -128,10 +128,10 @@ impl Default for Config {
             p2p_endpoint: "lnp-zmq:///tmp?api=rpc#1"
                 .parse()
                 .expect("Error in STASHD_P2P_ENDPOINT constant value"),
-            rpc_endpoint: "ipc:/tmp"
+            rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            pub_endpoint: "ipc:/tmp"
+            pub_endpoint: STASHD_PUB_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK
