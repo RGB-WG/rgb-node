@@ -36,7 +36,11 @@ impl Runtime {
                 verbose: 5,
                 bin_dir: String::new(),
                 data_dir: config.datadir.clone(),
-                contracts: config.contract_endpoints.iter().map(|(k, v)| k.clone()).collect(),
+                contracts: config
+                    .contract_endpoints
+                    .iter()
+                    .map(|(k, v)| k.clone())
+                    .collect(),
                 network: config.network,
                 threaded: true,
             };

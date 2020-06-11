@@ -16,7 +16,7 @@ use log::*;
 use std::env;
 
 use rgb::error::BootstrapError;
-use rgb::rgbd::{Config, Opts, main_with_config};
+use rgb::rgbd::{main_with_config, Config, Opts};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
