@@ -61,7 +61,10 @@ impl Runtime {
             "-v",
             "-v",
             "--data-dir",
-            self.config.data_dir.to_str().expect("Datadir path is wrong"),
+            self.config
+                .data_dir
+                .to_str()
+                .expect("Datadir path is wrong"),
         ];
 
         if self.config.threaded {
