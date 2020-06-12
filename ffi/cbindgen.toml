@@ -4,7 +4,7 @@
 # See https://github.com/eqrion/cbindgen/blob/master/docs.md#cbindgentoml
 # for detailed documentation of every option here.
 
-language = "C++"
+language = "C"
 
 ############## Options for Wrapping the Contents of the Header #################
 

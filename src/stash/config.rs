@@ -125,7 +125,7 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: "lnp-zmq:///tmp?api=rpc#1"
+            p2p_endpoint: STASHD_P2P_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_P2P_ENDPOINT constant value"),
             rpc_endpoint: STASHD_RPC_ENDPOINT

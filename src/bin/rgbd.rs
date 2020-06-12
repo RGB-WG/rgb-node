@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::derive::Clap;
-use log::*;
+use log::LevelFilter;
 use std::env;
 
 use rgb::error::BootstrapError;
