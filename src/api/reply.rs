@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use amplify::Wrapper;
 use core::any::Any;
 use std::io;
 use std::sync::Arc;
@@ -18,7 +19,6 @@ use std::sync::Arc;
 use lnpbp::lnp::presentation::message::{Type, TypedEnum, Unmarshaller};
 use lnpbp::lnp::presentation::{Error, UnknownTypeError, UnmarshallFn};
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
-use lnpbp::Wrapper;
 
 const TYPE_OK: u16 = 1;
 const TYPE_ERR: u16 = 0;

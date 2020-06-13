@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use amplify::Wrapper;
 use core::any::Any;
 use core::borrow::Borrow;
 use std::io;
@@ -20,7 +21,6 @@ use lnpbp::lnp::presentation::{Error, UnknownTypeError};
 use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
 use lnpbp::rgb::{Consignment, ContractId, Genesis, Schema, SchemaId, TransitionId};
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
-use lnpbp::Wrapper;
 
 use crate::api::stash::ConsignRequest;
 

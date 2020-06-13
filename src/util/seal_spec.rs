@@ -34,7 +34,7 @@ pub struct SealSpec {
 
 impl SealSpec {
     pub fn seal_definition(&self) -> SealDefinition {
-        use lnpbp::rand::{self, RngCore};
+        use lnpbp::bitcoin::secp256k1::rand::{self, RngCore};
         let mut rng = rand::thread_rng();
         let entropy = rng.next_u32(); // Not an amount blinding factor but outpoint blinding
         match self.txid {
