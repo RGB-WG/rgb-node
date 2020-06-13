@@ -53,12 +53,8 @@ pub struct Opts {
     pub index: String,
 
     /// LNP socket address string for P2P API
-    #[clap(
-        long = "bind",
-        default_value = STASHD_P2P_ENDPOINT,
-        env = "RGB_STASHD_BIND"
-    )]
-    pub p2p_endpoint: String,
+    #[clap(long = "bind", env = "RGB_STASHD_BIND")]
+    pub p2p_endpoint: Option<String>,
 
     /// ZMQ socket address string for RPC API
     #[clap(
@@ -92,7 +88,7 @@ pub struct Config {
     pub data_dir: PathBuf,
     pub stash: String,
     pub index: String,
-    pub p2p_endpoint: NodeLocator,
+    pub p2p_endpoint: Option<NodeLocator>,
     pub rpc_endpoint: SocketLocator,
     pub pub_endpoint: SocketLocator,
     pub network: bp::Network,
@@ -110,7 +106,7 @@ impl From<Opts> for Config {
         me.index = me.parse_param(opts.index);
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
         me.pub_endpoint = me.parse_param(opts.pub_endpoint);
-        me.p2p_endpoint = me.parse_param(opts.p2p_endpoint);
+        me.p2p_endpoint = opts.p2p_endpoint.map(|ep| me.parse_param(ep));
         me
     }
 }
@@ -125,9 +121,7 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: STASHD_P2P_ENDPOINT
-                .parse()
-                .expect("Error in STASHD_P2P_ENDPOINT constant value"),
+            p2p_endpoint: None,
             rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
