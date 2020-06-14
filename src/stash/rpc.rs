@@ -13,13 +13,12 @@
 
 use amplify::Wrapper;
 use core::any::Any;
-use core::borrow::Borrow;
 use std::io;
 use std::sync::Arc;
 
 use lnpbp::lnp::presentation::{Error, UnknownTypeError};
 use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
-use lnpbp::rgb::{Consignment, ContractId, Genesis, Schema, SchemaId, TransitionId};
+use lnpbp::rgb::{Consignment, Genesis, Schema};
 use lnpbp::strict_encoding::{strict_encode, StrictDecode};
 
 use crate::api::stash::ConsignRequest;

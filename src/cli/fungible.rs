@@ -11,25 +11,22 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use bech32::{self, ToBase32};
 use clap::Clap;
+use std::fs;
 use std::path::PathBuf;
-use std::{fs, io};
 
 use bitcoin::consensus::Decodable;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::util::psbt::{self, PartiallySignedTransaction};
-use bitcoin::{OutPoint, Transaction, TxIn, TxOut};
+use bitcoin::{OutPoint, Transaction, TxIn};
 
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::strict_encode;
 
 use super::{Error, Runtime};
 use crate::api::fungible::{Issue, TransferApi};
-use crate::error::ServiceErrorDomain;
-use crate::fungible::{IssueStructure, Outcoincealed, Outcoins};
+use crate::fungible::{Outcoincealed, Outcoins};
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -103,7 +100,7 @@ impl Command {
             Command::List => {
                 println!("\nKnown assets:\n\n");
                 unimplemented!();
-                Ok(())
+                //Ok(())
             }
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
@@ -143,14 +140,14 @@ impl TransferCli {
         info!("Transferring asset ...");
         debug!("{}", self.clone());
 
-        let mut psbt = match self.psbt {
+        let psbt = match self.psbt {
             Some(filename) => {
                 debug!(
                     "Reading partially-signed transaction from file {:?}",
                     filename
                 );
                 let filepath = format!("{:?}", filename.clone());
-                let mut file = fs::File::open(filename)
+                let file = fs::File::open(filename)
                     .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
                 let psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
                     Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))

@@ -160,7 +160,7 @@ impl Cache for FileCache {
     }
 
     fn add_asset(&mut self, asset: Asset) -> Result<bool, CacheError> {
-        let exists = self.assets.insert(asset.id(), asset).is_some();
+        let exists = self.assets.insert(*asset.id(), asset).is_some();
         self.save()?;
         Ok(exists)
     }

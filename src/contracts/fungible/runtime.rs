@@ -12,7 +12,6 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use core::borrow::Borrow;
-use std::io;
 use std::path::PathBuf;
 
 use lnpbp::lnp::presentation::Encode;
@@ -21,9 +20,9 @@ use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
-use super::{Command, Config, Processor};
+use super::{Config, Processor};
 use crate::api::{
-    fungible::{Issue, TransferApi},
+    fungible::{Issue, Request, TransferApi},
     Reply,
 };
 use crate::error::{
@@ -57,7 +56,7 @@ pub struct Runtime {
     processor: Processor,
 
     /// Unmarshaller instance used for parsing RPC request
-    unmarshaller: Unmarshaller<Command>,
+    unmarshaller: Unmarshaller<Request>,
 
     /// Unmarshaller instance used for parsing RPC request
     reply_unmarshaller: Unmarshaller<Reply>,
@@ -119,7 +118,7 @@ impl Runtime {
             stash_sub,
             cacher,
             processor,
-            unmarshaller: Command::create_unmarshaller(),
+            unmarshaller: Request::create_unmarshaller(),
             reply_unmarshaller: Reply::create_unmarshaller(),
         })
     }
@@ -160,9 +159,8 @@ impl Runtime {
             .unmarshall(&raw)
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
-            Command::Issue(issue) => self.rpc_issue(issue).await,
-            Command::Transfer(transfer) => self.rpc_transfer(transfer).await,
-            _ => unimplemented!(),
+            Request::Issue(issue) => self.rpc_issue(issue).await,
+            Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))
     }
@@ -218,7 +216,7 @@ impl Runtime {
 
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
         let mut psbt = transfer.psbt.clone();
-        let consignment = self.processor.transfer(
+        let _consignment = self.processor.transfer(
             &mut asset,
             &mut psbt,
             transfer.inputs.clone(),

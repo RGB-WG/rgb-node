@@ -15,7 +15,6 @@ mod config;
 mod data;
 mod processor;
 mod request;
-mod rpc;
 mod runtime;
 
 pub(self) mod cache;
@@ -23,7 +22,6 @@ pub(self) mod cache;
 pub use data::*;
 
 pub use config::{Config, Opts};
-pub use rpc::Command;
 pub use runtime::{main_with_config, Runtime};
 
 pub use cache::CacheError;

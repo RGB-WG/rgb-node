@@ -16,18 +16,13 @@ use core::convert::TryFrom;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, LinkedList};
 
-use bitcoin::secp256k1;
-use bitcoin::OutPoint;
 use lnpbp::bitcoin;
 
 use lnpbp::bp;
-use lnpbp::miniscript::Miniscript;
 use lnpbp::rgb::prelude::*;
 
 use super::schema::{AssignmentsType, FieldType};
 use super::{schema, SchemaError};
-use lnpbp::rgb::prelude::amount::Revealed;
-use std::collections::btree_map::Entry;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
 #[display_from(Display)]
@@ -81,7 +76,7 @@ impl Coins {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Display)]
+#[derive(Clone, Getters, Serialize, Deserialize, PartialEq, Debug, Display)]
 #[display_from(Debug)]
 pub struct Asset {
     id: ContractId,
@@ -90,7 +85,7 @@ pub struct Asset {
     description: Option<String>,
     supply: Supply,
     dust_limit: Coins,
-    network: bp::MagicNumber,
+    network_magic: bp::MagicNumber,
     fractional_bits: u8,
     date: NaiveDateTime,
     unspent_issue_txo: Option<bitcoin::OutPoint>,
@@ -116,54 +111,11 @@ pub struct Issue {
 
 impl Asset {
     pub fn network(&self) -> bp::Network {
-        bp::Network::from_magic(self.network)
+        bp::Network::from_magic(self.network_magic)
     }
 
     pub fn add_issue(&self, _issue: Transition) -> Supply {
         unimplemented!()
-    }
-
-    #[inline]
-    pub fn id(&self) -> ContractId {
-        self.id
-    }
-
-    #[inline]
-    pub fn ticker(&self) -> &str {
-        self.ticker.as_str()
-    }
-
-    #[inline]
-    pub fn name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    #[inline]
-    fn description(&self) -> Option<&str> {
-        match &self.description {
-            None => None,
-            Some(s) => Some(s.as_str()),
-        }
-    }
-
-    #[inline]
-    pub fn supply(&self) -> Supply {
-        self.supply.clone()
-    }
-
-    #[inline]
-    pub fn dust_limit(&self) -> Coins {
-        self.dust_limit.clone()
-    }
-
-    #[inline]
-    pub fn fractional_bits(&self) -> u8 {
-        self.fractional_bits
-    }
-
-    #[inline]
-    pub fn date(&self) -> NaiveDateTime {
-        self.date
     }
 
     #[inline]
@@ -185,7 +137,7 @@ impl TryFrom<Genesis> for Asset {
 
         Ok(Self {
             id: genesis.contract_id(),
-            network: genesis.network().as_magic(),
+            network_magic: genesis.network().as_magic(),
             ticker: genesis.string(-FieldType::Ticker)?,
             name: genesis.string(-FieldType::Name)?,
             description: genesis.string(-FieldType::Description).next(),

@@ -14,9 +14,11 @@
 //! Shared constants, including configuration parameters etc
 
 pub const RGB_BECH32_HRP_ID: &'static str = "rgb";
-pub const RGB_BECH32_HRP_GENESIS: &'static str = "rgb:gen";
-pub const RGB_BECH32_HRP_TRANSITION: &'static str = "rgb:ts";
-pub const RGB_BECH32_HRP_CONSIGNMENT: &'static str = "rgb:cs";
+pub const RGB_BECH32_HRP_GENESIS: &'static str = "rgb:g";
+pub const RGB_BECH32_HRP_TRANSITION: &'static str = "rgb:t";
+pub const RGB_BECH32_HRP_CONSIGNMENT: &'static str = "rgb:c";
+pub const RGB_BECH32_HRP_RGB20ASSET: &'static str = "rgb20a";
+pub const RGB_BECH32_HRP_RGB20INVOICE: &'static str = "rgb20i";
 
 pub const RGB_DATA_DIR: &'static str = "/var/lib/rgb";
 pub const RGB_BIN_DIR: &'static str = "/usr/local/bin";

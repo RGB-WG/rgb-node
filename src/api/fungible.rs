@@ -11,27 +11,87 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use amplify::Wrapper;
 use clap::Clap;
+use core::any::Any;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::io;
-use std::path::PathBuf;
+use std::sync::Arc;
 
-use bitcoin::consensus::encode::{Decodable, Encodable};
-use bitcoin::hashes::hex::FromHex;
 use bitcoin::util::psbt::PartiallySignedTransaction;
-use bitcoin::{OutPoint, TxIn};
+use bitcoin::OutPoint;
 
 use lnpbp::bitcoin;
-use lnpbp::bp;
+use lnpbp::lnp::presentation::{Error, UnknownTypeError};
+use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
+use lnpbp::strict_encoding::{strict_encode, StrictDecode};
 
 use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
 
-#[derive(Clap, Clone, PartialEq, Serialize, Deserialize, Debug, Display)]
+const TYPE_ISSUE: u16 = 1000;
+const TYPE_TRANSFER: u16 = 1001;
+
+#[derive(Clone, PartialEq, Debug, Display)]
+#[display_from(Debug)]
+#[non_exhaustive]
+pub enum Request {
+    Issue(Issue),
+    Transfer(TransferApi),
+    //Receive(Receive),
+}
+
+impl TypedEnum for Request {
+    fn try_from_type(type_id: Type, data: &dyn Any) -> Result<Self, UnknownTypeError> {
+        Ok(match type_id.into_inner() {
+            TYPE_ISSUE => Self::Issue(
+                data.downcast_ref::<Issue>()
+                    .expect("Internal API parser inconsistency")
+                    .clone(),
+            ),
+            _ => Err(UnknownTypeError)?,
+        })
+    }
+
+    fn get_type(&self) -> Type {
+        Type::from_inner(match self {
+            Request::Issue(_) => TYPE_ISSUE,
+            _ => unimplemented!(),
+        })
+    }
+
+    fn get_payload(&self) -> Vec<u8> {
+        match self {
+            Request::Issue(issue) => {
+                strict_encode(issue).expect("Strict encoding for issue structure has failed")
+            }
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl Request {
+    pub fn create_unmarshaller() -> Unmarshaller<Self> {
+        Unmarshaller::new(bmap! {
+            TYPE_ISSUE => Self::parse_issue as UnmarshallFn<_>,
+            TYPE_TRANSFER => Self::parse_transfer as UnmarshallFn<_>
+        })
+    }
+
+    fn parse_issue(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
+        Ok(Arc::new(Issue::strict_decode(&mut reader)?))
+    }
+
+    fn parse_transfer(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
+        Ok(Arc::new(TransferApi::strict_decode(&mut reader)?))
+    }
+}
+
+#[derive(
+    Clap, Clone, PartialEq, Serialize, Deserialize, StrictEncode, StrictDecode, Debug, Display,
+)]
 #[display_from(Debug)]
 pub struct Issue {
     /// Asset ticker
@@ -67,41 +127,7 @@ pub struct Issue {
     pub allocate: Vec<Outcoins>,
 }
 
-impl StrictEncode for Issue {
-    type Error = Error;
-
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
-        Ok(strict_encode_list!(e;
-            self.ticker,
-            self.title,
-            self.description,
-            self.supply,
-            self.inflatable,
-            self.precision,
-            self.dust_limit,
-            self.allocate
-        ))
-    }
-}
-
-impl StrictDecode for Issue {
-    type Error = Error;
-
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
-        Ok(Self {
-            ticker: String::strict_decode(&mut d)?,
-            title: String::strict_decode(&mut d)?,
-            description: Option::<String>::strict_decode(&mut d)?,
-            supply: Option::<f32>::strict_decode(&mut d)?,
-            inflatable: Option::<SealSpec>::strict_decode(&mut d)?,
-            precision: u8::strict_decode(&mut d)?,
-            dust_limit: Option::<Amount>::strict_decode(&mut d)?,
-            allocate: Vec::<Outcoins>::strict_decode(&mut d)?,
-        })
-    }
-}
-
-#[derive(Clone, PartialEq, Debug, Display)]
+#[derive(Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
 #[display_from(Debug)]
 pub struct TransferApi {
     /// Asset contract id
@@ -127,37 +153,6 @@ pub struct TransferApi {
 
     /// Optional change output: the rest of assets will be allocated here
     pub change: Option<OutPoint>,
-}
-
-impl StrictEncode for TransferApi {
-    type Error = Error;
-
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
-        let mut len = self.psbt.consensus_encode(&mut e)?;
-        Ok(strict_encode_list!(e; len;
-            self.contract_id,
-            self.inputs,
-            self.ours,
-            self.theirs,
-            self.change
-        ))
-    }
-}
-
-impl StrictDecode for TransferApi {
-    type Error = Error;
-
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
-        let psbt = PartiallySignedTransaction::consensus_decode(&mut d)?;
-        Ok(Self {
-            psbt,
-            contract_id: ContractId::strict_decode(&mut d)?,
-            inputs: Vec::<OutPoint>::strict_decode(&mut d)?,
-            ours: Vec::<Outcoins>::strict_decode(&mut d)?,
-            theirs: Vec::<Outcoincealed>::strict_decode(&mut d)?,
-            change: Option::<OutPoint>::strict_decode(&mut d)?,
-        })
-    }
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {

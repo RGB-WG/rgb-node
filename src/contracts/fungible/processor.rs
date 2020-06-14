@@ -21,15 +21,14 @@ use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
 use bitcoin::util::psbt::PartiallySignedTransaction;
-use bitcoin::{OutPoint, Transaction};
+use bitcoin::OutPoint;
 
 use super::schema::{self, AssignmentsType, FieldType, TransitionType};
 use super::{Asset, Coins, Outcoincealed, Outcoins};
 
-use crate::error::{ApiErrorType, BootstrapError, ServiceErrorDomain};
+use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::SealSpec;
 use crate::{field, type_map};
-use lnpbp::rgb::prelude::amount::BlindingFactor;
 
 pub struct Processor {}
 
@@ -159,7 +158,7 @@ impl Processor {
     pub fn transfer(
         &mut self,
         asset: &mut Asset,
-        psbt: &mut PartiallySignedTransaction,
+        _psbt: &mut PartiallySignedTransaction,
         inputs: Vec<OutPoint>,
         ours: Vec<Outcoins>,
         theirs: Vec<Outcoincealed>,
@@ -167,7 +166,7 @@ impl Processor {
         /*
          * Step 1. Construct transition
          */
-        let mut total_inputs = 0;
+        let total_inputs = 0;
         let input_commitments: Vec<amount::Revealed> = inputs.iter().try_fold(
             vec![],
             |mut acc, seal| -> Result<Vec<_>, ServiceErrorDomain> {
@@ -187,7 +186,7 @@ impl Processor {
         let allocations_ours = ours
             .into_iter()
             .map(|outcoins| {
-                let amount = Coins::transmutate(outcoins.coins, asset.fractional_bits());
+                let amount = Coins::transmutate(outcoins.coins, *asset.fractional_bits());
                 total_outputs += amount;
                 (outcoins.seal_definition(), amount)
             })
@@ -195,7 +194,7 @@ impl Processor {
         let allocations_theirs = theirs
             .into_iter()
             .map(|outcoincealed| {
-                let amount = Coins::transmutate(outcoincealed.coins, asset.fractional_bits());
+                let amount = Coins::transmutate(outcoincealed.coins, *asset.fractional_bits());
                 total_outputs += amount;
                 (outcoincealed.seal_confidential, amount)
             })
@@ -205,7 +204,7 @@ impl Processor {
             Err("Input amount is not equal to output amount".to_string())?
         }
 
-        let mut assignments = type_map! {
+        let assignments = type_map! {
             AssignmentsType::Assets =>
             AssignmentsVariant::zero_balanced(input_commitments, allocations_ours, allocations_theirs)
                 .ok_or("Can't do confidential amount commitments: need at least one output".to_string())?

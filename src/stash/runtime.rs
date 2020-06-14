@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::io;
 use std::path::PathBuf;
 
 use lnpbp::lnp::presentation::Encode;

@@ -39,7 +39,7 @@ impl Runtime {
                 contracts: config
                     .contract_endpoints
                     .iter()
-                    .map(|(k, v)| k.clone())
+                    .map(|(k, _)| k.clone())
                     .collect(),
                 network: config.network,
                 threaded: true,

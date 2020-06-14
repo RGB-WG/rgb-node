@@ -21,7 +21,6 @@ use lnpbp::lnp::transport::zmq::SocketLocator;
 
 use super::{fungible, Error, Runtime};
 use crate::constants::*;
-use crate::error::ServiceErrorDomain;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]

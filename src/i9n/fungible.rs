@@ -17,21 +17,21 @@ use lnpbp::lnp::Unmarshall;
 use lnpbp::rgb::Amount;
 
 use super::Runtime;
-use crate::api::{fungible::Issue, Reply};
-use crate::fungible::{Command, IssueStructure, Outcoins};
+use crate::api::{fungible::Issue, fungible::Request, Reply};
+use crate::fungible::{IssueStructure, Outcoins};
 use crate::util::SealSpec;
 
 impl Runtime {
     pub fn issue(
         &mut self,
-        network: bp::Network,
+        _network: bp::Network,
         ticker: String,
         title: String,
         description: Option<String>,
         issue_structure: IssueStructure,
         allocate: Vec<Outcoins>,
         precision: u8,
-        prune_seals: Vec<SealSpec>,
+        _prune_seals: Vec<SealSpec>,
         dust_limit: Option<Amount>,
     ) -> Result<(), String> {
         // TODO: Make sure we use the same network
@@ -42,7 +42,7 @@ impl Runtime {
                 reissue_control,
             } => (Some(max_supply), Some(reissue_control)),
         };
-        let command = Command::Issue(Issue {
+        let command = Request::Issue(Issue {
             ticker,
             title,
             description,
