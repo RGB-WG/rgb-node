@@ -11,17 +11,28 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use ::std::sync::Arc;
+
 use lnpbp::bp;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::Unmarshall;
 use lnpbp::rgb::Amount;
 
-use super::Runtime;
+use super::{Error, Runtime};
 use crate::api::{fungible::Issue, fungible::Request, reply, Reply};
+use crate::error::ServiceErrorDomain;
 use crate::fungible::{IssueStructure, Outcoins};
 use crate::util::SealSpec;
 
 impl Runtime {
+    fn command(&mut self, command: Request) -> Result<Arc<Reply>, ServiceErrorDomain> {
+        let data = command.encode()?;
+        self.session_rpc.send_raw_message(data)?;
+        let raw = self.session_rpc.recv_raw_message()?;
+        let reply = self.unmarshaller.unmarshall(&raw)?;
+        Ok(reply)
+    }
+
     pub fn issue(
         &mut self,
         _network: bp::Network,
@@ -33,7 +44,7 @@ impl Runtime {
         precision: u8,
         _prune_seals: Vec<SealSpec>,
         dust_limit: Option<Amount>,
-    ) -> Result<(), reply::Failure> {
+    ) -> Result<(), Error> {
         // TODO: Make sure we use the same network
         let (supply, inflatable) = match issue_structure {
             IssueStructure::SingleIssue => (None, None),
@@ -52,21 +63,22 @@ impl Runtime {
             dust_limit,
             allocate,
         });
-        let data = command.encode()?;
-        self.session_rpc.send_raw_message(data)?;
-        let raw = self.session_rpc.recv_raw_message()?;
-        let reply = &*self.unmarshaller.unmarshall(&raw)?;
-        match reply {
+        match &*self.command(command)? {
             Reply::Success => Ok(()),
-            Reply::Failure(failmsg) => Err(failmsg.clone()),
-            _ => Err(reply::Failure {
-                code: 0,
-                info: "Unexpected server response".to_string(),
-            }),
+            Reply::Failure(failmsg) => Err(Error::Reply(failmsg.clone())),
+            _ => Err(Error::UnexpectedResponse),
         }
     }
 
-    pub fn transfer(&mut self) -> Result<(), String> {
-        Ok(())
+    pub fn transfer(&mut self) -> Result<(), Error> {
+        unimplemented!()
+    }
+
+    pub fn sync(&mut self) -> Result<reply::SyncFormat, Error> {
+        match &*self.command(Request::Sync)? {
+            Reply::Sync(data) => Ok(data.clone()),
+            Reply::Failure(failmsg) => Err(Error::Reply(failmsg.clone())),
+            _ => Err(Error::UnexpectedResponse),
+        }
     }
 }

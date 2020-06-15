@@ -11,11 +11,17 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-mod config;
-mod error;
-mod fungible;
-mod runtime;
+use crate::api::reply;
+use crate::error::ServiceErrorDomain;
 
-pub use config::Config;
-pub use error::Error;
-pub use runtime::Runtime;
+#[derive(Clone, Debug, Display, Error, From)]
+#[display_from(Debug)]
+pub enum Error {
+    #[derive_from]
+    ServiceError(ServiceErrorDomain),
+
+    #[derive_from]
+    Reply(reply::Failure),
+
+    UnexpectedResponse,
+}

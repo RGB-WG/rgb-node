@@ -26,7 +26,7 @@ pub struct Config {
     pub contract_endpoints: HashMap<ContractName, SocketLocator>,
     pub network: bp::Network,
     pub threaded: bool,
-    pub datadir: String,
+    pub data_dir: String,
 }
 
 impl Default for Config {
@@ -45,7 +45,7 @@ impl Default for Config {
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),
             threaded: true,
-            datadir: RGB_DATA_DIR.to_string(),
+            data_dir: RGB_DATA_DIR.to_string(),
         }
     }
 }

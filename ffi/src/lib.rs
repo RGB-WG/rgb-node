@@ -139,7 +139,7 @@ fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
         network: config.network,
         stash_endpoint: config.stash_endpoint,
         threaded: config.threaded,
-        datadir: config.datadir,
+        data_dir: config.datadir,
         contract_endpoints: config
             .contract_endpoints
             .into_iter()
