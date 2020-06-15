@@ -38,7 +38,7 @@ pub extern crate lnpbp;
 #[macro_use]
 pub extern crate lnpbp_derive;
 
-mod api;
+pub mod api;
 pub mod cli;
 pub mod constants;
 mod contracts;
