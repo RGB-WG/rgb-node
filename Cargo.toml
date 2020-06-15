@@ -19,6 +19,8 @@ clap = "=3.0.0-beta.1"
 chrono = { version = "~0.4.11", features = [ "serde" ] }
 serde = { version = "~1.0.111", features = ["derive"] }
 serde_json = "~1.0.55"
+serde_yaml = "~0.8.13"
+toml = "~0.5.6"
 bech32 = "~0.7.2"
 log = { version = "~0.4", features = ["max_level_trace", "release_max_level_debug"] }
 async-trait = "~0.1.35"

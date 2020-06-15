@@ -33,6 +33,8 @@ pub enum Request {
     Transfer(crate::api::fungible::TransferApi),
     //#[lnp_api(type = 0x0105)]
     //Receive(Receive),
+    #[lnp_api(type = 0xFF01)]
+    Sync,
 }
 
 #[derive(

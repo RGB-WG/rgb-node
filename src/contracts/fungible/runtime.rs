@@ -23,7 +23,7 @@ use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::{Config, Processor};
 use crate::api::{
     fungible::{Issue, Request, TransferApi},
-    Reply,
+    reply, Reply,
 };
 use crate::error::{
     ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
@@ -75,6 +75,7 @@ impl Runtime {
 
         let cacher = FileCache::new(FileCacheConfig {
             data_dir: PathBuf::from(&config.cache),
+            data_format: config.format,
         })
         .map_err(|err| {
             error!("{}", err);
@@ -142,33 +143,35 @@ impl TryService for Runtime {
 
 impl Runtime {
     async fn run(&mut self) -> Result<(), RuntimeError> {
+        trace!("Awaiting for ZMQ RPC requests...");
         let raw = self.session_rpc.recv_raw_message()?;
-        let reply = match self.rpc_process(raw).await {
-            Ok(_) => Reply::Success,
-            Err(err) => {
-                error!("Error processing request: {}", err);
-                Reply::from(err)
-            }
-        };
-        trace!("Sending reply: {}", reply);
+        let reply = self.rpc_process(raw).await.unwrap_or_else(|err| err);
+        trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.encode()?;
+        trace!(
+            "Sending {} bytes back to the client over ZMQ RPC",
+            data.len()
+        );
         self.session_rpc.send_raw_message(data)?;
         Ok(())
     }
 
-    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<(), ServiceError> {
+    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
+        trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
         let message = &*self
             .unmarshaller
             .unmarshall(&raw)
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
-        match message {
+        debug!("Received ZMQ RPC request: {:?}", message);
+        Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
+            Request::Sync => self.rpc_sync().await,
         }
-        .map_err(|err| ServiceError::contract(err, "fungible"))
+        .map_err(|err| ServiceError::contract(err, "fungible"))?)
     }
 
-    async fn rpc_issue(&mut self, issue: &Issue) -> Result<(), ServiceErrorDomain> {
+    async fn rpc_issue(&mut self, issue: &Issue) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
         let issue_structure = match issue.inflatable {
@@ -208,10 +211,10 @@ impl Runtime {
 
         // TODO: Send push request to client informing about cache update
 
-        Ok(())
+        Ok(Reply::Success)
     }
 
-    async fn rpc_transfer(&mut self, transfer: &TransferApi) -> Result<(), ServiceErrorDomain> {
+    async fn rpc_transfer(&mut self, transfer: &TransferApi) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", transfer);
 
         // TODO: Check inputs that they really exist and have sufficient amount of
@@ -230,7 +233,13 @@ impl Runtime {
 
         // TODO: Save consignment, send push request etc
 
-        Ok(())
+        Ok(Reply::Success)
+    }
+
+    async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got SYNC");
+        let data = self.cacher.export()?;
+        Ok(Reply::Sync(reply::SyncFormat(self.config.format, data)))
     }
 }
 

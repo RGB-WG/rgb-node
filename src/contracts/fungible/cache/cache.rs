@@ -67,6 +67,10 @@ impl From<FileCacheError> for CacheError {
                 Self::DataIntegrityError("Broken filename structure in storage".to_string())
             }
             FileCacheError::SerdeJson(e) => Self::DataIntegrityError(format!("{:?}", e)),
+            FileCacheError::SerdeYaml(e) => Self::DataIntegrityError(format!("{:?}", e)),
+            FileCacheError::SerdeToml => {
+                Self::DataIntegrityError(format!("TOML serialization/deserialization error"))
+            }
             FileCacheError::NotFound => {
                 Self::DataIntegrityError("Data file is not found".to_string())
             }

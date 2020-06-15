@@ -53,6 +53,11 @@ impl Runtime {
     }
 
     #[inline]
+    pub fn list(&mut self) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Request::Sync)?)
+    }
+
+    #[inline]
     pub fn issue(&mut self, issue: Issue) -> Result<Arc<Reply>, Error> {
         Ok(self.command(Request::Issue(issue))?)
     }

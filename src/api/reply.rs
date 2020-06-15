@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use lnpbp::data_format::DataFormat;
 use lnpbp::lnp;
 
 #[cfg(feature = "service")]
@@ -26,6 +27,9 @@ pub enum Reply {
 
     #[lnp_api(type = 0x0001)]
     Failure(crate::api::reply::Failure),
+
+    #[lnp_api(type = 0xFF03)]
+    Sync(crate::api::reply::SyncFormat),
 }
 
 impl From<lnp::presentation::Error> for Reply {
@@ -53,6 +57,10 @@ impl From<ServiceError> for Reply {
         Reply::Failure(Failure::from(err))
     }
 }
+
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
+#[display_from(Debug)]
+pub struct SyncFormat(pub DataFormat, pub Vec<u8>);
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[display_from(Debug)]

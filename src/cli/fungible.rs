@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::Clap;
+use std::borrow::Borrow;
 use std::fs;
 use std::path::PathBuf;
 
@@ -26,6 +27,7 @@ use lnpbp::rgb::prelude::*;
 
 use super::{Error, Runtime};
 use crate::api::fungible::{Issue, TransferApi};
+use crate::api::{reply, Reply};
 use crate::fungible::{Outcoincealed, Outcoins};
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -95,12 +97,29 @@ pub struct TransferCli {
 }
 
 impl Command {
-    pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
+    pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
         match self {
             Command::List => {
-                println!("\nKnown assets:\n\n");
-                unimplemented!();
-                //Ok(())
+                match runtime.list() {
+                    Ok(reply) => match reply.borrow() {
+                        Reply::Sync(reply::SyncFormat(format, data)) => match format {
+                            DataFormat::Yaml | DataFormat::Json | DataFormat::Toml => {
+                                let str = String::from_utf8(data.to_vec()).expect(
+                                    "Server mis-serializaed data format: potentially iy is broken",
+                                );
+                                println!("{}\n", str);
+                            }
+                            DataFormat::StrictEncode => unimplemented!(),
+                        },
+                        _ => {
+                            eprintln!("Unexpected server error; probably you connecting with outdated client version");
+                        }
+                    },
+                    Err(err) => {
+                        eprintln!("Server returned error: {}\n", err);
+                    }
+                }
+                Ok(())
             }
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
@@ -237,3 +256,4 @@ mod helpers {
     }
 }
 pub use helpers::*;
+use lnpbp::data_format::DataFormat;

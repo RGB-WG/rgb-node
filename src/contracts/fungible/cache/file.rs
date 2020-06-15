@@ -17,6 +17,7 @@ use std::path::PathBuf;
 use std::{fs, io, io::Read, io::Write};
 
 use lnpbp::bitcoin;
+use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
 
 use super::Cache;
@@ -34,14 +35,20 @@ pub enum FileCacheError {
     #[derive_from(bitcoin::hashes::Error)]
     HashName,
 
-    #[derive_from]
-    Encoding(lnpbp::strict_encoding::Error),
-
     #[derive_from(bitcoin::hashes::hex::Error)]
     BrokenHexFilenames,
 
     #[derive_from]
+    Encoding(lnpbp::strict_encoding::Error),
+
+    #[derive_from]
     SerdeJson(serde_json::Error),
+
+    #[derive_from]
+    SerdeYaml(serde_yaml::Error),
+
+    #[derive_from(toml::de::Error, toml::ser::Error)]
+    SerdeToml,
 
     #[derive_from(std::option::NoneError)]
     NotFound,
@@ -63,11 +70,10 @@ impl From<FileCacheError> for BootstrapError {
 #[display_from(Debug)]
 pub struct FileCacheConfig {
     pub data_dir: PathBuf,
+    pub data_format: DataFormat,
 }
 
 impl FileCacheConfig {
-    pub const RGB_FA_EXTENSION: &'static str = "dat";
-
     #[inline]
     pub fn assets_dir(&self) -> PathBuf {
         self.data_dir.clone()
@@ -77,7 +83,7 @@ impl FileCacheConfig {
     pub fn assets_filename(&self) -> PathBuf {
         self.assets_dir()
             .join("assets")
-            .with_extension(Self::RGB_FA_EXTENSION)
+            .with_extension(self.data_format.extension())
     }
 }
 
@@ -110,33 +116,59 @@ impl FileCache {
             fs::create_dir_all(assets_dir)?;
         }
 
-        debug!("Reading asset information ...");
-        let filename = config.assets_filename();
-        let assets = if filename.exists() {
-            let mut f = file(filename, FileMode::Read)?;
-            let mut contents = String::new();
-            f.read_to_string(&mut contents)?;
-            let assets = serde_json::from_str(&contents)?;
-            assets
+        let mut me = Self {
+            config,
+            assets: map![],
+        };
+        let filename = me.config.assets_filename();
+        if filename.exists() {
+            me.load()?;
         } else {
             debug!("Initializing assets file {:?} ...", filename.to_str());
-            let mut f = file(filename, FileMode::Create)?;
-            let assets = HashMap::new();
-            let data = serde_json::to_string(&assets)?;
-            f.write_all(&data.as_bytes())?;
-            assets
-        };
+            me.save()?;
+        }
 
-        Ok(Self { config, assets })
+        Ok(me)
+    }
+
+    fn load(&mut self) -> Result<(), FileCacheError> {
+        debug!("Reading assets information ...");
+        let filename = self.config.assets_filename();
+        let mut f = file(filename, FileMode::Read)?;
+        self.assets = match self.config.data_format {
+            DataFormat::Yaml => serde_yaml::from_reader(&f)?,
+            DataFormat::Json => serde_json::from_reader(&f)?,
+            DataFormat::Toml => {
+                let mut data = String::new();
+                f.read_to_string(&mut data)?;
+                toml::from_str(&data)?
+            }
+            DataFormat::StrictEncode => unimplemented!(),
+        };
+        Ok(())
     }
 
     pub fn save(&self) -> Result<(), FileCacheError> {
-        trace!("Saving updated asset information ...");
+        trace!("Saving assets information ...");
         let filename = self.config.assets_filename();
         let mut f = file(filename, FileMode::Create)?;
-        let data = serde_json::to_string(&self.assets)?;
-        f.write_all(&data.as_bytes())?;
+        match self.config.data_format {
+            DataFormat::Yaml => serde_yaml::to_writer(&f, &self.assets)?,
+            DataFormat::Json => serde_json::to_writer(&f, &self.assets)?,
+            DataFormat::Toml => f.write_all(&toml::to_vec(&self.assets)?)?,
+            DataFormat::StrictEncode => unimplemented!(),
+        }
         Ok(())
+    }
+
+    pub fn export(&self) -> Result<Vec<u8>, FileCacheError> {
+        trace!("Exporting assets information ...");
+        Ok(match self.config.data_format {
+            DataFormat::Yaml => serde_yaml::to_vec(&self.assets)?,
+            DataFormat::Json => serde_json::to_vec(&self.assets)?,
+            DataFormat::Toml => toml::to_vec(&self.assets)?,
+            DataFormat::StrictEncode => unimplemented!(),
+        })
     }
 }
 

@@ -59,6 +59,10 @@ impl Runtime {
         match reply {
             Reply::Success => Ok(()),
             Reply::Failure(failmsg) => Err(failmsg.clone()),
+            _ => Err(reply::Failure {
+                code: 0,
+                info: "Unexpected server response".to_string(),
+            }),
         }
     }
 
