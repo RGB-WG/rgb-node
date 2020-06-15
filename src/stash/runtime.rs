@@ -19,8 +19,8 @@ use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{Genesis, Schema};
 use lnpbp::TryService;
 
-use super::Command;
 use super::Config;
+use crate::api::stash::Request;
 use crate::api::Reply;
 use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
@@ -58,7 +58,7 @@ pub struct Runtime {
     storage: HammersbaldStore,
 
     /// Unmarshaller instance used for parsing RPC request
-    unmarshaller: Unmarshaller<Command>,
+    unmarshaller: Unmarshaller<Request>,
 }
 
 impl Runtime {
@@ -102,7 +102,7 @@ impl Runtime {
             session_pub,
             indexer,
             storage,
-            unmarshaller: Command::create_unmarshaller(),
+            unmarshaller: Request::create_unmarshaller(),
         })
     }
 }
@@ -129,8 +129,12 @@ impl Runtime {
         let raw = self.session_rpc.recv_raw_message()?;
         let reply = match self.rpc_process(raw).await {
             Ok(_) => Reply::Success,
-            Err(err) => Reply::Failure(format!("{}", err)),
+            Err(err) => {
+                error!("Error processing request: {}", err);
+                Reply::from(err)
+            }
         };
+        trace!("Sending reply: {}", reply);
         let data = reply.encode()?;
         self.session_rpc.send_raw_message(data)?;
         Ok(())
@@ -142,8 +146,8 @@ impl Runtime {
             .unmarshall(&raw)
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         match message {
-            Command::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
-            Command::AddSchema(schema) => self.rpc_add_schema(schema).await,
+            Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
+            Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -153,11 +157,13 @@ impl Runtime {
     }
 
     async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<(), ServiceErrorDomain> {
+        debug!("Got ADD_SCHEMA {}", schema);
         self.storage.add_schema(schema)?;
         Ok(())
     }
 
     async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<(), ServiceErrorDomain> {
+        debug!("Got ADD_GENESIS {}", genesis);
         self.storage.add_genesis(genesis)?;
         Ok(())
     }

@@ -11,82 +11,28 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use amplify::Wrapper;
-use clap::Clap;
-use core::any::Any;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::io;
-use std::sync::Arc;
 
-use bitcoin::util::psbt::PartiallySignedTransaction;
-use bitcoin::OutPoint;
-
-use lnpbp::bitcoin;
-use lnpbp::lnp::presentation::{Error, UnknownTypeError};
-use lnpbp::lnp::{Type, TypedEnum, UnmarshallFn, Unmarshaller};
-use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::{strict_encode, StrictDecode};
+use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
+use lnpbp::bitcoin::OutPoint;
+use lnpbp::rgb::{Amount, ContractId};
 
 use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
 
-const TYPE_ISSUE: u16 = 1000;
-const TYPE_TRANSFER: u16 = 1001;
-
-#[derive(Clone, PartialEq, Debug, Display)]
+#[derive(Clone, PartialEq, Debug, Display, LnpApi)]
+#[lnp_api(encoding = "strict")]
 #[display_from(Debug)]
 #[non_exhaustive]
 pub enum Request {
-    Issue(Issue),
-    Transfer(TransferApi),
+    #[lnp_api(type = 0x0101)]
+    Issue(crate::api::fungible::Issue),
+
+    #[lnp_api(type = 0x0103)]
+    Transfer(crate::api::fungible::TransferApi),
+    //#[lnp_api(type = 0x0105)]
     //Receive(Receive),
-}
-
-impl TypedEnum for Request {
-    fn try_from_type(type_id: Type, data: &dyn Any) -> Result<Self, UnknownTypeError> {
-        Ok(match type_id.into_inner() {
-            TYPE_ISSUE => Self::Issue(
-                data.downcast_ref::<Issue>()
-                    .expect("Internal API parser inconsistency")
-                    .clone(),
-            ),
-            _ => Err(UnknownTypeError)?,
-        })
-    }
-
-    fn get_type(&self) -> Type {
-        Type::from_inner(match self {
-            Request::Issue(_) => TYPE_ISSUE,
-            _ => unimplemented!(),
-        })
-    }
-
-    fn get_payload(&self) -> Vec<u8> {
-        match self {
-            Request::Issue(issue) => {
-                strict_encode(issue).expect("Strict encoding for issue structure has failed")
-            }
-            _ => unimplemented!(),
-        }
-    }
-}
-
-impl Request {
-    pub fn create_unmarshaller() -> Unmarshaller<Self> {
-        Unmarshaller::new(bmap! {
-            TYPE_ISSUE => Self::parse_issue as UnmarshallFn<_>,
-            TYPE_TRANSFER => Self::parse_transfer as UnmarshallFn<_>
-        })
-    }
-
-    fn parse_issue(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
-        Ok(Arc::new(Issue::strict_decode(&mut reader)?))
-    }
-
-    fn parse_transfer(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
-        Ok(Arc::new(TransferApi::strict_decode(&mut reader)?))
-    }
 }
 
 #[derive(

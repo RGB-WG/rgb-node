@@ -30,7 +30,6 @@ use crate::error::{
     ServiceErrorSource,
 };
 use crate::fungible::IssueStructure;
-use crate::stash;
 
 pub struct Runtime {
     /// Original configuration object
@@ -146,8 +145,12 @@ impl Runtime {
         let raw = self.session_rpc.recv_raw_message()?;
         let reply = match self.rpc_process(raw).await {
             Ok(_) => Reply::Success,
-            Err(err) => Reply::Failure(format!("{}", err)),
+            Err(err) => {
+                error!("Error processing request: {}", err);
+                Reply::from(err)
+            }
         };
+        trace!("Sending reply: {}", reply);
         let data = reply.encode()?;
         self.session_rpc.send_raw_message(data)?;
         Ok(())
@@ -193,7 +196,7 @@ impl Runtime {
             issue.dust_limit,
         )?;
 
-        let data = stash::Command::AddGenesis(genesis).encode()?;
+        let data = crate::api::stash::Request::AddGenesis(genesis).encode()?;
         self.stash_rpc.send_raw_message(data.borrow())?;
         let raw = self.stash_rpc.recv_raw_message()?;
         if let Reply::Failure(failmsg) = &*self.reply_unmarshaller.unmarshall(&raw)? {

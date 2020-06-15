@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 pub mod fungible;
-mod reply;
+pub mod reply;
 pub mod stash;
 
 pub use reply::Reply;

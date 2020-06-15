@@ -21,7 +21,11 @@
 )]
 
 #[macro_use]
+extern crate clap;
+#[macro_use]
 extern crate amplify;
+#[macro_use]
+extern crate amplify_derive;
 #[macro_use]
 extern crate derive_wrapper;
 #[macro_use]

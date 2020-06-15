@@ -17,7 +17,7 @@ use lnpbp::lnp::Unmarshall;
 use lnpbp::rgb::Amount;
 
 use super::Runtime;
-use crate::api::{fungible::Issue, fungible::Request, Reply};
+use crate::api::{fungible::Issue, fungible::Request, reply, Reply};
 use crate::fungible::{IssueStructure, Outcoins};
 use crate::util::SealSpec;
 
@@ -33,7 +33,7 @@ impl Runtime {
         precision: u8,
         _prune_seals: Vec<SealSpec>,
         dust_limit: Option<Amount>,
-    ) -> Result<(), String> {
+    ) -> Result<(), reply::Failure> {
         // TODO: Make sure we use the same network
         let (supply, inflatable) = match issue_structure {
             IssueStructure::SingleIssue => (None, None),
@@ -52,18 +52,10 @@ impl Runtime {
             dust_limit,
             allocate,
         });
-        let data = command.encode().map_err(|err| err.to_string())?;
-        self.session_rpc
-            .send_raw_message(data)
-            .map_err(|err| err.to_string())?;
-        let raw = self
-            .session_rpc
-            .recv_raw_message()
-            .map_err(|err| err.to_string())?;
-        let reply = &*self
-            .unmarshaller
-            .unmarshall(&raw)
-            .map_err(|err| err.to_string())?;
+        let data = command.encode()?;
+        self.session_rpc.send_raw_message(data)?;
+        let raw = self.session_rpc.recv_raw_message()?;
+        let reply = &*self.unmarshaller.unmarshall(&raw)?;
         match reply {
             Reply::Success => Ok(()),
             Reply::Failure(failmsg) => Err(failmsg.clone()),

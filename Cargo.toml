@@ -12,8 +12,8 @@ readme = "README.md"
 name = "rgb"
 
 [dependencies]
-amplify = "~0.1.3"
-amplify_derive = "~0.1.0"
+amplify = "~0.1.6"
+amplify_derive = "~0.1.1"
 dotenv = "~0.15.0"
 clap = "=3.0.0-beta.1"
 chrono = { version = "~0.4.11", features = [ "serde" ] }
@@ -50,7 +50,7 @@ version = "~0.9"
 features = ["vendored"]
 
 [features]
-default = ["fungibles", "collectibles", "identities"]
+default = ["daemon", "fungibles", "collectibles", "identities"]
 service = []
 daemon = ["service"]
 cli = []

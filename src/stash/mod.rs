@@ -12,12 +12,10 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod config;
-mod rpc;
 mod runtime;
 
 pub(self) mod index;
 pub(self) mod storage;
 
 pub use config::{Config, Opts};
-pub use rpc::Command;
 pub use runtime::{main_with_config, Runtime};

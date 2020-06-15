@@ -11,72 +11,99 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use amplify::Wrapper;
-use core::any::Any;
-use std::io;
-use std::sync::Arc;
+use lnpbp::lnp;
 
-use lnpbp::lnp::presentation::message::{Type, TypedEnum, Unmarshaller};
-use lnpbp::lnp::presentation::{Error, UnknownTypeError, UnmarshallFn};
-use lnpbp::strict_encoding::{strict_encode, StrictDecode};
+#[cfg(feature = "service")]
+use crate::error::{RuntimeError, ServiceError};
 
-const TYPE_OK: u16 = 1;
-const TYPE_ERR: u16 = 0;
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(Clone, Debug, Display, LnpApi)]
+#[lnp_api(encoding = "strict")]
 #[display_from(Debug)]
+#[non_exhaustive]
 pub enum Reply {
+    #[lnp_api(type = 0x0003)]
     Success,
-    Failure(String),
+
+    #[lnp_api(type = 0x0001)]
+    Failure(crate::api::reply::Failure),
 }
 
-impl TypedEnum for Reply {
-    fn try_from_type(type_id: Type, data: &dyn Any) -> Result<Self, UnknownTypeError> {
-        Ok(match type_id.into_inner() {
-            TYPE_OK => Self::Success,
-            TYPE_ERR => Self::Failure(
-                data.downcast_ref::<String>()
-                    .expect("Internal API parser inconsistency")
-                    .clone(),
-            ),
-            // Here we receive odd-numbered messages. However, in terms of RPC,
-            // there is no "upstream processor", so we return error (but do not
-            // break connection).
-            _ => Err(UnknownTypeError)?,
-        })
+impl From<lnp::presentation::Error> for Reply {
+    fn from(err: lnp::presentation::Error) -> Self {
+        Reply::Failure(Failure::from(err))
     }
+}
 
-    fn get_type(&self) -> Type {
-        Type::from_inner(match self {
-            Reply::Success => TYPE_OK,
-            Reply::Failure(_) => TYPE_ERR,
-        })
+impl From<lnp::transport::Error> for Reply {
+    fn from(err: lnp::transport::Error) -> Self {
+        Reply::Failure(Failure::from(err))
     }
+}
 
-    fn get_payload(&self) -> Vec<u8> {
-        match self {
-            Reply::Success => vec![],
-            Reply::Failure(details) => {
-                strict_encode(details).expect("Strict encoding for string has failed")
-            }
+#[cfg(feature = "service")]
+impl From<RuntimeError> for Reply {
+    fn from(err: RuntimeError) -> Self {
+        Reply::Failure(Failure::from(err))
+    }
+}
+
+#[cfg(feature = "service")]
+impl From<ServiceError> for Reply {
+    fn from(err: ServiceError) -> Self {
+        Reply::Failure(Failure::from(err))
+    }
+}
+
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
+#[display_from(Debug)]
+#[non_exhaustive]
+pub struct Failure {
+    pub code: u16,
+    pub info: String,
+}
+
+impl From<lnp::presentation::Error> for Failure {
+    fn from(err: lnp::presentation::Error) -> Self {
+        // TODO: Save error code taken from `Error::to_value()` after
+        //       implementation of `ToValue` trait and derive macro for enums
+        Failure {
+            code: 0,
+            info: format!("{}", err),
         }
     }
 }
 
-impl Reply {
-    pub fn create_unmarshaller() -> Unmarshaller<Self> {
-        Unmarshaller::new(bmap! {
-            TYPE_OK => Self::parse_success as UnmarshallFn<_>,
-            TYPE_ERR => Self::parse_failure as UnmarshallFn<_>
-        })
+impl From<lnp::transport::Error> for Failure {
+    fn from(err: lnp::transport::Error) -> Self {
+        // TODO: Save error code taken from `Error::to_value()` after
+        //       implementation of `ToValue` trait and derive macro for enums
+        Failure {
+            code: 1,
+            info: format!("{}", err),
+        }
     }
+}
 
-    fn parse_success(_: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
-        struct NoData;
-        Ok(Arc::new(NoData))
+#[cfg(feature = "service")]
+impl From<RuntimeError> for Failure {
+    fn from(err: RuntimeError) -> Self {
+        // TODO: Save error code taken from `Error::to_value()` after
+        //       implementation of `ToValue` trait and derive macro for enums
+        Failure {
+            code: 2,
+            info: format!("{}", err),
+        }
     }
+}
 
-    fn parse_failure(mut reader: &mut dyn io::Read) -> Result<Arc<dyn Any>, Error> {
-        Ok(Arc::new(String::strict_decode(&mut reader)?))
+#[cfg(feature = "service")]
+impl From<ServiceError> for Failure {
+    fn from(err: ServiceError) -> Self {
+        // TODO: Save error code taken from `Error::to_value()` after
+        //       implementation of `ToValue` trait and derive macro for enums
+        Failure {
+            code: 3,
+            info: format!("{}", err),
+        }
     }
 }
