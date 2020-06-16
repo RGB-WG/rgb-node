@@ -11,15 +11,18 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use core::borrow::Borrow;
-use std::path::PathBuf;
+use ::core::borrow::Borrow;
+use ::core::convert::TryFrom;
+use ::std::path::PathBuf;
 
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
+use lnpbp::rgb::Genesis;
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
+use super::{Asset, IssueStructure};
 use super::{Config, Processor};
 use crate::api::{
     fungible::{Issue, Request, TransferApi},
@@ -29,7 +32,6 @@ use crate::error::{
     ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
     ServiceErrorSource,
 };
-use crate::fungible::IssueStructure;
 
 pub struct Runtime {
     /// Original configuration object
@@ -166,6 +168,7 @@ impl Runtime {
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
+            Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
             Request::Sync => self.rpc_sync().await,
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
@@ -199,15 +202,7 @@ impl Runtime {
             issue.dust_limit,
         )?;
 
-        let data = crate::api::stash::Request::AddGenesis(genesis).encode()?;
-        self.stash_rpc.send_raw_message(data.borrow())?;
-        let raw = self.stash_rpc.recv_raw_message()?;
-        if let Reply::Failure(failmsg) = &*self.reply_unmarshaller.unmarshall(&raw)? {
-            error!("Failed saving genesis data: {}", failmsg);
-            Err(ServiceErrorDomain::Storage)?
-        }
-
-        self.cacher.add_asset(asset)?;
+        self.import_asset(asset, genesis).await?;
 
         // TODO: Send push request to client informing about cache update
 
@@ -229,7 +224,6 @@ impl Runtime {
             transfer.ours.clone(),
             transfer.theirs.clone(),
         )?;
-        self.cacher.add_asset(asset)?;
 
         // TODO: Save consignment, send push request etc
 
@@ -240,6 +234,28 @@ impl Runtime {
         debug!("Got SYNC");
         let data = self.cacher.export()?;
         Ok(Reply::Sync(reply::SyncFormat(self.config.format, data)))
+    }
+
+    async fn rpc_import_asset(&mut self, genesis: &Genesis) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got IMPORT_ASSET");
+        self.import_asset(Asset::try_from(genesis.clone())?, genesis.clone())
+            .await?;
+        Ok(Reply::Success)
+    }
+
+    async fn import_asset(
+        &mut self,
+        asset: Asset,
+        genesis: Genesis,
+    ) -> Result<bool, ServiceErrorDomain> {
+        let data = crate::api::stash::Request::AddGenesis(genesis).encode()?;
+        self.stash_rpc.send_raw_message(data.borrow())?;
+        let raw = self.stash_rpc.recv_raw_message()?;
+        if let Reply::Failure(failmsg) = &*self.reply_unmarshaller.unmarshall(&raw)? {
+            error!("Failed saving genesis data: {}", failmsg);
+            Err(ServiceErrorDomain::Storage)?
+        }
+        Ok(self.cacher.add_asset(asset)?)
     }
 }
 

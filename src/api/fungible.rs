@@ -21,7 +21,7 @@ use lnpbp::rgb::{Amount, ContractId};
 use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
 
-#[derive(Clone, PartialEq, Debug, Display, LnpApi)]
+#[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
 #[display_from(Debug)]
 #[non_exhaustive]
@@ -31,6 +31,10 @@ pub enum Request {
 
     #[lnp_api(type = 0x0103)]
     Transfer(crate::api::fungible::TransferApi),
+
+    #[lnp_api(type = 0x0105)]
+    ImportAsset(::lnpbp::rgb::Genesis),
+
     //#[lnp_api(type = 0x0105)]
     //Receive(Receive),
     #[lnp_api(type = 0xFF01)]

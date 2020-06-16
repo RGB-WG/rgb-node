@@ -14,7 +14,6 @@
 mod config;
 mod data;
 mod processor;
-mod request;
 mod runtime;
 
 pub(self) mod cache;
