@@ -131,7 +131,7 @@ impl TryFrom<Genesis> for Asset {
         if genesis.schema_id() != schema::schema().schema_id() {
             Err(SchemaError::NotAllFieldsPresent)?;
         }
-        let fractional_bits = genesis.u8(-FieldType::FractionalBits)?;
+        let fractional_bits = genesis.u8(-FieldType::Precision)?;
         let supply =
             Coins::with_sats_precision(genesis.u64(-FieldType::IssuedSupply)?, fractional_bits);
 

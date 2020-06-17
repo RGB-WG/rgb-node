@@ -46,7 +46,7 @@ pub enum FieldType {
     TotalSupply = 3,
     IssuedSupply = 4,
     DustLimit = 5,
-    FractionalBits = 6,
+    Precision = 6,
     PruneProof = 7,
     Timestamp = 8,
 }
@@ -74,10 +74,11 @@ pub fn schema() -> Schema {
             FieldType::Name => DataFormat::String(256),
             FieldType::Description => DataFormat::String(1024),
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
+            FieldType::Precision => DataFormat::Unsigned(Bits::Bit64, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::DustLimit => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::PruneProof => DataFormat::Bytes(core::u16::MAX),
-            FieldType::Timestamp => DataFormat::Unsigned(Bits::Bit32, 0, core::u32::MAX as u128)
+            FieldType::Timestamp => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128)
         },
         assignment_types: type_map! {
             AssignmentsType::Issue => StateFormat::Void,
@@ -92,7 +93,8 @@ pub fn schema() -> Schema {
                 FieldType::TotalSupply => Occurences::Once,
                 FieldType::IssuedSupply => Occurences::Once,
                 FieldType::DustLimit => Occurences::NoneOrOnce,
-                FieldType::FractionalBits => Occurences::Once
+                FieldType::Precision => Occurences::Once,
+                FieldType::Timestamp => Occurences::Once
             },
             defines: type_map! {
                 AssignmentsType::Issue => Occurences::NoneOrOnce,
@@ -137,17 +139,19 @@ pub fn schema() -> Schema {
             },
             TransitionType::Prune => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::PruneProof => Occurences::OnceOrUpTo(None)
+                    FieldType::PruneProof => Occurences::NoneOrUpTo(None)
                 },
                 closes: type_map! {
-                    AssignmentsType::Prune => Occurences::NoneOrUpTo(None),
-                    AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
+                    AssignmentsType::Prune => Occurences::OnceOrUpTo(None),
+                    AssignmentsType::Assets => Occurences::OnceOrUpTo(None)
                 },
                 defines: type_map! {
                     AssignmentsType::Prune => Occurences::NoneOrUpTo(None),
                     AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
                 },
                 scripting: Scripting {
+                    // These means that the issuers may introduce custom
+                    // prune validation procedure
                     validation: script::Procedure::NoValidation,
                     extensions: script::Extensions::ScriptsReplace,
                 }

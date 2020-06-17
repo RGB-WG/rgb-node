@@ -78,7 +78,7 @@ impl Processor {
         let mut metadata = type_map! {
             FieldType::Ticker => field!(String, ticker),
             FieldType::Name => field!(String, name),
-            FieldType::FractionalBits => field!(U8, precision),
+            FieldType::Precision => field!(U8, precision),
             FieldType::DustLimit => field!(U64, dust_limit.unwrap_or(0)),
             FieldType::Timestamp => field!(U32, now as u32)
         };
