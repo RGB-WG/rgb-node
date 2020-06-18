@@ -12,7 +12,6 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::Clap;
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -119,67 +118,106 @@ impl Command {
     pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
             Command::List { format, long } => self.exec_list(runtime, format, long),
+            Command::Import { ref asset } => self.exec_import(runtime, asset.clone()),
+            Command::Export { asset } => self.exec_export(runtime, asset),
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
-            _ => unimplemented!(),
         }
     }
 
     fn exec_list(
-        self,
+        &self,
         mut runtime: Runtime,
         output_format: OutputFormat,
         long: bool,
     ) -> Result<(), Error> {
-        match runtime.list() {
-            Ok(reply) => match reply.borrow() {
-                Reply::Sync(reply::SyncFormat(input_format, data)) => {
-                    let assets: Vec<Asset> = match input_format {
-                        DataFormat::Yaml => serde_yaml::from_slice(&data)?,
-                        DataFormat::Json => serde_json::from_slice(&data)?,
-                        DataFormat::Toml => toml::from_slice(&data)?,
-                        DataFormat::StrictEncode => unimplemented!(),
-                    };
-                    let short: Vec<HashMap<&str, String>> = assets
-                        .iter()
-                        .map(|a| {
-                            map! {
-                                "id" => format!("{}", a.id()).to_string(),
-                                "ticker" => a.ticker().clone(),
-                                "name" => a.name().clone()
-                            }
-                        })
-                        .collect();
-                    let long_str: String;
-                    let short_str: String;
-                    match output_format {
-                        OutputFormat::Yaml => {
-                            long_str = serde_yaml::to_string(&assets)?;
-                            short_str = serde_yaml::to_string(&short)?;
+        match &*runtime.list()? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Sync(reply::SyncFormat(input_format, data)) => {
+                let assets: Vec<Asset> = match input_format {
+                    DataFormat::Yaml => serde_yaml::from_slice(&data)?,
+                    DataFormat::Json => serde_json::from_slice(&data)?,
+                    DataFormat::Toml => toml::from_slice(&data)?,
+                    DataFormat::StrictEncode => unimplemented!(),
+                };
+                let short: Vec<HashMap<&str, String>> = assets
+                    .iter()
+                    .map(|a| {
+                        map! {
+                            "id" => format!("{}", a.id()).to_string(),
+                            "ticker" => a.ticker().clone(),
+                            "name" => a.name().clone()
                         }
-                        OutputFormat::Json => {
-                            long_str = serde_json::to_string(&assets)?;
-                            short_str = serde_json::to_string(&short)?;
-                        }
-                        OutputFormat::Toml => {
-                            long_str = toml::to_string(&assets)?;
-                            short_str = toml::to_string(&short)?;
-                        }
-                        _ => unimplemented!(),
+                    })
+                    .collect();
+                let long_str: String;
+                let short_str: String;
+                match output_format {
+                    OutputFormat::Yaml => {
+                        long_str = serde_yaml::to_string(&assets)?;
+                        short_str = serde_yaml::to_string(&short)?;
                     }
-                    if long {
-                        println!("{}", long_str);
-                    } else {
-                        println!("{}", short_str);
+                    OutputFormat::Json => {
+                        long_str = serde_json::to_string(&assets)?;
+                        short_str = serde_json::to_string(&short)?;
                     }
+                    OutputFormat::Toml => {
+                        long_str = toml::to_string(&assets)?;
+                        short_str = toml::to_string(&short)?;
+                    }
+                    _ => unimplemented!(),
                 }
+                if long {
+                    println!("{}", long_str);
+                } else {
+                    println!("{}", short_str);
+                }
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+        Ok(())
+    }
 
-                _ => {
-                    eprintln!("Unexpected server error; probably you connecting with outdated client version");
-                }
-            },
-            Err(err) => {
-                eprintln!("Server returned error: {}\n", err);
+    fn exec_import(&self, mut runtime: Runtime, genesis: Genesis) -> Result<(), Error> {
+        info!("Importing asset ...");
+
+        match &*runtime.import(genesis)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Success => {
+                eprintln!("Asset successfully imported");
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+        Ok(())
+    }
+
+    fn exec_export(&self, mut runtime: Runtime, asset_id: ContractId) -> Result<(), Error> {
+        info!("Exporting asset ...");
+
+        match &*runtime.export(asset_id)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Genesis(genesis) => {
+                eprintln!("Asset successfully exported. Use this information for sharing:");
+                println!("{}", genesis);
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with outdated client version"
+                );
             }
         }
         Ok(())
@@ -195,19 +233,15 @@ impl Issue {
         info!("Reply: {}", reply);
         // TODO: Wait for the information from push notification
 
-        /*let (asset, genesis) = debug!("Asset information:\n {}\n", asset);
-        trace!("Genesis contract:\n {}\n", genesis);
+        /*let (asset, genesis) = match reply {
 
-        let bech = bech32::encode(
-            crate::RGB_BECH32_HRP_GENESIS,
-            strict_encode(&genesis).to_base32(),
-        )
-        .unwrap();
-        info!(
-            "Use this string to send information about the issued asset:\n{}\n",
-            bech
-        );
-         */
+        };
+
+        debug!("Asset information:\n {:?}\n", asset);
+        trace!("Genesis contract:\n {:?}\n", genesis);
+
+        eprintln!("Asset successfully issued. Use this information for sharing:");
+        println!("{}", genesis);*/
 
         Ok(())
     }

@@ -19,14 +19,14 @@ pub trait Store {
     type Error: ::std::error::Error + Into<ServiceErrorDomain>;
 
     fn schema_ids(&self) -> Result<Vec<SchemaId>, Self::Error>;
-    fn schema(&self, id: SchemaId) -> Result<Schema, Self::Error>;
-    fn has_schema(&self, id: SchemaId) -> Result<bool, Self::Error>;
+    fn schema(&self, id: &SchemaId) -> Result<Schema, Self::Error>;
+    fn has_schema(&self, id: &SchemaId) -> Result<bool, Self::Error>;
     fn add_schema(&self, schema: &Schema) -> Result<bool, Self::Error>;
-    fn remove_schema(&self, id: SchemaId) -> Result<bool, Self::Error>;
+    fn remove_schema(&self, id: &SchemaId) -> Result<bool, Self::Error>;
 
     fn contract_ids(&self) -> Result<Vec<ContractId>, Self::Error>;
-    fn genesis(&self, id: ContractId) -> Result<Genesis, Self::Error>;
-    fn has_genesis(&self, id: ContractId) -> Result<bool, Self::Error>;
+    fn genesis(&self, id: &ContractId) -> Result<Genesis, Self::Error>;
+    fn has_genesis(&self, id: &ContractId) -> Result<bool, Self::Error>;
     fn add_genesis(&self, genesis: &Genesis) -> Result<bool, Self::Error>;
-    fn remove_genesis(&self, id: ContractId) -> Result<bool, Self::Error>;
+    fn remove_genesis(&self, id: &ContractId) -> Result<bool, Self::Error>;
 }

@@ -30,6 +30,9 @@ pub enum Reply {
 
     #[lnp_api(type = 0xFF03)]
     Sync(crate::api::reply::SyncFormat),
+
+    #[lnp_api(type = 0xFF05)]
+    Genesis(::lnpbp::rgb::Genesis),
 }
 
 impl From<lnp::presentation::Error> for Reply {

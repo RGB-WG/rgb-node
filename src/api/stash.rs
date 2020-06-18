@@ -32,7 +32,7 @@ pub enum Request {
     ListGeneses(),
 
     #[lnp_api(type = 0x0205)]
-    ReadGeneses(Vec<::lnpbp::rgb::ContractId>),
+    ReadGenesis(::lnpbp::rgb::ContractId),
 
     #[lnp_api(type = 0x0301)]
     ReadTransitions(Vec<::lnpbp::rgb::TransitionId>),

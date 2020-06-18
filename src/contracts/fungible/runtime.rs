@@ -18,7 +18,7 @@ use ::std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::Genesis;
+use lnpbp::rgb::{ContractId, Genesis};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
@@ -169,6 +169,7 @@ impl Runtime {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
+            Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
             Request::Sync => self.rpc_sync().await,
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
@@ -243,6 +244,15 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
+    async fn rpc_export_asset(
+        &mut self,
+        asset_id: &ContractId,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got EXPORT_ASSET");
+        let genesis = self.export_asset(asset_id.clone()).await?;
+        Ok(Reply::Genesis(genesis))
+    }
+
     async fn import_asset(
         &mut self,
         asset: Asset,
@@ -251,11 +261,28 @@ impl Runtime {
         let data = crate::api::stash::Request::AddGenesis(genesis).encode()?;
         self.stash_rpc.send_raw_message(data.borrow())?;
         let raw = self.stash_rpc.recv_raw_message()?;
-        if let Reply::Failure(failmsg) = &*self.reply_unmarshaller.unmarshall(&raw)? {
-            error!("Failed saving genesis data: {}", failmsg);
-            Err(ServiceErrorDomain::Storage)?
+        match &*self.reply_unmarshaller.unmarshall(&raw)? {
+            Reply::Failure(failmsg) => {
+                error!("Failed saving genesis data: {}", failmsg);
+                Err(ServiceErrorDomain::Storage)?
+            }
+            Reply::Success => Ok(self.cacher.add_asset(asset)?),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
-        Ok(self.cacher.add_asset(asset)?)
+    }
+
+    async fn export_asset(&mut self, asset_id: ContractId) -> Result<Genesis, ServiceErrorDomain> {
+        let data = crate::api::stash::Request::ReadGenesis(asset_id).encode()?;
+        self.stash_rpc.send_raw_message(data.borrow())?;
+        let raw = self.stash_rpc.recv_raw_message()?;
+        match &*self.reply_unmarshaller.unmarshall(&raw)? {
+            Reply::Failure(failmsg) => {
+                error!("Failed exporting asset data: {}", failmsg);
+                Err(ServiceErrorDomain::Storage)
+            }
+            Reply::Genesis(genesis) => Ok(genesis.clone()),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
+        }
     }
 }
 

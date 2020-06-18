@@ -35,6 +35,9 @@ pub enum Request {
     #[lnp_api(type = 0x0105)]
     ImportAsset(::lnpbp::rgb::Genesis),
 
+    #[lnp_api(type = 0x0107)]
+    ExportAsset(::lnpbp::rgb::ContractId),
+
     //#[lnp_api(type = 0x0105)]
     //Receive(Receive),
     #[lnp_api(type = 0xFF01)]

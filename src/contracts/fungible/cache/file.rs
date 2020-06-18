@@ -163,10 +163,11 @@ impl FileCache {
 
     pub fn export(&self) -> Result<Vec<u8>, FileCacheError> {
         trace!("Exporting assets information ...");
+        let assets = self.assets.values().collect::<Vec<&Asset>>();
         Ok(match self.config.data_format {
-            DataFormat::Yaml => serde_yaml::to_vec(&self.assets)?,
-            DataFormat::Json => serde_json::to_vec(&self.assets)?,
-            DataFormat::Toml => toml::to_vec(&self.assets)?,
+            DataFormat::Yaml => serde_yaml::to_vec(&assets)?,
+            DataFormat::Json => serde_json::to_vec(&assets)?,
+            DataFormat::Toml => toml::to_vec(&assets)?,
             DataFormat::StrictEncode => unimplemented!(),
         })
     }

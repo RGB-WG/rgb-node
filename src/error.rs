@@ -174,6 +174,7 @@ pub enum ApiErrorType {
     MissedArgument { request: String, argument: String },
     UnknownArgument { request: String, argument: String },
     MalformedArgument { request: String, argument: String },
+    UnexpectedReply,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]

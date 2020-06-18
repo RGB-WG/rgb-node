@@ -16,6 +16,7 @@ use std::sync::Arc;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
+use lnpbp::rgb::{ContractId, Genesis};
 
 use super::{Config, Error};
 use crate::api::fungible::{Issue, Request, TransferApi};
@@ -55,6 +56,16 @@ impl Runtime {
     #[inline]
     pub fn list(&mut self) -> Result<Arc<Reply>, Error> {
         Ok(self.command(Request::Sync)?)
+    }
+
+    #[inline]
+    pub fn import(&mut self, genesis: Genesis) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Request::ImportAsset(genesis))?)
+    }
+
+    #[inline]
+    pub fn export(&mut self, asset_id: ContractId) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Request::ExportAsset(asset_id))?)
     }
 
     #[inline]

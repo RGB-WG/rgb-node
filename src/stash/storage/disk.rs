@@ -70,14 +70,14 @@ impl DiskStorageConfig {
     }
 
     #[inline]
-    pub fn schema_filename(&self, schema_id: SchemaId) -> PathBuf {
+    pub fn schema_filename(&self, schema_id: &SchemaId) -> PathBuf {
         self.schemata_dir()
             .join(schema_id.to_hex())
             .with_extension(Self::RGB_EXTENSION)
     }
 
     #[inline]
-    pub fn genesis_filename(&self, contract_id: ContractId) -> PathBuf {
+    pub fn genesis_filename(&self, contract_id: &ContractId) -> PathBuf {
         self.geneses_dir()
             .join(contract_id.to_hex())
             .with_extension(Self::RGB_EXTENSION)
@@ -158,23 +158,23 @@ impl Store for DiskStorage {
     }
 
     #[inline]
-    fn schema(&self, id: SchemaId) -> Result<Schema, Self::Error> {
+    fn schema(&self, id: &SchemaId) -> Result<Schema, Self::Error> {
         Ok(Schema::read_file(self.config.schema_filename(id))?)
     }
 
     #[inline]
-    fn has_schema(&self, id: SchemaId) -> Result<bool, Self::Error> {
+    fn has_schema(&self, id: &SchemaId) -> Result<bool, Self::Error> {
         Ok(self.config.schema_filename(id).as_path().exists())
     }
 
     fn add_schema(&self, schema: &Schema) -> Result<bool, Self::Error> {
-        let filename = self.config.schema_filename(schema.schema_id());
+        let filename = self.config.schema_filename(&schema.schema_id());
         let exists = filename.as_path().exists();
         schema.write_file(filename)?;
         Ok(exists)
     }
 
-    fn remove_schema(&self, id: SchemaId) -> Result<bool, Self::Error> {
+    fn remove_schema(&self, id: &SchemaId) -> Result<bool, Self::Error> {
         let filename = self.config.schema_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
@@ -192,24 +192,24 @@ impl Store for DiskStorage {
     }
 
     #[inline]
-    fn genesis(&self, id: ContractId) -> Result<Genesis, Self::Error> {
+    fn genesis(&self, id: &ContractId) -> Result<Genesis, Self::Error> {
         Ok(Genesis::read_file(self.config.genesis_filename(id))?)
     }
 
     #[inline]
-    fn has_genesis(&self, id: ContractId) -> Result<bool, Self::Error> {
+    fn has_genesis(&self, id: &ContractId) -> Result<bool, Self::Error> {
         Ok(self.config.genesis_filename(id).as_path().exists())
     }
 
     fn add_genesis(&self, genesis: &Genesis) -> Result<bool, Self::Error> {
-        let filename = self.config.genesis_filename(genesis.contract_id());
+        let filename = self.config.genesis_filename(&genesis.contract_id());
         let exists = filename.as_path().exists();
         genesis.write_file(filename)?;
         Ok(exists)
     }
 
     #[inline]
-    fn remove_genesis(&self, id: ContractId) -> Result<bool, Self::Error> {
+    fn remove_genesis(&self, id: &ContractId) -> Result<bool, Self::Error> {
         let filename = self.config.genesis_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;

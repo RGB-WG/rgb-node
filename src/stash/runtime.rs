@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{Genesis, Schema};
+use lnpbp::rgb::{ContractId, Genesis, Schema};
 use lnpbp::TryService;
 
 use super::Config;
@@ -126,46 +126,57 @@ impl TryService for Runtime {
 
 impl Runtime {
     async fn run(&mut self) -> Result<(), RuntimeError> {
+        trace!("Awaiting for ZMQ RPC requests...");
         let raw = self.session_rpc.recv_raw_message()?;
-        let reply = match self.rpc_process(raw).await {
-            Ok(_) => Reply::Success,
-            Err(err) => {
-                error!("Error processing request: {}", err);
-                Reply::from(err)
-            }
-        };
-        trace!("Sending reply: {}", reply);
+        let reply = self.rpc_process(raw).await.unwrap_or_else(|err| err);
+        trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.encode()?;
+        trace!(
+            "Sending {} bytes back to the client over ZMQ RPC",
+            data.len()
+        );
         self.session_rpc.send_raw_message(data)?;
         Ok(())
     }
 
-    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<(), ServiceError> {
+    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
+        trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
         let message = &*self
             .unmarshaller
             .unmarshall(&raw)
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
-        match message {
+        debug!("Received ZMQ RPC request: {:?}", message);
+        Ok(match message {
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
+            Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
             domain: err,
             service: ServiceErrorSource::Stash,
-        })
+        })?)
     }
 
-    async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<(), ServiceErrorDomain> {
+    async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ADD_SCHEMA {}", schema);
         self.storage.add_schema(schema)?;
-        Ok(())
+        Ok(Reply::Success)
     }
 
-    async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<(), ServiceErrorDomain> {
+    async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ADD_GENESIS {}", genesis);
         self.storage.add_genesis(genesis)?;
-        Ok(())
+        Ok(Reply::Success)
+    }
+
+    async fn rpc_read_genesis(
+        &mut self,
+        contract_id: &ContractId,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got READ_GENESIS {}", contract_id);
+        let genesis = self.storage.genesis(contract_id)?;
+        Ok(Reply::Genesis(genesis))
     }
 }
 
