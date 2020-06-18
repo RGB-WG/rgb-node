@@ -13,7 +13,7 @@
 
 use crate::error::ServiceErrorDomain;
 
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
+#[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
 pub enum Error {
     InputFileIoError(String),
@@ -22,4 +22,13 @@ pub enum Error {
 
     #[derive_from]
     ServiceError(ServiceErrorDomain),
+
+    #[derive_from]
+    YamlError(serde_yaml::Error),
+
+    #[derive_from]
+    JsonError(serde_json::Error),
+
+    #[derive_from(toml::de::Error, toml::ser::Error)]
+    TomlError,
 }

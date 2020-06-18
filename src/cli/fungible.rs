@@ -13,6 +13,7 @@
 
 use clap::Clap;
 use std::borrow::Borrow;
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -25,16 +26,34 @@ use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
-use super::{Error, Runtime};
+use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{Issue, TransferApi};
 use crate::api::{reply, Reply};
-use crate::fungible::{Outcoincealed, Outcoins};
+use crate::fungible::{Asset, Outcoincealed, Outcoins};
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
 pub enum Command {
     /// Lists all known assets
-    List,
+    List {
+        /// Format for information output
+        #[clap(short, long, arg_enum, default_value = "yaml")]
+        format: OutputFormat,
+
+        /// List all asset details
+        #[clap(short, long)]
+        long: bool,
+    },
+
+    Import {
+        /// Bech32 representation of the asset genesis
+        asset: Genesis,
+    },
+
+    Export {
+        /// Bech32 representation of the asset ID (contract id of the asset genesis)
+        asset: ContractId,
+    },
 
     /// Creates a new asset
     Issue(Issue),
@@ -97,33 +116,73 @@ pub struct TransferCli {
 }
 
 impl Command {
-    pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
+    pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
-            Command::List => {
-                match runtime.list() {
-                    Ok(reply) => match reply.borrow() {
-                        Reply::Sync(reply::SyncFormat(format, data)) => match format {
-                            DataFormat::Yaml | DataFormat::Json | DataFormat::Toml => {
-                                let str = String::from_utf8(data.to_vec()).expect(
-                                    "Server mis-serializaed data format: potentially iy is broken",
-                                );
-                                println!("{}\n", str);
-                            }
-                            DataFormat::StrictEncode => unimplemented!(),
-                        },
-                        _ => {
-                            eprintln!("Unexpected server error; probably you connecting with outdated client version");
-                        }
-                    },
-                    Err(err) => {
-                        eprintln!("Server returned error: {}\n", err);
-                    }
-                }
-                Ok(())
-            }
+            Command::List { format, long } => self.exec_list(runtime, format, long),
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
+            _ => unimplemented!(),
         }
+    }
+
+    fn exec_list(
+        self,
+        mut runtime: Runtime,
+        output_format: OutputFormat,
+        long: bool,
+    ) -> Result<(), Error> {
+        match runtime.list() {
+            Ok(reply) => match reply.borrow() {
+                Reply::Sync(reply::SyncFormat(input_format, data)) => {
+                    let assets: Vec<Asset> = match input_format {
+                        DataFormat::Yaml => serde_yaml::from_slice(&data)?,
+                        DataFormat::Json => serde_json::from_slice(&data)?,
+                        DataFormat::Toml => toml::from_slice(&data)?,
+                        DataFormat::StrictEncode => unimplemented!(),
+                    };
+                    let short: Vec<HashMap<&str, String>> = assets
+                        .iter()
+                        .map(|a| {
+                            map! {
+                                "id" => format!("{}", a.id()).to_string(),
+                                "ticker" => a.ticker().clone(),
+                                "name" => a.name().clone()
+                            }
+                        })
+                        .collect();
+                    let long_str: String;
+                    let short_str: String;
+                    match output_format {
+                        OutputFormat::Yaml => {
+                            long_str = serde_yaml::to_string(&assets)?;
+                            short_str = serde_yaml::to_string(&short)?;
+                        }
+                        OutputFormat::Json => {
+                            long_str = serde_json::to_string(&assets)?;
+                            short_str = serde_json::to_string(&short)?;
+                        }
+                        OutputFormat::Toml => {
+                            long_str = toml::to_string(&assets)?;
+                            short_str = toml::to_string(&short)?;
+                        }
+                        _ => unimplemented!(),
+                    }
+                    if long {
+                        println!("{}", long_str);
+                    } else {
+                        println!("{}", short_str);
+                    }
+                }
+
+                _ => {
+                    eprintln!("Unexpected server error; probably you connecting with outdated client version");
+                }
+            },
+            Err(err) => {
+                eprintln!("Server returned error: {}\n", err);
+            }
+        }
+        Ok(())
     }
 }
 
