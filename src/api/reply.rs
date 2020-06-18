@@ -11,8 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use lnpbp::data_format::DataFormat;
 use lnpbp::lnp;
+use lnpbp::rgb::Consignment;
 
 #[cfg(feature = "service")]
 use crate::error::{RuntimeError, ServiceError};
@@ -33,6 +35,12 @@ pub enum Reply {
 
     #[lnp_api(type = 0xFF05)]
     Genesis(::lnpbp::rgb::Genesis),
+
+    #[lnp_api(type = 0xFF07)]
+    Transitions(Vec<::lnpbp::rgb::Transition>),
+
+    #[lnp_api(type = 0xFF09)]
+    Transfer(Transfer),
 }
 
 impl From<lnp::presentation::Error> for Reply {
@@ -64,6 +72,14 @@ impl From<ServiceError> for Reply {
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[display_from(Debug)]
 pub struct SyncFormat(pub DataFormat, pub Vec<u8>);
+
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
+#[display_from(Debug)]
+pub struct Transfer {
+    pub ours_consignment: Consignment,
+    pub their_consignment: Consignment,
+    pub psbt: Psbt,
+}
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[display_from(Debug)]

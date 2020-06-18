@@ -217,14 +217,34 @@ impl Runtime {
         //       asset for the transfer operation
 
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
-        let mut psbt = transfer.psbt.clone();
-        let _consignment = self.processor.transfer(
+
+        let transition = self.processor.transition(
             &mut asset,
-            &mut psbt,
             transfer.inputs.clone(),
             transfer.ours.clone(),
             transfer.theirs.clone(),
         )?;
+
+        // Move from here downwards to Stash: this is common functionality for
+        // all types of contracts
+
+        let transitions = &*self.blank_transitions(self.inputs, transfer.contract_id)?;
+
+        // Gather other states on the same inputs, generate transitions
+        // ... we already have it as an argument
+        transitions.push(transition);
+
+        // Construct multi-message commitment with LNPBP-4
+
+        // Assemble transaction, add commitment
+
+        // Construct anchor
+        let anchor = Anchor::new(transitions);
+
+        // Prepare consignment
+        // ... this must be done by the upstream, since it requires call to stash
+
+        let mut psbt = transfer.psbt.clone();
 
         // TODO: Save consignment, send push request etc
 

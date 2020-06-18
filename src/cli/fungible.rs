@@ -289,6 +289,7 @@ impl TransferCli {
                 psbt
             }
         };
+
         let api = TransferApi {
             psbt,
             contract_id: self.contract_id,

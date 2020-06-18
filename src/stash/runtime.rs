@@ -13,6 +13,7 @@
 
 use std::path::PathBuf;
 
+use lnpbp::bitcoin::OutPoint;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
@@ -150,6 +151,7 @@ impl Runtime {
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
+            Request::BlankTransitions(outpoints) => self.rpc_blank_transitions(outpoints).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -177,6 +179,15 @@ impl Runtime {
         debug!("Got READ_GENESIS {}", contract_id);
         let genesis = self.storage.genesis(contract_id)?;
         Ok(Reply::Genesis(genesis))
+    }
+
+    async fn rpc_blank_transitions(
+        &mut self,
+        outpoints: &Vec<OutPoint>,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got BLANK_TRANSITIONS {}", outpoints);
+        // TODO: Implement
+        Ok(Reply::Transitions(transitions))
     }
 }
 

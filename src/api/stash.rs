@@ -11,6 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
+use lnpbp::bitcoin::OutPoint;
+use lnpbp::rgb::{ContractId, Transition};
+
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
 #[display_from(Debug)]
@@ -37,6 +41,9 @@ pub enum Request {
     #[lnp_api(type = 0x0301)]
     ReadTransitions(Vec<::lnpbp::rgb::TransitionId>),
 
+    #[lnp_api(type = 0x0303)]
+    BlankTransitions(Vec<::lnpbp::bitcoin::OutPoint>),
+
     #[lnp_api(type = 0x0401)]
     Consign(crate::api::stash::ConsignRequest),
     /*
@@ -53,4 +60,9 @@ pub enum Request {
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[display_from(Debug)]
-pub struct ConsignRequest();
+pub struct ConsignRequest {
+    pub contract_id: ContractId,
+    pub inputs: Vec<OutPoint>,
+    pub transition: Transition,
+    pub psbt: Psbt,
+}
