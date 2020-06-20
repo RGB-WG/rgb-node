@@ -127,6 +127,7 @@ pub enum RoutedError {
 pub enum ServiceErrorDomain {
     #[derive_from(::std::io::Error)]
     Io,
+    Stash,
     Storage,
     Index,
     Cache,

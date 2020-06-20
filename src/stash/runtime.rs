@@ -13,7 +13,6 @@
 
 use std::path::PathBuf;
 
-use lnpbp::bitcoin::OutPoint;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
@@ -21,7 +20,7 @@ use lnpbp::rgb::{ContractId, Genesis, Schema};
 use lnpbp::TryService;
 
 use super::Config;
-use crate::api::stash::Request;
+use crate::api::stash::{ConsignRequest, Request};
 use crate::api::Reply;
 use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
@@ -30,6 +29,7 @@ use crate::error::{
 use super::index::{BtreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
+//use crate::api::reply::Transfer;
 
 pub struct Runtime {
     /// Original configuration object
@@ -46,7 +46,7 @@ pub struct Runtime {
     // Here we use default indexer. When other indexers will be implemented,
     // they will be compile-time switched with `--cfg` options like
     // `--cfg "index_memcached"`
-    indexer: BtreeIndex,
+    pub(super) indexer: BtreeIndex,
 
     /// RGB Stash data storage: high-volume on-disk key-value storage with
     /// large binary blob values. Fast read, slow write, no delete db.
@@ -54,9 +54,9 @@ pub struct Runtime {
     /// from anywhere else. The disk storage must be locked for exclusive
     /// access.
     #[cfg(not(store_hammersbald))] // Default store
-    storage: DiskStorage,
+    pub(super) storage: DiskStorage,
     #[cfg(all(store_hammersbald, not(any(store_disk))))]
-    storage: HammersbaldStore,
+    pub(super) storage: HammersbaldStore,
 
     /// Unmarshaller instance used for parsing RPC request
     unmarshaller: Unmarshaller<Request>,
@@ -151,7 +151,7 @@ impl Runtime {
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
-            Request::BlankTransitions(outpoints) => self.rpc_blank_transitions(outpoints).await,
+            Request::Consign(consign) => self.rpc_consign(consign).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -181,13 +181,27 @@ impl Runtime {
         Ok(Reply::Genesis(genesis))
     }
 
-    async fn rpc_blank_transitions(
-        &mut self,
-        outpoints: &Vec<OutPoint>,
-    ) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got BLANK_TRANSITIONS {}", outpoints);
-        // TODO: Implement
-        Ok(Reply::Transitions(transitions))
+    async fn rpc_consign(&mut self, consign: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got CONSIGN {}", consign);
+
+        //let transitions = self.blank_transitions(&consign.inputs, consign.contract_id)?;
+        //transitions.push(consign.transition.clone());
+
+        // Construct anchor
+        //let mut psbt = consign.psbt.clone();
+        //let anchors = Anchor::commit(transitions, &mut psbt);
+
+        // Prepare consignments: extract from stash storage the required data
+        // and assemble them into a consignment
+
+        /*
+        Ok(Reply::Transfer(Transfer {
+            ours_consignment,
+            their_consignment,
+            psbt,
+        }))
+         */
+        Ok(Reply::Success)
     }
 }
 

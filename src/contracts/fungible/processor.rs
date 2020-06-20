@@ -20,7 +20,6 @@ use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
-use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 
 use super::schema::{self, AssignmentsType, FieldType, TransitionType};
@@ -210,7 +209,14 @@ impl Processor {
             AssignmentsVariant::zero_balanced(input_commitments, allocations_ours, allocations_theirs)
                 .ok_or("Can't do confidential amount commitments: need at least one output".to_string())?
         };
-        let transition = Transition::with(-TransitionType::Transfer, metadata, assignments, vec![]);
+        // TODO: Add transition inputs
+        let transition = Transition::with(
+            -TransitionType::Transfer,
+            metadata,
+            vec![],
+            assignments,
+            vec![],
+        );
 
         Ok(transition)
     }

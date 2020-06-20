@@ -41,9 +41,6 @@ pub enum Request {
     #[lnp_api(type = 0x0301)]
     ReadTransitions(Vec<::lnpbp::rgb::TransitionId>),
 
-    #[lnp_api(type = 0x0303)]
-    BlankTransitions(Vec<::lnpbp::bitcoin::OutPoint>),
-
     #[lnp_api(type = 0x0401)]
     Consign(crate::api::stash::ConsignRequest),
     /*

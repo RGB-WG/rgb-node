@@ -13,6 +13,7 @@
 
 mod config;
 mod runtime;
+mod stash;
 
 pub(self) mod index;
 pub(self) mod storage;

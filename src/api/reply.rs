@@ -40,7 +40,7 @@ pub enum Reply {
     Transitions(Vec<::lnpbp::rgb::Transition>),
 
     #[lnp_api(type = 0xFF09)]
-    Transfer(Transfer),
+    Transfer(crate::api::reply::Transfer),
 }
 
 impl From<lnp::presentation::Error> for Reply {

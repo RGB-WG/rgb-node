@@ -25,8 +25,11 @@ use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::{Asset, IssueStructure};
 use super::{Config, Processor};
 use crate::api::{
+    self,
     fungible::{Issue, Request, TransferApi},
-    reply, Reply,
+    reply,
+    stash::ConsignRequest,
+    Reply,
 };
 use crate::error::{
     ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
@@ -225,30 +228,16 @@ impl Runtime {
             transfer.theirs.clone(),
         )?;
 
-        // Move from here downwards to Stash: this is common functionality for
-        // all types of contracts
+        let reply = self
+            .consign(ConsignRequest {
+                contract_id: transfer.contract_id,
+                inputs: transfer.inputs.clone(),
+                transition,
+                psbt: transfer.psbt.clone(),
+            })
+            .await?;
 
-        let transitions = &*self.blank_transitions(self.inputs, transfer.contract_id)?;
-
-        // Gather other states on the same inputs, generate transitions
-        // ... we already have it as an argument
-        transitions.push(transition);
-
-        // Construct multi-message commitment with LNPBP-4
-
-        // Assemble transaction, add commitment
-
-        // Construct anchor
-        let anchor = Anchor::new(transitions);
-
-        // Prepare consignment
-        // ... this must be done by the upstream, since it requires call to stash
-
-        let mut psbt = transfer.psbt.clone();
-
-        // TODO: Save consignment, send push request etc
-
-        Ok(Reply::Success)
+        Ok(reply)
     }
 
     async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
@@ -278,31 +267,49 @@ impl Runtime {
         asset: Asset,
         genesis: Genesis,
     ) -> Result<bool, ServiceErrorDomain> {
-        let data = crate::api::stash::Request::AddGenesis(genesis).encode()?;
-        self.stash_rpc.send_raw_message(data.borrow())?;
-        let raw = self.stash_rpc.recv_raw_message()?;
-        match &*self.reply_unmarshaller.unmarshall(&raw)? {
-            Reply::Failure(failmsg) => {
-                error!("Failed saving genesis data: {}", failmsg);
-                Err(ServiceErrorDomain::Storage)?
-            }
+        match self
+            .stash_req_rep(api::stash::Request::AddGenesis(genesis))
+            .await?
+        {
             Reply::Success => Ok(self.cacher.add_asset(asset)?),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
     async fn export_asset(&mut self, asset_id: ContractId) -> Result<Genesis, ServiceErrorDomain> {
-        let data = crate::api::stash::Request::ReadGenesis(asset_id).encode()?;
-        self.stash_rpc.send_raw_message(data.borrow())?;
-        let raw = self.stash_rpc.recv_raw_message()?;
-        match &*self.reply_unmarshaller.unmarshall(&raw)? {
-            Reply::Failure(failmsg) => {
-                error!("Failed exporting asset data: {}", failmsg);
-                Err(ServiceErrorDomain::Storage)
-            }
+        match self
+            .stash_req_rep(api::stash::Request::ReadGenesis(asset_id))
+            .await?
+        {
             Reply::Genesis(genesis) => Ok(genesis.clone()),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
+    }
+
+    async fn consign(&mut self, consign_req: ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self
+            .stash_req_rep(api::stash::Request::Consign(consign_req))
+            .await?;
+        if let Reply::Transfer(_) = reply {
+            Ok(reply)
+        } else {
+            Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))
+        }
+    }
+
+    async fn stash_req_rep(
+        &mut self,
+        request: api::stash::Request,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        let data = request.encode()?;
+        self.stash_rpc.send_raw_message(data.borrow())?;
+        let raw = self.stash_rpc.recv_raw_message()?;
+        let reply = &*self.reply_unmarshaller.unmarshall(&raw)?.clone();
+        if let Reply::Failure(ref failmsg) = reply {
+            error!("Stash daemon has returned failure code: {}", failmsg);
+            Err(ServiceErrorDomain::Stash)?
+        }
+        Ok(reply.clone())
     }
 }
 
