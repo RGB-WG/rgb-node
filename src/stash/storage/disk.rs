@@ -70,6 +70,16 @@ impl DiskStorageConfig {
     }
 
     #[inline]
+    pub fn anchors_dir(&self) -> PathBuf {
+        self.data_dir.join("anchors")
+    }
+
+    #[inline]
+    pub fn transitions_dir(&self) -> PathBuf {
+        self.data_dir.join("transitions")
+    }
+
+    #[inline]
     pub fn schema_filename(&self, schema_id: &SchemaId) -> PathBuf {
         self.schemata_dir()
             .join(schema_id.to_hex())
@@ -80,6 +90,20 @@ impl DiskStorageConfig {
     pub fn genesis_filename(&self, contract_id: &ContractId) -> PathBuf {
         self.geneses_dir()
             .join(contract_id.to_hex())
+            .with_extension(Self::RGB_EXTENSION)
+    }
+
+    #[inline]
+    pub fn anchor_filename(&self, anchor_id: &AnchorId) -> PathBuf {
+        self.anchors_dir()
+            .join(anchor_id.to_hex())
+            .with_extension(Self::RGB_EXTENSION)
+    }
+
+    #[inline]
+    pub fn transition_filename(&self, transition_id: &TransitionId) -> PathBuf {
+        self.transitions_dir()
+            .join(transition_id.to_hex())
             .with_extension(Self::RGB_EXTENSION)
     }
 
@@ -138,6 +162,24 @@ impl DiskStorage {
                 geneses_dir
             );
             fs::create_dir_all(geneses_dir)?;
+        }
+
+        let anchors_dir = config.anchors_dir();
+        if !anchors_dir.exists() {
+            debug!(
+                "RGB anchor data directory '{:?}' is not found; creating one",
+                anchors_dir
+            );
+            fs::create_dir_all(anchors_dir)?;
+        }
+
+        let transitions_dir = config.geneses_dir();
+        if !transitions_dir.exists() {
+            debug!(
+                "RGB state transition data directory '{:?}' is not found; creating one",
+                transitions_dir
+            );
+            fs::create_dir_all(transitions_dir)?;
         }
 
         Ok(Self { config })
@@ -216,19 +258,47 @@ impl Store for DiskStorage {
         Ok(existed)
     }
 
-    fn anchor(&self, _id: &AnchorId) -> Result<Anchor, Self::Error> {
-        unimplemented!()
+    fn anchor(&self, id: &AnchorId) -> Result<Anchor, Self::Error> {
+        Ok(Anchor::read_file(self.config.anchor_filename(id))?)
     }
 
-    fn add_anchor(&self, _anchor: &Anchor) -> Result<bool, Self::Error> {
-        unimplemented!()
+    fn has_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error> {
+        Ok(self.config.anchor_filename(id).as_path().exists())
     }
 
-    fn transition(&self, _id: &TransitionId) -> Result<Transition, Self::Error> {
-        unimplemented!()
+    fn add_anchor(&self, anchor: &Anchor) -> Result<bool, Self::Error> {
+        let filename = self.config.anchor_filename(&anchor.anchor_id());
+        let exists = filename.as_path().exists();
+        anchor.write_file(filename)?;
+        Ok(exists)
     }
 
-    fn add_transition(&self, _transition: &Transition) -> Result<bool, Self::Error> {
-        unimplemented!()
+    fn remove_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error> {
+        let filename = self.config.anchor_filename(id);
+        let existed = filename.as_path().exists();
+        fs::remove_file(filename)?;
+        Ok(existed)
+    }
+
+    fn transition(&self, id: &TransitionId) -> Result<Transition, Self::Error> {
+        Ok(Transition::read_file(self.config.transition_filename(id))?)
+    }
+
+    fn has_transition(&self, id: &TransitionId) -> Result<bool, Self::Error> {
+        Ok(self.config.transition_filename(id).as_path().exists())
+    }
+
+    fn add_transition(&self, transition: &Transition) -> Result<bool, Self::Error> {
+        let filename = self.config.transition_filename(&transition.transition_id());
+        let exists = filename.as_path().exists();
+        transition.write_file(filename)?;
+        Ok(exists)
+    }
+
+    fn remove_transition(&self, id: &TransitionId) -> Result<bool, Self::Error> {
+        let filename = self.config.transition_filename(id);
+        let existed = filename.as_path().exists();
+        fs::remove_file(filename)?;
+        Ok(existed)
     }
 }

@@ -120,3 +120,59 @@ impl ReadWrite for Genesis {
         self.strict_encode(file)
     }
 }
+
+impl ReadWrite for Anchor {
+    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+        let mut file = file(filename, FileMode::Read)?;
+        let mut magic_buf = [0u8; 4];
+        file.read_exact(&mut magic_buf)?;
+        let magic = u32::from_be_bytes(magic_buf);
+        let magic = MagicNumber::try_from(magic).map_err(|detected| {
+            Error::DataIntegrityError(format!(
+                "Wrong file type: expected anchor file, got unknown magic number {}",
+                detected
+            ))
+        })?;
+        if magic != MagicNumber::Anchor {
+            Err(Error::DataIntegrityError(format!(
+                "Wrong file type: expected anchor file, got {}",
+                magic
+            )))?
+        }
+        Anchor::strict_decode(file)
+    }
+
+    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+        let mut file = file(filename, FileMode::Create)?;
+        file.write(&MagicNumber::Anchor.to_u32().to_be_bytes())?;
+        self.strict_encode(file)
+    }
+}
+
+impl ReadWrite for Transition {
+    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+        let mut file = file(filename, FileMode::Read)?;
+        let mut magic_buf = [0u8; 4];
+        file.read_exact(&mut magic_buf)?;
+        let magic = u32::from_be_bytes(magic_buf);
+        let magic = MagicNumber::try_from(magic).map_err(|detected| {
+            Error::DataIntegrityError(format!(
+                "Wrong file type: expected state transition file, got unknown magic number {}",
+                detected
+            ))
+        })?;
+        if magic != MagicNumber::Transition {
+            Err(Error::DataIntegrityError(format!(
+                "Wrong file type: expected state transition file, got {}",
+                magic
+            )))?
+        }
+        Transition::strict_decode(file)
+    }
+
+    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+        let mut file = file(filename, FileMode::Create)?;
+        file.write(&MagicNumber::Transition.to_u32().to_be_bytes())?;
+        self.strict_encode(file)
+    }
+}

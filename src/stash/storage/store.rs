@@ -31,8 +31,12 @@ pub trait Store {
     fn remove_genesis(&self, id: &ContractId) -> Result<bool, Self::Error>;
 
     fn anchor(&self, id: &AnchorId) -> Result<Anchor, Self::Error>;
+    fn has_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error>;
     fn add_anchor(&self, anchor: &Anchor) -> Result<bool, Self::Error>;
+    fn remove_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error>;
 
     fn transition(&self, id: &TransitionId) -> Result<Transition, Self::Error>;
+    fn has_transition(&self, id: &TransitionId) -> Result<bool, Self::Error>;
     fn add_transition(&self, transition: &Transition) -> Result<bool, Self::Error>;
+    fn remove_transition(&self, id: &TransitionId) -> Result<bool, Self::Error>;
 }
