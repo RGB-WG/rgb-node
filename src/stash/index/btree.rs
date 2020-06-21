@@ -13,18 +13,47 @@
 
 use std::collections::BTreeMap;
 
+use lnpbp::rgb::{Anchor, AnchorId, TransitionId};
+
 use super::Index;
+use crate::error::{BootstrapError, ServiceErrorDomain};
+
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
+#[display_from(Debug)]
+pub enum BTreeIndexError {}
+
+impl From<BTreeIndexError> for ServiceErrorDomain {
+    fn from(_: BTreeIndexError) -> Self {
+        ServiceErrorDomain::Storage
+    }
+}
+
+impl From<BTreeIndexError> for BootstrapError {
+    fn from(_: BTreeIndexError) -> Self {
+        BootstrapError::StorageError
+    }
+}
 
 #[derive(Display, Debug)]
 #[display_from(Debug)]
-pub struct BtreeIndex {
+pub struct BTreeIndex {
     index: BTreeMap<Vec<u8>, Vec<u8>>,
 }
 
-impl BtreeIndex {
+impl BTreeIndex {
     pub fn new() -> Self {
         Self { index: bmap! {} }
     }
 }
 
-impl Index for BtreeIndex {}
+impl Index for BTreeIndex {
+    type Error = BTreeIndexError;
+
+    fn anchor_id_by_transition_id(&self, _tsid: TransitionId) -> Result<AnchorId, Self::Error> {
+        unimplemented!()
+    }
+
+    fn index_anchor(&mut self, _anchor: &Anchor) -> Result<bool, Self::Error> {
+        unimplemented!()
+    }
+}

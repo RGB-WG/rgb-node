@@ -21,9 +21,7 @@ mod hammersbald;
 pub(super) use store::Store;
 
 #[cfg(not(store_hammersbald))] // Default store
-pub(super) use disk::DiskStorage;
-#[cfg(not(store_hammersbald))]
-pub(super) use disk::DiskStorageConfig;
+pub(super) use disk::{DiskStorage, DiskStorageConfig, DiskStorageError};
 
 #[cfg(all(store_hammersbald, not(any(store_disk))))]
 pub(super) use hammersbald::HammersbaldStorage;

@@ -13,10 +13,11 @@
 
 #![allow(dead_code)]
 #![feature(
-    never_type,
-    unwrap_infallible,
+    bool_to_option,
     in_band_lifetimes,
+    never_type,
     try_trait,
+    unwrap_infallible,
     with_options
 )]
 

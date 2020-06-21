@@ -26,7 +26,7 @@ use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
 };
 
-use super::index::{BtreeIndex, Index};
+use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
 //use crate::api::reply::Transfer;
@@ -46,7 +46,7 @@ pub struct Runtime {
     // Here we use default indexer. When other indexers will be implemented,
     // they will be compile-time switched with `--cfg` options like
     // `--cfg "index_memcached"`
-    pub(super) indexer: BtreeIndex,
+    pub(super) indexer: BTreeIndex,
 
     /// RGB Stash data storage: high-volume on-disk key-value storage with
     /// large binary blob values. Fast read, slow write, no delete db.
@@ -81,7 +81,7 @@ impl Runtime {
             data_dir: PathBuf::from(config.stash.clone()),
         })?;
 
-        let indexer = BtreeIndex::new();
+        let indexer = BTreeIndex::new();
 
         let session_rpc = Session::new_zmq_unencrypted(
             ApiType::Server,

@@ -215,4 +215,20 @@ impl Store for DiskStorage {
         fs::remove_file(filename)?;
         Ok(existed)
     }
+
+    fn anchor(&self, _id: &AnchorId) -> Result<Anchor, Self::Error> {
+        unimplemented!()
+    }
+
+    fn add_anchor(&self, _anchor: &Anchor) -> Result<bool, Self::Error> {
+        unimplemented!()
+    }
+
+    fn transition(&self, _id: &TransitionId) -> Result<Transition, Self::Error> {
+        unimplemented!()
+    }
+
+    fn add_transition(&self, _transition: &Transition) -> Result<bool, Self::Error> {
+        unimplemented!()
+    }
 }
