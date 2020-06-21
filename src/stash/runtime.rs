@@ -29,6 +29,7 @@ use crate::error::{
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
+use crate::stash::index::BTreeIndexConfig;
 //use crate::api::reply::Transfer;
 
 pub struct Runtime {
@@ -81,7 +82,9 @@ impl Runtime {
             data_dir: PathBuf::from(config.stash.clone()),
         })?;
 
-        let indexer = BTreeIndex::new();
+        let indexer = BTreeIndex::load(BTreeIndexConfig {
+            index_file: PathBuf::from(config.index.clone()),
+        })?;
 
         let session_rpc = Session::new_zmq_unencrypted(
             ApiType::Server,

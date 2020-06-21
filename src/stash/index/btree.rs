@@ -12,15 +12,27 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::collections::BTreeMap;
+use std::fs;
+use std::io;
+use std::path::PathBuf;
 
 use lnpbp::rgb::{Anchor, AnchorId, TransitionId};
+use lnpbp::strict_encoding::{StrictDecode, StrictEncode};
 
 use super::Index;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
+type BTreeIndexData = BTreeMap<Vec<u8>, Vec<u8>>;
+
+#[derive(Debug, Display, Error, From)]
 #[display_from(Debug)]
-pub enum BTreeIndexError {}
+pub enum BTreeIndexError {
+    #[derive_from]
+    Io(io::Error),
+
+    #[derive_from]
+    Encoding(lnpbp::strict_encoding::Error),
+}
 
 impl From<BTreeIndexError> for ServiceErrorDomain {
     fn from(_: BTreeIndexError) -> Self {
@@ -34,15 +46,44 @@ impl From<BTreeIndexError> for BootstrapError {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
+#[display_from(Debug)]
+pub struct BTreeIndexConfig {
+    pub index_file: PathBuf,
+}
+
 #[derive(Display, Debug)]
 #[display_from(Debug)]
 pub struct BTreeIndex {
-    index: BTreeMap<Vec<u8>, Vec<u8>>,
+    config: BTreeIndexConfig,
+    index: BTreeIndexData,
 }
 
 impl BTreeIndex {
-    pub fn new() -> Self {
-        Self { index: bmap! {} }
+    pub fn new(config: BTreeIndexConfig) -> Self {
+        Self {
+            config,
+            index: bmap! {},
+        }
+    }
+
+    pub fn load(config: BTreeIndexConfig) -> Result<Self, BTreeIndexError> {
+        let file = fs::File::with_options()
+            .read(true)
+            .open(&config.index_file)?;
+        Ok(Self {
+            config,
+            index: BTreeIndexData::strict_decode(file)?,
+        })
+    }
+
+    pub fn store(&self) -> Result<(), BTreeIndexError> {
+        let file = fs::File::with_options()
+            .write(true)
+            .create(true)
+            .open(&self.config.index_file)?;
+        self.index.strict_encode(file)?;
+        Ok(())
     }
 }
 

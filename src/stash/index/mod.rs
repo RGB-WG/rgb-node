@@ -17,4 +17,4 @@ mod btree;
 
 pub(super) use index::Index;
 
-pub(super) use btree::{BTreeIndex, BTreeIndexError};
+pub(super) use btree::{BTreeIndex, BTreeIndexConfig, BTreeIndexError};
