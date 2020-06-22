@@ -28,6 +28,7 @@ regex = "~1.3.9"
 env_logger = "~0.7.1"
 num-traits = "~0.2.12"
 num-derive = "~0.3.0"
+url = "~2.1.1"
 diesel = { version = "~1.4.5", features = ["uuid", "numeric", "chrono"] } # target-specific features are coming, in the meantime keep postgres disabled to compile on android (https://github.com/rust-lang/cargo/issues/7914)
 tokio = { version = "~0.2.21", features = ["full"] }
 futures = "~0.3.5"

@@ -31,4 +31,7 @@ pub enum Error {
 
     #[derive_from(toml::de::Error, toml::ser::Error)]
     TomlError,
+
+    #[derive_from]
+    StrictEncoding(lnpbp::strict_encoding::Error),
 }

@@ -23,12 +23,14 @@ use bitcoin::{OutPoint, Transaction, TxIn};
 
 use lnpbp::bitcoin;
 use lnpbp::bp;
+use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
 
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{Issue, TransferApi};
 use crate::api::{reply, Reply};
-use crate::fungible::{Asset, Outcoincealed, Outcoins};
+use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, OutpointDescriptor};
+use crate::util::file::ReadWrite;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display_from(Debug)]
@@ -57,8 +59,30 @@ pub enum Command {
     /// Creates a new asset
     Issue(Issue),
 
-    /// Transfers some asset to another party
+    /// Create an invoice
+    Invoice(InvoiceCli),
+
+    /// Do a transfer of some requested asset to another party
     Transfer(TransferCli),
+
+    /// Accepts an incoming payment
+    Accept {
+        /// Consignment file
+        consignment: PathBuf,
+    },
+}
+
+#[derive(Clap, Clone, PartialEq, Debug, Display)]
+#[display_from(Debug)]
+pub struct InvoiceCli {
+    /// Assets
+    pub asset: ContractId,
+
+    /// Amount
+    pub amount: f32,
+
+    /// Receive assets to a given bitcoin address or UTXO
+    pub outpoint: OutpointDescriptor,
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
@@ -68,40 +92,35 @@ pub struct TransferCli {
     #[clap(long)]
     pub commit_txout: Option<Output>,
 
-    /// Read pastially-signed transaction prototype
+    /// Read partially-signed transaction prototype
     #[clap(short, long)]
-    pub psbt: Option<PathBuf>,
+    pub prototype: Option<PathBuf>,
 
     /// Asset inputs
     #[clap(short = "i", long, min_values = 1)]
     pub inputs: Vec<OutPoint>,
 
-    /// Adds output(s) to generated witness transaction
+    /// Adds custom (non-RGB) output(s) to generated witness transaction
     #[clap(long)]
     pub txout: Vec<Output>,
 
-    /// Adds input(s) to generated witness transaction
+    /// Adds custom (non-RGB) input(s) to generated witness transaction
     #[clap(long)]
     pub txin: Vec<Input>,
+
+    /// Fee (in satoshis), if the PSBT transaction prototype is not provided
+    #[clap(short, long)]
+    pub fee: Option<u64>,
 
     /// Adds additional asset allocations; MUST use transaction inputs
     /// controlled by the local party
     #[clap(short, long)]
     pub allocate: Vec<Outcoins>,
 
-    /// Saves witness transaction to a file instead of publishing it
-    #[clap(short, long)]
-    pub transaction: Option<PathBuf>,
-
-    /// Saves consignment data to a file
-    #[clap(long)]
-    pub consignment: Option<PathBuf>,
-
     /// Amount
     pub amount: f32,
 
     /// Assets
-    #[clap(parse(try_from_str=ContractId::from_hex))]
     pub contract_id: ContractId,
 
     /// Receiver
@@ -110,6 +129,12 @@ pub struct TransferCli {
 
     /// Change output
     pub change: Option<OutPoint>,
+
+    /// File to save consignment to
+    pub consignment: PathBuf,
+
+    /// File to save updated partially-signed bitcoin transaction to
+    pub transaction: PathBuf,
     // / Invoice to pay
     //pub invoice: fungible::Invoice,
 }
@@ -120,8 +145,10 @@ impl Command {
             Command::List { format, long } => self.exec_list(runtime, format, long),
             Command::Import { ref asset } => self.exec_import(runtime, asset.clone()),
             Command::Export { asset } => self.exec_export(runtime, asset),
+            Command::Invoice(invoice) => invoice.exec(runtime),
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
+            _ => unimplemented!(),
         }
     }
 
@@ -247,12 +274,29 @@ impl Issue {
     }
 }
 
+impl InvoiceCli {
+    pub fn exec(self, _: Runtime) -> Result<(), Error> {
+        info!("Generating invoice ...");
+        debug!("{}", self.clone());
+
+        let invoice = Invoice {
+            contract_id: self.asset,
+            outpoint: self.outpoint.into(),
+            amount: self.amount,
+        };
+
+        println!("{}", invoice);
+
+        Ok(())
+    }
+}
+
 impl TransferCli {
     pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
         info!("Transferring asset ...");
         debug!("{}", self.clone());
 
-        let psbt = match self.psbt {
+        let psbt = match self.prototype {
             Some(filename) => {
                 debug!(
                     "Reading partially-signed transaction from file {:?}",
@@ -304,8 +348,19 @@ impl TransferCli {
 
         let reply = runtime.transfer(api)?;
         info!("Reply: {}", reply);
-
-        // TODO: Wait for the information from push notification
+        match &*reply {
+            Reply::Failure(failure) => {
+                eprintln!("Transfer failed: {}", failure);
+            }
+            Reply::Transfer(transfer) => {
+                transfer.consignment.write_file(self.consignment.clone())?;
+                println!(
+                    "Transfer succeeded, consignment data are written to {:?}",
+                    self.consignment
+                );
+            }
+            _ => (),
+        }
 
         Ok(())
     }
@@ -350,4 +405,3 @@ mod helpers {
     }
 }
 pub use helpers::*;
-use lnpbp::data_format::DataFormat;

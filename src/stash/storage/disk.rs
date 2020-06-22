@@ -173,7 +173,7 @@ impl DiskStorage {
             fs::create_dir_all(anchors_dir)?;
         }
 
-        let transitions_dir = config.geneses_dir();
+        let transitions_dir = config.transitions_dir();
         if !transitions_dir.exists() {
             debug!(
                 "RGB state transition data directory '{:?}' is not found; creating one",

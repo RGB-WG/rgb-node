@@ -12,9 +12,11 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod asset;
+mod invoice;
 mod outcoins;
 pub mod schema;
 
-pub use asset::*;
+pub use asset::{Asset, Coins, Issue, Supply};
+pub use invoice::{Invoice, Outpoint, OutpointDescriptor};
 pub use outcoins::{Outcoincealed, Outcoins};
 pub use schema::SchemaError;
