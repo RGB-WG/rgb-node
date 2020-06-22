@@ -11,9 +11,12 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeMap;
+
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use lnpbp::bitcoin::OutPoint;
-use lnpbp::rgb::{ContractId, Transition};
+use lnpbp::bp::blind::OutpointHash;
+use lnpbp::rgb::{ContractId, Transition, TransitionId};
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
@@ -61,5 +64,7 @@ pub struct ConsignRequest {
     pub contract_id: ContractId,
     pub inputs: Vec<OutPoint>,
     pub transition: Transition,
+    pub other_transition_ids: BTreeMap<ContractId, TransitionId>,
+    pub outpoints: Vec<OutpointHash>,
     pub psbt: Psbt,
 }

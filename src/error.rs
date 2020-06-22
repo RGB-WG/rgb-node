@@ -145,6 +145,7 @@ pub enum ServiceErrorDomain {
     Bitcoin,
     Lightning,
     Schema(String),
+    Anchor(String),
     #[derive_from]
     Internal(String),
 }

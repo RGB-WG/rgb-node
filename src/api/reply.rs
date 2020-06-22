@@ -76,8 +76,7 @@ pub struct SyncFormat(pub DataFormat, pub Vec<u8>);
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[display_from(Debug)]
 pub struct Transfer {
-    pub ours_consignment: Consignment,
-    pub their_consignment: Consignment,
+    pub consignment: Consignment,
     pub psbt: Psbt,
 }
 

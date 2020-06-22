@@ -233,6 +233,13 @@ impl Runtime {
                 contract_id: transfer.contract_id,
                 inputs: transfer.inputs.clone(),
                 transition,
+                // TODO: Collect blank state transitions and pass it here
+                other_transition_ids: bmap![],
+                outpoints: transfer
+                    .theirs
+                    .iter()
+                    .map(|o| o.seal_confidential)
+                    .collect(),
                 psbt: transfer.psbt.clone(),
             })
             .await?;

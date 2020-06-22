@@ -16,21 +16,19 @@ use std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{ContractId, Genesis, Schema};
+use lnpbp::rgb::{Anchor, ContractId, Genesis, Schema};
 use lnpbp::TryService;
-
-use super::Config;
-use crate::api::stash::{ConsignRequest, Request};
-use crate::api::Reply;
-use crate::error::{
-    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
-};
 
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
+use super::Config;
+use crate::api::stash::{ConsignRequest, Request};
+use crate::api::{reply::Transfer, Reply};
+use crate::error::{
+    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
+};
 use crate::stash::index::BTreeIndexConfig;
-//use crate::api::reply::Transfer;
 
 pub struct Runtime {
     /// Original configuration object
@@ -184,27 +182,33 @@ impl Runtime {
         Ok(Reply::Genesis(genesis))
     }
 
-    async fn rpc_consign(&mut self, consign: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got CONSIGN {}", consign);
+    async fn rpc_consign(&mut self, request: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got CONSIGN {}", request);
 
-        //let transitions = self.blank_transitions(&consign.inputs, consign.contract_id)?;
-        //transitions.push(consign.transition.clone());
+        let mut transitions = request.other_transition_ids.clone();
+        transitions.insert(request.contract_id, request.transition.transition_id());
 
         // Construct anchor
-        //let mut psbt = consign.psbt.clone();
-        //let anchors = Anchor::commit(transitions, &mut psbt);
+        let mut psbt = request.psbt.clone();
+        let (anchors, map) = Anchor::commit(transitions, &mut psbt)
+            .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
+        let anchor = anchors[*map
+            .get(&request.contract_id)
+            .expect("Core LNP/BP anchor commitment procedure is broken")]
+        .clone();
 
         // Prepare consignments: extract from stash storage the required data
         // and assemble them into a consignment
+        let consignment = self
+            .consign(
+                &request.contract_id,
+                &request.transition,
+                &anchor,
+                request.outpoints.clone(),
+            )
+            .map_err(|_| ServiceErrorDomain::Stash)?;
 
-        /*
-        Ok(Reply::Transfer(Transfer {
-            ours_consignment,
-            their_consignment,
-            psbt,
-        }))
-         */
-        Ok(Reply::Success)
+        Ok(Reply::Transfer(Transfer { consignment, psbt }))
     }
 }
 

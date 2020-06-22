@@ -14,9 +14,8 @@
 use std::collections::VecDeque;
 
 use lnpbp::bitcoin::hashes::Hash;
-use lnpbp::rgb::{
-    Anchor, AutoConceal, Consignment, ContractId, Node, SealDefinition, Transition, TransitionId,
-};
+use lnpbp::bp::blind::OutpointHash;
+use lnpbp::rgb::{Anchor, AutoConceal, Consignment, ContractId, Node, Transition, TransitionId};
 
 use super::index::Index;
 use super::storage::Store;
@@ -35,16 +34,16 @@ pub enum Error {
 impl Runtime {
     pub fn consign(
         &self,
-        contract_id: ContractId,
-        mut transition: Transition,
-        anchor: Anchor,
-        endpoints: Vec<SealDefinition>,
+        contract_id: &ContractId,
+        transition: &Transition,
+        anchor: &Anchor,
+        endpoints: Vec<OutpointHash>,
     ) -> Result<Consignment, Error> {
         let genesis = self.storage.genesis(&contract_id)?;
 
-        let mut node: &mut dyn Node = &mut transition;
+        let mut node: &mut dyn Node = &mut transition.clone();
         node.conceal_except(&endpoints);
-        let mut data = vec![(anchor, transition.clone())];
+        let mut data = vec![(anchor.clone(), transition.clone())];
         let mut sources: VecDeque<TransitionId> = Default::default();
         sources.extend(transition.ancestors().into_iter());
         while let Some(tsid) = sources.pop_front() {
