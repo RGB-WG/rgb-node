@@ -11,13 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use chrono::NaiveDateTime;
 use core::convert::TryFrom;
-use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, LinkedList};
 
-use lnpbp::bitcoin;
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 
+use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 

@@ -18,7 +18,7 @@ use url::Url;
 use lnpbp::bitcoin;
 use lnpbp::bitcoin::Address;
 use lnpbp::bp::blind::OutpointHash;
-use lnpbp::rgb::{Bech32, ContractId};
+use lnpbp::rgb::{Bech32, ContractId, ToBech32};
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display_from(Debug)]
@@ -146,7 +146,9 @@ impl Display for Invoice {
     fn fmt(&self, f: &mut Formatter<'_>) -> ::core::fmt::Result {
         let url = Url::parse(&format!(
             "rgb20:{}?asset={}&amount={}",
-            self.outpoint, self.contract_id, self.amount
+            self.outpoint,
+            self.contract_id.to_bech32(),
+            self.amount
         ))
         .expect("Internal Url generation error");
         write!(f, "{}", url)

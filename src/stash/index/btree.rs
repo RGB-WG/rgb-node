@@ -61,6 +61,7 @@ pub struct BTreeIndex {
 
 impl BTreeIndex {
     pub fn new(config: BTreeIndexConfig) -> Self {
+        debug!("Instantiating RGB index (file & memory storage) ...");
         Self {
             config,
             index: bmap! {},
@@ -68,16 +69,19 @@ impl BTreeIndex {
     }
 
     pub fn load(config: BTreeIndexConfig) -> Result<Self, BTreeIndexError> {
-        let file = fs::File::with_options()
-            .read(true)
-            .open(&config.index_file)?;
-        Ok(Self {
-            config,
-            index: BTreeIndexData::strict_decode(file)?,
-        })
+        if let Ok(file) = fs::File::with_options().read(true).open(&config.index_file) {
+            debug!("Loading RGB index from file {:?} ...", &config.index_file);
+            Ok(Self {
+                config,
+                index: BTreeIndexData::strict_decode(file)?,
+            })
+        } else {
+            Ok(Self::new(config))
+        }
     }
 
     pub fn store(&self) -> Result<(), BTreeIndexError> {
+        debug!("Saving RGB index to file {:?} ...", &self.config.index_file);
         let file = fs::File::with_options()
             .write(true)
             .create(true)

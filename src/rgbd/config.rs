@@ -29,13 +29,7 @@ use crate::constants::*;
 )]
 pub struct Opts {
     /// Sets verbosity level; can be used multiple times to increase verbosity
-    #[clap(
-        short = "v",
-        long = "verbose",
-        min_values = 0,
-        max_values = 4,
-        parse(from_occurrences)
-    )]
+    #[clap(short, long, global = true, parse(from_occurrences))]
     pub verbose: u8,
 
     /// Path to the directory containing daemon executables

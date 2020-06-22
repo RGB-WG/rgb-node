@@ -82,14 +82,14 @@ impl DiskStorageConfig {
     #[inline]
     pub fn schema_filename(&self, schema_id: &SchemaId) -> PathBuf {
         self.schemata_dir()
-            .join(schema_id.to_hex())
+            .join(schema_id.to_bech32().to_string())
             .with_extension(Self::RGB_EXTENSION)
     }
 
     #[inline]
     pub fn genesis_filename(&self, contract_id: &ContractId) -> PathBuf {
         self.geneses_dir()
-            .join(contract_id.to_hex())
+            .join(contract_id.to_bech32().to_string())
             .with_extension(Self::RGB_EXTENSION)
     }
 

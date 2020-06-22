@@ -21,7 +21,7 @@ pub const RGB_CONTRACTS: &'static str = "fungible";
 pub const RGB_NETWORK: &'static str = "testnet";
 
 pub const STASHD_STASH: &'static str = "{data_dir}/{network}/stash/{id}/";
-pub const STASHD_INDEX: &'static str = "{data_dir}/{network}/stash/{id}/index/";
+pub const STASHD_INDEX: &'static str = "{data_dir}/{network}/stash/{id}/index.dat";
 pub const STASHD_P2P_ENDPOINT: &'static str = "lnp://{node_id}@0.0.0.0:13000";
 pub const STASHD_RPC_ENDPOINT: &'static str = "ipc:{data_dir}/{network}/stashd.rpc";
 pub const STASHD_PUB_ENDPOINT: &'static str = "ipc:{data_dir}/{network}/stashd.pub";

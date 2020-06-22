@@ -173,7 +173,7 @@ impl Command {
                     .iter()
                     .map(|a| {
                         map! {
-                            "id" => format!("{}", a.id()).to_string(),
+                            "id" => a.id().to_bech32_string(),
                             "ticker" => a.ticker().clone(),
                             "name" => a.name().clone()
                         }
