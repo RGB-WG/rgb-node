@@ -16,20 +16,19 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-use bitcoin::consensus::Decodable;
-use bitcoin::hashes::hex::FromHex;
-use bitcoin::util::psbt::{self, PartiallySignedTransaction};
-use bitcoin::{OutPoint, Transaction, TxIn};
+use bitcoin::consensus::{Decodable, Encodable};
+use bitcoin::util::psbt::{raw::Key, PartiallySignedTransaction};
+use bitcoin::OutPoint;
 
 use lnpbp::bitcoin;
-use lnpbp::bp;
+use lnpbp::client_side_validation::Conceal;
 use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
 
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{Issue, TransferApi};
 use crate::api::{reply, Reply};
-use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, OutpointDescriptor};
+use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, Outpoint, OutpointDescriptor};
 use crate::util::file::ReadWrite;
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -88,55 +87,32 @@ pub struct InvoiceCli {
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
 #[display_from(Debug)]
 pub struct TransferCli {
-    /// Use custom commitment output for generated witness transaction
-    #[clap(long)]
-    pub commit_txout: Option<Output>,
-
-    /// Read partially-signed transaction prototype
-    #[clap(short, long)]
-    pub prototype: Option<PathBuf>,
-
     /// Asset inputs
-    #[clap(short = "i", long, min_values = 1)]
+    #[clap(short = "i", long = "input", min_values = 1)]
     pub inputs: Vec<OutPoint>,
-
-    /// Adds custom (non-RGB) output(s) to generated witness transaction
-    #[clap(long)]
-    pub txout: Vec<Output>,
-
-    /// Adds custom (non-RGB) input(s) to generated witness transaction
-    #[clap(long)]
-    pub txin: Vec<Input>,
-
-    /// Fee (in satoshis), if the PSBT transaction prototype is not provided
-    #[clap(short, long)]
-    pub fee: Option<u64>,
 
     /// Adds additional asset allocations; MUST use transaction inputs
     /// controlled by the local party
     #[clap(short, long)]
     pub allocate: Vec<Outcoins>,
 
-    /// Amount
-    pub amount: f32,
+    /// Invoice to pay
+    pub invoice: Invoice,
 
-    /// Assets
-    pub contract_id: ContractId,
+    /// Read partially-signed transaction prototype
+    pub prototype: PathBuf,
 
-    /// Receiver
-    #[clap(parse(try_from_str=bp::blind::OutpointHash::from_hex))]
-    pub receiver: bp::blind::OutpointHash,
+    /// Fee (in satoshis)
+    pub fee: u64,
 
     /// Change output
-    pub change: Option<OutPoint>,
+    pub change: OutPoint,
 
     /// File to save consignment to
     pub consignment: PathBuf,
 
     /// File to save updated partially-signed bitcoin transaction to
     pub transaction: PathBuf,
-    // / Invoice to pay
-    //pub invoice: fungible::Invoice,
 }
 
 impl Command {
@@ -292,59 +268,72 @@ impl InvoiceCli {
 }
 
 impl TransferCli {
+    #[allow(unreachable_code)]
     pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
         info!("Transferring asset ...");
         debug!("{}", self.clone());
 
-        let psbt = match self.prototype {
-            Some(filename) => {
-                debug!(
-                    "Reading partially-signed transaction from file {:?}",
-                    filename
-                );
-                let filepath = format!("{:?}", filename.clone());
-                let file = fs::File::open(filename)
-                    .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
-                let psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
-                    Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))
-                })?;
-                trace!("{:?}", psbt);
-                psbt
-            }
-            None => {
-                debug!("Generating transaction from arguments");
-                let tx = Transaction {
-                    version: 2,
-                    lock_time: 0,
-                    input: vec![],
-                    output: vec![],
-                };
-                // TODO: Add addition of custom tx inputs and outputs from
-                //       command-line arguments
-                let psbt = PartiallySignedTransaction {
-                    global: psbt::Global {
-                        unsigned_tx: tx,
-                        unknown: Default::default(),
-                    },
-                    inputs: vec![],
-                    outputs: vec![],
-                };
-                trace!("{:?}", psbt);
-                psbt
+        let seal_confidential = match self.invoice.outpoint {
+            Outpoint::BlindedUtxo(outpoint_hash) => outpoint_hash,
+            Outpoint::Address(_address) => {
+                // To do a pay-to-address, we need to spend some bitcoins,
+                // which we have to take from somewhere. While payee can
+                // provide us with additional input, it's not part of the
+                // invoicing protocol + does not make a lot of sense, since
+                // the same input can be simply used by Utxo scheme
+                unimplemented!();
+                SealDefinition::WitnessVout {
+                    vout: 0,
+                    blinding: 0,
+                }
+                .conceal()
             }
         };
 
+        let pubkey_key = Key {
+            type_value: 0xFC,
+            key: PSBT_PUBKEY_KEY.to_vec(),
+        };
+        let fee_key = Key {
+            type_value: 0xFC,
+            key: PSBT_FEE_KEY.to_vec(),
+        };
+
+        debug!(
+            "Reading partially-signed transaction from file {:?}",
+            self.prototype
+        );
+        let filepath = format!("{:?}", &self.prototype);
+        let file = fs::File::open(self.prototype)
+            .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
+        let mut psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))
+        })?;
+
+        psbt.global
+            .unknown
+            .insert(fee_key, self.fee.to_be_bytes().to_vec());
+        for output in &mut psbt.outputs {
+            output.unknown.insert(
+                pubkey_key.clone(),
+                output.hd_keypaths.keys().next().unwrap().to_bytes(),
+            );
+        }
+        trace!("{:?}", psbt);
+
         let api = TransferApi {
             psbt,
-            contract_id: self.contract_id,
+            contract_id: self.invoice.contract_id,
             inputs: self.inputs,
             ours: self.allocate,
             theirs: vec![Outcoincealed {
-                coins: self.amount,
-                seal_confidential: self.receiver,
+                coins: self.invoice.amount,
+                seal_confidential,
             }],
             change: self.change,
         };
+
+        // TODO: Do tx output reorg for deterministic ordering
 
         let reply = runtime.transfer(api)?;
         info!("Reply: {}", reply);
@@ -354,9 +343,12 @@ impl TransferCli {
             }
             Reply::Transfer(transfer) => {
                 transfer.consignment.write_file(self.consignment.clone())?;
+                let out_file = fs::File::create(&self.transaction)
+                    .expect("can't create output transaction file");
+                transfer.psbt.consensus_encode(out_file)?;
                 println!(
-                    "Transfer succeeded, consignment data are written to {:?}",
-                    self.consignment
+                    "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
+                    self.consignment, self.transaction
                 );
             }
             _ => (),
@@ -365,43 +357,3 @@ impl TransferCli {
         Ok(())
     }
 }
-
-// Helper data structures
-
-mod helpers {
-    use super::*;
-    use core::str::FromStr;
-
-    /// Defines information required to generate bitcoin transaction output from
-    /// command-line argument
-    #[derive(Clone, PartialEq, Debug, Display)]
-    #[display_from(Debug)]
-    pub struct Output {
-        pub amount: bitcoin::Amount,
-        pub lock: bp::LockScript,
-    }
-
-    impl FromStr for Output {
-        type Err = String;
-        fn from_str(_s: &str) -> Result<Self, Self::Err> {
-            unimplemented!()
-        }
-    }
-
-    /// Defines information required to generate bitcoin transaction input from
-    /// command-line argument
-    #[derive(Clone, PartialEq, Debug, Display)]
-    #[display_from(Debug)]
-    pub struct Input {
-        pub txin: TxIn,
-        pub unlock: bp::LockScript,
-    }
-
-    impl FromStr for Input {
-        type Err = String;
-        fn from_str(_s: &str) -> Result<Self, Self::Err> {
-            unimplemented!()
-        }
-    }
-}
-pub use helpers::*;

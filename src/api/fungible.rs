@@ -107,7 +107,7 @@ pub struct TransferApi {
     pub theirs: Vec<Outcoincealed>,
 
     /// Optional change output: the rest of assets will be allocated here
-    pub change: Option<OutPoint>,
+    pub change: OutPoint,
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {

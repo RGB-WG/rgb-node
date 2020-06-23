@@ -34,4 +34,7 @@ pub enum Error {
 
     #[derive_from]
     StrictEncoding(lnpbp::strict_encoding::Error),
+
+    #[derive_from]
+    ConsensusEncoding(lnpbp::bitcoin::consensus::encode::Error),
 }
