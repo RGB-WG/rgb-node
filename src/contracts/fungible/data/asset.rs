@@ -18,6 +18,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use lnpbp::bitcoin;
+use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
@@ -90,7 +91,7 @@ pub struct Asset {
     date: NaiveDateTime,
     unspent_issue_txo: Option<bitcoin::OutPoint>,
     known_issues: Vec<LinkedList<Issue>>,
-    known_allocations: BTreeMap<bitcoin::OutPoint, Vec<amount::Revealed>>,
+    known_allocations: BTreeMap<bitcoin::OutPoint, Vec<(TransitionId, amount::Revealed)>>,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
@@ -119,7 +120,10 @@ impl Asset {
     }
 
     #[inline]
-    pub fn allocations(&self, seal: &bitcoin::OutPoint) -> Option<&Vec<amount::Revealed>> {
+    pub fn allocations(
+        &self,
+        seal: &bitcoin::OutPoint,
+    ) -> Option<&Vec<(TransitionId, amount::Revealed)>> {
         self.known_allocations.get(seal)
     }
 }
@@ -135,6 +139,7 @@ impl TryFrom<Genesis> for Asset {
         let supply =
             Coins::with_sats_precision(genesis.u64(-FieldType::IssuedSupply)?, fractional_bits);
 
+        let transition_id = TransitionId::from_inner(genesis.contract_id().into_inner());
         Ok(Self {
             id: genesis.contract_id(),
             network_magic: genesis.network().as_magic(),
@@ -179,7 +184,7 @@ impl TryFrom<Genesis> for Asset {
                             {
                                 data.entry(outpoint_reveal.clone().into())
                                     .or_insert(vec![])
-                                    .push(assigned_state.clone())
+                                    .push((transition_id, assigned_state.clone()))
                             }
                         });
                     }

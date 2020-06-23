@@ -164,7 +164,7 @@ impl Processor {
         theirs: Vec<Outcoincealed>,
     ) -> Result<Transition, ServiceErrorDomain> {
         // Collecting all input allocations
-        let input_commitments: Vec<amount::Revealed> = inputs.iter().try_fold(
+        let input_commitments: Vec<(TransitionId, amount::Revealed)> = inputs.iter().try_fold(
             vec![],
             |mut acc, seal| -> Result<Vec<_>, ServiceErrorDomain> {
                 let found = asset
@@ -179,7 +179,9 @@ impl Processor {
             },
         )?;
         // Computing sum of inputs
-        let total_inputs = input_commitments.iter().fold(0u64, |acc, r| acc + r.amount);
+        let total_inputs = input_commitments
+            .iter()
+            .fold(0u64, |acc, (_, r)| acc + r.amount);
 
         let metadata = type_map! {};
         let mut total_outputs = 0;
@@ -204,16 +206,17 @@ impl Processor {
             Err("Input amount is not equal to output amount".to_string())?
         }
 
+        let input_amounts = input_commitments.iter().map(|(_, r)| r.clone()).collect();
         let assignments = type_map! {
             AssignmentsType::Assets =>
-            AssignmentsVariant::zero_balanced(input_commitments, allocations_ours, allocations_theirs)
+            AssignmentsVariant::zero_balanced(input_amounts, allocations_ours, allocations_theirs)
                 .ok_or("Can't do confidential amount commitments: need at least one output".to_string())?
         };
         // TODO: Add transition inputs
         let transition = Transition::with(
             -TransitionType::Transfer,
             metadata,
-            vec![],
+            input_commitments.into_iter().map(|(id, _)| id).collect(),
             assignments,
             vec![],
         );
