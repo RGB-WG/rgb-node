@@ -15,21 +15,21 @@ use ::std::sync::Arc;
 use std::fs::File;
 use std::path::PathBuf;
 
-use lnpbp::bitcoin::OutPoint;
 use lnpbp::bitcoin::consensus::encode::{deserialize, Encodable};
 use lnpbp::bitcoin::util::psbt::{raw::Key, PartiallySignedTransaction};
+use lnpbp::bitcoin::OutPoint;
 
 use lnpbp::bp;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::Unmarshall;
-use lnpbp::rgb::{Amount, PSBT_PUBKEY_KEY, PSBT_FEE_KEY};
+use lnpbp::rgb::{Amount, PSBT_FEE_KEY, PSBT_PUBKEY_KEY};
 
 use super::{Error, Runtime};
 use crate::api::{fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply};
 use crate::error::ServiceErrorDomain;
-use crate::fungible::{Invoice, IssueStructure, Outcoins, Outcoincealed, Outpoint};
-use crate::util::SealSpec;
+use crate::fungible::{Invoice, IssueStructure, Outcoincealed, Outcoins, Outpoint};
 use crate::util::file::ReadWrite;
+use crate::util::SealSpec;
 
 impl Runtime {
     fn command(&mut self, command: Request) -> Result<Arc<Reply>, ServiceErrorDomain> {
@@ -133,9 +133,11 @@ impl Runtime {
         match &*self.command(Request::Transfer(api))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Transfer(transfer) => {
-                transfer.consignment.write_file(PathBuf::from(&consignment_file))?;
-                let out_file = File::create(&transaction_file)
-                    .expect("can't create output transaction file");
+                transfer
+                    .consignment
+                    .write_file(PathBuf::from(&consignment_file))?;
+                let out_file =
+                    File::create(&transaction_file).expect("can't create output transaction file");
                 transfer.psbt.consensus_encode(out_file)?;
                 println!(
                     "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lnpbp.rgbnode.model.IssueArgs;
 import org.lnpbp.rgbnode.model.StartRgbArgs;
+import org.lnpbp.rgbnode.model.TransferArgs;
 import org.lnpbp.rgbnode_autogen.COpaqueStruct;
 import org.lnpbp.rgbnode_autogen.rgb_node;
 
@@ -32,6 +33,16 @@ public class Runtime {
         try {
             final String jsonArgs = mapper.writeValueAsString(args);
             rgb_node.issue(this.runtime, jsonArgs);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void transfer(List<String> inputs, List<IssueArgs.CoinAllocation> allocate, String invoice, String prototype_psbt, Integer fee, String change, String consignment_file, String transaction_file) throws RuntimeException {
+        final TransferArgs args = new TransferArgs(inputs, allocate, invoice, prototype_psbt, fee, change, consignment_file, transaction_file);
+        try {
+            final String jsonArgs = mapper.writeValueAsString(args);
+            rgb_node.transfer(this.runtime, jsonArgs);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

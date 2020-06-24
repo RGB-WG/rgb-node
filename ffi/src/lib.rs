@@ -15,7 +15,7 @@ use rgb::lnpbp::bp;
 use rgb::lnpbp::lnp::transport::zmq::{SocketLocator, UrlError};
 use rgb::lnpbp::rgb::Amount;
 
-use rgb::fungible::{IssueStructure, Outcoins, Invoice};
+use rgb::fungible::{Invoice, IssueStructure, Outcoins};
 use rgb::i9n::*;
 use rgb::rgbd::ContractName;
 use rgb::util::SealSpec;
@@ -154,9 +154,7 @@ fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
 
 #[cfg(target_os = "android")]
 fn start_logger() {
-        android_logger::init_once(
-            android_logger::Config::default().with_min_level(log::Level::Debug),
-        );
+    android_logger::init_once(android_logger::Config::default().with_min_level(log::Level::Debug));
 }
 
 #[cfg(not(target_os = "android"))]
@@ -247,7 +245,7 @@ fn _transfer(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
         )
         .map_err(|e| format!("{:?}", e))
         .map(|_| ())
-        //.and_then(|r| serde_json::to_string(&r).map_err(|e| format!("{:?}", e)))
+    //.and_then(|r| serde_json::to_string(&r).map_err(|e| format!("{:?}", e)))
 }
 
 #[no_mangle]
