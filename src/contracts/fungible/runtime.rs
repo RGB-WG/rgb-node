@@ -18,15 +18,16 @@ use ::std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{Consignment, ContractId, Genesis};
+use lnpbp::rgb::{ContractId, Genesis};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::{Asset, IssueStructure};
 use super::{Config, Processor};
+use crate::api::stash::MergeRequest;
 use crate::api::{
     self,
-    fungible::{Issue, Request, TransferApi},
+    fungible::{AcceptApi, Issue, Request, TransferApi},
     reply,
     stash::ConsignRequest,
     Reply,
@@ -171,7 +172,7 @@ impl Runtime {
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
-            Request::Accept(consignment) => self.rpc_accept(consignment).await,
+            Request::Accept(accept) => self.rpc_accept(accept).await,
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
             Request::Sync => self.rpc_sync().await,
@@ -248,9 +249,9 @@ impl Runtime {
         Ok(reply)
     }
 
-    async fn rpc_accept(&mut self, consignment: &Consignment) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_accept(&mut self, accept: &AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
-        self.accept(consignment.clone()).await?;
+        self.accept(accept.clone()).await?;
         Ok(Reply::Success)
     }
 
@@ -311,11 +312,24 @@ impl Runtime {
         }
     }
 
-    async fn accept(&mut self, consignment: Consignment) -> Result<Reply, ServiceErrorDomain> {
+    async fn accept(&mut self, accept: AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
-            .stash_req_rep(api::stash::Request::MergeConsignment(consignment))
+            .stash_req_rep(api::stash::Request::MergeConsignment(MergeRequest {
+                consignment: accept.consignment.clone(),
+                reveal_outpoints: accept.reveal_outpoints,
+            }))
             .await?;
-        if let Reply::Transfer(_) = reply {
+        if let Reply::Success = reply {
+            let asset_id = accept.consignment.genesis.contract_id();
+            let asset = if self.cacher.has_asset(asset_id)? {
+                self.cacher.asset(asset_id)?.clone()
+            } else {
+                Asset::try_from(accept.consignment.genesis)?
+            };
+
+            // TODO: Add new allocations
+
+            self.cacher.add_asset(asset)?;
             Ok(reply)
         } else {
             Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))

@@ -16,7 +16,8 @@ use serde::{Deserialize, Serialize};
 
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
-use lnpbp::rgb::{Amount, ContractId};
+use lnpbp::bp::blind::OutpointReveal;
+use lnpbp::rgb::{Amount, Consignment, ContractId};
 
 use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
@@ -33,7 +34,7 @@ pub enum Request {
     Transfer(crate::api::fungible::TransferApi),
 
     #[lnp_api(type = 0x0105)]
-    Accept(::lnpbp::rgb::Consignment),
+    Accept(crate::api::fungible::AcceptApi),
 
     #[lnp_api(type = 0x0107)]
     ImportAsset(::lnpbp::rgb::Genesis),
@@ -109,6 +110,16 @@ pub struct TransferApi {
 
     /// Optional change output: the rest of assets will be allocated here
     pub change: OutPoint,
+}
+
+#[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
+#[display_from(Debug)]
+pub struct AcceptApi {
+    /// Raw consignment data
+    pub consignment: Consignment,
+
+    /// Reveal outpoints data used during invoice creation
+    pub reveal_outpoints: Vec<OutpointReveal>,
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {

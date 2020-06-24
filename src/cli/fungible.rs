@@ -21,14 +21,15 @@ use bitcoin::util::psbt::{raw::Key, PartiallySignedTransaction};
 use bitcoin::OutPoint;
 
 use lnpbp::bitcoin;
+use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
 
 use super::{Error, OutputFormat, Runtime};
-use crate::api::fungible::{Issue, TransferApi};
+use crate::api::fungible::{AcceptApi, Issue, TransferApi};
 use crate::api::{reply, Reply};
-use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, Outpoint, OutpointDescriptor};
+use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, Outpoint};
 use crate::util::file::ReadWrite;
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -68,6 +69,12 @@ pub enum Command {
     Accept {
         /// Consignment file
         consignment: PathBuf,
+
+        /// Locally-controlled outpoint (specified when the invoice was created)
+        outpoint: OutPoint,
+
+        /// Outpoint blinding factor (generated when the invoice was created)
+        blinding_factor: u32,
     },
 }
 
@@ -81,7 +88,7 @@ pub struct InvoiceCli {
     pub amount: f32,
 
     /// Receive assets to a given bitcoin address or UTXO
-    pub outpoint: OutpointDescriptor,
+    pub outpoint: OutPoint,
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
@@ -124,7 +131,11 @@ impl Command {
             Command::Invoice(invoice) => invoice.exec(runtime),
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
-            Command::Accept { ref consignment } => self.exec_accept(runtime, consignment.clone()),
+            Command::Accept {
+                ref consignment,
+                outpoint,
+                blinding_factor,
+            } => self.exec_accept(runtime, consignment.clone(), outpoint, blinding_factor),
         }
     }
 
@@ -226,7 +237,13 @@ impl Command {
         Ok(())
     }
 
-    fn exec_accept(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
+    fn exec_accept(
+        &self,
+        mut runtime: Runtime,
+        filename: PathBuf,
+        outpoint: OutPoint,
+        blinding_factor: u32,
+    ) -> Result<(), Error> {
         info!("Accepting asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
@@ -234,7 +251,26 @@ impl Command {
             Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
         })?;
 
-        match &*runtime.accept(consignment)? {
+        let api = if let Some(outpoint_hash) = consignment.endpoints.get(0) {
+            let outpoint_reveal = OutpointReveal {
+                blinding: blinding_factor,
+                txid: outpoint.txid,
+                vout: outpoint.vout as u16,
+            };
+            if outpoint_reveal.conceal() != *outpoint_hash {
+                eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
+                Err(Error::DataInconsistency)?
+            }
+            AcceptApi {
+                consignment,
+                reveal_outpoints: vec![outpoint_reveal],
+            }
+        } else {
+            eprintln!("Currently, this command-line tool is unable to accept consignments containing more than a single locally-controlled output point");
+            Err(Error::UnsupportedFunctionality)?
+        };
+
+        match &*runtime.accept(api)? {
             Reply::Failure(failure) => {
                 eprintln!("Server returned error: {}", failure);
             }
@@ -279,13 +315,17 @@ impl InvoiceCli {
         info!("Generating invoice ...");
         debug!("{}", self.clone());
 
+        let outpoint_reveal = OutpointReveal::from(self.outpoint);
         let invoice = Invoice {
             contract_id: self.asset,
-            outpoint: self.outpoint.into(),
+            outpoint: Outpoint::BlindedUtxo(outpoint_reveal.conceal()),
             amount: self.amount,
         };
 
+        eprint!("Invoice: ");
         println!("{}", invoice);
+        eprint!("Outpoint blinding factor: ");
+        println!("{}", outpoint_reveal.blinding);
 
         Ok(())
     }

@@ -111,6 +111,7 @@ pub struct Issue {
 }
 
 impl Asset {
+    #[inline]
     pub fn network(&self) -> bp::Network {
         bp::Network::from_magic(self.network_magic)
     }

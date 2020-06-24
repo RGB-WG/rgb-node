@@ -11,19 +11,22 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 
+use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
+use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{Anchor, Consignment, ContractId, Genesis, Schema};
+use lnpbp::rgb::{seal, Anchor, Assignment, AssignmentsVariant, ContractId, Genesis, Node, Schema};
 use lnpbp::TryService;
 
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
 use super::Config;
-use crate::api::stash::{ConsignRequest, Request};
+use crate::api::stash::{ConsignRequest, MergeRequest, Request};
 use crate::api::{reply::Transfer, Reply};
 use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
@@ -153,7 +156,7 @@ impl Runtime {
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
             Request::Consign(consign) => self.rpc_consign(consign).await,
-            Request::MergeConsignment(consignment) => self.rpc_merge_consignment(consignment).await,
+            Request::MergeConsignment(merge) => self.rpc_merge_consignment(merge).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -214,15 +217,96 @@ impl Runtime {
 
     async fn rpc_merge_consignment(
         &mut self,
-        consignment: &Consignment,
+        merge: &MergeRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got MERGE CONSIGNMENT");
 
-        self.storage.add_genesis(&consignment.genesis)?;
-        consignment.data.iter().try_for_each(
+        // TODO: Integrate validation workflow
+
+        let known_seals: HashMap<OutpointHash, OutpointReveal> = merge
+            .reveal_outpoints
+            .iter()
+            .map(|rev| (rev.conceal(), rev.clone()))
+            .collect();
+
+        self.storage.add_genesis(&merge.consignment.genesis)?;
+        merge.consignment.data.iter().try_for_each(
             |(anchor, transition)| -> Result<(), ServiceErrorDomain> {
+                let mut transition = transition.clone();
+                transition.assignments_mut().into_iter().for_each(
+                    |(_, assignment)| match assignment {
+                        AssignmentsVariant::Void(_) => {}
+                        AssignmentsVariant::Homomorphic(set) => {
+                            set.clone().iter().for_each(|a| match a {
+                                Assignment::Confidential {
+                                    seal_definition,
+                                    assigned_state,
+                                } => {
+                                    if let Some(reveal) = known_seals.get(seal_definition) {
+                                        set.remove(a);
+                                        set.insert(Assignment::ConfidentialAmount {
+                                            seal_definition: seal::Revealed::TxOutpoint(
+                                                reveal.clone(),
+                                            ),
+                                            assigned_state: assigned_state.clone(),
+                                        });
+                                    };
+                                }
+                                Assignment::ConfidentialSeal {
+                                    seal_definition,
+                                    assigned_state,
+                                } => {
+                                    if let Some(reveal) = known_seals.get(seal_definition) {
+                                        set.remove(a);
+                                        set.insert(Assignment::Revealed {
+                                            seal_definition: seal::Revealed::TxOutpoint(
+                                                reveal.clone(),
+                                            ),
+                                            assigned_state: assigned_state.clone(),
+                                        });
+                                    };
+                                }
+                                _ => {}
+                            });
+                        }
+                        AssignmentsVariant::Hashed(set) => {
+                            set.clone().iter().for_each(|a| match a {
+                                Assignment::Confidential {
+                                    seal_definition,
+                                    assigned_state,
+                                } => {
+                                    if let Some(reveal) = known_seals.get(seal_definition) {
+                                        set.remove(a);
+                                        set.insert(Assignment::ConfidentialAmount {
+                                            seal_definition: seal::Revealed::TxOutpoint(
+                                                reveal.clone(),
+                                            ),
+                                            assigned_state: assigned_state.clone(),
+                                        });
+                                    };
+                                }
+                                Assignment::ConfidentialSeal {
+                                    seal_definition,
+                                    assigned_state,
+                                } => {
+                                    if let Some(reveal) = known_seals.get(seal_definition) {
+                                        set.remove(a);
+                                        set.insert(Assignment::Revealed {
+                                            seal_definition: seal::Revealed::TxOutpoint(
+                                                reveal.clone(),
+                                            ),
+                                            assigned_state: assigned_state.clone(),
+                                        });
+                                    };
+                                }
+                                _ => {}
+                            });
+                        }
+                    },
+                );
+
                 self.storage.add_anchor(anchor)?;
-                self.storage.add_transition(transition)?;
+                self.storage.add_transition(&transition)?;
                 Ok(())
             },
         )?;

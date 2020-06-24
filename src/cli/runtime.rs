@@ -16,10 +16,10 @@ use std::sync::Arc;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{Consignment, ContractId, Genesis};
+use lnpbp::rgb::{ContractId, Genesis};
 
 use super::{Config, Error};
-use crate::api::fungible::{Issue, Request, TransferApi};
+use crate::api::fungible::{AcceptApi, Issue, Request, TransferApi};
 use crate::api::Reply;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 
@@ -79,7 +79,7 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn accept(&mut self, consignment: Consignment) -> Result<Arc<Reply>, Error> {
-        Ok(self.command(Request::Accept(consignment))?)
+    pub fn accept(&mut self, accept: AcceptApi) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Request::Accept(accept))?)
     }
 }

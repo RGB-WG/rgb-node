@@ -37,4 +37,8 @@ pub enum Error {
 
     #[derive_from]
     ConsensusEncoding(lnpbp::bitcoin::consensus::encode::Error),
+
+    DataInconsistency,
+
+    UnsupportedFunctionality,
 }

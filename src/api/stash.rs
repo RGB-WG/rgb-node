@@ -15,8 +15,8 @@ use std::collections::BTreeMap;
 
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use lnpbp::bitcoin::OutPoint;
-use lnpbp::bp::blind::OutpointHash;
-use lnpbp::rgb::{ContractId, Transition, TransitionId};
+use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
+use lnpbp::rgb::{Consignment, ContractId, Transition, TransitionId};
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
@@ -48,7 +48,7 @@ pub enum Request {
     Consign(crate::api::stash::ConsignRequest),
 
     #[lnp_api(type = 0x0403)]
-    MergeConsignment(::lnpbp::rgb::Consignment),
+    MergeConsignment(crate::api::stash::MergeRequest),
     /*
     #[lnp_api(type = 0x0405)]
     VerifyConsignment(::lnpbp::rgb::Consignment),
@@ -67,4 +67,11 @@ pub struct ConsignRequest {
     pub other_transition_ids: BTreeMap<ContractId, TransitionId>,
     pub outpoints: Vec<OutpointHash>,
     pub psbt: Psbt,
+}
+
+#[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
+#[display_from(Debug)]
+pub struct MergeRequest {
+    pub consignment: Consignment,
+    pub reveal_outpoints: Vec<OutpointReveal>,
 }
