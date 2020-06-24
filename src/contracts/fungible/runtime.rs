@@ -18,7 +18,7 @@ use ::std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{ContractId, Genesis};
+use lnpbp::rgb::{Consignment, ContractId, Genesis};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
@@ -171,6 +171,7 @@ impl Runtime {
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
+            Request::Accept(consignment) => self.rpc_accept(consignment).await,
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
             Request::Sync => self.rpc_sync().await,
@@ -247,6 +248,12 @@ impl Runtime {
         Ok(reply)
     }
 
+    async fn rpc_accept(&mut self, consignment: &Consignment) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ACCEPT");
+        self.accept(consignment.clone()).await?;
+        Ok(Reply::Success)
+    }
+
     async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got SYNC");
         let data = self.cacher.export()?;
@@ -296,6 +303,17 @@ impl Runtime {
     async fn consign(&mut self, consign_req: ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
             .stash_req_rep(api::stash::Request::Consign(consign_req))
+            .await?;
+        if let Reply::Transfer(_) = reply {
+            Ok(reply)
+        } else {
+            Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))
+        }
+    }
+
+    async fn accept(&mut self, consignment: Consignment) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self
+            .stash_req_rep(api::stash::Request::MergeConsignment(consignment))
             .await?;
         if let Reply::Transfer(_) = reply {
             Ok(reply)

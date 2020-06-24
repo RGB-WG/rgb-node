@@ -16,7 +16,7 @@ use std::sync::Arc;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{ContractId, Genesis};
+use lnpbp::rgb::{Consignment, ContractId, Genesis};
 
 use super::{Config, Error};
 use crate::api::fungible::{Issue, Request, TransferApi};
@@ -76,5 +76,10 @@ impl Runtime {
     #[inline]
     pub fn transfer(&mut self, transfer: TransferApi) -> Result<Arc<Reply>, Error> {
         Ok(self.command(Request::Transfer(transfer))?)
+    }
+
+    #[inline]
+    pub fn accept(&mut self, consignment: Consignment) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Request::Accept(consignment))?)
     }
 }

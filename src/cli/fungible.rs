@@ -124,7 +124,7 @@ impl Command {
             Command::Invoice(invoice) => invoice.exec(runtime),
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
-            _ => unimplemented!(),
+            Command::Accept { ref consignment } => self.exec_accept(runtime, consignment.clone()),
         }
     }
 
@@ -216,6 +216,30 @@ impl Command {
             Reply::Genesis(genesis) => {
                 eprintln!("Asset successfully exported. Use this information for sharing:");
                 println!("{}", genesis);
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+        Ok(())
+    }
+
+    fn exec_accept(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
+        info!("Accepting asset transfer...");
+
+        debug!("Reading consignment from file {:?}", &filename);
+        let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
+        })?;
+
+        match &*runtime.accept(consignment)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Success => {
+                eprintln!("Asset transfer successfully accepted.");
             }
             _ => {
                 eprintln!(

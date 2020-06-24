@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{Anchor, ContractId, Genesis, Schema};
+use lnpbp::rgb::{Anchor, Consignment, ContractId, Genesis, Schema};
 use lnpbp::TryService;
 
 use super::index::{BTreeIndex, Index};
@@ -153,6 +153,7 @@ impl Runtime {
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
             Request::Consign(consign) => self.rpc_consign(consign).await,
+            Request::MergeConsignment(consignment) => self.rpc_merge_consignment(consignment).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -209,6 +210,24 @@ impl Runtime {
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
         Ok(Reply::Transfer(Transfer { consignment, psbt }))
+    }
+
+    async fn rpc_merge_consignment(
+        &mut self,
+        consignment: &Consignment,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got MERGE CONSIGNMENT");
+
+        self.storage.add_genesis(&consignment.genesis)?;
+        consignment.data.iter().try_for_each(
+            |(anchor, transition)| -> Result<(), ServiceErrorDomain> {
+                self.storage.add_anchor(anchor)?;
+                self.storage.add_transition(transition)?;
+                Ok(())
+            },
+        )?;
+
+        Ok(Reply::Success)
     }
 }
 
