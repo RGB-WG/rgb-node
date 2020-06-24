@@ -9,11 +9,13 @@ use log::info;
 
 use serde::Deserialize;
 
+use rgb::lnpbp::bitcoin::OutPoint;
+
 use rgb::lnpbp::bp;
 use rgb::lnpbp::lnp::transport::zmq::{SocketLocator, UrlError};
 use rgb::lnpbp::rgb::Amount;
 
-use rgb::fungible::{IssueStructure, Outcoins};
+use rgb::fungible::{IssueStructure, Outcoins, Invoice};
 use rgb::i9n::*;
 use rgb::rgbd::ContractName;
 use rgb::util::SealSpec;
@@ -150,13 +152,19 @@ fn _start_rgb(json: *mut c_char) -> Result<Runtime, String> {
     Runtime::init(config).map_err(|e| format!("{:?}", e))
 }
 
-#[no_mangle]
-pub extern "C" fn start_rgb(json: *mut c_char) -> CResult {
-    if cfg!(target_os = "android") {
+#[cfg(target_os = "android")]
+fn start_logger() {
         android_logger::init_once(
             android_logger::Config::default().with_min_level(log::Level::Debug),
         );
-    }
+}
+
+#[cfg(not(target_os = "android"))]
+fn start_logger() {}
+
+#[no_mangle]
+pub extern "C" fn start_rgb(json: *mut c_char) -> CResult {
+    start_logger();
 
     info!("Starting RGB...");
 
@@ -205,4 +213,44 @@ fn _issue(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
 #[no_mangle]
 pub extern "C" fn issue(runtime: &COpaqueStruct, json: *mut c_char) -> CResult {
     _issue(runtime, json).into()
+}
+
+#[derive(Debug, Deserialize)]
+struct TransferArgs {
+    inputs: Vec<OutPoint>,
+    allocate: Vec<Outcoins>,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    invoice: Invoice,
+    prototype_psbt: String,
+    fee: u64,
+    change: OutPoint,
+    consignment_file: String,
+    transaction_file: String,
+}
+
+fn _transfer(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
+    let runtime = Runtime::from_opaque(runtime)?;
+    let data: TransferArgs =
+        serde_json::from_str(ptr_to_string(json)?.as_str()).map_err(|e| format!("{:?}", e))?;
+    info!("{:?}", data);
+
+    runtime
+        .transfer(
+            data.inputs,
+            data.allocate,
+            data.invoice,
+            data.prototype_psbt,
+            data.fee,
+            data.change,
+            data.consignment_file,
+            data.transaction_file,
+        )
+        .map_err(|e| format!("{:?}", e))
+        .map(|_| ())
+        //.and_then(|r| serde_json::to_string(&r).map_err(|e| format!("{:?}", e)))
+}
+
+#[no_mangle]
+pub extern "C" fn transfer(runtime: &COpaqueStruct, json: *mut c_char) -> CResult {
+    _transfer(runtime, json).into()
 }
