@@ -14,6 +14,7 @@ name = "rgb"
 [dependencies]
 amplify = "~0.1.6"
 amplify_derive = "~0.1.1"
+base64 = "0.12"
 dotenv = "~0.15.0"
 clap = "=3.0.0-beta.1"
 chrono = { version = "~0.4.11", features = [ "serde" ] }

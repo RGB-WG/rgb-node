@@ -5,6 +5,7 @@
 # for detailed documentation of every option here.
 
 language = "C"
+cpp_compat = true
 
 ############## Options for Wrapping the Contents of the Header #################
 
