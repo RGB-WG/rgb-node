@@ -238,6 +238,7 @@ impl Runtime {
             transfer.inputs.clone(),
             transfer.ours.clone(),
             transfer.theirs.clone(),
+            transfer.change.clone(),
         )?;
 
         let reply = self

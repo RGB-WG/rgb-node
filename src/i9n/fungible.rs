@@ -84,7 +84,7 @@ impl Runtime {
         invoice: Invoice,
         prototype_psbt: String,
         fee: u64,
-        change: OutPoint,
+        change: Option<bp::blind::OutpointHash>,
         consignment_file: String,
         transaction_file: String,
     ) -> Result<(), Error> {

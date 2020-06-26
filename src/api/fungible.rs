@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
-use lnpbp::bp::blind::OutpointReveal;
+use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
 use lnpbp::rgb::{Amount, Consignment, ContractId};
 
 use crate::fungible::{Outcoincealed, Outcoins};
@@ -115,7 +115,7 @@ pub struct TransferApi {
     pub theirs: Vec<Outcoincealed>,
 
     /// Optional change output: the rest of assets will be allocated here
-    pub change: OutPoint,
+    pub change: Option<OutpointHash>,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
