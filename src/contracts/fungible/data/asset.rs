@@ -127,6 +127,18 @@ impl Asset {
     ) -> Option<&Vec<(TransitionId, amount::Revealed)>> {
         self.known_allocations.get(seal)
     }
+
+    pub fn add_allocation(
+        &mut self,
+        seal: bitcoin::OutPoint,
+        transition_id: TransitionId,
+        amount: amount::Revealed,
+    ) {
+        self.known_allocations
+            .entry(seal)
+            .or_insert(vec![])
+            .push((transition_id, amount));
+    }
 }
 
 impl TryFrom<Genesis> for Asset {

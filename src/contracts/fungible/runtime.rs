@@ -15,15 +15,16 @@ use ::core::borrow::Borrow;
 use ::core::convert::TryFrom;
 use ::std::path::PathBuf;
 
+use lnpbp::bitcoin;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{ContractId, Genesis};
+use lnpbp::rgb::{seal, Assignment, AssignmentsVariant, ContractId, Genesis, Node};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
-use super::{Asset, IssueStructure};
-use super::{Config, Processor};
+use super::schema::AssignmentsType;
+use super::{Asset, Config, IssueStructure, Processor};
 use crate::api::stash::MergeRequest;
 use crate::api::{
     self,
@@ -321,13 +322,47 @@ impl Runtime {
             .await?;
         if let Reply::Success = reply {
             let asset_id = accept.consignment.genesis.contract_id();
-            let asset = if self.cacher.has_asset(asset_id)? {
+            let mut asset = if self.cacher.has_asset(asset_id)? {
                 self.cacher.asset(asset_id)?.clone()
             } else {
                 Asset::try_from(accept.consignment.genesis)?
             };
 
-            // TODO: Add new allocations
+            // TODO: This block of code is written in a rush under strict time
+            //       limit, so re-write it carefully during next review/refactor
+            accept.consignment.data.iter().for_each(|(_, transition)| {
+                transition
+                    .assignments_by_type(-AssignmentsType::Assets)
+                    .into_iter()
+                    .for_each(|variant| {
+                        if let AssignmentsVariant::Homomorphic(set) = variant {
+                            set.into_iter().for_each(|assignment| {
+                                if let Assignment::Revealed {
+                                    seal_definition,
+                                    assigned_state,
+                                } = assignment
+                                {
+                                    let seal = match seal_definition {
+                                        seal::Revealed::TxOutpoint(outpoint) => bitcoin::OutPoint {
+                                            txid: outpoint.txid,
+                                            vout: outpoint.vout as u32,
+                                        },
+                                        seal::Revealed::WitnessVout { .. } => {
+                                            // In this case we need to look up transaction <-> anchor index from
+                                            // the stash daemon.
+                                            unimplemented!()
+                                        }
+                                    };
+                                    asset.add_allocation(
+                                        seal,
+                                        transition.transition_id(),
+                                        assigned_state.clone(),
+                                    );
+                                }
+                            })
+                        }
+                    })
+            });
 
             self.cacher.add_asset(asset)?;
             Ok(reply)
