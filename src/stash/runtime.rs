@@ -19,7 +19,9 @@ use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{seal, Anchor, Assignment, AssignmentsVariant, ContractId, Genesis, Node, Schema};
+use lnpbp::rgb::{
+    seal, validation, Anchor, Assignment, AssignmentsVariant, ContractId, Genesis, Node, Schema,
+};
 use lnpbp::TryService;
 
 use super::index::{BTreeIndex, Index};
@@ -221,7 +223,10 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got MERGE CONSIGNMENT");
 
-        // TODO: Integrate validation workflow
+        let schema = self
+            .storage()
+            .schema(&merge.consignment.genesis.schema_id())
+            .map_err(|_| ServiceErrorDomain::Storage)?;
 
         let known_seals: HashMap<OutpointHash, OutpointReveal> = merge
             .reveal_outpoints
@@ -230,8 +235,21 @@ impl Runtime {
             .collect();
 
         self.storage.add_genesis(&merge.consignment.genesis)?;
+
+        // TODO: Integrate validation workflow (already in progress)
+        // [VALIDATION]: Validate genesis node against the scheme
+        let mut validation_status = validation::Status::new();
+        validation_status += schema.validate(&merge.consignment.genesis);
+
         merge.consignment.data.iter().try_for_each(
             |(anchor, transition)| -> Result<(), ServiceErrorDomain> {
+                // [VALIDATION]: Validate node (transition) against the scheme
+                validation_status += schema.validate(transition);
+
+                // [PRIVACY]:
+                // Update transition data with the revealed state information
+                // that we kept since we did an invoice (and the sender did not
+                // know)
                 let mut transition = transition.clone();
                 transition.assignments_mut().into_iter().for_each(
                     |(_, assignment)| match assignment {
@@ -305,13 +323,16 @@ impl Runtime {
                     },
                 );
 
+                // Store the transition and the anchor data in the stash
                 self.storage.add_anchor(anchor)?;
                 self.storage.add_transition(&transition)?;
+
                 Ok(())
             },
         )?;
 
         Ok(Reply::Success)
+        //Ok(Reply::ValidationStatus(validation_status))
     }
 }
 
