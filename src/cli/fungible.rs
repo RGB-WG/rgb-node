@@ -244,12 +244,15 @@ impl Command {
         outpoint: OutPoint,
         blinding_factor: u32,
     ) -> Result<(), Error> {
+        use lnpbp::strict_encoding::strict_encode;
+
         info!("Accepting asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
         let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
             Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
         })?;
+        trace!("{:?}", strict_encode(&consignment));
 
         let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0) {
             let outpoint_reveal = OutpointReveal {

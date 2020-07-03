@@ -76,7 +76,7 @@ pub fn schema() -> Schema {
             FieldType::Name => DataFormat::String(256),
             FieldType::Description => DataFormat::String(1024),
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
-            FieldType::Precision => DataFormat::Unsigned(Bits::Bit64, 0, 18u128),
+            FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::DustLimit => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::PruneProof => DataFormat::Bytes(core::u16::MAX),

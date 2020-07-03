@@ -24,7 +24,7 @@ use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::schema::AssignmentsType;
-use super::{Asset, Config, IssueStructure, Processor};
+use super::{schema, Asset, Config, IssueStructure, Processor};
 use crate::api::stash::MergeRequest;
 use crate::api::{
     self,
@@ -136,6 +136,12 @@ impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
     async fn try_run_loop(mut self) -> Result<!, RuntimeError> {
+        debug!("Registering RGB20 schema");
+        self.register_schema().await.map_err(|_| {
+            error!("Unable to register RGB20 schema");
+            RuntimeError::Internal("Unable to register RGB20 schema".to_string())
+        })?;
+
         loop {
             match self.run().await {
                 Ok(_) => debug!("API request processing complete"),
@@ -224,7 +230,7 @@ impl Runtime {
 
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
 
-        let transition = self.processor.transition(
+        let transition = self.processor.transfer(
             &mut asset,
             transfer.inputs.clone(),
             transfer.ours.clone(),
@@ -276,6 +282,16 @@ impl Runtime {
         debug!("Got EXPORT_ASSET");
         let genesis = self.export_asset(asset_id.clone()).await?;
         Ok(Reply::Genesis(genesis))
+    }
+
+    async fn register_schema(&mut self) -> Result<(), ServiceErrorDomain> {
+        match self
+            .stash_req_rep(api::stash::Request::AddSchema(schema::schema()))
+            .await?
+        {
+            Reply::Success => Ok(()),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
+        }
     }
 
     async fn import_asset(

@@ -79,7 +79,7 @@ impl Processor {
             FieldType::Name => field!(String, name),
             FieldType::Precision => field!(U8, precision),
             FieldType::DustLimit => field!(U64, dust_limit.unwrap_or(0)),
-            FieldType::Timestamp => field!(U32, now as u32)
+            FieldType::Timestamp => field!(U64, now as u32)
         };
         if let Some(description) = description {
             metadata.insert(-FieldType::Description, field!(String, description));
@@ -156,7 +156,7 @@ impl Processor {
 
     /// Function creates a fungible asset-specific state transition (i.e. RGB-20
     /// schema-based) given an asset information, inputs and desired outputs
-    pub fn transition(
+    pub fn transfer(
         &mut self,
         asset: &mut Asset,
         inputs: Vec<OutPoint>,

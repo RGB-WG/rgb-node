@@ -346,7 +346,7 @@ impl Runtime {
 }
 
 fn tx_resolver(_txid: &Txid) -> Result<Option<(Transaction, u64)>, validation::TxResolverError> {
-    unimplemented!()
+    Err(validation::TxResolverError)
 }
 
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
