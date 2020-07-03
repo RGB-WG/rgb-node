@@ -42,7 +42,7 @@ lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.gi
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
-branch = "feat/validation"
+branch = "master"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
