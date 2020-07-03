@@ -91,7 +91,16 @@ pub struct Asset {
     date: NaiveDateTime,
     unspent_issue_txo: Option<bitcoin::OutPoint>,
     known_issues: Vec<LinkedList<Issue>>,
-    known_allocations: BTreeMap<bitcoin::OutPoint, Vec<(TransitionId, amount::Revealed)>>,
+    known_allocations: BTreeMap<bitcoin::OutPoint, Vec<Allocation>>,
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Display)]
+#[display_from(Debug)]
+pub struct Allocation {
+    pub node_id: NodeId,
+    // Index of the assignment within the node
+    pub index: u16,
+    pub amount: amount::Revealed,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
@@ -121,11 +130,25 @@ impl Asset {
     }
 
     #[inline]
-    pub fn allocations(
-        &self,
-        seal: &bitcoin::OutPoint,
-    ) -> Option<&Vec<(TransitionId, amount::Revealed)>> {
+    pub fn allocations(&self, seal: &bitcoin::OutPoint) -> Option<&Vec<Allocation>> {
         self.known_allocations.get(seal)
+    }
+
+    pub fn add_allocation(
+        &mut self,
+        seal: bitcoin::OutPoint,
+        node_id: NodeId,
+        index: u16,
+        amount: amount::Revealed,
+    ) {
+        self.known_allocations
+            .entry(seal)
+            .or_insert(vec![])
+            .push(Allocation {
+                node_id,
+                index,
+                amount,
+            });
     }
 }
 
@@ -140,7 +163,36 @@ impl TryFrom<Genesis> for Asset {
         let supply =
             Coins::with_sats_precision(genesis.u64(-FieldType::IssuedSupply)?, fractional_bits);
 
-        let transition_id = TransitionId::from_inner(genesis.contract_id().into_inner());
+        let node_id = NodeId::from_inner(genesis.contract_id().into_inner());
+        let issue = Issue {
+            id: genesis.contract_id(),
+            txo: genesis
+                .known_seal_definitions_by_type(-AssignmentsType::Issue)
+                .first()
+                .and_then(|i| bitcoin::OutPoint::try_from((*i).clone()).ok()),
+            supply: supply.clone(),
+        };
+        let mut known_allocations = BTreeMap::<bitcoin::OutPoint, Vec<Allocation>>::default();
+        for variant in genesis.assignments_by_type(-AssignmentsType::Assets) {
+            if let AssignmentsVariant::DiscreteFiniteField(tree) = variant {
+                tree.iter().enumerate().for_each(|(index, assign)| {
+                    if let Assignment::Revealed {
+                        seal_definition: seal::Revealed::TxOutpoint(outpoint_reveal),
+                        assigned_state,
+                    } = assign
+                    {
+                        known_allocations
+                            .entry(outpoint_reveal.clone().into())
+                            .or_insert(vec![])
+                            .push(Allocation {
+                                node_id,
+                                index: index as u16,
+                                amount: assigned_state.clone(),
+                            })
+                    }
+                });
+            }
+        }
         Ok(Self {
             id: genesis.contract_id(),
             network_magic: genesis.network().as_magic(),
@@ -161,36 +213,10 @@ impl TryFrom<Genesis> for Asset {
             fractional_bits,
             date: NaiveDateTime::from_timestamp(genesis.u32(-FieldType::Timestamp)? as i64, 0),
             unspent_issue_txo: None,
-            known_issues: vec![list! { Issue {
-                id: genesis.contract_id(),
-                txo: genesis.defined_seals(-AssignmentsType::Issue)
-                    .unwrap_or(vec![])
-                    .first()
-                    .and_then(|i| bitcoin::OutPoint::try_from(i.clone()).ok()),
-                supply
-            } }],
+            known_issues: vec![list! { issue }],
             // we assume that each genesis allocation with revealed amount
             // and known seal (they are always revealed together) belongs to us
-            known_allocations: genesis
-                .assignments()
-                .get(&-AssignmentsType::Assets)
-                .into_iter()
-                .fold(Default::default(), |mut data, variant| {
-                    if let AssignmentsVariant::Homomorphic(tree) = variant {
-                        tree.iter().for_each(|assign| {
-                            if let Assignment::Revealed {
-                                seal_definition: seal::Revealed::TxOutpoint(outpoint_reveal),
-                                assigned_state,
-                            } = assign
-                            {
-                                data.entry(outpoint_reveal.clone().into())
-                                    .or_insert(vec![])
-                                    .push((transition_id, assigned_state.clone()))
-                            }
-                        });
-                    }
-                    data
-                }),
+            known_allocations,
         })
     }
 }

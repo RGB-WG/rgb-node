@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
-use lnpbp::rgb::{Consignment, ContractId, Transition, TransitionId};
+use lnpbp::rgb::{Consignment, ContractId, NodeId, Transition};
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
@@ -42,7 +42,7 @@ pub enum Request {
     ReadGenesis(::lnpbp::rgb::ContractId),
 
     #[lnp_api(type = 0x0301)]
-    ReadTransitions(Vec<::lnpbp::rgb::TransitionId>),
+    ReadTransitions(Vec<::lnpbp::rgb::NodeId>),
 
     #[lnp_api(type = 0x0401)]
     Consign(crate::api::stash::ConsignRequest),
@@ -64,7 +64,7 @@ pub struct ConsignRequest {
     pub contract_id: ContractId,
     pub inputs: Vec<OutPoint>,
     pub transition: Transition,
-    pub other_transition_ids: BTreeMap<ContractId, TransitionId>,
+    pub other_transition_ids: BTreeMap<ContractId, NodeId>,
     pub outpoints: Vec<OutpointHash>,
     pub psbt: Psbt,
 }

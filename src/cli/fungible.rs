@@ -251,7 +251,7 @@ impl Command {
             Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
         })?;
 
-        let api = if let Some(outpoint_hash) = consignment.endpoints.get(0) {
+        let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0) {
             let outpoint_reveal = OutpointReveal {
                 blinding: blinding_factor,
                 txid: outpoint.txid,

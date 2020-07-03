@@ -14,12 +14,16 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use lnpbp::bitcoin::{Transaction, Txid};
 use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{seal, Anchor, Assignment, AssignmentsVariant, ContractId, Genesis, Node, Schema};
+use lnpbp::rgb::{
+    seal, validation, Anchor, Assignment, AssignmentsVariant, ContractId, Genesis, Node, Schema,
+    Validity,
+};
 use lnpbp::TryService;
 
 use super::index::{BTreeIndex, Index};
@@ -27,7 +31,7 @@ use super::index::{BTreeIndex, Index};
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
 use super::Config;
 use crate::api::stash::{ConsignRequest, MergeRequest, Request};
-use crate::api::{reply::Transfer, Reply};
+use crate::api::{reply, Reply};
 use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
 };
@@ -190,7 +194,7 @@ impl Runtime {
         debug!("Got CONSIGN {}", request);
 
         let mut transitions = request.other_transition_ids.clone();
-        transitions.insert(request.contract_id, request.transition.transition_id());
+        transitions.insert(request.contract_id, request.transition.node_id());
 
         // Construct anchor
         let mut psbt = request.psbt.clone();
@@ -212,7 +216,7 @@ impl Runtime {
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
-        Ok(Reply::Transfer(Transfer { consignment, psbt }))
+        Ok(Reply::Transfer(reply::Transfer { consignment, psbt }))
     }
 
     async fn rpc_merge_consignment(
@@ -221,7 +225,10 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got MERGE CONSIGNMENT");
 
-        // TODO: Integrate validation workflow
+        let schema = self
+            .storage()
+            .schema(&merge.consignment.genesis.schema_id())
+            .map_err(|_| ServiceErrorDomain::Storage)?;
 
         let known_seals: HashMap<OutpointHash, OutpointReveal> = merge
             .reveal_outpoints
@@ -230,13 +237,21 @@ impl Runtime {
             .collect();
 
         self.storage.add_genesis(&merge.consignment.genesis)?;
+
+        // [VALIDATION]: Validate genesis node against the scheme
+        let validation_status = merge.consignment.validate(&schema, tx_resolver);
+
         merge.consignment.data.iter().try_for_each(
             |(anchor, transition)| -> Result<(), ServiceErrorDomain> {
+                // [PRIVACY]:
+                // Update transition data with the revealed state information
+                // that we kept since we did an invoice (and the sender did not
+                // know)
                 let mut transition = transition.clone();
                 transition.assignments_mut().into_iter().for_each(
                     |(_, assignment)| match assignment {
-                        AssignmentsVariant::Void(_) => {}
-                        AssignmentsVariant::Homomorphic(set) => {
+                        AssignmentsVariant::Declarative(_) => {}
+                        AssignmentsVariant::DiscreteFiniteField(set) => {
                             set.clone().iter().for_each(|a| match a {
                                 Assignment::Confidential {
                                     seal_definition,
@@ -269,7 +284,7 @@ impl Runtime {
                                 _ => {}
                             });
                         }
-                        AssignmentsVariant::Hashed(set) => {
+                        AssignmentsVariant::CustomData(set) => {
                             set.clone().iter().for_each(|a| match a {
                                 Assignment::Confidential {
                                     seal_definition,
@@ -305,14 +320,33 @@ impl Runtime {
                     },
                 );
 
+                // Store the transition and the anchor data in the stash
                 self.storage.add_anchor(anchor)?;
                 self.storage.add_transition(&transition)?;
+
                 Ok(())
             },
         )?;
 
-        Ok(Reply::Success)
+        match validation_status.validity() {
+            Validity::Valid => Ok(Reply::Success),
+            Validity::UnresolvedTransactions => Ok(Reply::Failure(reply::Failure {
+                code: 1,
+                info: format!("{:?}", validation_status.unresolved_txids),
+            })),
+            Validity::Invalid => Ok(Reply::Failure(reply::Failure {
+                code: 2,
+                info: format!("{:?}", validation_status.failures),
+            })),
+        }
+        // TODO: Return this type of reply when StrictEncoding will be
+        //       implemented for validation::Status
+        //Ok(Reply::ValidationStatus(validation_status))
     }
+}
+
+fn tx_resolver(_txid: &Txid) -> Result<Option<(Transaction, u64)>, validation::TxResolverError> {
+    unimplemented!()
 }
 
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
