@@ -16,8 +16,8 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 
 use lnpbp::rgb::schema::{
-    script, Bits, DataFormat, GenesisSchema, HomomorphicFormat, Occurences, Schema, Scripting,
-    StateFormat, TransitionSchema,
+    script, AssignmentAction, Bits, DataFormat, GenesisSchema, HomomorphicFormat, Occurences,
+    Schema, StateFormat, StateSchema, TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;
@@ -38,7 +38,7 @@ impl From<SchemaError> for ServiceErrorDomain {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
 #[display_from(Display)]
-#[repr(u8)]
+#[repr(u16)]
 pub enum FieldType {
     Ticker = 0,
     Name = 1,
@@ -53,6 +53,7 @@ pub enum FieldType {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
 #[display_from(Display)]
+#[repr(u16)]
 pub enum AssignmentsType {
     Issue = 0,
     Assets = 1,
@@ -61,6 +62,7 @@ pub enum AssignmentsType {
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
 #[display_from(Display)]
+#[repr(u16)]
 pub enum TransitionType {
     Issue = 0,
     Transfer = 1,
@@ -81,9 +83,24 @@ pub fn schema() -> Schema {
             FieldType::Timestamp => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128)
         },
         assignment_types: type_map! {
-            AssignmentsType::Issue => StateFormat::Void,
-            AssignmentsType::Assets => StateFormat::Homomorphic(HomomorphicFormat::Amount),
-            AssignmentsType::Prune => StateFormat::Void
+            AssignmentsType::Issue => StateSchema {
+                format: StateFormat::Void,
+                abi: bmap! {
+                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::IssueControl)
+                }
+            },
+            AssignmentsType::Assets => StateSchema {
+                format: StateFormat::Homomorphic(HomomorphicFormat::Amount),
+                abi: bmap! {
+                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::ConfidentialAmount)
+                }
+            },
+            AssignmentsType::Prune => StateSchema {
+                format: StateFormat::Void,
+                abi: bmap! {
+                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Prunning)
+                }
+            }
         },
         genesis: GenesisSchema {
             metadata: type_map! {
@@ -101,10 +118,7 @@ pub fn schema() -> Schema {
                 AssignmentsType::Assets => Occurences::NoneOrUpTo(None),
                 AssignmentsType::Prune => Occurences::NoneOrUpTo(None)
             },
-            scripting: Scripting {
-                validation: script::Procedure::Standard(script::StandardProcedure::IssueControl),
-                extensions: script::Extensions::ScriptsDenied,
-            },
+            abi: bmap! {},
         },
         transitions: type_map! {
             TransitionType::Issue => TransitionSchema {
@@ -119,10 +133,7 @@ pub fn schema() -> Schema {
                     AssignmentsType::Prune => Occurences::NoneOrUpTo(None),
                     AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
                 },
-                scripting: Scripting {
-                    validation: script::Procedure::Standard(script::StandardProcedure::IssueControl),
-                    extensions: script::Extensions::ScriptsDenied,
-                }
+            abi: bmap! {}
             },
             TransitionType::Transfer => TransitionSchema {
                 metadata: type_map! {},
@@ -132,10 +143,7 @@ pub fn schema() -> Schema {
                 defines: type_map! {
                     AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
                 },
-                scripting: Scripting {
-                    validation: script::Procedure::Standard(script::StandardProcedure::ConfidentialAmount),
-                    extensions: script::Extensions::ScriptsDenied,
-                }
+                abi: bmap! {}
             },
             TransitionType::Prune => TransitionSchema {
                 metadata: type_map! {
@@ -149,16 +157,9 @@ pub fn schema() -> Schema {
                     AssignmentsType::Prune => Occurences::NoneOrUpTo(None),
                     AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
                 },
-                scripting: Scripting {
-                    // These means that the issuers may introduce custom
-                    // prune validation procedure
-                    validation: script::Procedure::NoValidation,
-                    extensions: script::Extensions::ScriptsReplace,
-                }
+                abi: bmap! {}
             }
         },
-        script_library: vec![],
-        script_extensions: script::Extensions::ScriptsDenied,
     }
 }
 

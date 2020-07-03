@@ -241,7 +241,7 @@ impl Runtime {
                 outpoints: transfer
                     .theirs
                     .iter()
-                    .map(|o| o.seal_confidential)
+                    .map(|o| (o.seal_confidential))
                     .collect(),
                 psbt: transfer.psbt.clone(),
             })
@@ -335,8 +335,8 @@ impl Runtime {
                     .assignments_by_type(-AssignmentsType::Assets)
                     .into_iter()
                     .for_each(|variant| {
-                        if let AssignmentsVariant::Homomorphic(set) = variant {
-                            set.into_iter().for_each(|assignment| {
+                        if let AssignmentsVariant::Field(set) = variant {
+                            set.into_iter().enumerate().for_each(|(index, assignment)| {
                                 if let Assignment::Revealed {
                                     seal_definition,
                                     assigned_state,
@@ -355,7 +355,8 @@ impl Runtime {
                                     };
                                     asset.add_allocation(
                                         seal,
-                                        transition.transition_id(),
+                                        transition.node_id(),
+                                        index as u16,
                                         assigned_state.clone(),
                                     );
                                 }
