@@ -174,7 +174,7 @@ impl TryFrom<Genesis> for Asset {
         };
         let mut known_allocations = BTreeMap::<bitcoin::OutPoint, Vec<Allocation>>::default();
         for variant in genesis.assignments_by_type(-AssignmentsType::Assets) {
-            if let AssignmentsVariant::Field(tree) = variant {
+            if let AssignmentsVariant::DiscreteFiniteField(tree) = variant {
                 tree.iter().enumerate().for_each(|(index, assign)| {
                     if let Assignment::Revealed {
                         seal_definition: seal::Revealed::TxOutpoint(outpoint_reveal),

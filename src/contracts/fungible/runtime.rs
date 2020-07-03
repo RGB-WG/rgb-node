@@ -335,7 +335,7 @@ impl Runtime {
                     .assignments_by_type(-AssignmentsType::Assets)
                     .into_iter()
                     .for_each(|variant| {
-                        if let AssignmentsVariant::Field(set) = variant {
+                        if let AssignmentsVariant::DiscreteFiniteField(set) = variant {
                             set.into_iter().enumerate().for_each(|(index, assignment)| {
                                 if let Assignment::Revealed {
                                     seal_definition,

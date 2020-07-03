@@ -16,8 +16,8 @@ use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 
 use lnpbp::rgb::schema::{
-    script, AssignmentAction, Bits, DataFormat, GenesisSchema, HomomorphicFormat, Occurences,
-    Schema, StateFormat, StateSchema, TransitionSchema,
+    script, AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema,
+    Occurences, Schema, StateFormat, StateSchema, TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;
@@ -84,19 +84,19 @@ pub fn schema() -> Schema {
         },
         assignment_types: type_map! {
             AssignmentsType::Issue => StateSchema {
-                format: StateFormat::Void,
+                format: StateFormat::Declarative,
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::IssueControl)
                 }
             },
             AssignmentsType::Assets => StateSchema {
-                format: StateFormat::Homomorphic(HomomorphicFormat::Amount),
+                format: StateFormat::DiscreteFiniteField(DiscreteFiniteFieldFormat::Unsigned64bit),
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::ConfidentialAmount)
                 }
             },
             AssignmentsType::Prune => StateSchema {
-                format: StateFormat::Void,
+                format: StateFormat::Declarative,
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Prunning)
                 }

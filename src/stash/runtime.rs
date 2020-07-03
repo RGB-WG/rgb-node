@@ -251,7 +251,7 @@ impl Runtime {
                 transition.assignments_mut().into_iter().for_each(
                     |(_, assignment)| match assignment {
                         AssignmentsVariant::Declarative(_) => {}
-                        AssignmentsVariant::Field(set) => {
+                        AssignmentsVariant::DiscreteFiniteField(set) => {
                             set.clone().iter().for_each(|a| match a {
                                 Assignment::Confidential {
                                     seal_definition,
@@ -284,7 +284,7 @@ impl Runtime {
                                 _ => {}
                             });
                         }
-                        AssignmentsVariant::Data(set) => {
+                        AssignmentsVariant::CustomData(set) => {
                             set.clone().iter().for_each(|a| match a {
                                 Assignment::Confidential {
                                     seal_definition,
