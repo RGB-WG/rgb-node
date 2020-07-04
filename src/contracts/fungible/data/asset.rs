@@ -141,14 +141,15 @@ impl Asset {
         index: u16,
         amount: amount::Revealed,
     ) {
-        self.known_allocations
-            .entry(seal)
-            .or_insert(vec![])
-            .push(Allocation {
-                node_id,
-                index,
-                amount,
-            });
+        let new_allocation = Allocation {
+            node_id,
+            index,
+            amount,
+        };
+        let allocations = self.known_allocations.entry(seal).or_insert(vec![]);
+        if !allocations.contains(&new_allocation) {
+            allocations.push(new_allocation);
+        }
     }
 }
 
