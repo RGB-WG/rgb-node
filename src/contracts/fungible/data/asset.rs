@@ -179,9 +179,12 @@ impl TryFrom<Genesis> for Asset {
         if genesis.schema_id() != schema::schema().schema_id() {
             Err(SchemaError::WrongSchemaId)?;
         }
-        let fractional_bits = genesis.u8(-FieldType::Precision)?;
-        let supply =
-            Coins::with_sats_precision(genesis.u64(-FieldType::IssuedSupply)?, fractional_bits);
+        let genesis_meta = genesis.metadata();
+        let fractional_bits = genesis_meta.u8(-FieldType::Precision)?;
+        let supply = Coins::with_sats_precision(
+            genesis_meta.u64(-FieldType::IssuedSupply)?,
+            fractional_bits,
+        );
 
         let node_id = NodeId::from_inner(genesis.contract_id().into_inner());
         let issue = Issue {
@@ -216,22 +219,22 @@ impl TryFrom<Genesis> for Asset {
         Ok(Self {
             id: genesis.contract_id(),
             network_magic: genesis.network().as_magic(),
-            ticker: genesis.string(-FieldType::Ticker)?,
-            name: genesis.string(-FieldType::Name)?,
-            description: genesis.string(-FieldType::Description).next(),
+            ticker: genesis_meta.string(-FieldType::Ticker)?,
+            name: genesis_meta.string(-FieldType::Name)?,
+            description: genesis_meta.string(-FieldType::Description).next(),
             supply: Supply {
                 known_circulating: supply.clone(),
                 total: Some(Coins::with_sats_precision(
-                    genesis.u64(-FieldType::TotalSupply)?,
+                    genesis_meta.u64(-FieldType::TotalSupply)?,
                     fractional_bits,
                 )),
             },
             dust_limit: Coins::with_sats_precision(
-                genesis.u64(-FieldType::DustLimit)?,
+                genesis_meta.u64(-FieldType::DustLimit)?,
                 fractional_bits,
             ),
             fractional_bits,
-            date: NaiveDateTime::from_timestamp(genesis.i64(-FieldType::Timestamp)?, 0),
+            date: NaiveDateTime::from_timestamp(genesis_meta.i64(-FieldType::Timestamp)?, 0),
             unspent_issue_txo: None,
             known_issues: vec![list! { issue }],
             // we assume that each genesis allocation with revealed amount

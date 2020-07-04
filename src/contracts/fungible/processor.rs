@@ -142,7 +142,7 @@ impl Processor {
         let genesis = Genesis::with(
             schema::schema().schema_id(),
             network,
-            metadata,
+            metadata.into(),
             assignments,
             vec![],
         );
@@ -223,7 +223,7 @@ impl Processor {
 
         let transition = Transition::with(
             -TransitionType::Transfer,
-            metadata,
+            metadata.into(),
             ancestors,
             assignments,
             vec![],
