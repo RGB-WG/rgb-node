@@ -26,7 +26,7 @@ use super::schema::{AssignmentsType, FieldType};
 use super::{schema, SchemaError};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
-#[display_from(Display)]
+#[display_from(Debug)]
 pub struct Coins(Amount, u8);
 
 impl Coins {
@@ -157,7 +157,7 @@ impl TryFrom<Genesis> for Asset {
 
     fn try_from(genesis: Genesis) -> Result<Self, Self::Error> {
         if genesis.schema_id() != schema::schema().schema_id() {
-            Err(SchemaError::NotAllFieldsPresent)?;
+            Err(SchemaError::WrongSchemaId)?;
         }
         let fractional_bits = genesis.u8(-FieldType::Precision)?;
         let supply =
@@ -211,7 +211,7 @@ impl TryFrom<Genesis> for Asset {
                 fractional_bits,
             ),
             fractional_bits,
-            date: NaiveDateTime::from_timestamp(genesis.u32(-FieldType::Timestamp)? as i64, 0),
+            date: NaiveDateTime::from_timestamp(genesis.i64(-FieldType::Timestamp)?, 0),
             unspent_issue_txo: None,
             known_issues: vec![list! { issue }],
             // we assume that each genesis allocation with revealed amount

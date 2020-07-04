@@ -25,7 +25,7 @@ use crate::constants::*;
 #[derive(Clap)]
 #[clap(
     name = "stashd",
-    version = "0.1.0",
+    version = "0.1.0-beta.2",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
     about = "RGB stashd: daemon managing RGB smart contract stash; part of RGB suite"
 )]
