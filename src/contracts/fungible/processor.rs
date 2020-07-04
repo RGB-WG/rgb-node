@@ -97,8 +97,7 @@ impl Processor {
         let mut assignments = BTreeMap::new();
         assignments.insert(
             -AssignmentsType::Assets,
-            AssignmentsVariant::zero_balanced(vec![], allocations, vec![])
-                .ok_or("Empty allocation set during asset issuance".to_string())?,
+            AssignmentsVariant::zero_balanced(vec![], allocations, vec![]),
         );
         metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
 
@@ -210,7 +209,6 @@ impl Processor {
         let assignments = type_map! {
             AssignmentsType::Assets =>
             AssignmentsVariant::zero_balanced(input_amounts, allocations_ours, allocations_theirs)
-                .ok_or("Can't do confidential amount commitments: need at least one output".to_string())?
         };
 
         let mut ancestors = Ancestors::new();

@@ -48,13 +48,13 @@ pub enum Request {
     Consign(crate::api::stash::ConsignRequest),
 
     #[lnp_api(type = 0x0403)]
-    MergeConsignment(crate::api::stash::MergeRequest),
-    /*
-    #[lnp_api(type = 0x0405)]
-    VerifyConsignment(::lnpbp::rgb::Consignment),
+    Validate(::lnpbp::rgb::Consignment),
 
+    #[lnp_api(type = 0x0405)]
+    Merge(crate::api::stash::MergeRequest),
+    /*
     #[lnp_api(type = 0x0407)]
-    ForgetConsignment(::lnpbp::rgb::Consignment),
+    Forget(::lnpbp::rgb::Consignment),
      */
 }
 

@@ -34,12 +34,15 @@ pub enum Request {
     Transfer(crate::api::fungible::TransferApi),
 
     #[lnp_api(type = 0x0105)]
-    Accept(crate::api::fungible::AcceptApi),
+    Validate(::lnpbp::rgb::Consignment),
 
     #[lnp_api(type = 0x0107)]
-    ImportAsset(::lnpbp::rgb::Genesis),
+    Accept(crate::api::fungible::AcceptApi),
 
     #[lnp_api(type = 0x0109)]
+    ImportAsset(::lnpbp::rgb::Genesis),
+
+    #[lnp_api(type = 0x010b)]
     ExportAsset(::lnpbp::rgb::ContractId),
 
     #[lnp_api(type = 0xFF01)]

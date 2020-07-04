@@ -65,6 +65,12 @@ pub enum Command {
     /// Do a transfer of some requested asset to another party
     Transfer(TransferCli),
 
+    /// Do a transfer of some requested asset to another party
+    Validate {
+        /// Consignment file
+        consignment: PathBuf,
+    },
+
     /// Accepts an incoming payment
     Accept {
         /// Consignment file
@@ -131,6 +137,9 @@ impl Command {
             Command::Invoice(invoice) => invoice.exec(runtime),
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
+            Command::Validate { ref consignment } => {
+                self.exec_validate(runtime, consignment.clone())
+            }
             Command::Accept {
                 ref consignment,
                 outpoint,
@@ -227,6 +236,33 @@ impl Command {
             Reply::Genesis(genesis) => {
                 eprintln!("Asset successfully exported. Use this information for sharing:");
                 println!("{}", genesis);
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+        Ok(())
+    }
+
+    fn exec_validate(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
+        use lnpbp::strict_encoding::strict_encode;
+
+        info!("Validating asset transfer...");
+
+        debug!("Reading consignment from file {:?}", &filename);
+        let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
+        })?;
+        trace!("{:?}", strict_encode(&consignment));
+
+        match &*runtime.validate(consignment)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Success => {
+                eprintln!("Asset transfer successfully validated.");
             }
             _ => {
                 eprintln!(

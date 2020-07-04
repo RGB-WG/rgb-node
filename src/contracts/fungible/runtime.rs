@@ -19,7 +19,7 @@ use lnpbp::bitcoin;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{seal, Assignment, AssignmentsVariant, ContractId, Genesis, Node};
+use lnpbp::rgb::{seal, Assignment, AssignmentsVariant, Consignment, ContractId, Genesis, Node};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
@@ -179,6 +179,7 @@ impl Runtime {
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
+            Request::Validate(consignment) => self.rpc_validate(consignment).await,
             Request::Accept(accept) => self.rpc_accept(accept).await,
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
@@ -256,10 +257,18 @@ impl Runtime {
         Ok(reply)
     }
 
+    async fn rpc_validate(
+        &mut self,
+        consignment: &Consignment,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got VALIDATE");
+        self.validate(consignment.clone()).await?;
+        Ok(Reply::Success)
+    }
+
     async fn rpc_accept(&mut self, accept: &AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
-        self.accept(accept.clone()).await?;
-        Ok(Reply::Success)
+        Ok(self.accept(accept.clone()).await?)
     }
 
     async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
@@ -329,9 +338,20 @@ impl Runtime {
         }
     }
 
+    async fn validate(&mut self, consignment: Consignment) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self
+            .stash_req_rep(api::stash::Request::Validate(consignment))
+            .await?;
+
+        match reply {
+            Reply::Success | Reply::Failure(_) => Ok(reply),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
+        }
+    }
+
     async fn accept(&mut self, accept: AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
-            .stash_req_rep(api::stash::Request::MergeConsignment(MergeRequest {
+            .stash_req_rep(api::stash::Request::Merge(MergeRequest {
                 consignment: accept.consignment.clone(),
                 reveal_outpoints: accept.reveal_outpoints,
             }))
@@ -344,44 +364,42 @@ impl Runtime {
                 Asset::try_from(accept.consignment.genesis)?
             };
 
-            // TODO: This block of code is written in a rush under strict time
-            //       limit, so re-write it carefully during next review/refactor
-            accept.consignment.data.iter().for_each(|(_, transition)| {
-                transition
-                    .assignments_by_type(-AssignmentsType::Assets)
-                    .into_iter()
-                    .for_each(|variant| {
-                        if let AssignmentsVariant::DiscreteFiniteField(set) = variant {
-                            set.into_iter().enumerate().for_each(|(index, assignment)| {
-                                if let Assignment::Revealed {
-                                    seal_definition,
-                                    assigned_state,
-                                } = assignment
-                                {
-                                    let seal = match seal_definition {
-                                        seal::Revealed::TxOutpoint(outpoint) => bitcoin::OutPoint {
-                                            txid: outpoint.txid,
-                                            vout: outpoint.vout as u32,
-                                        },
-                                        seal::Revealed::WitnessVout { .. } => {
-                                            // In this case we need to look up transaction <-> anchor index from
-                                            // the stash daemon.
-                                            unimplemented!()
-                                        }
-                                    };
-                                    asset.add_allocation(
-                                        seal,
-                                        transition.node_id(),
-                                        index as u16,
-                                        assigned_state.clone(),
-                                    );
-                                }
-                            })
+            for (_, transition) in &accept.consignment.data {
+                let set = transition.assignments_by_type(-AssignmentsType::Assets);
+                for variant in set {
+                    if let AssignmentsVariant::DiscreteFiniteField(set) = variant {
+                        for (index, assignment) in set.into_iter().enumerate() {
+                            if let Assignment::Revealed {
+                                seal_definition,
+                                assigned_state,
+                            } = assignment
+                            {
+                                let seal = match seal_definition {
+                                    seal::Revealed::TxOutpoint(outpoint) => bitcoin::OutPoint {
+                                        txid: outpoint.txid,
+                                        vout: outpoint.vout as u32,
+                                    },
+                                    seal::Revealed::WitnessVout { .. } => {
+                                        // In this case we need to look up transaction <-> anchor index from
+                                        // the stash daemon.
+                                        unimplemented!()
+                                    }
+                                };
+                                asset.add_allocation(
+                                    seal,
+                                    transition.node_id(),
+                                    index as u16,
+                                    assigned_state.clone(),
+                                );
+                            }
                         }
-                    })
-            });
+                    }
+                }
+            }
 
             self.cacher.add_asset(asset)?;
+            Ok(reply)
+        } else if let Reply::Failure(_) = &reply {
             Ok(reply)
         } else {
             Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))

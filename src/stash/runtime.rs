@@ -21,8 +21,8 @@ use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
-    seal, validation, Anchor, Assignment, AssignmentsVariant, ContractId, Genesis, Node, Schema,
-    Validity,
+    seal, validation, Anchor, Assignment, AssignmentsVariant, Consignment, ContractId, Genesis,
+    Node, Schema, Validity,
 };
 use lnpbp::TryService;
 
@@ -160,7 +160,8 @@ impl Runtime {
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
             Request::Consign(consign) => self.rpc_consign(consign).await,
-            Request::MergeConsignment(merge) => self.rpc_merge_consignment(merge).await,
+            Request::Validate(consign) => self.rpc_validate(consign).await,
+            Request::Merge(merge) => self.rpc_merge(merge).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -219,114 +220,21 @@ impl Runtime {
         Ok(Reply::Transfer(reply::Transfer { consignment, psbt }))
     }
 
-    async fn rpc_merge_consignment(
+    async fn rpc_validate(
         &mut self,
-        merge: &MergeRequest,
+        consignment: &Consignment,
     ) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got MERGE CONSIGNMENT");
+        debug!("Got VALIDATE CONSIGNMENT");
 
         let schema = self
             .storage()
-            .schema(&merge.consignment.genesis.schema_id())
+            .schema(&consignment.genesis.schema_id())
             .map_err(|_| ServiceErrorDomain::Storage)?;
 
-        let known_seals: HashMap<OutpointHash, OutpointReveal> = merge
-            .reveal_outpoints
-            .iter()
-            .map(|rev| (rev.conceal(), rev.clone()))
-            .collect();
-
-        self.storage.add_genesis(&merge.consignment.genesis)?;
-
         // [VALIDATION]: Validate genesis node against the scheme
-        let validation_status = merge.consignment.validate(&schema, tx_resolver);
+        let validation_status = consignment.validate(&schema, tx_resolver);
 
-        merge.consignment.data.iter().try_for_each(
-            |(anchor, transition)| -> Result<(), ServiceErrorDomain> {
-                // [PRIVACY]:
-                // Update transition data with the revealed state information
-                // that we kept since we did an invoice (and the sender did not
-                // know)
-                let mut transition = transition.clone();
-                transition.assignments_mut().into_iter().for_each(
-                    |(_, assignment)| match assignment {
-                        AssignmentsVariant::Declarative(_) => {}
-                        AssignmentsVariant::DiscreteFiniteField(set) => {
-                            set.clone().iter().for_each(|a| match a {
-                                Assignment::Confidential {
-                                    seal_definition,
-                                    assigned_state,
-                                } => {
-                                    if let Some(reveal) = known_seals.get(seal_definition) {
-                                        set.remove(a);
-                                        set.insert(Assignment::ConfidentialAmount {
-                                            seal_definition: seal::Revealed::TxOutpoint(
-                                                reveal.clone(),
-                                            ),
-                                            assigned_state: assigned_state.clone(),
-                                        });
-                                    };
-                                }
-                                Assignment::ConfidentialSeal {
-                                    seal_definition,
-                                    assigned_state,
-                                } => {
-                                    if let Some(reveal) = known_seals.get(seal_definition) {
-                                        set.remove(a);
-                                        set.insert(Assignment::Revealed {
-                                            seal_definition: seal::Revealed::TxOutpoint(
-                                                reveal.clone(),
-                                            ),
-                                            assigned_state: assigned_state.clone(),
-                                        });
-                                    };
-                                }
-                                _ => {}
-                            });
-                        }
-                        AssignmentsVariant::CustomData(set) => {
-                            set.clone().iter().for_each(|a| match a {
-                                Assignment::Confidential {
-                                    seal_definition,
-                                    assigned_state,
-                                } => {
-                                    if let Some(reveal) = known_seals.get(seal_definition) {
-                                        set.remove(a);
-                                        set.insert(Assignment::ConfidentialAmount {
-                                            seal_definition: seal::Revealed::TxOutpoint(
-                                                reveal.clone(),
-                                            ),
-                                            assigned_state: assigned_state.clone(),
-                                        });
-                                    };
-                                }
-                                Assignment::ConfidentialSeal {
-                                    seal_definition,
-                                    assigned_state,
-                                } => {
-                                    if let Some(reveal) = known_seals.get(seal_definition) {
-                                        set.remove(a);
-                                        set.insert(Assignment::Revealed {
-                                            seal_definition: seal::Revealed::TxOutpoint(
-                                                reveal.clone(),
-                                            ),
-                                            assigned_state: assigned_state.clone(),
-                                        });
-                                    };
-                                }
-                                _ => {}
-                            });
-                        }
-                    },
-                );
-
-                // Store the transition and the anchor data in the stash
-                self.storage.add_anchor(anchor)?;
-                self.storage.add_transition(&transition)?;
-
-                Ok(())
-            },
-        )?;
+        self.storage.add_genesis(&consignment.genesis)?;
 
         match validation_status.validity() {
             Validity::Valid => Ok(Reply::Success),
@@ -342,6 +250,98 @@ impl Runtime {
         // TODO: Return this type of reply when StrictEncoding will be
         //       implemented for validation::Status
         //Ok(Reply::ValidationStatus(validation_status))
+    }
+
+    async fn rpc_merge(&mut self, merge: &MergeRequest) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got MERGE CONSIGNMENT");
+
+        let known_seals: HashMap<OutpointHash, OutpointReveal> = merge
+            .reveal_outpoints
+            .iter()
+            .map(|rev| (rev.conceal(), rev.clone()))
+            .collect();
+
+        // [PRIVACY]:
+        // Update transition data with the revealed state information
+        // that we kept since we did an invoice (and the sender did not
+        // know)
+        let mut data = Vec::<_>::with_capacity(merge.consignment.data.len());
+        for (anchor, transition) in &merge.consignment.data {
+            let mut transition = transition.clone();
+            transition
+                .assignments_mut()
+                .into_iter()
+                .for_each(|(_, assignment)| match assignment {
+                    AssignmentsVariant::Declarative(_) => {}
+                    AssignmentsVariant::DiscreteFiniteField(set) => {
+                        set.clone().iter().for_each(|a| match a {
+                            Assignment::Confidential {
+                                seal_definition,
+                                assigned_state,
+                            } => {
+                                if let Some(reveal) = known_seals.get(seal_definition) {
+                                    set.remove(a);
+                                    set.insert(Assignment::ConfidentialAmount {
+                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
+                                        assigned_state: assigned_state.clone(),
+                                    });
+                                };
+                            }
+                            Assignment::ConfidentialSeal {
+                                seal_definition,
+                                assigned_state,
+                            } => {
+                                if let Some(reveal) = known_seals.get(seal_definition) {
+                                    set.remove(a);
+                                    set.insert(Assignment::Revealed {
+                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
+                                        assigned_state: assigned_state.clone(),
+                                    });
+                                };
+                            }
+                            _ => {}
+                        });
+                    }
+                    AssignmentsVariant::CustomData(set) => {
+                        set.clone().iter().for_each(|a| match a {
+                            Assignment::Confidential {
+                                seal_definition,
+                                assigned_state,
+                            } => {
+                                if let Some(reveal) = known_seals.get(seal_definition) {
+                                    set.remove(a);
+                                    set.insert(Assignment::ConfidentialAmount {
+                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
+                                        assigned_state: assigned_state.clone(),
+                                    });
+                                };
+                            }
+                            Assignment::ConfidentialSeal {
+                                seal_definition,
+                                assigned_state,
+                            } => {
+                                if let Some(reveal) = known_seals.get(seal_definition) {
+                                    set.remove(a);
+                                    set.insert(Assignment::Revealed {
+                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
+                                        assigned_state: assigned_state.clone(),
+                                    });
+                                };
+                            }
+                            _ => {}
+                        });
+                    }
+                });
+            data.push((anchor, transition));
+        }
+
+        // Store the transition and the anchor data in the stash
+        for (anchor, transition) in data {
+            self.storage.add_anchor(&anchor)?;
+            self.storage.add_transition(&transition)?;
+        }
+
+        Ok(Reply::Success)
     }
 }
 
