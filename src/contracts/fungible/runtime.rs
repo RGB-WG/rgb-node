@@ -15,11 +15,11 @@ use ::core::borrow::Borrow;
 use ::core::convert::TryFrom;
 use ::std::path::PathBuf;
 
-use lnpbp::bitcoin;
+use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{seal, Assignment, AssignmentsVariant, Consignment, ContractId, Genesis, Node};
+use lnpbp::rgb::{AssignmentsVariant, Consignment, ContractId, Genesis, Node};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
@@ -353,7 +353,7 @@ impl Runtime {
         let reply = self
             .stash_req_rep(api::stash::Request::Merge(MergeRequest {
                 consignment: accept.consignment.clone(),
-                reveal_outpoints: accept.reveal_outpoints,
+                reveal_outpoints: accept.reveal_outpoints.clone(),
             }))
             .await?;
         if let Reply::Success = reply {
@@ -369,28 +369,21 @@ impl Runtime {
                 for variant in set {
                     if let AssignmentsVariant::DiscreteFiniteField(set) = variant {
                         for (index, assignment) in set.into_iter().enumerate() {
-                            if let Assignment::Revealed {
-                                seal_definition,
-                                assigned_state,
-                            } = assignment
-                            {
-                                let seal = match seal_definition {
-                                    seal::Revealed::TxOutpoint(outpoint) => bitcoin::OutPoint {
-                                        txid: outpoint.txid,
-                                        vout: outpoint.vout as u32,
-                                    },
-                                    seal::Revealed::WitnessVout { .. } => {
-                                        // In this case we need to look up transaction <-> anchor index from
-                                        // the stash daemon.
-                                        unimplemented!()
-                                    }
-                                };
-                                asset.add_allocation(
-                                    seal,
-                                    transition.node_id(),
-                                    index as u16,
-                                    assigned_state.clone(),
-                                );
+                            if let Some(seal) = accept.reveal_outpoints.iter().find(|op| {
+                                op.conceal() == assignment.seal_definition_confidential()
+                            }) {
+                                if let Some(assigned_state) = assignment.assigned_state() {
+                                    asset.add_allocation(
+                                        seal.clone().into(),
+                                        transition.node_id(),
+                                        index as u16,
+                                        assigned_state.clone(),
+                                    );
+                                } else {
+                                    Err(ServiceErrorDomain::Internal(
+                                        "Consignment structure is broken".to_string(),
+                                    ))?
+                                }
                             }
                         }
                     }
