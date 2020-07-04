@@ -22,7 +22,7 @@ use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
     seal, validation, Anchor, Assignment, AssignmentsVariant, Consignment, ContractId, Genesis,
-    Node, Schema, Validity,
+    Node, NodeId, Schema, Validity,
 };
 use lnpbp::TryService;
 
@@ -162,6 +162,7 @@ impl Runtime {
             Request::Consign(consign) => self.rpc_consign(consign).await,
             Request::Validate(consign) => self.rpc_validate(consign).await,
             Request::Merge(merge) => self.rpc_merge(merge).await,
+            Request::Forget(removal_list) => self.rpc_forget(removal_list).await,
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -194,6 +195,7 @@ impl Runtime {
     async fn rpc_consign(&mut self, request: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got CONSIGN {}", request);
 
+        // TODO: Move this to processor mod
         let mut transitions = request.other_transition_ids.clone();
         transitions.insert(request.contract_id, request.transition.node_id());
 
@@ -261,6 +263,7 @@ impl Runtime {
             .map(|rev| (rev.conceal(), rev.clone()))
             .collect();
 
+        // TODO: Move this to processor mod
         // [PRIVACY]:
         // Update transition data with the revealed state information
         // that we kept since we did an invoice (and the sender did not
@@ -340,6 +343,20 @@ impl Runtime {
             self.storage.add_anchor(&anchor)?;
             self.storage.add_transition(&transition)?;
         }
+
+        Ok(Reply::Success)
+    }
+
+    async fn rpc_forget(
+        &mut self,
+        _removal_list: &Vec<(NodeId, u16)>,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got FORGET");
+
+        // TODO: Implement stash prunning: filter all transitions containing
+        //       revealed outpoints from the removal_list, and if they do
+        //       not have any other _known_ outpoints, remove them — and iterate
+        //       over their direct ancestor in the same manner
 
         Ok(Reply::Success)
     }

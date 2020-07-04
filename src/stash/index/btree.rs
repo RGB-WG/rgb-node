@@ -82,6 +82,7 @@ impl BTreeIndex {
 
     pub fn store(&self) -> Result<(), BTreeIndexError> {
         debug!("Saving RGB index to file {:?} ...", &self.config.index_file);
+        let _ = fs::remove_file(&self.config.index_file);
         let file = fs::File::with_options()
             .write(true)
             .create(true)

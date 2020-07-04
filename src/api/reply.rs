@@ -30,6 +30,10 @@ pub enum Reply {
     #[lnp_api(type = 0x0001)]
     Failure(crate::api::reply::Failure),
 
+    /// There was nothing to do
+    #[lnp_api(type = 0x0005)]
+    Nothing,
+
     #[lnp_api(type = 0xFF03)]
     Sync(crate::api::reply::SyncFormat),
 

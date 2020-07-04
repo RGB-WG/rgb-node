@@ -82,6 +82,12 @@ pub enum Command {
         /// Outpoint blinding factor (generated when the invoice was created)
         blinding_factor: u32,
     },
+
+    Forget {
+        /// Bitcoin transaction output that was spent and which data
+        /// has to be forgotten
+        outpoint: OutPoint,
+    },
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
@@ -145,6 +151,7 @@ impl Command {
                 outpoint,
                 blinding_factor,
             } => self.exec_accept(runtime, consignment.clone(), outpoint, blinding_factor),
+            Command::Forget { outpoint } => self.exec_forget(runtime, outpoint),
         }
     }
 
@@ -322,6 +329,29 @@ impl Command {
                 );
             }
         }
+
+        Ok(())
+    }
+
+    fn exec_forget(&self, mut runtime: Runtime, outpoint: OutPoint) -> Result<(), Error> {
+        info!(
+            "Forgetting assets allocated to specific bitcoin transaction output that was spent..."
+        );
+
+        match &*runtime.forget(outpoint)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Success => {
+                eprintln!("Assets are removed from the stash.");
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+
         Ok(())
     }
 }

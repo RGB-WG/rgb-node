@@ -15,6 +15,7 @@ use ::core::borrow::Borrow;
 use ::core::convert::TryFrom;
 use ::std::path::PathBuf;
 
+use lnpbp::bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
@@ -181,6 +182,7 @@ impl Runtime {
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
             Request::Validate(consignment) => self.rpc_validate(consignment).await,
             Request::Accept(accept) => self.rpc_accept(accept).await,
+            Request::Forget(outpoint) => self.rpc_forget(outpoint).await,
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
             Request::Sync => self.rpc_sync().await,
@@ -269,6 +271,11 @@ impl Runtime {
     async fn rpc_accept(&mut self, accept: &AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
         Ok(self.accept(accept.clone()).await?)
+    }
+
+    async fn rpc_forget(&mut self, outpoint: &OutPoint) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got FORGET");
+        Ok(self.forget(outpoint.clone()).await?)
     }
 
     async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
@@ -396,6 +403,45 @@ impl Runtime {
             Ok(reply)
         } else {
             Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))
+        }
+    }
+
+    async fn forget(&mut self, outpoint: OutPoint) -> Result<Reply, ServiceErrorDomain> {
+        let mut removal_list = Vec::<_>::new();
+        let assets = self
+            .cacher
+            .assets()?
+            .into_iter()
+            .map(Clone::clone)
+            .collect::<Vec<_>>();
+        for asset in assets {
+            let mut asset = asset.clone();
+            for allocation in asset
+                .clone()
+                .allocations(&outpoint)
+                .ok_or(ServiceErrorDomain::Cache)?
+            {
+                asset.remove_allocation(
+                    outpoint,
+                    allocation.node_id,
+                    allocation.index,
+                    allocation.amount.clone(),
+                );
+                removal_list.push((allocation.node_id, allocation.index));
+            }
+            self.cacher.add_asset(asset)?;
+        }
+        if removal_list.is_empty() {
+            return Ok(Reply::Nothing);
+        }
+
+        let reply = self
+            .stash_req_rep(api::stash::Request::Forget(removal_list))
+            .await?;
+
+        match reply {
+            Reply::Success | Reply::Failure(_) => Ok(reply),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 

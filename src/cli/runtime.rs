@@ -13,6 +13,7 @@
 
 use std::sync::Arc;
 
+use lnpbp::bitcoin::OutPoint;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
@@ -86,5 +87,10 @@ impl Runtime {
     #[inline]
     pub fn accept(&mut self, accept: AcceptApi) -> Result<Arc<Reply>, Error> {
         Ok(self.command(Request::Accept(accept))?)
+    }
+
+    #[inline]
+    pub fn forget(&mut self, outpoint: OutPoint) -> Result<Arc<Reply>, Error> {
+        Ok(self.command(Request::Forget(outpoint))?)
     }
 }

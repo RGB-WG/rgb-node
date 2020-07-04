@@ -45,6 +45,9 @@ pub enum Request {
     #[lnp_api(type = 0x010b)]
     ExportAsset(::lnpbp::rgb::ContractId),
 
+    #[lnp_api(type = 0x010d)]
+    Forget(::lnpbp::bitcoin::OutPoint),
+
     #[lnp_api(type = 0xFF01)]
     Sync,
 }

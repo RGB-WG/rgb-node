@@ -52,10 +52,9 @@ pub enum Request {
 
     #[lnp_api(type = 0x0405)]
     Merge(crate::api::stash::MergeRequest),
-    /*
+
     #[lnp_api(type = 0x0407)]
-    Forget(::lnpbp::rgb::Consignment),
-     */
+    Forget(Vec<(::lnpbp::rgb::NodeId, u16)>),
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]

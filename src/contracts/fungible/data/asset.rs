@@ -140,7 +140,7 @@ impl Asset {
         node_id: NodeId,
         index: u16,
         amount: amount::Revealed,
-    ) {
+    ) -> bool {
         let new_allocation = Allocation {
             node_id,
             index,
@@ -149,7 +149,26 @@ impl Asset {
         let allocations = self.known_allocations.entry(seal).or_insert(vec![]);
         if !allocations.contains(&new_allocation) {
             allocations.push(new_allocation);
+            true
+        } else {
+            false
         }
+    }
+
+    pub fn remove_allocation(
+        &mut self,
+        seal: bitcoin::OutPoint,
+        node_id: NodeId,
+        index: u16,
+        amount: amount::Revealed,
+    ) -> bool {
+        let old_allocation = Allocation {
+            node_id,
+            index,
+            amount,
+        };
+        let allocations = self.known_allocations.entry(seal).or_insert(vec![]);
+        allocations.remove_item(&old_allocation).is_some()
     }
 }
 
