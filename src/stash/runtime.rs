@@ -26,6 +26,7 @@ use lnpbp::rgb::{
 };
 use lnpbp::TryService;
 
+use super::electrum::ElectrumTxResolver;
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
@@ -66,6 +67,9 @@ pub struct Runtime {
 
     /// Unmarshaller instance used for parsing RPC request
     unmarshaller: Unmarshaller<Request>,
+
+    /// Electrum client handle to fetch transactions
+    electrum: ElectrumTxResolver,
 }
 
 impl Runtime {
@@ -105,6 +109,8 @@ impl Runtime {
             None,
         )?;
 
+        let electrum = ElectrumTxResolver::new(&config.electrum_server)?;
+
         Ok(Self {
             config,
             session_rpc,
@@ -112,6 +118,7 @@ impl Runtime {
             indexer,
             storage,
             unmarshaller: Request::create_unmarshaller(),
+            electrum,
         })
     }
 }
@@ -234,7 +241,7 @@ impl Runtime {
             .map_err(|_| ServiceErrorDomain::Storage)?;
 
         // [VALIDATION]: Validate genesis node against the scheme
-        let validation_status = consignment.validate(&schema, tx_resolver);
+        let validation_status = consignment.validate(&schema, &self.electrum);
 
         self.storage.add_genesis(&consignment.genesis)?;
 
@@ -362,8 +369,15 @@ impl Runtime {
     }
 }
 
-fn tx_resolver(_txid: &Txid) -> Result<Option<(Transaction, u64)>, validation::TxResolverError> {
-    Err(validation::TxResolverError)
+struct DummyTxResolver;
+
+impl validation::TxResolver for DummyTxResolver {
+    fn resolve(
+        &self,
+        _txid: &Txid,
+    ) -> Result<Option<(Transaction, u64)>, validation::TxResolverError> {
+        Err(validation::TxResolverError)
+    }
 }
 
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {

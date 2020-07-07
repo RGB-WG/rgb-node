@@ -39,10 +39,11 @@ prometheus = "~0.9.0"
 derive_wrapper = "~0.1.6"
 # TODO: Move this dependency to LNP/BP core library
 lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git", branch = "comment-systemtime-check" }
+electrum-client = { git = "https://github.com/afilini/rust-electrum-client.git", branch = "lnpbp-bitcoin" }
 
 [dependencies.lnpbp]
-git = "https://github.com/lnp-bp/rust-lnpbp"
-branch = "master"
+git = "https://github.com/afilini/rust-lnpbp.git"
+branch = "alekos-fixes"
 features = ["all"]
 
 [dependencies.lnpbp_derive]

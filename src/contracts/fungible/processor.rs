@@ -207,6 +207,7 @@ impl Processor {
             if change_outpoint.is_none() {
                 Err("Excess input with no change".to_string())?
             } else {
+                debug!("Adding change output of {}", total_inputs - total_outputs);
                 allocations_theirs.push((change_outpoint.unwrap(), total_inputs - total_outputs));
             }
         }
