@@ -41,6 +41,9 @@ pub enum BootstrapError {
     #[derive_from]
     MessageBusError(lnp::transport::Error),
 
+    #[derive_from]
+    ElectrumError(electrum_client::types::Error),
+
     StorageError,
 
     CacheError,
