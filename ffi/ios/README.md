@@ -16,4 +16,5 @@ You will also need to add `libzmq.a` as a library dependency. For this you will
 need to do manually compile ZMQ library from sources for iOS target and copy
 the resulting library as a dependency. Pls make sure that you are checking out
 exactly the same version of the code as used by RGB library.
-A good instructions may be found at <http://wiki.zeromq.org/build:iphone>
+Build script can be found at 
+<https://github.com/zeromq/libzmq/blob/master/builds/ios/build_ios.sh>.
