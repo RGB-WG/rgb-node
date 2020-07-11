@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -15,7 +15,7 @@
 		30BC0AE02490F47000C1ACED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30BC0ADF2490F47000C1ACED /* Assets.xcassets */; };
 		30BC0AE32490F47000C1ACED /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 30BC0AE12490F47000C1ACED /* LaunchScreen.storyboard */; };
 		30BC0AEF2490FB9D00C1ACED /* librgb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 30BC0AEE2490FB9A00C1ACED /* librgb.a */; };
-		30BC0AF6249106FA00C1ACED /* libzmq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 30BC0AF22490FED600C1ACED /* libzmq.a */; };
+		30BD768424B7B4B100EE6985 /* libzmq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 30BD768324B7B4B100EE6985 /* libzmq.a */; platformFilter = ios; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,7 +30,7 @@
 		30BC0AE42490F47000C1ACED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		30BC0AEA2490F47B00C1ACED /* RGB Demo App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "RGB Demo App.entitlements"; sourceTree = "<group>"; };
 		30BC0AEE2490FB9A00C1ACED /* librgb.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librgb.a; path = libs/librgb.a; sourceTree = "<group>"; };
-		30BC0AF22490FED600C1ACED /* libzmq.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzmq.a; path = libs/libzmq.a; sourceTree = "<group>"; };
+		30BD768324B7B4B100EE6985 /* libzmq.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzmq.a; path = libs/libzmq.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,7 +38,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				30BC0AF6249106FA00C1ACED /* libzmq.a in Frameworks */,
+				30BD768424B7B4B100EE6985 /* libzmq.a in Frameworks */,
 				30BC0AEF2490FB9D00C1ACED /* librgb.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -82,7 +82,7 @@
 		30BC0AEB2490F70000C1ACED /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				30BC0AF22490FED600C1ACED /* libzmq.a */,
+				30BD768324B7B4B100EE6985 /* libzmq.a */,
 				30BC0AEE2490FB9A00C1ACED /* librgb.a */,
 			);
 			name = Frameworks;
@@ -308,6 +308,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CODE_SIGN_ENTITLEMENTS = "RGB Demo App/RGB Demo App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BLS4N8A6L6;
@@ -319,8 +320,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libs",
+					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lstdc++";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.lnp-bp.RGB-Demo-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
@@ -334,6 +337,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CODE_SIGN_ENTITLEMENTS = "RGB Demo App/RGB Demo App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BLS4N8A6L6;
@@ -345,8 +349,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libs",
+					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lstdc++";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.lnp-bp.RGB-Demo-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
