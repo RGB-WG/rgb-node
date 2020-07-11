@@ -67,3 +67,5 @@ members = ["ffi"]
 
 [patch.crates-io]
 torut = { git = "https://github.com/afilini/torut", branch = "vendored-openssl-android" }
+# Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
+zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

@@ -1,11 +1,12 @@
 use std::any::TypeId;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::env;
 use std::ffi::{CStr, CString};
 use std::hash::{Hash, Hasher};
 use std::os::raw::{c_char, c_void};
 
-use log::info;
+use log::{info, LevelFilter};
 
 use serde::Deserialize;
 
@@ -13,7 +14,7 @@ use rgb::lnpbp::bitcoin::OutPoint;
 
 use rgb::lnpbp::bp;
 use rgb::lnpbp::lnp::transport::zmq::{SocketLocator, UrlError};
-use rgb::lnpbp::rgb::Amount;
+use rgb::lnpbp::rgb::{seal, Amount};
 
 use rgb::fungible::{Invoice, IssueStructure, Outcoins};
 use rgb::i9n::*;
@@ -158,7 +159,11 @@ fn start_logger() {
 }
 
 #[cfg(not(target_os = "android"))]
-fn start_logger() {}
+fn start_logger() {
+    env::set_var("RUST_LOG", "trace");
+    ::env_logger::init();
+    log::set_max_level(LevelFilter::Trace);
+}
 
 #[no_mangle]
 pub extern "C" fn start_rgb(json: *mut c_char) -> CResult {
@@ -221,7 +226,7 @@ struct TransferArgs {
     invoice: Invoice,
     prototype_psbt: String,
     fee: u64,
-    change: OutPoint,
+    change: Option<seal::Confidential>,
     consignment_file: String,
     transaction_file: String,
 }

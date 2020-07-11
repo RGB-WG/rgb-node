@@ -13,7 +13,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let s = "{}"
+        let s = "{'network':'testnet','threaded':true}"
         let cs = (s as NSString).utf8String
         let buffer = UnsafeMutablePointer<Int8>(mutating: cs)
         start_rgb(buffer)
