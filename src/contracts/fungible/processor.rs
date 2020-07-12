@@ -127,7 +127,7 @@ impl Processor {
         }
 
         owned_rights.insert(
-            -OwnedRightsType::Prune,
+            -OwnedRightsType::Replacement,
             Assignments::Declarative(
                 prune_seals
                     .into_iter()

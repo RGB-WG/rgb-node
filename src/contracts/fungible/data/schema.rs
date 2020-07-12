@@ -11,9 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use core::ops::Neg;
+use core::ops::{Deref, Neg};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
+use std::collections::BTreeSet;
 
 use lnpbp::features;
 use lnpbp::rgb::schema::{
@@ -39,7 +40,9 @@ impl From<SchemaError> for ServiceErrorDomain {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
+#[derive(
+    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
+)]
 #[display(Debug)]
 #[repr(u16)]
 pub enum FieldType {
@@ -50,26 +53,89 @@ pub enum FieldType {
     IssuedSupply = 4,
     DustLimit = 5,
     Precision = 6,
-    PruneProof = 7,
-    Timestamp = 8,
+    Timestamp = 7,
+    HistoryProof = 8,
+    HistoryProofFormat = 9,
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
+#[derive(
+    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
+)]
 #[display(Debug)]
 #[repr(u16)]
 pub enum OwnedRightsType {
     Issue = 0,
     Assets = 1,
-    Prune = 2,
+    Epoch = 2,
+    Replacement = 3,
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
+#[derive(
+    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
+)]
 #[display(Debug)]
 #[repr(u16)]
 pub enum TransitionType {
     Issue = 0,
     Transfer = 1,
-    Prune = 2,
+    Epoch = 2,
+    Replacement = 3,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
+)]
+#[display(Debug)]
+#[non_exhaustive]
+#[repr(u8)]
+pub enum HistoryProofFormat {
+    ProofAbsent = 0x0,
+    ProovV1 = 0x1,
+    ProovV2 = 0x2,
+    ProovV3 = 0x3,
+    ProovV4 = 0x4,
+    ProovV5 = 0x5,
+    ProovV6 = 0x6,
+    ProovV7 = 0x7,
+    ProovV8 = 0x8,
+    ProovV9 = 0x9,
+    ProovV10 = 0xA,
+    ProovV11 = 0xB,
+    ProovV12 = 0xC,
+    ProovV13 = 0xD,
+    ProovV14 = 0xE,
+    ProovV15 = 0xF,
+}
+
+impl Deref for HistoryProofFormat {
+    type Target = u8;
+
+    fn deref(&self) -> &Self::Target {
+        &self.to_u8().expect("History proofs always fit into u8")
+    }
+}
+
+impl HistoryProofFormat {
+    pub fn all() -> BTreeSet<u8> {
+        bset![
+            *HistoryProofFormat::ProofAbsent,
+            *HistoryProofFormat::ProovV1,
+            *HistoryProofFormat::ProovV2,
+            *HistoryProofFormat::ProovV3,
+            *HistoryProofFormat::ProovV4,
+            *HistoryProofFormat::ProovV5,
+            *HistoryProofFormat::ProovV6,
+            *HistoryProofFormat::ProovV7,
+            *HistoryProofFormat::ProovV8,
+            *HistoryProofFormat::ProovV9,
+            *HistoryProofFormat::ProovV10,
+            *HistoryProofFormat::ProovV11,
+            *HistoryProofFormat::ProovV12,
+            *HistoryProofFormat::ProovV13,
+            *HistoryProofFormat::ProovV14,
+            *HistoryProofFormat::ProovV15
+        ]
+    }
 }
 
 pub fn schema() -> Schema {
@@ -90,14 +156,14 @@ pub fn schema() -> Schema {
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
-            FieldType::DustLimit => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
-            FieldType::PruneProof => DataFormat::Bytes(core::u16::MAX),
             // While UNIX timestamps allow negative numbers; in context of RGB Schema, assets
             // can't be issued in the past before RGB or Bitcoin even existed; so we prohibit
             // all the dates before RGB release
             // TODO: Update lower allowed timestamp value with the first RGB release
             //       Current lower time limit is 07/04/2020 @ 1:54pm (UTC)
-            FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1593870844, core::i64::MAX as i128)
+            FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1593870844, core::i64::MAX as i128),
+            FieldType::HistoryProof => DataFormat::Bytes(core::u16::MAX),
+            FieldType::HistoryProofFormat => DataFormat::Enum(HistoryProofFormat::all())
         },
         owned_right_types: type_map! {
             OwnedRightsType::Issue => StateSchema {
@@ -112,10 +178,16 @@ pub fn schema() -> Schema {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::ConfidentialAmount)
                 }
             },
-            OwnedRightsType::Prune => StateSchema {
+            OwnedRightsType::Epoch => StateSchema {
                 format: StateFormat::Declarative,
                 abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Prunning)
+                    AssignmentAction::Validate => script::Procedure::NoOp
+                }
+            },
+            OwnedRightsType::Replacement => StateSchema {
+                format: StateFormat::Declarative,
+                abi: bmap! {
+                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Replacement)
                 }
             }
         },
@@ -133,8 +205,8 @@ pub fn schema() -> Schema {
             },
             owned_rights: type_map! {
                 OwnedRightsType::Issue => Occurences::NoneOrOnce,
-                OwnedRightsType::Assets => Occurences::NoneOrUpTo(None),
-                OwnedRightsType::Prune => Occurences::NoneOrUpTo(None)
+                OwnedRightsType::Epoch => Occurences::NoneOrOnce,
+                OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
             },
             public_rights: Default::default(),
             abi: bmap! {},
@@ -150,7 +222,7 @@ pub fn schema() -> Schema {
                 },
                 owned_rights: type_map! {
                     OwnedRightsType::Issue => Occurences::NoneOrOnce,
-                    OwnedRightsType::Prune => Occurences::NoneOrUpTo(None),
+                    OwnedRightsType::Epoch => Occurences::NoneOrOnce,
                     OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
                 },
                 public_rights: Default::default(),
@@ -167,17 +239,30 @@ pub fn schema() -> Schema {
                 public_rights: Default::default(),
                 abi: bmap! {}
             },
-            TransitionType::Prune => TransitionSchema {
-                metadata: type_map! {
-                    FieldType::PruneProof => Occurences::NoneOrUpTo(None)
-                },
+            TransitionType::Epoch => TransitionSchema {
+                metadata: type_map! {},
                 closes: type_map! {
-                    OwnedRightsType::Prune => Occurences::OnceOrUpTo(None),
-                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
+                    OwnedRightsType::Epoch => Occurences::Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Prune => Occurences::NoneOrUpTo(None),
-                    OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
+                    OwnedRightsType::Epoch => Occurences::NoneOrOnce,
+                    OwnedRightsType::Replacement => Occurences::NoneOrOnce
+                },
+                public_rights: Default::default(),
+                abi: bmap! {}
+            },
+            TransitionType::Replacement => TransitionSchema {
+                metadata: type_map! {
+                    FieldType::IssuedSupply => Occurences::Once,
+                    FieldType::HistoryProofFormat => Occurences::Once,
+                    FieldType::HistoryProof => Occurences::NoneOrUpTo(None)
+                },
+                closes: type_map! {
+                    OwnedRightsType::Replacement => Occurences::Once
+                },
+                owned_rights: type_map! {
+                    OwnedRightsType::Replacement => Occurences::NoneOrOnce,
+                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
                 },
                 public_rights: Default::default(),
                 abi: bmap! {}
