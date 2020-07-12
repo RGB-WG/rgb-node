@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		004DC7A524BA14830061D02A /* StartRgbArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7A424BA14830061D02A /* StartRgbArgs.swift */; };
+		004DC7A824BA15410061D02A /* IssueArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7A724BA15410061D02A /* IssueArgs.swift */; };
+		004DC7AA24BA16DE0061D02A /* TransferArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7A924BA16DE0061D02A /* TransferArgs.swift */; };
+		004DC7AD24BA184F0061D02A /* Runtime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7AC24BA184F0061D02A /* Runtime.swift */; };
+		00FB43D224BA35060031D53E /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43D124BA35060031D53E /* Arguments.swift */; };
 		30BC0AD42490F46F00C1ACED /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BC0AD32490F46F00C1ACED /* AppDelegate.swift */; };
 		30BC0AD62490F46F00C1ACED /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BC0AD52490F46F00C1ACED /* SceneDelegate.swift */; };
 		30BC0AD82490F46F00C1ACED /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BC0AD72490F46F00C1ACED /* ViewController.swift */; };
@@ -19,6 +24,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		004DC7A424BA14830061D02A /* StartRgbArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartRgbArgs.swift; sourceTree = "<group>"; };
+		004DC7A724BA15410061D02A /* IssueArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IssueArgs.swift; sourceTree = "<group>"; };
+		004DC7A924BA16DE0061D02A /* TransferArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferArgs.swift; sourceTree = "<group>"; };
+		004DC7AC24BA184F0061D02A /* Runtime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runtime.swift; sourceTree = "<group>"; };
+		00FB43D124BA35060031D53E /* Arguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arguments.swift; sourceTree = "<group>"; };
 		30BC0AD02490F46F00C1ACED /* RGB Demo App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RGB Demo App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		30BC0AD32490F46F00C1ACED /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		30BC0AD52490F46F00C1ACED /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -46,6 +56,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		004DC7A624BA14910061D02A /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				00FB43D124BA35060031D53E /* Arguments.swift */,
+				004DC7A424BA14830061D02A /* StartRgbArgs.swift */,
+				004DC7A724BA15410061D02A /* IssueArgs.swift */,
+				004DC7A924BA16DE0061D02A /* TransferArgs.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		004DC7AB24BA183A0061D02A /* RGBLib */ = {
+			isa = PBXGroup;
+			children = (
+				004DC7AC24BA184F0061D02A /* Runtime.swift */,
+				004DC7A624BA14910061D02A /* Model */,
+			);
+			path = RGBLib;
+			sourceTree = "<group>";
+		};
 		30BC0AC72490F46F00C1ACED = {
 			isa = PBXGroup;
 			children = (
@@ -66,6 +96,7 @@
 		30BC0AD22490F46F00C1ACED /* RGB Demo App */ = {
 			isa = PBXGroup;
 			children = (
+				004DC7AB24BA183A0061D02A /* RGBLib */,
 				30BC0AEA2490F47B00C1ACED /* RGB Demo App.entitlements */,
 				30BC0AD32490F46F00C1ACED /* AppDelegate.swift */,
 				30BC0AD52490F46F00C1ACED /* SceneDelegate.swift */,
@@ -161,10 +192,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00FB43D224BA35060031D53E /* Arguments.swift in Sources */,
 				30BC0ADE2490F46F00C1ACED /* RGB_Demo_App.xcdatamodeld in Sources */,
 				30BC0AD82490F46F00C1ACED /* ViewController.swift in Sources */,
+				004DC7A824BA15410061D02A /* IssueArgs.swift in Sources */,
 				30BC0AD42490F46F00C1ACED /* AppDelegate.swift in Sources */,
+				004DC7AA24BA16DE0061D02A /* TransferArgs.swift in Sources */,
 				30BC0AD62490F46F00C1ACED /* SceneDelegate.swift in Sources */,
+				004DC7A524BA14830061D02A /* StartRgbArgs.swift in Sources */,
+				004DC7AD24BA184F0061D02A /* Runtime.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
