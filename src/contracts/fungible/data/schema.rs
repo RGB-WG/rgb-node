@@ -74,9 +74,16 @@ pub enum TransitionType {
 pub fn schema() -> Schema {
     Schema {
         field_types: type_map! {
-            FieldType::Ticker => DataFormat::String(16),
+            // Rational: if we will use just 26 letters of English alphabet (and
+            // we are not limited by them), we will have 26^8 possible tickers,
+            // i.e. > 208 trillions, which is sufficient amount
+            FieldType::Ticker => DataFormat::String(8),
             FieldType::Name => DataFormat::String(256),
-            FieldType::Description => DataFormat::String(1024),
+            // Description may contain URL, text or text representation of
+            // Ricardian contract. We use all available size, in case the
+            // contract is long. If the contract still doesn't fit, a hash or
+            // URL should be used instead, pointing to the full contract text
+            FieldType::Description => DataFormat::String(core::u16::MAX),
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
