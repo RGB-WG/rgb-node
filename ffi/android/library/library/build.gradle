@@ -17,12 +17,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+}
 
-    task buildRust(type: Exec) {
-        workingDir '../'
-        commandLine './build_rust.sh'
-    }
-    build.dependsOn buildRust
+task buildRust(type: Exec) {
+    workingDir '../'
+    commandLine './build_rust.sh'
+}
+
+afterEvaluate {
+  android.libraryVariants.all { variant ->
+    variant.javaCompileProvider.get().dependsOn(buildRust)
+  }
 }
 
 dependencies {
