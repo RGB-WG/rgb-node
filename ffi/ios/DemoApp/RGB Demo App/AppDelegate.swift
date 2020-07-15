@@ -11,9 +11,28 @@ import CoreData
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
-
-
+    lazy var runtime: Runtime? = {
+        let datadir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.path
+        let network = "testnet"
+        let contractEndpoints = ["Fungible": "ipc:/\(datadir)/\(network)/fungibled.rpc"]
+                        
+        let args = StartRgbArgs(
+            network: network,
+            stashEndpoint: "ipc:/\(datadir)/\(network)/stashd.rpc",
+            contractEndpoints: contractEndpoints,
+            threaded: true,
+            datadir: datadir
+        )
+                
+        do {
+            return try Runtime(args)
+        } catch {
+            print("Failed to start RGB: \(error.localizedDescription)")
+        }
+        
+        return nil
+    }()
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true
