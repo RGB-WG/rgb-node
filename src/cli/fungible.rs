@@ -80,7 +80,7 @@ pub enum Command {
         outpoint: OutPoint,
 
         /// Outpoint blinding factor (generated when the invoice was created)
-        blinding_factor: u32,
+        blinding_factor: u64,
     },
 
     Forget {
@@ -285,7 +285,7 @@ impl Command {
         mut runtime: Runtime,
         filename: PathBuf,
         outpoint: OutPoint,
-        blinding_factor: u32,
+        blinding_factor: u64,
     ) -> Result<(), Error> {
         use lnpbp::strict_encoding::strict_encode;
 
