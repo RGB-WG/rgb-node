@@ -28,7 +28,7 @@ use crate::error::ParseError;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
 #[display_from(Debug)]
 pub struct SealSpec {
-    pub vout: u16,
+    pub vout: u32,
     pub txid: Option<Txid>,
 }
 
@@ -64,7 +64,7 @@ impl StrictDecode for SealSpec {
 
     fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
         Ok(Self {
-            vout: u16::strict_decode(&mut d)?,
+            vout: u32::strict_decode(&mut d)?,
             txid: Option::<Txid>::strict_decode(&mut d)?,
         })
     }

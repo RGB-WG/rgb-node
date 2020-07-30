@@ -301,7 +301,7 @@ impl Command {
             let outpoint_reveal = OutpointReveal {
                 blinding: blinding_factor,
                 txid: outpoint.txid,
-                vout: outpoint.vout as u16,
+                vout: outpoint.vout as u32,
             };
             if outpoint_reveal.conceal() != *outpoint_hash {
                 eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
