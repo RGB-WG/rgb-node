@@ -42,8 +42,8 @@ lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.gi
 electrum-client = { git = "https://github.com/afilini/rust-electrum-client.git", branch = "lnpbp-bitcoin" }
 
 [dependencies.lnpbp]
-git = "https://github.com/afilini/rust-lnpbp.git"
-branch = "alekos-fixes"
+git = "https://github.com/lnp-bp/rust-lnpbp"
+branch = "master"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
