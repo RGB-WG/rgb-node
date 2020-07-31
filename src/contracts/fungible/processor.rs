@@ -161,7 +161,6 @@ impl Processor {
         inputs: Vec<OutPoint>,
         ours: Vec<Outcoins>,
         theirs: Vec<Outcoincealed>,
-        change_outpoint: Option<bp::blind::OutpointHash>,
     ) -> Result<Transition, ServiceErrorDomain> {
         // Collecting all input allocations
         let mut input_allocations = Vec::<Allocation>::new();
@@ -190,7 +189,7 @@ impl Processor {
                 (outcoins.seal_definition(), amount)
             })
             .collect();
-        let mut allocations_theirs: Vec<(bp::blind::OutpointHash, u64)> = theirs
+        let allocations_theirs = theirs
             .into_iter()
             .map(|outcoincealed| {
                 let amount = Coins::transmutate(outcoincealed.coins, *asset.fractional_bits());
@@ -199,17 +198,8 @@ impl Processor {
             })
             .collect();
 
-        if total_inputs < total_outputs {
-            Err("Input amount is lower than output amount".to_string())?
-        } else if total_inputs > total_outputs {
-            // TODO: keep in mind the dust limit here
-
-            if change_outpoint.is_none() {
-                Err("Excess input with no change".to_string())?
-            } else {
-                debug!("Adding change output of {}", total_inputs - total_outputs);
-                allocations_theirs.push((change_outpoint.unwrap(), total_inputs - total_outputs));
-            }
+        if total_inputs != total_outputs {
+            Err("Input amount is not equal to output amount".to_string())?
         }
 
         let input_amounts = input_allocations

@@ -125,7 +125,7 @@ pub struct TransferCli {
     pub fee: u64,
 
     /// Change output
-    // pub change: OutpointHash,
+    pub change: OutPoint,
 
     /// File to save consignment to
     pub consignment: PathBuf,
@@ -463,7 +463,7 @@ impl TransferCli {
                 coins: self.invoice.amount,
                 seal_confidential,
             }],
-            change: None, // TODO
+            change: self.change,
         };
 
         // TODO: Do tx output reorg for deterministic ordering
