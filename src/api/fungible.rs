@@ -113,9 +113,6 @@ pub struct TransferApi {
     /// know the actual seals and only know hashes derived from seal data and
     /// blinding entropy.
     pub theirs: Vec<Outcoincealed>,
-
-    /// Optional change output: the rest of assets will be allocated here
-    pub change: OutPoint,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]

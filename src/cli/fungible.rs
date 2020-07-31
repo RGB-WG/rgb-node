@@ -25,6 +25,7 @@ use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
+use lnpbp::strict_encoding::strict_encode;
 
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{AcceptApi, Issue, TransferApi};
@@ -123,9 +124,6 @@ pub struct TransferCli {
 
     /// Fee (in satoshis)
     pub fee: u64,
-
-    /// Change output
-    pub change: OutPoint,
 
     /// File to save consignment to
     pub consignment: PathBuf,
@@ -463,7 +461,6 @@ impl TransferCli {
                 coins: self.invoice.amount,
                 seal_confidential,
             }],
-            change: self.change,
         };
 
         // TODO: Do tx output reorg for deterministic ordering
@@ -475,6 +472,7 @@ impl TransferCli {
                 eprintln!("Transfer failed: {}", failure);
             }
             Reply::Transfer(transfer) => {
+                trace!("{:?}", strict_encode(&transfer.consignment));
                 transfer.consignment.write_file(self.consignment.clone())?;
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
