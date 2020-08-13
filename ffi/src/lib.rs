@@ -226,7 +226,6 @@ struct TransferArgs {
     invoice: Invoice,
     prototype_psbt: String,
     fee: u64,
-    change: Option<seal::Confidential>,
     consignment_file: String,
     transaction_file: String,
 }
@@ -244,7 +243,6 @@ fn _transfer(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
             data.invoice,
             data.prototype_psbt,
             data.fee,
-            data.change,
             data.consignment_file,
             data.transaction_file,
         )
