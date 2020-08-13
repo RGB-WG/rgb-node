@@ -226,7 +226,6 @@ struct TransferArgs {
     invoice: Invoice,
     prototype_psbt: String,
     fee: u64,
-    change: Option<seal::Confidential>,
     consignment_file: String,
     transaction_file: String,
 }
