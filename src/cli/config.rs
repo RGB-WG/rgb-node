@@ -26,7 +26,7 @@ use crate::constants::*;
 #[display_from(Debug)]
 #[clap(
     name = "rgb-cli",
-    version = "0.1.0-beta.2",
+    version = "0.0.1",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
     about = "RGB node command-line interface; part of Lightning network protocol suite"
 )]

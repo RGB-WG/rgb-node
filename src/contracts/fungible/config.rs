@@ -25,7 +25,7 @@ use crate::constants::*;
 #[derive(Clap)]
 #[clap(
     name = "fungibled",
-    version = "0.1.0-beta.2",
+    version = "0.1.0",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
     about = "RGB fungible contract daemon; part of RGB suite"
 )]

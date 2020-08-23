@@ -3,7 +3,7 @@
     {
       "target_name": "rgb_node",
       "sources": [ "swig_wrap.cxx" ],
-      "libraries": [ '-L<(module_root_dir)/../../target/debug/', '-lrgb'],
+      "libraries": [ '<(module_root_dir)/../../target/debug/librgb.so'],
       'include_dirs': [
           '../',
        ],

@@ -11,14 +11,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use lnpbp::rgb::{Anchor, AnchorId, NodeId};
+use lnpbp::rgb::{Anchor, AnchorId, TransitionId};
 
 use crate::error::ServiceErrorDomain;
 
 pub trait Index {
     type Error: ::std::error::Error + Into<ServiceErrorDomain>;
 
-    fn anchor_id_by_transition_id(&self, tsid: NodeId) -> Result<AnchorId, Self::Error>;
+    fn anchor_id_by_transition_id(&self, tsid: TransitionId) -> Result<AnchorId, Self::Error>;
 
     fn index_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error>;
 }

@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -39,7 +39,6 @@ prometheus = "~0.9.0"
 derive_wrapper = "~0.1.6"
 # TODO: Move this dependency to LNP/BP core library
 lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git", branch = "comment-systemtime-check" }
-electrum-client = { git = "https://github.com/afilini/rust-electrum-client.git", branch = "lnpbp-bitcoin" }
 
 [dependencies.lnpbp]
 git = "https://github.com/lnp-bp/rust-lnpbp"
@@ -68,5 +67,3 @@ members = ["ffi"]
 
 [patch.crates-io]
 torut = { git = "https://github.com/afilini/torut", branch = "vendored-openssl-android" }
-# Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
-zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

@@ -16,7 +16,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use lnpbp::rgb::{Anchor, AnchorId, NodeId};
+use lnpbp::rgb::{Anchor, AnchorId, TransitionId};
 use lnpbp::strict_encoding::{StrictDecode, StrictEncode};
 
 use super::Index;
@@ -82,7 +82,6 @@ impl BTreeIndex {
 
     pub fn store(&self) -> Result<(), BTreeIndexError> {
         debug!("Saving RGB index to file {:?} ...", &self.config.index_file);
-        let _ = fs::remove_file(&self.config.index_file);
         let file = fs::File::with_options()
             .write(true)
             .create(true)
@@ -95,7 +94,7 @@ impl BTreeIndex {
 impl Index for BTreeIndex {
     type Error = BTreeIndexError;
 
-    fn anchor_id_by_transition_id(&self, _tsid: NodeId) -> Result<AnchorId, Self::Error> {
+    fn anchor_id_by_transition_id(&self, _tsid: TransitionId) -> Result<AnchorId, Self::Error> {
         unimplemented!()
     }
 
