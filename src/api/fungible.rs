@@ -34,13 +34,19 @@ pub enum Request {
     Transfer(crate::api::fungible::TransferApi),
 
     #[lnp_api(type = 0x0105)]
-    Accept(crate::api::fungible::AcceptApi),
+    Validate(::lnpbp::rgb::Consignment),
 
     #[lnp_api(type = 0x0107)]
-    ImportAsset(::lnpbp::rgb::Genesis),
+    Accept(crate::api::fungible::AcceptApi),
 
     #[lnp_api(type = 0x0109)]
+    ImportAsset(::lnpbp::rgb::Genesis),
+
+    #[lnp_api(type = 0x010b)]
     ExportAsset(::lnpbp::rgb::ContractId),
+
+    #[lnp_api(type = 0x010d)]
+    Forget(::lnpbp::bitcoin::OutPoint),
 
     #[lnp_api(type = 0xFF01)]
     Sync,
@@ -107,9 +113,6 @@ pub struct TransferApi {
     /// know the actual seals and only know hashes derived from seal data and
     /// blinding entropy.
     pub theirs: Vec<Outcoincealed>,
-
-    /// Optional change output: the rest of assets will be allocated here
-    pub change: OutPoint,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]

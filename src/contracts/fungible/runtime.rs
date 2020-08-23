@@ -15,16 +15,17 @@ use ::core::borrow::Borrow;
 use ::core::convert::TryFrom;
 use ::std::path::PathBuf;
 
-use lnpbp::bitcoin;
+use lnpbp::bitcoin::OutPoint;
+use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{seal, Assignment, AssignmentsVariant, ContractId, Genesis, Node};
+use lnpbp::rgb::{AssignmentsVariant, Consignment, ContractId, Genesis, Node};
 use lnpbp::TryService;
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::schema::AssignmentsType;
-use super::{Asset, Config, IssueStructure, Processor};
+use super::{schema, Asset, Config, IssueStructure, Processor};
 use crate::api::stash::MergeRequest;
 use crate::api::{
     self,
@@ -136,6 +137,12 @@ impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
     async fn try_run_loop(mut self) -> Result<!, RuntimeError> {
+        debug!("Registering RGB20 schema");
+        self.register_schema().await.map_err(|_| {
+            error!("Unable to register RGB20 schema");
+            RuntimeError::Internal("Unable to register RGB20 schema".to_string())
+        })?;
+
         loop {
             match self.run().await {
                 Ok(_) => debug!("API request processing complete"),
@@ -173,7 +180,9 @@ impl Runtime {
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
+            Request::Validate(consignment) => self.rpc_validate(consignment).await,
             Request::Accept(accept) => self.rpc_accept(accept).await,
+            Request::Forget(outpoint) => self.rpc_forget(outpoint).await,
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
             Request::Sync => self.rpc_sync().await,
@@ -224,7 +233,7 @@ impl Runtime {
 
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
 
-        let transition = self.processor.transition(
+        let transition = self.processor.transfer(
             &mut asset,
             transfer.inputs.clone(),
             transfer.ours.clone(),
@@ -241,7 +250,7 @@ impl Runtime {
                 outpoints: transfer
                     .theirs
                     .iter()
-                    .map(|o| o.seal_confidential)
+                    .map(|o| (o.seal_confidential))
                     .collect(),
                 psbt: transfer.psbt.clone(),
             })
@@ -250,10 +259,23 @@ impl Runtime {
         Ok(reply)
     }
 
+    async fn rpc_validate(
+        &mut self,
+        consignment: &Consignment,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got VALIDATE");
+        self.validate(consignment.clone()).await?;
+        Ok(Reply::Success)
+    }
+
     async fn rpc_accept(&mut self, accept: &AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
-        self.accept(accept.clone()).await?;
-        Ok(Reply::Success)
+        Ok(self.accept(accept.clone()).await?)
+    }
+
+    async fn rpc_forget(&mut self, outpoint: &OutPoint) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got FORGET");
+        Ok(self.forget(outpoint.clone()).await?)
     }
 
     async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
@@ -276,6 +298,16 @@ impl Runtime {
         debug!("Got EXPORT_ASSET");
         let genesis = self.export_asset(asset_id.clone()).await?;
         Ok(Reply::Genesis(genesis))
+    }
+
+    async fn register_schema(&mut self) -> Result<(), ServiceErrorDomain> {
+        match self
+            .stash_req_rep(api::stash::Request::AddSchema(schema::schema()))
+            .await?
+        {
+            Reply::Success => Ok(()),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
+        }
     }
 
     async fn import_asset(
@@ -313,11 +345,22 @@ impl Runtime {
         }
     }
 
+    async fn validate(&mut self, consignment: Consignment) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self
+            .stash_req_rep(api::stash::Request::Validate(consignment))
+            .await?;
+
+        match reply {
+            Reply::Success | Reply::Failure(_) => Ok(reply),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
+        }
+    }
+
     async fn accept(&mut self, accept: AcceptApi) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
-            .stash_req_rep(api::stash::Request::MergeConsignment(MergeRequest {
+            .stash_req_rep(api::stash::Request::Merge(MergeRequest {
                 consignment: accept.consignment.clone(),
-                reveal_outpoints: accept.reveal_outpoints,
+                reveal_outpoints: accept.reveal_outpoints.clone(),
             }))
             .await?;
         if let Reply::Success = reply {
@@ -328,46 +371,77 @@ impl Runtime {
                 Asset::try_from(accept.consignment.genesis)?
             };
 
-            // TODO: This block of code is written in a rush under strict time
-            //       limit, so re-write it carefully during next review/refactor
-            accept.consignment.data.iter().for_each(|(_, transition)| {
-                transition
-                    .assignments_by_type(-AssignmentsType::Assets)
-                    .into_iter()
-                    .for_each(|variant| {
-                        if let AssignmentsVariant::Homomorphic(set) = variant {
-                            set.into_iter().for_each(|assignment| {
-                                if let Assignment::Revealed {
-                                    seal_definition,
-                                    assigned_state,
-                                } = assignment
-                                {
-                                    let seal = match seal_definition {
-                                        seal::Revealed::TxOutpoint(outpoint) => bitcoin::OutPoint {
-                                            txid: outpoint.txid,
-                                            vout: outpoint.vout as u32,
-                                        },
-                                        seal::Revealed::WitnessVout { .. } => {
-                                            // In this case we need to look up transaction <-> anchor index from
-                                            // the stash daemon.
-                                            unimplemented!()
-                                        }
-                                    };
+            for (_, transition) in &accept.consignment.data {
+                let set = transition.assignments_by_type(-AssignmentsType::Assets);
+                for variant in set {
+                    if let AssignmentsVariant::DiscreteFiniteField(set) = variant {
+                        for (index, assignment) in set.into_iter().enumerate() {
+                            if let Some(seal) = accept.reveal_outpoints.iter().find(|op| {
+                                op.conceal() == assignment.seal_definition_confidential()
+                            }) {
+                                if let Some(assigned_state) = assignment.assigned_state() {
                                     asset.add_allocation(
-                                        seal,
-                                        transition.transition_id(),
+                                        seal.clone().into(),
+                                        transition.node_id(),
+                                        index as u16,
                                         assigned_state.clone(),
                                     );
+                                } else {
+                                    Err(ServiceErrorDomain::Internal(
+                                        "Consignment structure is broken".to_string(),
+                                    ))?
                                 }
-                            })
+                            }
                         }
-                    })
-            });
+                    }
+                }
+            }
 
             self.cacher.add_asset(asset)?;
             Ok(reply)
+        } else if let Reply::Failure(_) = &reply {
+            Ok(reply)
         } else {
             Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))
+        }
+    }
+
+    async fn forget(&mut self, outpoint: OutPoint) -> Result<Reply, ServiceErrorDomain> {
+        let mut removal_list = Vec::<_>::new();
+        let assets = self
+            .cacher
+            .assets()?
+            .into_iter()
+            .map(Clone::clone)
+            .collect::<Vec<_>>();
+        for asset in assets {
+            let mut asset = asset.clone();
+            for allocation in asset
+                .clone()
+                .allocations(&outpoint)
+                .ok_or(ServiceErrorDomain::Cache)?
+            {
+                asset.remove_allocation(
+                    outpoint,
+                    allocation.node_id,
+                    allocation.index,
+                    allocation.amount.clone(),
+                );
+                removal_list.push((allocation.node_id, allocation.index));
+            }
+            self.cacher.add_asset(asset)?;
+        }
+        if removal_list.is_empty() {
+            return Ok(Reply::Nothing);
+        }
+
+        let reply = self
+            .stash_req_rep(api::stash::Request::Forget(removal_list))
+            .await?;
+
+        match reply {
+            Reply::Success | Reply::Failure(_) => Ok(reply),
+            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 

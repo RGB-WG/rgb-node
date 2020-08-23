@@ -25,7 +25,7 @@ use crate::constants::*;
 #[derive(Clap)]
 #[clap(
     name = "stashd",
-    version = "0.1.0",
+    version = "0.1.0-beta.2",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
     about = "RGB stashd: daemon managing RGB smart contract stash; part of RGB suite"
 )]
@@ -69,6 +69,14 @@ pub struct Opts {
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
     pub network: bp::Network,
+
+    /// Electrum server to use to fecth Bitcoin transactions
+    #[clap(
+        long = "electrum",
+        default_value = DEFAULT_ELECTRUM_ENDPOINT,
+        env = "RGB_ELECTRUM_SERVER"
+    )]
+    pub electrum_server: String,
 }
 
 // We need config structure since not all of the parameters can be specified
@@ -86,6 +94,7 @@ pub struct Config {
     pub rpc_endpoint: SocketLocator,
     pub pub_endpoint: SocketLocator,
     pub network: bp::Network,
+    pub electrum_server: String,
 }
 
 impl From<Opts> for Config {
@@ -101,6 +110,7 @@ impl From<Opts> for Config {
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
         me.pub_endpoint = me.parse_param(opts.pub_endpoint);
         me.p2p_endpoint = opts.p2p_endpoint.map(|ep| me.parse_param(ep));
+        me.electrum_server = me.parse_param(opts.electrum_server);
         me
     }
 }
@@ -125,6 +135,9 @@ impl Default for Config {
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),
+            electrum_server: DEFAULT_ELECTRUM_ENDPOINT
+                .parse()
+                .expect("Error in DEFAULT_ELECTRUM_ENDPOINT constant value"),
         }
     }
 }

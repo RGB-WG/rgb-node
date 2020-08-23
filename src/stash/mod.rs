@@ -18,5 +18,7 @@ mod stash;
 pub(self) mod index;
 pub(self) mod storage;
 
+pub mod electrum;
+
 pub use config::{Config, Opts};
 pub use runtime::{main_with_config, Runtime};

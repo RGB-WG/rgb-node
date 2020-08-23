@@ -28,7 +28,7 @@ use crate::error::ParseError;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
 #[display_from(Debug)]
 pub struct SealSpec {
-    pub vout: u16,
+    pub vout: u32,
     pub txid: Option<Txid>,
 }
 
@@ -36,7 +36,7 @@ impl SealSpec {
     pub fn seal_definition(&self) -> SealDefinition {
         use lnpbp::bitcoin::secp256k1::rand::{self, RngCore};
         let mut rng = rand::thread_rng();
-        let entropy = rng.next_u32(); // Not an amount blinding factor but outpoint blinding
+        let entropy = rng.next_u64(); // Not an amount blinding factor but outpoint blinding
         match self.txid {
             Some(txid) => SealDefinition::TxOutpoint(bp::blind::OutpointReveal {
                 blinding: entropy,
@@ -64,7 +64,7 @@ impl StrictDecode for SealSpec {
 
     fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
         Ok(Self {
-            vout: u16::strict_decode(&mut d)?,
+            vout: u32::strict_decode(&mut d)?,
             txid: Option::<Txid>::strict_decode(&mut d)?,
         })
     }

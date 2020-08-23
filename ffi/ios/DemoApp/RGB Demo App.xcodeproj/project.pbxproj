@@ -3,10 +3,15 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		004DC7A524BA14830061D02A /* StartRgbArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7A424BA14830061D02A /* StartRgbArgs.swift */; };
+		004DC7A824BA15410061D02A /* IssueArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7A724BA15410061D02A /* IssueArgs.swift */; };
+		004DC7AA24BA16DE0061D02A /* TransferArgs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7A924BA16DE0061D02A /* TransferArgs.swift */; };
+		004DC7AD24BA184F0061D02A /* Runtime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 004DC7AC24BA184F0061D02A /* Runtime.swift */; };
+		00FB43D224BA35060031D53E /* Arguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FB43D124BA35060031D53E /* Arguments.swift */; };
 		30BC0AD42490F46F00C1ACED /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BC0AD32490F46F00C1ACED /* AppDelegate.swift */; };
 		30BC0AD62490F46F00C1ACED /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BC0AD52490F46F00C1ACED /* SceneDelegate.swift */; };
 		30BC0AD82490F46F00C1ACED /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BC0AD72490F46F00C1ACED /* ViewController.swift */; };
@@ -15,10 +20,15 @@
 		30BC0AE02490F47000C1ACED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30BC0ADF2490F47000C1ACED /* Assets.xcassets */; };
 		30BC0AE32490F47000C1ACED /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 30BC0AE12490F47000C1ACED /* LaunchScreen.storyboard */; };
 		30BC0AEF2490FB9D00C1ACED /* librgb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 30BC0AEE2490FB9A00C1ACED /* librgb.a */; };
-		30BC0AF6249106FA00C1ACED /* libzmq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 30BC0AF22490FED600C1ACED /* libzmq.a */; };
+		30BD768424B7B4B100EE6985 /* libzmq.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 30BD768324B7B4B100EE6985 /* libzmq.a */; platformFilter = ios; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		004DC7A424BA14830061D02A /* StartRgbArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartRgbArgs.swift; sourceTree = "<group>"; };
+		004DC7A724BA15410061D02A /* IssueArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IssueArgs.swift; sourceTree = "<group>"; };
+		004DC7A924BA16DE0061D02A /* TransferArgs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferArgs.swift; sourceTree = "<group>"; };
+		004DC7AC24BA184F0061D02A /* Runtime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runtime.swift; sourceTree = "<group>"; };
+		00FB43D124BA35060031D53E /* Arguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arguments.swift; sourceTree = "<group>"; };
 		30BC0AD02490F46F00C1ACED /* RGB Demo App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RGB Demo App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		30BC0AD32490F46F00C1ACED /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		30BC0AD52490F46F00C1ACED /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -30,7 +40,7 @@
 		30BC0AE42490F47000C1ACED /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		30BC0AEA2490F47B00C1ACED /* RGB Demo App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "RGB Demo App.entitlements"; sourceTree = "<group>"; };
 		30BC0AEE2490FB9A00C1ACED /* librgb.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librgb.a; path = libs/librgb.a; sourceTree = "<group>"; };
-		30BC0AF22490FED600C1ACED /* libzmq.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzmq.a; path = libs/libzmq.a; sourceTree = "<group>"; };
+		30BD768324B7B4B100EE6985 /* libzmq.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzmq.a; path = libs/libzmq.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,7 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				30BC0AF6249106FA00C1ACED /* libzmq.a in Frameworks */,
+				30BD768424B7B4B100EE6985 /* libzmq.a in Frameworks */,
 				30BC0AEF2490FB9D00C1ACED /* librgb.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -46,6 +56,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		004DC7A624BA14910061D02A /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				00FB43D124BA35060031D53E /* Arguments.swift */,
+				004DC7A424BA14830061D02A /* StartRgbArgs.swift */,
+				004DC7A724BA15410061D02A /* IssueArgs.swift */,
+				004DC7A924BA16DE0061D02A /* TransferArgs.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		004DC7AB24BA183A0061D02A /* RGBLib */ = {
+			isa = PBXGroup;
+			children = (
+				004DC7AC24BA184F0061D02A /* Runtime.swift */,
+				004DC7A624BA14910061D02A /* Model */,
+			);
+			path = RGBLib;
+			sourceTree = "<group>";
+		};
 		30BC0AC72490F46F00C1ACED = {
 			isa = PBXGroup;
 			children = (
@@ -66,6 +96,7 @@
 		30BC0AD22490F46F00C1ACED /* RGB Demo App */ = {
 			isa = PBXGroup;
 			children = (
+				004DC7AB24BA183A0061D02A /* RGBLib */,
 				30BC0AEA2490F47B00C1ACED /* RGB Demo App.entitlements */,
 				30BC0AD32490F46F00C1ACED /* AppDelegate.swift */,
 				30BC0AD52490F46F00C1ACED /* SceneDelegate.swift */,
@@ -82,7 +113,7 @@
 		30BC0AEB2490F70000C1ACED /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				30BC0AF22490FED600C1ACED /* libzmq.a */,
+				30BD768324B7B4B100EE6985 /* libzmq.a */,
 				30BC0AEE2490FB9A00C1ACED /* librgb.a */,
 			);
 			name = Frameworks;
@@ -161,10 +192,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00FB43D224BA35060031D53E /* Arguments.swift in Sources */,
 				30BC0ADE2490F46F00C1ACED /* RGB_Demo_App.xcdatamodeld in Sources */,
 				30BC0AD82490F46F00C1ACED /* ViewController.swift in Sources */,
+				004DC7A824BA15410061D02A /* IssueArgs.swift in Sources */,
 				30BC0AD42490F46F00C1ACED /* AppDelegate.swift in Sources */,
+				004DC7AA24BA16DE0061D02A /* TransferArgs.swift in Sources */,
 				30BC0AD62490F46F00C1ACED /* SceneDelegate.swift in Sources */,
+				004DC7A524BA14830061D02A /* StartRgbArgs.swift in Sources */,
+				004DC7AD24BA184F0061D02A /* Runtime.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -308,6 +344,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CODE_SIGN_ENTITLEMENTS = "RGB Demo App/RGB Demo App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BLS4N8A6L6;
@@ -319,8 +356,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libs",
+					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lstdc++";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.lnp-bp.RGB-Demo-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;
@@ -334,6 +373,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CODE_SIGN_ENTITLEMENTS = "RGB Demo App/RGB Demo App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BLS4N8A6L6;
@@ -345,8 +385,10 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libs",
+					"$(PROJECT_DIR)",
 				);
 				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = "-lstdc++";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.lnp-bp.RGB-Demo-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = YES;

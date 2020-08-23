@@ -29,3 +29,5 @@ pub const STASHD_PUB_ENDPOINT: &'static str = "ipc:{data_dir}/{network}/stashd.p
 pub const FUNGIBLED_CACHE: &'static str = "{data_dir}/{network}/cache/fungible";
 pub const FUNGIBLED_RPC_ENDPOINT: &'static str = "ipc:{data_dir}/{network}/fungibled.rpc";
 pub const FUNGIBLED_PUB_ENDPOINT: &'static str = "ipc:{data_dir}/{network}/fungibled.pub";
+
+pub const DEFAULT_ELECTRUM_ENDPOINT: &'static str = "electrum.blockstream.info:60001";

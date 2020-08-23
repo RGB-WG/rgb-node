@@ -20,6 +20,7 @@
     unwrap_infallible,
     with_options
 )]
+#![feature(vec_remove_item)]
 
 #[macro_use]
 extern crate clap;

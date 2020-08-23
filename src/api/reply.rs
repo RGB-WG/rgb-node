@@ -30,6 +30,10 @@ pub enum Reply {
     #[lnp_api(type = 0x0001)]
     Failure(crate::api::reply::Failure),
 
+    /// There was nothing to do
+    #[lnp_api(type = 0x0005)]
+    Nothing,
+
     #[lnp_api(type = 0xFF03)]
     Sync(crate::api::reply::SyncFormat),
 
@@ -41,6 +45,8 @@ pub enum Reply {
 
     #[lnp_api(type = 0xFF09)]
     Transfer(crate::api::reply::Transfer),
+    //#[lnp_api(type = 0xFF0B)]
+    //ValidationStatus(::lnpbp::rgb::validation::Status),
 }
 
 impl From<lnp::presentation::Error> for Reply {
