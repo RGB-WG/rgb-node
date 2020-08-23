@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
-use lnpbp::rgb::{Consignment, ContractId, NodeId, Transition};
+use lnpbp::rgb::{Consignment, ContractId, Transition, TransitionId};
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
@@ -42,19 +42,20 @@ pub enum Request {
     ReadGenesis(::lnpbp::rgb::ContractId),
 
     #[lnp_api(type = 0x0301)]
-    ReadTransitions(Vec<::lnpbp::rgb::NodeId>),
+    ReadTransitions(Vec<::lnpbp::rgb::TransitionId>),
 
     #[lnp_api(type = 0x0401)]
     Consign(crate::api::stash::ConsignRequest),
 
     #[lnp_api(type = 0x0403)]
-    Validate(::lnpbp::rgb::Consignment),
-
+    MergeConsignment(crate::api::stash::MergeRequest),
+    /*
     #[lnp_api(type = 0x0405)]
-    Merge(crate::api::stash::MergeRequest),
+    VerifyConsignment(::lnpbp::rgb::Consignment),
 
     #[lnp_api(type = 0x0407)]
-    Forget(Vec<(::lnpbp::rgb::NodeId, u16)>),
+    ForgetConsignment(::lnpbp::rgb::Consignment),
+     */
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
@@ -63,7 +64,7 @@ pub struct ConsignRequest {
     pub contract_id: ContractId,
     pub inputs: Vec<OutPoint>,
     pub transition: Transition,
-    pub other_transition_ids: BTreeMap<ContractId, NodeId>,
+    pub other_transition_ids: BTreeMap<ContractId, TransitionId>,
     pub outpoints: Vec<OutpointHash>,
     pub psbt: Psbt,
 }

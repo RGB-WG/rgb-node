@@ -23,7 +23,7 @@ use lnpbp::rgb::prelude::*;
 use bitcoin::OutPoint;
 
 use super::schema::{self, AssignmentsType, FieldType, TransitionType};
-use super::{Allocation, Asset, Coins, Outcoincealed, Outcoins};
+use super::{Asset, Coins, Outcoincealed, Outcoins};
 
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::SealSpec;
@@ -79,7 +79,7 @@ impl Processor {
             FieldType::Name => field!(String, name),
             FieldType::Precision => field!(U8, precision),
             FieldType::DustLimit => field!(U64, dust_limit.unwrap_or(0)),
-            FieldType::Timestamp => field!(I64, now)
+            FieldType::Timestamp => field!(U32, now as u32)
         };
         if let Some(description) = description {
             metadata.insert(-FieldType::Description, field!(String, description));
@@ -97,7 +97,8 @@ impl Processor {
         let mut assignments = BTreeMap::new();
         assignments.insert(
             -AssignmentsType::Assets,
-            AssignmentsVariant::zero_balanced(vec![], allocations, vec![]),
+            AssignmentsVariant::zero_balanced(vec![], allocations, vec![])
+                .ok_or("Empty allocation set during asset issuance".to_string())?,
         );
         metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
 
@@ -117,7 +118,7 @@ impl Processor {
             metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
             assignments.insert(
                 -AssignmentsType::Issue,
-                AssignmentsVariant::Declarative(bset![Assignment::Revealed {
+                AssignmentsVariant::Void(bset![Assignment::Revealed {
                     seal_definition: reissue_control.seal_definition(),
                     assigned_state: data::Void
                 }]),
@@ -128,7 +129,7 @@ impl Processor {
 
         assignments.insert(
             -AssignmentsType::Prune,
-            AssignmentsVariant::Declarative(
+            AssignmentsVariant::Void(
                 prune_seals
                     .into_iter()
                     .map(|seal_spec| Assignment::Revealed {
@@ -142,7 +143,7 @@ impl Processor {
         let genesis = Genesis::with(
             schema::schema().schema_id(),
             network,
-            metadata.into(),
+            metadata,
             assignments,
             vec![],
         );
@@ -155,7 +156,7 @@ impl Processor {
 
     /// Function creates a fungible asset-specific state transition (i.e. RGB-20
     /// schema-based) given an asset information, inputs and desired outputs
-    pub fn transfer(
+    pub fn transition(
         &mut self,
         asset: &mut Asset,
         inputs: Vec<OutPoint>,
@@ -163,21 +164,24 @@ impl Processor {
         theirs: Vec<Outcoincealed>,
     ) -> Result<Transition, ServiceErrorDomain> {
         // Collecting all input allocations
-        let mut input_allocations = Vec::<Allocation>::new();
-        for seal in &inputs {
-            let found = asset
-                .allocations(seal)
-                .ok_or(format!("Unknown input {}", seal))?
-                .clone();
-            if found.len() == 0 {
-                Err(format!("Unknown input {}", seal))?
-            }
-            input_allocations.extend(found);
-        }
+        let input_commitments: Vec<(TransitionId, amount::Revealed)> = inputs.iter().try_fold(
+            vec![],
+            |mut acc, seal| -> Result<Vec<_>, ServiceErrorDomain> {
+                let found = asset
+                    .allocations(seal)
+                    .ok_or(format!("Unknown input {}", seal))?
+                    .clone();
+                if found.len() == 0 {
+                    Err(format!("Unknown input {}", seal))?
+                }
+                acc.extend(found);
+                Ok(acc)
+            },
+        )?;
         // Computing sum of inputs
-        let total_inputs = input_allocations
+        let total_inputs = input_commitments
             .iter()
-            .fold(0u64, |acc, alloc| acc + alloc.amount.amount);
+            .fold(0u64, |acc, (_, r)| acc + r.amount);
 
         let metadata = type_map! {};
         let mut total_outputs = 0;
@@ -202,29 +206,17 @@ impl Processor {
             Err("Input amount is not equal to output amount".to_string())?
         }
 
-        let input_amounts = input_allocations
-            .iter()
-            .map(|alloc| alloc.amount.clone())
-            .collect();
+        let input_amounts = input_commitments.iter().map(|(_, r)| r.clone()).collect();
         let assignments = type_map! {
             AssignmentsType::Assets =>
             AssignmentsVariant::zero_balanced(input_amounts, allocations_ours, allocations_theirs)
+                .ok_or("Can't do confidential amount commitments: need at least one output".to_string())?
         };
-
-        let mut ancestors = Ancestors::new();
-        for alloc in input_allocations {
-            ancestors
-                .entry(alloc.node_id)
-                .or_insert(bmap! {})
-                .entry(-AssignmentsType::Assets)
-                .or_insert(vec![])
-                .push(alloc.index);
-        }
-
+        // TODO: Add transition inputs
         let transition = Transition::with(
             -TransitionType::Transfer,
-            metadata.into(),
-            ancestors,
+            metadata,
+            input_commitments.into_iter().map(|(id, _)| id).collect(),
             assignments,
             vec![],
         );

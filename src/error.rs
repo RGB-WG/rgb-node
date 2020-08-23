@@ -41,9 +41,6 @@ pub enum BootstrapError {
     #[derive_from]
     MessageBusError(lnp::transport::Error),
 
-    #[derive_from]
-    ElectrumError(electrum_client::types::Error),
-
     StorageError,
 
     CacheError,
@@ -98,7 +95,6 @@ pub enum RuntimeError {
     Lnp(lnp::transport::Error),
     #[derive_from(lnp::presentation::Error)]
     BrokenTransport,
-    Internal(String),
 }
 
 impl RuntimeError {

@@ -23,7 +23,7 @@ use crate::constants::*;
 #[derive(Clap)]
 #[clap(
     name = "rgbd",
-    version = "0.1.0-beta.2",
+    version = "0.1.0",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
     about = "RGB main daemon; part of RGB suite"
 )]

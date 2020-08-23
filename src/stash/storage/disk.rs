@@ -101,9 +101,9 @@ impl DiskStorageConfig {
     }
 
     #[inline]
-    pub fn transition_filename(&self, node_id: &NodeId) -> PathBuf {
+    pub fn transition_filename(&self, transition_id: &TransitionId) -> PathBuf {
         self.transitions_dir()
-            .join(node_id.to_hex())
+            .join(transition_id.to_hex())
             .with_extension(Self::RGB_EXTENSION)
     }
 
@@ -280,22 +280,22 @@ impl Store for DiskStorage {
         Ok(existed)
     }
 
-    fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error> {
+    fn transition(&self, id: &TransitionId) -> Result<Transition, Self::Error> {
         Ok(Transition::read_file(self.config.transition_filename(id))?)
     }
 
-    fn has_transition(&self, id: &NodeId) -> Result<bool, Self::Error> {
+    fn has_transition(&self, id: &TransitionId) -> Result<bool, Self::Error> {
         Ok(self.config.transition_filename(id).as_path().exists())
     }
 
     fn add_transition(&self, transition: &Transition) -> Result<bool, Self::Error> {
-        let filename = self.config.transition_filename(&transition.node_id());
+        let filename = self.config.transition_filename(&transition.transition_id());
         let exists = filename.as_path().exists();
         transition.write_file(filename)?;
         Ok(exists)
     }
 
-    fn remove_transition(&self, id: &NodeId) -> Result<bool, Self::Error> {
+    fn remove_transition(&self, id: &TransitionId) -> Result<bool, Self::Error> {
         let filename = self.config.transition_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;

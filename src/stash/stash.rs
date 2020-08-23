@@ -15,7 +15,7 @@ use std::collections::VecDeque;
 
 use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bp::blind::OutpointHash;
-use lnpbp::rgb::{Anchor, AutoConceal, Consignment, ContractId, Node, NodeId, Transition};
+use lnpbp::rgb::{Anchor, AutoConceal, Consignment, ContractId, Node, Transition, TransitionId};
 
 use super::index::Index;
 use super::storage::Store;
@@ -44,8 +44,8 @@ impl Runtime {
         let mut node: &mut dyn Node = &mut transition.clone();
         node.conceal_except(&endpoints);
         let mut data = vec![(anchor.clone(), transition.clone())];
-        let mut sources = VecDeque::<NodeId>::new();
-        sources.extend(transition.ancestors().into_iter().map(|(id, _)| id));
+        let mut sources: VecDeque<TransitionId> = Default::default();
+        sources.extend(transition.ancestors().into_iter());
         while let Some(tsid) = sources.pop_front() {
             if tsid.into_inner() == genesis.contract_id().into_inner() {
                 continue;
@@ -56,12 +56,14 @@ impl Runtime {
             let mut node: &mut dyn Node = &mut transition;
             node.conceal_all();
             data.push((anchor, transition.clone()));
-            sources.extend(transition.ancestors().into_iter().map(|(id, _)| id));
+            sources.extend(transition.ancestors().into_iter());
         }
 
-        let node_id = transition.node_id();
-        let extended_endpoints = endpoints.iter().map(|op| (node_id, *op)).collect();
-        Ok(Consignment::with(genesis, extended_endpoints, data))
+        Ok(Consignment {
+            genesis,
+            endpoints,
+            data,
+        })
     }
 
     pub fn merge(&mut self, consignment: Consignment) -> Result<Vec<Box<dyn Node>>, Error> {

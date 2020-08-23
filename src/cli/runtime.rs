@@ -13,11 +13,10 @@
 
 use std::sync::Arc;
 
-use lnpbp::bitcoin::OutPoint;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{Consignment, ContractId, Genesis};
+use lnpbp::rgb::{ContractId, Genesis};
 
 use super::{Config, Error};
 use crate::api::fungible::{AcceptApi, Issue, Request, TransferApi};
@@ -80,17 +79,7 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn validate(&mut self, consignment: Consignment) -> Result<Arc<Reply>, Error> {
-        Ok(self.command(Request::Validate(consignment))?)
-    }
-
-    #[inline]
     pub fn accept(&mut self, accept: AcceptApi) -> Result<Arc<Reply>, Error> {
         Ok(self.command(Request::Accept(accept))?)
-    }
-
-    #[inline]
-    pub fn forget(&mut self, outpoint: OutPoint) -> Result<Arc<Reply>, Error> {
-        Ok(self.command(Request::Forget(outpoint))?)
     }
 }

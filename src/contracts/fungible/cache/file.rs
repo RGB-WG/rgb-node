@@ -151,7 +151,6 @@ impl FileCache {
     pub fn save(&self) -> Result<(), FileCacheError> {
         trace!("Saving assets information ...");
         let filename = self.config.assets_filename();
-        let _ = fs::remove_file(&filename);
         let mut f = file(filename, FileMode::Create)?;
         match self.config.data_format {
             DataFormat::Yaml => serde_yaml::to_writer(&f, &self.assets)?,
@@ -201,8 +200,6 @@ impl Cache for FileCache {
 
     #[inline]
     fn remove_asset(&mut self, id: ContractId) -> Result<bool, CacheError> {
-        let existed = self.assets.remove(&id).is_some();
-        self.save()?;
-        Ok(existed)
+        Ok(self.assets.remove(&id).is_some())
     }
 }

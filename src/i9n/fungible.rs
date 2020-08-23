@@ -84,6 +84,7 @@ impl Runtime {
         invoice: Invoice,
         prototype_psbt: String,
         fee: u64,
+        change: OutPoint,
         consignment_file: String,
         transaction_file: String,
     ) -> Result<(), Error> {
@@ -124,6 +125,7 @@ impl Runtime {
                 coins: invoice.amount,
                 seal_confidential,
             }],
+            change,
         };
 
         // TODO: Do tx output reorg for deterministic ordering
