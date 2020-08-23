@@ -1,0 +1,16 @@
+{
+  "name": "nodejs",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "cargo build && swig -javascript -node -c++ swig.i",
+    "install": "node ./node_modules/node-gyp/bin/node-gyp.js rebuild"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "node-gyp": "^5.1.1"
+  }
+}
