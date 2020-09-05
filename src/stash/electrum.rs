@@ -13,7 +13,7 @@
 
 use std::cell::RefCell;
 
-use electrum_client::{client::ElectrumPlaintextStream, types::Error, Client};
+use electrum_client::{Client, ElectrumApi, Error};
 
 use lnpbp::bitcoin::{Transaction, Txid};
 use lnpbp::rgb::validation::{TxResolver, TxResolverError};
@@ -25,13 +25,13 @@ fn map_electrum_err(other: Error) -> TxResolverError {
 }
 
 pub struct ElectrumTxResolver {
-    client: RefCell<Client<ElectrumPlaintextStream>>,
+    client: RefCell<Client>,
 }
 
 impl ElectrumTxResolver {
     pub fn new(server: &str) -> Result<Self, Error> {
         Ok(ElectrumTxResolver {
-            client: RefCell::new(Client::new(server)?),
+            client: RefCell::new(Client::new(server, None)?),
         })
     }
 }
