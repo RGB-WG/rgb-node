@@ -202,7 +202,6 @@ impl Runtime {
     async fn rpc_consign(&mut self, request: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got CONSIGN {}", request);
 
-        // TODO: Move this to processor mod
         let mut transitions = request.other_transition_ids.clone();
         transitions.insert(request.contract_id, request.transition.node_id());
 
@@ -270,7 +269,7 @@ impl Runtime {
             .map(|rev| (rev.conceal(), rev.clone()))
             .collect();
 
-        // TODO: Move this to processor mod
+        // TODO: Move this to LNP/BP Core library
         // [PRIVACY]:
         // Update transition data with the revealed state information
         // that we kept since we did an invoice (and the sender did not

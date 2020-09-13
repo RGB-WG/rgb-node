@@ -20,7 +20,6 @@ use rgb::rgbd::{main_with_config, Config, Opts};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {
-    // TODO: Move on configure_me
     let opts: Opts = Opts::parse();
     let config: Config = opts.into();
 

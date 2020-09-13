@@ -463,8 +463,6 @@ impl TransferCli {
             }],
         };
 
-        // TODO: Do tx output reorg for deterministic ordering
-
         let reply = runtime.transfer(api)?;
         info!("Reply: {}", reply);
         match &*reply {

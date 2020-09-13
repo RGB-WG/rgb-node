@@ -126,8 +126,6 @@ impl Runtime {
             }],
         };
 
-        // TODO: Do tx output reorg for deterministic ordering
-
         match &*self.command(Request::Transfer(api))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Transfer(transfer) => {

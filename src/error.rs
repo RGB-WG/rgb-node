@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-// TODO: Move parts of this file to common daemon modules (LNP/BP)
+// TODO: Consider moving parts of this file to common daemon modules (LNP/BP)
 
 use std::collections::HashMap;
 use std::io;
