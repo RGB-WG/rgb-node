@@ -1,9 +1,12 @@
 FROM rustlang/rust:nightly-slim as builder
 
-COPY . /rgb-node
+COPY ffi /rgb-node/ffi
+COPY src /rgb-node/src
+COPY Cargo.lock Cargo.toml README.md /rgb-node/
 
 RUN apt-get update -y \
     && apt-get install -y \
+        cmake \
         python3 \
         pkg-config \
         make \
@@ -47,6 +50,6 @@ RUN mkdir -pv /rgb-node/target/debug/
 RUN mkdir -pv /rgb-node/ffi/nodejs/
 
 COPY --from=builder /rgb-node/ffi/nodejs/build/Release/rgb_node.node /rgb-node
-COPY --from=builder /rgb-node/target/debug/libffi.so /rgb-node/target/debug/
+COPY --from=builder /rgb-node/target/debug/librgb.so /rgb-node/target/debug/
 
 WORKDIR /rgb-node/
