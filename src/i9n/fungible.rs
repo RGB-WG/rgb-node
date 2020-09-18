@@ -110,7 +110,7 @@ impl Runtime {
         for output in &mut psbt.outputs {
             output.unknown.insert(
                 pubkey_key.clone(),
-                output.hd_keypaths.keys().next().unwrap().to_bytes(),
+                output.bip32_derivation.keys().next().unwrap().to_bytes(),
             );
         }
         // trace!("{:?}", psbt);

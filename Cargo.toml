@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.1.0-beta.4"
+version = "0.1.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -39,16 +39,16 @@ prometheus = "~0.9.0"
 derive_wrapper = "~0.1.6"
 # TODO: Move this dependency to LNP/BP core library
 lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git", tag = "lnpbp-v0.1.0-beta-4" }
-electrum-client = { git = "https://github.com/LNP-BP/rust-electrum-client.git", tag = "lnpbp-v0.1.0-beta-4" }
+electrum-client = { git = "https://github.com/LNP-BP/rust-electrum-client.git", branch = "develop" }
 
 [dependencies.lnpbp]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-tag = "v0.1.0-beta.4"
+branch = "master"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-tag = "v0.1.0-beta.4"
+branch = "master"
 
 [target.'cfg(target_os="android")'.dependencies.zmq]
 version = "~0.9"
@@ -67,6 +67,7 @@ identities = []
 members = ["ffi"]
 
 [patch.crates-io]
+# Remove this once https://github.com/teawithsand/torut/pull/5 got merged
 torut = { git = "https://github.com/LNP-BP/torut", branch = "vendored-openssl-android" }
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

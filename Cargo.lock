@@ -152,8 +152,8 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.23.0"
-source = "git+https://github.com/LNP-BP/rust-bitcoin?tag=lnpbp-v0.1.0-beta-4#088f70d19fb8d4969f9926b125cebd4790f6afd6"
+version = "0.25.0"
+source = "git+https://github.com/LNP-BP/rust-bitcoin?branch=develop#26bcf0ebeabbc7ee36dd39aef693fcc3c9d114f9"
 dependencies = [
  "bech32",
  "bitcoin_hashes 0.9.0 (git+https://github.com/LNP-BP/bitcoin_hashes?tag=lnpbp-v0.1.0-beta-4)",
@@ -484,7 +484,7 @@ dependencies = [
 [[package]]
 name = "electrum-client"
 version = "0.2.0-beta.3"
-source = "git+https://github.com/LNP-BP/rust-electrum-client.git?tag=lnpbp-v0.1.0-beta-4#f0bdc38c91663301dda884b3d00a2b30be3b4116"
+source = "git+https://github.com/LNP-BP/rust-electrum-client.git?branch=develop#12713feed517a2f01cd812327a4a8fc6d4f95dc5"
 dependencies = [
  "bitcoin",
  "log",
@@ -830,7 +830,7 @@ checksum = "f2f96b10ec2560088a8e76961b00d47107b3a625fecb76dedb29ee7ccbf98235"
 [[package]]
 name = "lightning"
 version = "0.0.11"
-source = "git+https://github.com/LNP-BP/rust-lightning?tag=lnpbp-v0.1.0-beta-4#0646987480e6fc18d42a40ea065d3c9c3c9d04e9"
+source = "git+https://github.com/LNP-BP/rust-lightning?branch=develop#4682a0045eddb87403e156dc24f30fb143db70a0"
 dependencies = [
  "bitcoin",
 ]
@@ -854,8 +854,8 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.1.0-beta.4"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?tag=v0.1.0-beta.4#f211f0d4b73a6540c452626deb2a77c1a546f3cd"
+version = "0.1.0"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#d71d62b1cbba417f5cedec9066b2373d55a81427"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -883,8 +883,8 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_derive"
-version = "0.1.0-beta.4"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?tag=v0.1.0-beta.4#f211f0d4b73a6540c452626deb2a77c1a546f3cd"
+version = "0.1.0"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#d71d62b1cbba417f5cedec9066b2373d55a81427"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -926,7 +926,7 @@ dependencies = [
 [[package]]
 name = "miniscript"
 version = "1.0.0"
-source = "git+https://github.com/LNP-BP/rust-miniscript?tag=lnpbp-v0.1.0-beta-4#83d2dcfeefd6768e00bb4fed3709932aaf454693"
+source = "git+https://github.com/LNP-BP/rust-miniscript?branch=develop#07f37be581f7ea5cc6a8bc915980a5ef2e002108"
 dependencies = [
  "bitcoin",
  "serde",
@@ -1506,7 +1506,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.1.0-beta.4"
+version = "0.1.0"
 dependencies = [
  "amplify",
  "amplify_derive",
