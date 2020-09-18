@@ -14,7 +14,7 @@ use rgb::lnpbp::bitcoin::OutPoint;
 
 use rgb::lnpbp::bp;
 use rgb::lnpbp::lnp::transport::zmq::{SocketLocator, UrlError};
-use rgb::lnpbp::rgb::{seal, Amount};
+use rgb::lnpbp::rgb::Amount;
 
 use rgb::fungible::{Invoice, IssueStructure, Outcoins};
 use rgb::i9n::*;

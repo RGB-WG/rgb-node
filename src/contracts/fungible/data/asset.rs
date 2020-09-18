@@ -168,7 +168,12 @@ impl Asset {
             amount,
         };
         let allocations = self.known_allocations.entry(seal).or_insert(vec![]);
-        allocations.remove_item(&old_allocation).is_some()
+        if let Some(index) = allocations.iter().position(|a| *a == old_allocation) {
+            allocations.remove(index);
+            true
+        } else {
+            false
+        }
     }
 }
 

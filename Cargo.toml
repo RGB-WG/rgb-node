@@ -43,12 +43,12 @@ electrum-client = { git = "https://github.com/LNP-BP/rust-electrum-client.git", 
 
 [dependencies.lnpbp]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-branch = "master"
+tag = "v0.1.0-beta.4"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-branch = "master"
+tag = "v0.1.0-beta.4"
 
 [target.'cfg(target_os="android")'.dependencies.zmq]
 version = "~0.9"
@@ -67,6 +67,6 @@ identities = []
 members = ["ffi"]
 
 [patch.crates-io]
-torut = { git = "https://github.com/afilini/torut", branch = "vendored-openssl-android" }
+torut = { git = "https://github.com/LNP-BP/torut", branch = "vendored-openssl-android" }
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

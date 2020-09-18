@@ -252,8 +252,6 @@ impl Command {
     }
 
     fn exec_validate(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
-        use lnpbp::strict_encoding::strict_encode;
-
         info!("Validating asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
@@ -285,8 +283,6 @@ impl Command {
         outpoint: OutPoint,
         blinding_factor: u64,
     ) -> Result<(), Error> {
-        use lnpbp::strict_encoding::strict_encode;
-
         info!("Accepting asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
