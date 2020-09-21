@@ -41,3 +41,12 @@ The following bindings are available:
 - [Android](/ffi/android)
 - [iOS](/ffi/ios)
 - [Node.js](/ffi/nodejs)
+
+## Developer guidelines
+
+In order to update the project dependencies, run `cargo update`.
+If any dependency updates, the `Cargo.lock` file will be updated, keeping
+track of the exact package version.
+After an update, run tests (`cargo test`) and manually test the software
+in order to stimulate function calls from updated libraries.
+If any problem arises, open an issue.
