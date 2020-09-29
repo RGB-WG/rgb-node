@@ -21,7 +21,7 @@ use crate::error::{RuntimeError, ServiceError};
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
-#[display_from(Debug)]
+#[display(Debug)]
 #[non_exhaustive]
 pub enum Reply {
     #[lnp_api(type = 0x0003)]
@@ -76,18 +76,18 @@ impl From<ServiceError> for Reply {
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct SyncFormat(pub DataFormat, pub Vec<u8>);
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Transfer {
     pub consignment: Consignment,
     pub psbt: Psbt,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[non_exhaustive]
 pub struct Failure {
     pub code: u16,

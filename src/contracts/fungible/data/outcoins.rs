@@ -28,7 +28,7 @@ use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 use crate::error::ParseError;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Outcoins {
     pub coins: f32,
     pub vout: u32,
@@ -36,7 +36,7 @@ pub struct Outcoins {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Outcoincealed {
     pub coins: f32,
     pub seal_confidential: OutpointHash,

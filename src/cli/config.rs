@@ -23,7 +23,7 @@ use super::{fungible, Error, Runtime};
 use crate::constants::*;
 
 #[derive(Clap, Clone, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[clap(
     name = "rgb-cli",
     version = "0.1.0-beta.2",
@@ -53,7 +53,7 @@ pub struct Opts {
 }
 
 #[derive(Clap, Clone, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum Command {
     /// Operations on fungible RGB assets (RGB-20 standard)
     Fungible {
@@ -67,7 +67,7 @@ pub enum Command {
 // via environment and command-line arguments. Thus we need a config file and
 // default set of configuration
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,

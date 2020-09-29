@@ -14,28 +14,29 @@
 use crate::error::ServiceErrorDomain;
 
 #[derive(Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum Error {
     InputFileIoError(String),
 
     InputFileFormatError(String, String),
 
-    #[derive_from]
+    #[from]
     ServiceError(ServiceErrorDomain),
 
-    #[derive_from]
+    #[from]
     YamlError(serde_yaml::Error),
 
-    #[derive_from]
+    #[from]
     JsonError(serde_json::Error),
 
-    #[derive_from(toml::de::Error, toml::ser::Error)]
+    #[from(toml::de::Error)]
+    #[from(toml::ser::Error)]
     TomlError,
 
-    #[derive_from]
+    #[from]
     StrictEncoding(lnpbp::strict_encoding::Error),
 
-    #[derive_from]
+    #[from]
     ConsensusEncoding(lnpbp::bitcoin::consensus::encode::Error),
 
     DataInconsistency,

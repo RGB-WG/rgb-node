@@ -21,7 +21,7 @@ pub use error::Error;
 pub use runtime::Runtime;
 
 #[derive(Clap, Copy, Clone, PartialEq, Eq, Hash, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum OutputFormat {
     Yaml,
     Json,

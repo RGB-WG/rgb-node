@@ -20,7 +20,7 @@ use crate::constants::*;
 use crate::rgbd::ContractName;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Config {
     pub stash_endpoint: SocketLocator,
     pub contract_endpoints: HashMap<ContractName, SocketLocator>,

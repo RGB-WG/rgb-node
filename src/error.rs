@@ -20,28 +20,28 @@ use tokio::task::JoinError;
 use lnpbp::lnp;
 
 #[derive(Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum BootstrapError {
     TorNotYetSupported,
 
-    #[derive_from]
+    #[from]
     IoError(io::Error),
 
-    #[derive_from]
+    #[from]
     ArgParseError(String),
 
-    #[derive_from]
+    #[from]
     ZmqSocketError(zmq::Error),
 
-    #[derive_from]
+    #[from]
     MultithreadError(JoinError),
 
     MonitorSocketError(Box<dyn std::error::Error + Send>),
 
-    #[derive_from]
+    #[from]
     MessageBusError(lnp::transport::Error),
 
-    #[derive_from]
+    #[from]
     ElectrumError(electrum_client::Error),
 
     StorageError,
@@ -67,7 +67,7 @@ use lnpbp::bitcoin::hashes::hex;
 use std::num::{ParseFloatError, ParseIntError};
 
 #[derive(Clone, Copy, Debug, Display, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct ParseError;
 
 impl From<ParseFloatError> for ParseError {
@@ -89,14 +89,14 @@ impl From<hex::Error> for ParseError {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum RuntimeError {
-    #[derive_from(std::io::Error)]
+    #[from(std::io::Error)]
     Io,
     Zmq(ServiceSocketType, String, zmq::Error),
-    #[derive_from]
+    #[from]
     Lnp(lnp::transport::Error),
-    #[derive_from(lnp::presentation::Error)]
+    #[from(lnp::presentation::Error)]
     BrokenTransport,
     Internal(String),
 }
@@ -120,16 +120,16 @@ impl RuntimeError {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum RoutedError {
     Global(RuntimeError),
     RequestSpecific(ServiceError),
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum ServiceErrorDomain {
-    #[derive_from(::std::io::Error)]
+    #[from(::std::io::Error)]
     Io,
     Stash,
     Storage,
@@ -137,9 +137,9 @@ pub enum ServiceErrorDomain {
     Cache,
     Multithreading,
     P2pwire,
-    #[derive_from]
+    #[from]
     LnpRpc(lnp::presentation::Error),
-    #[derive_from]
+    #[from]
     LnpTransport(lnp::transport::Error),
     Api(ApiErrorType),
     Monitoring,
@@ -150,12 +150,12 @@ pub enum ServiceErrorDomain {
     Lightning,
     Schema(String),
     Anchor(String),
-    #[derive_from]
+    #[from]
     Internal(String),
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum ServiceErrorSource {
     Broker,
     Stash,
@@ -163,7 +163,7 @@ pub enum ServiceErrorSource {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum ServiceSocketType {
     Request,
     Reply,
@@ -172,7 +172,7 @@ pub enum ServiceSocketType {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum ApiErrorType {
     MalformedRequest { request: String },
     UnknownCommand { command: String },
@@ -184,7 +184,7 @@ pub enum ApiErrorType {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct ServiceError {
     pub domain: ServiceErrorDomain,
     pub service: ServiceErrorSource,
@@ -207,7 +207,7 @@ impl ServiceError {
 }
 
 #[derive(Debug, Display, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct ServiceErrorRepresentation {
     pub domain: String,
     pub service: String,

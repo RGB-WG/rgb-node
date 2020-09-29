@@ -20,7 +20,7 @@ use lnpbp::rgb::{Consignment, ContractId, NodeId, Transition};
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
-#[display_from(Debug)]
+#[display(Debug)]
 #[non_exhaustive]
 pub enum Request {
     #[lnp_api(type = 0x0101)]
@@ -58,7 +58,7 @@ pub enum Request {
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct ConsignRequest {
     pub contract_id: ContractId,
     pub inputs: Vec<OutPoint>,
@@ -69,7 +69,7 @@ pub struct ConsignRequest {
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct MergeRequest {
     pub consignment: Consignment,
     pub reveal_outpoints: Vec<OutpointReveal>,

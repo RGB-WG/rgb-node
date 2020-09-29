@@ -29,7 +29,7 @@ pub trait Cache {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum CacheError {
     Io(String),
     NotFound {

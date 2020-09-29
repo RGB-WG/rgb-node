@@ -26,7 +26,7 @@ use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 use crate::error::ParseError;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct SealSpec {
     pub vout: u32,
     pub txid: Option<Txid>,

@@ -87,7 +87,7 @@ pub struct Opts {
 // via environment and command-line arguments. Thus we need a config file and
 // default set of configuration
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,

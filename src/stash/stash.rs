@@ -22,12 +22,12 @@ use super::storage::Store;
 use super::Runtime;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, From, Error)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum Error {
-    #[derive_from(super::storage::DiskStorageError)]
+    #[from(super::storage::DiskStorageError)]
     StorageError,
 
-    #[derive_from(super::index::BTreeIndexError)]
+    #[from(super::index::BTreeIndexError)]
     IndexError,
 }
 

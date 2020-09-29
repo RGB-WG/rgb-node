@@ -21,9 +21,9 @@ use lnpbp::bp::blind::OutpointHash;
 use lnpbp::rgb::{Bech32, ContractId, ToBech32};
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum Error {
-    #[derive_from]
+    #[from]
     Url(::url::ParseError),
 
     WrongUrlScheme,

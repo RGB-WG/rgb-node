@@ -15,21 +15,21 @@ use crate::api::reply;
 use crate::error::ServiceErrorDomain;
 
 #[derive(Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum Error {
-    #[derive_from]
+    #[from]
     ServiceError(ServiceErrorDomain),
 
-    #[derive_from]
+    #[from]
     Reply(reply::Failure),
 
-    #[derive_from]
+    #[from]
     Base64(base64::DecodeError),
 
-    #[derive_from]
+    #[from]
     Bitcoin(lnpbp::bitcoin::consensus::encode::Error),
 
-    #[derive_from]
+    #[from]
     Encoding(lnpbp::strict_encoding::Error),
 
     UnexpectedResponse,

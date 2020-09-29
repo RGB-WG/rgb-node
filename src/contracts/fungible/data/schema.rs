@@ -24,9 +24,9 @@ use crate::error::ServiceErrorDomain;
 use crate::type_map;
 
 #[derive(Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum SchemaError {
-    #[derive_from(core::option::NoneError)]
+    #[from(core::option::NoneError)]
     NotAllFieldsPresent,
 
     WrongSchemaId,
@@ -39,7 +39,7 @@ impl From<SchemaError> for ServiceErrorDomain {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[repr(u16)]
 pub enum FieldType {
     Ticker = 0,
@@ -54,7 +54,7 @@ pub enum FieldType {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[repr(u16)]
 pub enum AssignmentsType {
     Issue = 0,
@@ -63,7 +63,7 @@ pub enum AssignmentsType {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[repr(u16)]
 pub enum TransitionType {
     Issue = 0,

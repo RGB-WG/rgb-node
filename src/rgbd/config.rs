@@ -54,7 +54,7 @@ pub struct Opts {
 }
 
 #[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Deserialize)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[repr(u8)]
 #[non_exhaustive]
 pub enum ContractName {
@@ -74,7 +74,7 @@ impl ContractName {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Config {
     pub data_dir: PathBuf,
     pub bin_dir: PathBuf,

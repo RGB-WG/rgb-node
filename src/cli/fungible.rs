@@ -34,7 +34,7 @@ use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, Outpoint};
 use crate::util::file::ReadWrite;
 
 #[derive(Clap, Clone, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum Command {
     /// Lists all known assets
     List {
@@ -92,7 +92,7 @@ pub enum Command {
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct InvoiceCli {
     /// Assets
     pub asset: ContractId,
@@ -105,7 +105,7 @@ pub struct InvoiceCli {
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct TransferCli {
     /// Asset inputs
     #[clap(short = "i", long = "input", min_values = 1)]

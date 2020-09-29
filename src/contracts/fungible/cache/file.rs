@@ -27,30 +27,31 @@ use crate::fungible::Asset;
 use crate::util::file::*;
 
 #[derive(Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum FileCacheError {
-    #[derive_from]
+    #[from]
     Io(io::Error),
 
-    #[derive_from(bitcoin::hashes::Error)]
+    #[from(bitcoin::hashes::Error)]
     HashName,
 
-    #[derive_from(bitcoin::hashes::hex::Error)]
+    #[from(bitcoin::hashes::hex::Error)]
     BrokenHexFilenames,
 
-    #[derive_from]
+    #[from]
     Encoding(lnpbp::strict_encoding::Error),
 
-    #[derive_from]
+    #[from]
     SerdeJson(serde_json::Error),
 
-    #[derive_from]
+    #[from]
     SerdeYaml(serde_yaml::Error),
 
-    #[derive_from(toml::de::Error, toml::ser::Error)]
+    #[from(toml::de::Error)]
+    #[from(toml::ser::Error)]
     SerdeToml,
 
-    #[derive_from(std::option::NoneError)]
+    #[from(std::option::NoneError)]
     NotFound,
 }
 
@@ -67,7 +68,7 @@ impl From<FileCacheError> for BootstrapError {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct FileCacheConfig {
     pub data_dir: PathBuf,
     pub data_format: DataFormat,
@@ -89,7 +90,7 @@ impl FileCacheConfig {
 
 /// Keeps all source/binary RGB contract data, stash etc
 #[derive(Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct FileCache {
     config: FileCacheConfig,
     assets: HashMap<ContractId, Asset>,

@@ -26,7 +26,7 @@ use super::schema::{AssignmentsType, FieldType};
 use super::{schema, SchemaError};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Coins(Amount, u8);
 
 impl Coins {
@@ -78,7 +78,7 @@ impl Coins {
 }
 
 #[derive(Clone, Getters, Serialize, Deserialize, PartialEq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Asset {
     id: ContractId,
     ticker: String,
@@ -95,7 +95,7 @@ pub struct Asset {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Allocation {
     pub node_id: NodeId,
     // Index of the assignment within the node
@@ -104,14 +104,14 @@ pub struct Allocation {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Supply {
     pub known_circulating: Coins,
     pub total: Option<Coins>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Issue {
     pub id: ContractId,
     /// A point that has to be monitored to detect next issuance

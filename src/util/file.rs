@@ -9,7 +9,7 @@ use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
 use super::MagicNumber;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum FileMode {
     Read,
     Write,

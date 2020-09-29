@@ -24,7 +24,7 @@ use crate::util::SealSpec;
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
-#[display_from(Debug)]
+#[display(Debug)]
 #[non_exhaustive]
 pub enum Request {
     #[lnp_api(type = 0x0101)]
@@ -55,7 +55,7 @@ pub enum Request {
 #[derive(
     Clap, Clone, PartialEq, Serialize, Deserialize, StrictEncode, StrictDecode, Debug, Display,
 )]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct Issue {
     /// Asset ticker
     #[clap(validator=ticker_validator)]
@@ -91,7 +91,7 @@ pub struct Issue {
 }
 
 #[derive(Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct TransferApi {
     /// Asset contract id
     pub contract_id: ContractId,
@@ -116,7 +116,7 @@ pub struct TransferApi {
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct AcceptApi {
     /// Raw consignment data
     pub consignment: Consignment,

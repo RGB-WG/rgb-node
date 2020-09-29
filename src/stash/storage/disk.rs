@@ -23,18 +23,18 @@ use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::file::*;
 
 #[derive(Debug, Display, Error, From)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub enum DiskStorageError {
-    #[derive_from]
+    #[from]
     Io(io::Error),
 
-    #[derive_from(bitcoin::hashes::Error)]
+    #[from(bitcoin::hashes::Error)]
     HashName,
 
-    #[derive_from]
+    #[from]
     Encoding(lnpbp::strict_encoding::Error),
 
-    #[derive_from(bitcoin::hashes::hex::Error)]
+    #[from(bitcoin::hashes::hex::Error)]
     BrokenHexFilenames,
 }
 
@@ -51,7 +51,7 @@ impl From<DiskStorageError> for BootstrapError {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct DiskStorageConfig {
     pub data_dir: PathBuf,
 }
@@ -130,7 +130,7 @@ impl DiskStorageConfig {
 
 /// Keeps all source/binary RGB contract data, stash etc
 #[derive(Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 pub struct DiskStorage {
     config: DiskStorageConfig,
 }

@@ -22,7 +22,7 @@ use core::convert::TryFrom;
 /// Rationale: convenience for wallet data import/export and extra-wallet
 /// file storage; additional check not to mis-interpret byte sequences
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
-#[display_from(Debug)]
+#[display(Debug)]
 #[repr(u32)]
 pub enum MagicNumber {
     /// Equals to first 4 bytes of SHA26("rgb:schema")
