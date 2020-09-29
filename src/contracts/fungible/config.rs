@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::Clap;
 use core::fmt::Display;
 use core::str::FromStr;
 use std::path::PathBuf;
@@ -39,7 +38,7 @@ pub struct Opts {
     pub data_dir: String,
 
     /// Connection string to stash (exact format depends on used storage engine)
-    #[clap(short = "s", long = "stash", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
+    #[clap(short = 's', long = "stash", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
     pub cache: String,
 
     /// Data format for cache storage (valid only if file storage is used)

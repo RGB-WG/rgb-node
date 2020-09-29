@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::Clap;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -108,7 +107,7 @@ pub struct InvoiceCli {
 #[display(Debug)]
 pub struct TransferCli {
     /// Asset inputs
-    #[clap(short = "i", long = "input", min_values = 1)]
+    #[clap(short = 'i', long = "input", min_values = 1)]
     pub inputs: Vec<OutPoint>,
 
     /// Adds additional asset allocations; MUST use transaction inputs

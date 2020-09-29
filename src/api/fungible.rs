@@ -82,7 +82,7 @@ pub struct Issue {
     pub precision: u8,
 
     /// Dust limit for asset transfers; defaults to no limit
-    #[clap(short = "D", long)]
+    #[clap(short = 'D', long)]
     pub dust_limit: Option<Amount>,
 
     /// Asset allocation, in form of <amount>@<txid>:<vout>

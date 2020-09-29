@@ -16,7 +16,7 @@ amplify = "~1.0.0"
 amplify_derive = "~1.0.0"
 base64 = "0.12"
 dotenv = "~0.15.0"
-clap = "=3.0.0-beta.1"
+clap = "=3.0.0-beta.2"
 chrono = { version = "~0.4.11", features = [ "serde" ] }
 serde = { version = "~1.0.111", features = ["derive"] }
 serde_json = "~1.0.55"

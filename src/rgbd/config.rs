@@ -11,8 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::derive::ArgEnum;
-use clap::Clap;
 use lnpbp::bp;
 use std::path::PathBuf;
 

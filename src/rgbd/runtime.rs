@@ -14,8 +14,6 @@
 use futures::future::join_all;
 use tokio::{process, task};
 
-use clap::derive::Clap;
-
 use lnpbp::TryService;
 
 use super::Config;

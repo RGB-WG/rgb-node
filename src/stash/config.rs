@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::Clap;
 use core::fmt::Display;
 use core::str::FromStr;
 use std::path::PathBuf;
