@@ -19,7 +19,7 @@ use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
-    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema,
+    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema, Stash,
     Validity,
 };
 
@@ -215,10 +215,10 @@ impl Runtime {
         // and assemble them into a consignment
         let consignment = self
             .consign(
-                &request.contract_id,
+                request.contract_id,
                 &request.transition,
-                &anchor,
-                request.outpoints.clone(),
+                Some(&anchor),
+                &request.outpoints.clone(),
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
@@ -265,28 +265,48 @@ impl Runtime {
         // [PRIVACY]:
         // Update transition data with the revealed state information that we
         // kept since we did an invoice (and the sender did not know).
-        let mut data = Vec::<_>::with_capacity(merge.consignment.data.len());
-        for (anchor, transition) in &merge.consignment.data {
+        let reveal_known_seals = |(_, assignments): (&usize, &mut Assignments)| match assignments {
+            Assignments::Declarative(_) => {}
+            Assignments::DiscreteFiniteField(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
+            Assignments::CustomData(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
+        };
+
+        for (anchor, transition) in &merge.consignment.state_transitions {
             let mut transition = transition.clone();
             transition
-                .assignments_mut()
+                .owned_rights_mut()
                 .into_iter()
-                .for_each(|(_, assignment)| match assignment {
-                    Assignments::Declarative(_) => {}
-                    Assignments::DiscreteFiniteField(set) => {
-                        set.iter_mut().for_each(|a| a.reveal_seals(&known_seals));
-                    }
-                    Assignments::CustomData(set) => {
-                        set.iter_mut().for_each(|a| a.reveal_seals(&known_seals));
-                    }
-                });
-            data.push((anchor, transition));
-        }
-
-        // Store the transition and the anchor data in the stash
-        for (anchor, transition) in data {
+                .for_each(reveal_known_seals);
+            // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
             self.storage.add_transition(&transition)?;
+        }
+
+        for extension in &merge.consignment.state_extensions {
+            let mut extension = extension.clone();
+            extension
+                .owned_rights_mut()
+                .into_iter()
+                .for_each(reveal_known_seals);
+            self.storage.add_extension(&extension)?;
         }
 
         Ok(Reply::Success)

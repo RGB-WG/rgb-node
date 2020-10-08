@@ -41,7 +41,7 @@ impl Runtime {
                     .iter()
                     .map(|(k, _)| k.clone())
                     .collect(),
-                network: config.network,
+                network: config.network.clone(),
                 threaded: true,
             };
 

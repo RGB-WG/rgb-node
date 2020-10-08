@@ -177,6 +177,34 @@ impl ReadWrite for Transition {
     }
 }
 
+impl ReadWrite for Extension {
+    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+        let mut file = file(filename, FileMode::Read)?;
+        let mut magic_buf = [0u8; 4];
+        file.read_exact(&mut magic_buf)?;
+        let magic = u32::from_be_bytes(magic_buf);
+        let magic = MagicNumber::try_from(magic).map_err(|detected| {
+            Error::DataIntegrityError(format!(
+                "Wrong file type: expected state extension file, got unknown magic number {}",
+                detected
+            ))
+        })?;
+        if magic != MagicNumber::Extension {
+            Err(Error::DataIntegrityError(format!(
+                "Wrong file type: expected state extension file, got {}",
+                magic
+            )))?
+        }
+        Extension::strict_decode(file)
+    }
+
+    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+        let mut file = file(filename, FileMode::Create)?;
+        file.write(&MagicNumber::Extension.to_u32().to_be_bytes())?;
+        self.strict_encode(file)
+    }
+}
+
 impl ReadWrite for Consignment {
     fn read_file(filename: PathBuf) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;

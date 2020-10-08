@@ -57,7 +57,7 @@ pub struct DiskStorageConfig {
 }
 
 impl DiskStorageConfig {
-    pub const RGB_EXTENSION: &'static str = "rgb";
+    pub const RGB_FILE_EXT: &'static str = "rgb";
 
     #[inline]
     pub fn schemata_dir(&self) -> PathBuf {
@@ -80,37 +80,49 @@ impl DiskStorageConfig {
     }
 
     #[inline]
+    pub fn extensions_dir(&self) -> PathBuf {
+        self.data_dir.join("extensions")
+    }
+
+    #[inline]
     pub fn schema_filename(&self, schema_id: &SchemaId) -> PathBuf {
         self.schemata_dir()
             .join(schema_id.to_bech32().to_string())
-            .with_extension(Self::RGB_EXTENSION)
+            .with_extension(Self::RGB_FILE_EXT)
     }
 
     #[inline]
     pub fn genesis_filename(&self, contract_id: &ContractId) -> PathBuf {
         self.geneses_dir()
             .join(contract_id.to_bech32().to_string())
-            .with_extension(Self::RGB_EXTENSION)
+            .with_extension(Self::RGB_FILE_EXT)
     }
 
     #[inline]
     pub fn anchor_filename(&self, anchor_id: &AnchorId) -> PathBuf {
         self.anchors_dir()
             .join(anchor_id.to_hex())
-            .with_extension(Self::RGB_EXTENSION)
+            .with_extension(Self::RGB_FILE_EXT)
     }
 
     #[inline]
     pub fn transition_filename(&self, node_id: &NodeId) -> PathBuf {
         self.transitions_dir()
             .join(node_id.to_hex())
-            .with_extension(Self::RGB_EXTENSION)
+            .with_extension(Self::RGB_FILE_EXT)
+    }
+
+    #[inline]
+    pub fn extension_filename(&self, node_id: &NodeId) -> PathBuf {
+        self.extensions_dir()
+            .join(node_id.to_hex())
+            .with_extension(Self::RGB_FILE_EXT)
     }
 
     #[inline]
     pub fn schema_names(&self) -> Result<Vec<String>, io::Error> {
         Ok(
-            read_dir_filenames(self.schemata_dir(), Some(Self::RGB_EXTENSION))?
+            read_dir_filenames(self.schemata_dir(), Some(Self::RGB_FILE_EXT))?
                 .into_iter()
                 .map(|name| String::from(name))
                 .collect(),
@@ -120,7 +132,7 @@ impl DiskStorageConfig {
     #[inline]
     pub fn genesis_names(&self) -> Result<Vec<String>, io::Error> {
         Ok(
-            read_dir_filenames(self.geneses_dir(), Some(Self::RGB_EXTENSION))?
+            read_dir_filenames(self.geneses_dir(), Some(Self::RGB_FILE_EXT))?
                 .into_iter()
                 .map(|name| String::from(name))
                 .collect(),
@@ -297,6 +309,28 @@ impl Store for DiskStorage {
 
     fn remove_transition(&self, id: &NodeId) -> Result<bool, Self::Error> {
         let filename = self.config.transition_filename(id);
+        let existed = filename.as_path().exists();
+        fs::remove_file(filename)?;
+        Ok(existed)
+    }
+
+    fn extension(&self, id: &NodeId) -> Result<Extension, Self::Error> {
+        Ok(Extension::read_file(self.config.extension_filename(id))?)
+    }
+
+    fn has_extension(&self, id: &NodeId) -> Result<bool, Self::Error> {
+        Ok(self.config.extension_filename(id).as_path().exists())
+    }
+
+    fn add_extension(&self, extension: &Extension) -> Result<bool, Self::Error> {
+        let filename = self.config.extension_filename(&extension.node_id());
+        let exists = filename.as_path().exists();
+        extension.write_file(filename)?;
+        Ok(exists)
+    }
+
+    fn remove_extension(&self, id: &NodeId) -> Result<bool, Self::Error> {
+        let filename = self.config.extension_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
         Ok(existed)
