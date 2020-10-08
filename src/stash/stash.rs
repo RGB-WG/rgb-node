@@ -15,7 +15,7 @@ use std::collections::VecDeque;
 
 use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bp::blind::OutpointHash;
-use lnpbp::rgb::{Anchor, AutoConceal, Consignment, ContractId, Node, NodeId, Transition};
+use lnpbp::rgb::{Anchor, AutoConceal, Consignment, ContractId, Node, NodeId, Stash, Transition};
 
 use super::index::Index;
 use super::storage::Store;
@@ -31,8 +31,9 @@ pub enum Error {
     IndexError,
 }
 
-impl Runtime {
-    pub fn consign(
+// TODO: Move business logic to LNP/BP Core Library
+impl Stash for Runtime {
+    fn consign(
         &self,
         contract_id: &ContractId,
         transition: &Transition,
@@ -64,7 +65,7 @@ impl Runtime {
         Ok(Consignment::with(genesis, extended_endpoints, data))
     }
 
-    pub fn merge(&mut self, consignment: Consignment) -> Result<Vec<Box<dyn Node>>, Error> {
+    fn merge(&mut self, consignment: Consignment) -> Result<Vec<Box<dyn Node>>, Error> {
         let mut nodes: Vec<Box<dyn Node>> = vec![];
         consignment
             .data
