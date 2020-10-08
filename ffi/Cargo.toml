@@ -1,8 +1,8 @@
 [package]
 name = "rgb"
 version = "0.1.0"
-authors = ["Alekos Filini <alekos.filini@gmail.com>",
-           "Dr Maxim Orlovsky <orlovsky@pandoracore.com>"]
+authors = ["Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
+           "Alekos Filini <alekos.filini@gmail.com>"]
 edition = "2018"
 build = "build.rs"
 
@@ -13,8 +13,6 @@ name = "rgb"
 [build-dependencies]
 cbindgen = "^0.14"
 openssl = { version = "^0.10", features = ["vendored"] }
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 log = "0.4"
