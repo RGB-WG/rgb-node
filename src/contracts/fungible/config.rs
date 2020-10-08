@@ -15,8 +15,8 @@ use core::fmt::Display;
 use core::str::FromStr;
 use std::path::PathBuf;
 
+use crate::DataFormat;
 use lnpbp::bp;
-use lnpbp::data_format::DataFormat;
 use lnpbp::lnp::transport::zmq::SocketLocator;
 
 use crate::constants::*;
@@ -79,7 +79,7 @@ pub struct Opts {
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
-    pub network: bp::Network,
+    pub network: bp::Chain,
 }
 
 // We need config structure since not all of the parameters can be specified
@@ -96,7 +96,7 @@ pub struct Config {
     pub pub_endpoint: SocketLocator,
     pub stash_rpc: SocketLocator,
     pub stash_sub: SocketLocator,
-    pub network: bp::Network,
+    pub network: bp::Chain,
 }
 
 impl From<Opts> for Config {

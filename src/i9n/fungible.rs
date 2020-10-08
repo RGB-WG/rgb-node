@@ -42,7 +42,7 @@ impl Runtime {
 
     pub fn issue(
         &mut self,
-        _network: bp::Network,
+        _network: bp::Chain,
         ticker: String,
         title: String,
         description: Option<String>,

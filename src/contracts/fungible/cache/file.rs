@@ -16,8 +16,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{fs, io, io::Read, io::Write};
 
+use crate::DataFormat;
 use lnpbp::bitcoin;
-use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
 
 use super::Cache;

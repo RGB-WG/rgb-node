@@ -12,13 +12,14 @@ readme = "README.md"
 name = "rgb"
 
 [dependencies]
-amplify = "~1.0.0"
-amplify_derive = "~1.0.0"
+amplify = "~1.1.1"
+amplify_derive = "~1.1.1"
 base64 = "0.12"
 dotenv = "~0.15.0"
 clap = "=3.0.0-beta.2"
 chrono = { version = "~0.4.11", features = [ "serde" ] }
 serde = { version = "~1.0.111", features = ["derive"] }
+serde_with = "~1.5.0"
 serde_json = "~1.0.55"
 serde_yaml = "~0.8.13"
 toml = "~0.5.6"
@@ -66,7 +67,15 @@ identities = []
 members = ["ffi"]
 
 [patch.crates-io]
+bitcoin = { git = "https://github.com/LNP-BP/rust-bitcoin", branch = "develop" }
+bitcoin_hashes = { git = "https://github.com/LNP-BP/bitcoin_hashes", tag = "lnpbp-v0.1.0-beta-4" }
+lightning = { git = "https://github.com/LNP-BP/rust-lightning", branch = "develop", optional = true }
+# No changes here, just need to import forked `bitcoin` library
+miniscript = { git = "https://github.com/LNP-BP/rust-miniscript", branch = "develop" }
 # Remove this once https://github.com/teawithsand/torut/pull/5 got merged
-torut = { git = "https://github.com/LNP-BP/torut", branch = "vendored-openssl-android" }
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }
+# We can remove these two after <https://github.com/LNP-BP/rust-amplify/pull/21>
+# TODO: (new) remove them before 1.0 release
+amplify = { git = "https://github.com/LNP-BP/rust-amplify", branch = "develop" }
+torut = { git = "https://github.com/LNP-BP/torut", branch = "develop" }

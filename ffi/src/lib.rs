@@ -124,7 +124,7 @@ where
 #[derive(Debug, Deserialize)]
 struct StartRgbArgs {
     #[serde(with = "serde_with::rust::display_fromstr")]
-    network: bp::Network,
+    network: bp::Chain,
     #[serde(with = "serde_with::rust::display_fromstr")]
     stash_endpoint: SocketLocator,
     contract_endpoints: HashMap<ContractName, String>,
@@ -177,7 +177,7 @@ pub extern "C" fn start_rgb(json: *mut c_char) -> CResult {
 #[derive(Debug, Deserialize)]
 struct IssueArgs {
     #[serde(with = "serde_with::rust::display_fromstr")]
-    network: bp::Network,
+    network: bp::Chain,
     ticker: String,
     name: String,
     #[serde(default)]

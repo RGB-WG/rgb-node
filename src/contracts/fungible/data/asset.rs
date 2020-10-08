@@ -22,7 +22,7 @@ use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 
-use super::schema::{AssignmentsType, FieldType};
+use super::schema::{FieldType, OwnedRightsType};
 use super::{schema, SchemaError};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
@@ -86,7 +86,8 @@ pub struct Asset {
     description: Option<String>,
     supply: Supply,
     dust_limit: Coins,
-    network_magic: bp::MagicNumber,
+    #[serde(with = "serde_with::rust::display_fromstr")]
+    chain: bp::Chain,
     fractional_bits: u8,
     date: NaiveDateTime,
     unspent_issue_txo: Option<bitcoin::OutPoint>,
@@ -120,11 +121,6 @@ pub struct Issue {
 }
 
 impl Asset {
-    #[inline]
-    pub fn network(&self) -> bp::Network {
-        bp::Network::from_magic(self.network_magic)
-    }
-
     pub fn add_issue(&self, _issue: Transition) -> Supply {
         unimplemented!()
     }
@@ -195,16 +191,16 @@ impl TryFrom<Genesis> for Asset {
         let issue = Issue {
             id: genesis.contract_id(),
             txo: genesis
-                .known_seal_definitions_by_type(-AssignmentsType::Issue)
+                .known_seal_definitions_by_type(-OwnedRightsType::Issue)
                 .first()
                 .and_then(|i| bitcoin::OutPoint::try_from((*i).clone()).ok()),
             supply: supply.clone(),
         };
         let mut known_allocations = BTreeMap::<bitcoin::OutPoint, Vec<Allocation>>::default();
-        for variant in genesis.assignments_by_type(-AssignmentsType::Assets) {
-            if let AssignmentsVariant::DiscreteFiniteField(tree) = variant {
+        for variant in genesis.owned_rights_by_type(-OwnedRightsType::Assets) {
+            if let Assignments::DiscreteFiniteField(tree) = variant {
                 tree.iter().enumerate().for_each(|(index, assign)| {
-                    if let Assignment::Revealed {
+                    if let OwnedState::Revealed {
                         seal_definition: seal::Revealed::TxOutpoint(outpoint_reveal),
                         assigned_state,
                     } = assign
@@ -223,7 +219,7 @@ impl TryFrom<Genesis> for Asset {
         }
         Ok(Self {
             id: genesis.contract_id(),
-            network_magic: genesis.network().as_magic(),
+            chain: genesis.chain().clone(),
             ticker: genesis_meta.string(-FieldType::Ticker)?,
             name: genesis_meta.string(-FieldType::Name)?,
             description: genesis_meta.string(-FieldType::Description).next(),

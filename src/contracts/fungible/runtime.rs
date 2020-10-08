@@ -15,16 +15,16 @@ use ::core::borrow::Borrow;
 use ::core::convert::TryFrom;
 use ::std::path::PathBuf;
 
+use amplify::TryService;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
-use lnpbp::rgb::{AssignmentsVariant, Consignment, ContractId, Genesis, Node};
-use lnpbp::TryService;
+use lnpbp::rgb::{Assignments, Consignment, ContractId, Genesis, Node};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
-use super::schema::AssignmentsType;
+use super::schema::OwnedRightsType;
 use super::{schema, Asset, Config, IssueStructure, Processor};
 use crate::api::stash::MergeRequest;
 use crate::api::{
@@ -136,7 +136,7 @@ impl Runtime {
 impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
-    async fn try_run_loop(mut self) -> Result<!, RuntimeError> {
+    async fn try_run_loop(mut self) -> Result<(), RuntimeError> {
         debug!("Registering RGB20 schema");
         self.register_schema().await.map_err(|_| {
             error!("Unable to register RGB20 schema");
@@ -207,7 +207,7 @@ impl Runtime {
         };
 
         let (asset, genesis) = self.processor.issue(
-            self.config.network,
+            self.config.network.clone(),
             issue.ticker.clone(),
             issue.title.clone(),
             issue.description.clone(),
@@ -371,10 +371,10 @@ impl Runtime {
                 Asset::try_from(accept.consignment.genesis)?
             };
 
-            for (_, transition) in &accept.consignment.data {
-                let set = transition.assignments_by_type(-AssignmentsType::Assets);
+            for (_, transition) in &accept.consignment.state_transitions {
+                let set = transition.owned_rights_by_type(-OwnedRightsType::Assets);
                 for variant in set {
-                    if let AssignmentsVariant::DiscreteFiniteField(set) = variant {
+                    if let Assignments::DiscreteFiniteField(set) = variant {
                         for (index, assignment) in set.into_iter().enumerate() {
                             if let Some(seal) = accept.reveal_outpoints.iter().find(|op| {
                                 op.conceal() == assignment.seal_definition_confidential()
@@ -464,5 +464,7 @@ impl Runtime {
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let mut context = zmq::Context::new();
     let runtime = Runtime::init(config, &mut context)?;
-    runtime.run_or_panic("Fungible contract runtime").await
+    runtime.run_or_panic("Fungible contract runtime").await;
+
+    unreachable!()
 }

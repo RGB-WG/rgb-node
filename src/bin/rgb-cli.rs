@@ -13,7 +13,7 @@
 
 #![feature(never_type)]
 
-use clap::derive::Clap;
+use clap::Clap;
 use log::*;
 use std::env;
 

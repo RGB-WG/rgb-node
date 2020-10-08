@@ -11,20 +11,17 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 
+use amplify::TryService;
 use lnpbp::bitcoin::{Transaction, Txid};
-use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
-use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
-    seal, validation, Anchor, Assignment, AssignmentsVariant, Consignment, ContractId, Genesis,
-    Node, NodeId, Schema, Validity,
+    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema, Stash,
+    Validity,
 };
-use lnpbp::TryService;
 
 use super::electrum::ElectrumTxResolver;
 use super::index::{BTreeIndex, Index};
@@ -127,7 +124,7 @@ impl Runtime {
 impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
-    async fn try_run_loop(mut self) -> Result<!, Self::ErrorType> {
+    async fn try_run_loop(mut self) -> Result<(), Self::ErrorType> {
         loop {
             match self.run().await {
                 Ok(_) => debug!("API request processing complete"),
@@ -218,10 +215,10 @@ impl Runtime {
         // and assemble them into a consignment
         let consignment = self
             .consign(
-                &request.contract_id,
+                request.contract_id,
                 &request.transition,
-                &anchor,
-                request.outpoints.clone(),
+                Some(&anchor),
+                &request.outpoints.clone(),
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
@@ -263,91 +260,53 @@ impl Runtime {
     async fn rpc_merge(&mut self, merge: &MergeRequest) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got MERGE CONSIGNMENT");
 
-        let known_seals: HashMap<OutpointHash, OutpointReveal> = merge
-            .reveal_outpoints
-            .iter()
-            .map(|rev| (rev.conceal(), rev.clone()))
-            .collect();
+        let known_seals = &merge.reveal_outpoints;
 
-        // TODO: Move this to LNP/BP Core library
         // [PRIVACY]:
-        // Update transition data with the revealed state information
-        // that we kept since we did an invoice (and the sender did not
-        // know)
-        let mut data = Vec::<_>::with_capacity(merge.consignment.data.len());
-        for (anchor, transition) in &merge.consignment.data {
+        // Update transition data with the revealed state information that we
+        // kept since we did an invoice (and the sender did not know).
+        let reveal_known_seals = |(_, assignments): (&usize, &mut Assignments)| match assignments {
+            Assignments::Declarative(_) => {}
+            Assignments::DiscreteFiniteField(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
+            Assignments::CustomData(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
+        };
+
+        for (anchor, transition) in &merge.consignment.state_transitions {
             let mut transition = transition.clone();
             transition
-                .assignments_mut()
+                .owned_rights_mut()
                 .into_iter()
-                .for_each(|(_, assignment)| match assignment {
-                    AssignmentsVariant::Declarative(_) => {}
-                    AssignmentsVariant::DiscreteFiniteField(set) => {
-                        set.clone().iter().for_each(|a| match a {
-                            Assignment::Confidential {
-                                seal_definition,
-                                assigned_state,
-                            } => {
-                                if let Some(reveal) = known_seals.get(seal_definition) {
-                                    set.remove(a);
-                                    set.insert(Assignment::ConfidentialAmount {
-                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
-                                        assigned_state: assigned_state.clone(),
-                                    });
-                                };
-                            }
-                            Assignment::ConfidentialSeal {
-                                seal_definition,
-                                assigned_state,
-                            } => {
-                                if let Some(reveal) = known_seals.get(seal_definition) {
-                                    set.remove(a);
-                                    set.insert(Assignment::Revealed {
-                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
-                                        assigned_state: assigned_state.clone(),
-                                    });
-                                };
-                            }
-                            _ => {}
-                        });
-                    }
-                    AssignmentsVariant::CustomData(set) => {
-                        set.clone().iter().for_each(|a| match a {
-                            Assignment::Confidential {
-                                seal_definition,
-                                assigned_state,
-                            } => {
-                                if let Some(reveal) = known_seals.get(seal_definition) {
-                                    set.remove(a);
-                                    set.insert(Assignment::ConfidentialAmount {
-                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
-                                        assigned_state: assigned_state.clone(),
-                                    });
-                                };
-                            }
-                            Assignment::ConfidentialSeal {
-                                seal_definition,
-                                assigned_state,
-                            } => {
-                                if let Some(reveal) = known_seals.get(seal_definition) {
-                                    set.remove(a);
-                                    set.insert(Assignment::Revealed {
-                                        seal_definition: seal::Revealed::TxOutpoint(reveal.clone()),
-                                        assigned_state: assigned_state.clone(),
-                                    });
-                                };
-                            }
-                            _ => {}
-                        });
-                    }
-                });
-            data.push((anchor, transition));
-        }
-
-        // Store the transition and the anchor data in the stash
-        for (anchor, transition) in data {
+                .for_each(reveal_known_seals);
+            // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
             self.storage.add_transition(&transition)?;
+        }
+
+        for extension in &merge.consignment.state_extensions {
+            let mut extension = extension.clone();
+            extension
+                .owned_rights_mut()
+                .into_iter()
+                .for_each(reveal_known_seals);
+            self.storage.add_extension(&extension)?;
         }
 
         Ok(Reply::Success)
@@ -382,5 +341,7 @@ impl validation::TxResolver for DummyTxResolver {
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let mut context = zmq::Context::new();
     let runtime = Runtime::init(config, &mut context)?;
-    runtime.run_or_panic("Stashd runtime").await
+    runtime.run_or_panic("Stashd runtime").await;
+
+    unreachable!()
 }
