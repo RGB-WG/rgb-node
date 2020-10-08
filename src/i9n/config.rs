@@ -24,7 +24,7 @@ use crate::rgbd::ContractName;
 pub struct Config {
     pub stash_endpoint: SocketLocator,
     pub contract_endpoints: HashMap<ContractName, SocketLocator>,
-    pub network: bp::Network,
+    pub network: bp::Chain,
     pub threaded: bool,
     pub data_dir: String,
 }

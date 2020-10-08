@@ -67,7 +67,7 @@ pub struct Opts {
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
-    pub network: bp::Network,
+    pub network: bp::Chain,
 
     /// Electrum server to use to fecth Bitcoin transactions
     #[clap(
@@ -92,7 +92,7 @@ pub struct Config {
     pub p2p_endpoint: Option<NodeLocator>,
     pub rpc_endpoint: SocketLocator,
     pub pub_endpoint: SocketLocator,
-    pub network: bp::Network,
+    pub network: bp::Chain,
     pub electrum_server: String,
 }
 

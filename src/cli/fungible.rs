@@ -19,10 +19,10 @@ use bitcoin::consensus::{Decodable, Encodable};
 use bitcoin::util::psbt::{raw::Key, PartiallySignedTransaction};
 use bitcoin::OutPoint;
 
+use crate::DataFormat;
 use lnpbp::bitcoin;
 use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::client_side_validation::Conceal;
-use lnpbp::data_format::DataFormat;
 use lnpbp::rgb::prelude::*;
 use lnpbp::strict_encoding::strict_encode;
 

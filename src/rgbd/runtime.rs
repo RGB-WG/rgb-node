@@ -11,10 +11,11 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use clap::Clap;
 use futures::future::join_all;
 use tokio::{process, task};
 
-use lnpbp::TryService;
+use amplify::TryService;
 
 use super::Config;
 use crate::error::{BootstrapError, RuntimeError};
@@ -135,7 +136,7 @@ impl DaemonHandle {
 impl TryService for Runtime {
     type ErrorType = DaemonError;
 
-    async fn try_run_loop(mut self) -> Result<!, DaemonError> {
+    async fn try_run_loop(mut self) -> Result<(), DaemonError> {
         let mut handlers = vec![];
 
         handlers.push(self.daemon("stashd")?);
@@ -162,5 +163,7 @@ impl TryService for Runtime {
 
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let runtime = Runtime::init(config).await?;
-    runtime.run_or_panic("RGBd runtime").await
+    runtime.run_or_panic("RGBd runtime").await;
+
+    unreachable!()
 }

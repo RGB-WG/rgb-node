@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use clap::{ArgEnum, Clap};
 use lnpbp::bp;
 use std::path::PathBuf;
 
@@ -48,7 +49,7 @@ pub struct Opts {
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
-    pub network: bp::Network,
+    pub network: bp::Chain,
 }
 
 #[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Deserialize)]
@@ -78,7 +79,7 @@ pub struct Config {
     pub bin_dir: PathBuf,
     pub threaded: bool,
     pub contracts: Vec<ContractName>,
-    pub network: bp::Network,
+    pub network: bp::Chain,
     pub verbose: u8,
 }
 

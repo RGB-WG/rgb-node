@@ -42,8 +42,8 @@ impl Stash for Runtime {
     ) -> Result<Consignment, Error> {
         let genesis = self.storage.genesis(&contract_id)?;
 
-        let mut node: &mut dyn Node = &mut transition.clone();
-        node.conceal_except(&endpoints);
+        let mut transition = transition.clone();
+        transition.conceal_except(&endpoints);
         let mut data = vec![(anchor.clone(), transition.clone())];
         let mut sources = VecDeque::<NodeId>::new();
         sources.extend(transition.ancestors().into_iter().map(|(id, _)| id));
@@ -54,8 +54,7 @@ impl Stash for Runtime {
             let anchor_id = self.indexer.anchor_id_by_transition_id(tsid)?;
             let anchor = self.storage.anchor(&anchor_id)?;
             let mut transition = self.storage.transition(&tsid)?;
-            let mut node: &mut dyn Node = &mut transition;
-            node.conceal_all();
+            transition.conceal_all();
             data.push((anchor, transition.clone()));
             sources.extend(transition.ancestors().into_iter().map(|(id, _)| id));
         }

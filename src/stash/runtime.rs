@@ -11,20 +11,17 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 
+use amplify::TryService;
 use lnpbp::bitcoin::{Transaction, Txid};
-use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
-use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
-    seal, validation, Anchor, Assignment, AssignmentsVariant, Consignment, ContractId, Genesis,
-    Node, NodeId, Schema, Validity,
+    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema,
+    Validity,
 };
-use lnpbp::TryService;
 
 use super::electrum::ElectrumTxResolver;
 use super::index::{BTreeIndex, Index};
@@ -127,7 +124,7 @@ impl Runtime {
 impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
-    async fn try_run_loop(mut self) -> Result<!, Self::ErrorType> {
+    async fn try_run_loop(mut self) -> Result<(), Self::ErrorType> {
         loop {
             match self.run().await {
                 Ok(_) => debug!("API request processing complete"),
@@ -275,11 +272,11 @@ impl Runtime {
                 .assignments_mut()
                 .into_iter()
                 .for_each(|(_, assignment)| match assignment {
-                    AssignmentsVariant::Declarative(_) => {}
-                    AssignmentsVariant::DiscreteFiniteField(set) => {
+                    Assignments::Declarative(_) => {}
+                    Assignments::DiscreteFiniteField(set) => {
                         set.iter_mut().for_each(|a| a.reveal_seals(&known_seals));
                     }
-                    AssignmentsVariant::CustomData(set) => {
+                    Assignments::CustomData(set) => {
                         set.iter_mut().for_each(|a| a.reveal_seals(&known_seals));
                     }
                 });
@@ -324,5 +321,7 @@ impl validation::TxResolver for DummyTxResolver {
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let mut context = zmq::Context::new();
     let runtime = Runtime::init(config, &mut context)?;
-    runtime.run_or_panic("Stashd runtime").await
+    runtime.run_or_panic("Stashd runtime").await;
+
+    unreachable!()
 }

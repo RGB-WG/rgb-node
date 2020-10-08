@@ -22,7 +22,7 @@ use lnpbp::rgb::prelude::*;
 
 use bitcoin::OutPoint;
 
-use super::schema::{self, AssignmentsType, FieldType, TransitionType};
+use super::schema::{self, FieldType, OwnedRightsType, TransitionType};
 use super::{Allocation, Asset, Coins, Outcoincealed, Outcoins};
 
 use crate::error::{BootstrapError, ServiceErrorDomain};
@@ -63,7 +63,7 @@ impl Processor {
 
     pub fn issue(
         &mut self,
-        network: bp::Network,
+        network: bp::Chain,
         ticker: String,
         name: String,
         description: Option<String>,
@@ -94,10 +94,10 @@ impl Processor {
                 (outcoins.seal_definition(), amount)
             })
             .collect();
-        let mut assignments = BTreeMap::new();
-        assignments.insert(
-            -AssignmentsType::Assets,
-            AssignmentsVariant::zero_balanced(vec![], allocations, vec![]),
+        let mut owned_rights = BTreeMap::new();
+        owned_rights.insert(
+            -OwnedRightsType::Assets,
+            Assignments::zero_balanced(vec![], allocations, vec![]),
         );
         metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
 
@@ -115,9 +115,9 @@ impl Processor {
                 )))?;
             }
             metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
-            assignments.insert(
-                -AssignmentsType::Issue,
-                AssignmentsVariant::Declarative(bset![Assignment::Revealed {
+            owned_rights.insert(
+                -OwnedRightsType::Issue,
+                Assignments::Declarative(bset![OwnedState::Revealed {
                     seal_definition: reissue_control.seal_definition(),
                     assigned_state: data::Void
                 }]),
@@ -126,12 +126,12 @@ impl Processor {
             metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
         }
 
-        assignments.insert(
-            -AssignmentsType::Prune,
-            AssignmentsVariant::Declarative(
+        owned_rights.insert(
+            -OwnedRightsType::Prune,
+            Assignments::Declarative(
                 prune_seals
                     .into_iter()
-                    .map(|seal_spec| Assignment::Revealed {
+                    .map(|seal_spec| OwnedState::Revealed {
                         seal_definition: seal_spec.seal_definition(),
                         assigned_state: data::Void,
                     })
@@ -143,7 +143,8 @@ impl Processor {
             schema::schema().schema_id(),
             network,
             metadata.into(),
-            assignments,
+            owned_rights,
+            bset![],
             vec![],
         );
 
@@ -207,16 +208,16 @@ impl Processor {
             .map(|alloc| alloc.amount.clone())
             .collect();
         let assignments = type_map! {
-            AssignmentsType::Assets =>
-            AssignmentsVariant::zero_balanced(input_amounts, allocations_ours, allocations_theirs)
+            OwnedRightsType::Assets =>
+            Assignments::zero_balanced(input_amounts, allocations_ours, allocations_theirs)
         };
 
-        let mut ancestors = Ancestors::new();
+        let mut parent = ParentOwnedRights::new();
         for alloc in input_allocations {
-            ancestors
+            parent
                 .entry(alloc.node_id)
                 .or_insert(bmap! {})
-                .entry(-AssignmentsType::Assets)
+                .entry(-OwnedRightsType::Assets)
                 .or_insert(vec![])
                 .push(alloc.index);
         }
@@ -224,8 +225,9 @@ impl Processor {
         let transition = Transition::with(
             -TransitionType::Transfer,
             metadata.into(),
-            ancestors,
+            parent,
             assignments,
+            bset![],
             vec![],
         );
 

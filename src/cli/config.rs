@@ -48,7 +48,7 @@ pub struct Opts {
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
-    pub network: bp::Network,
+    pub network: bp::Chain,
 }
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -71,7 +71,7 @@ pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,
     pub endpoint: SocketLocator,
-    pub network: bp::Network,
+    pub network: bp::Chain,
 }
 
 impl From<Opts> for Config {

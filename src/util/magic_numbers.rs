@@ -13,8 +13,8 @@
 
 use core::convert::TryFrom;
 
-/// Magic numbers here are used to distinguish files or bech32-encoded strings
-/// with RGB data of different type.
+/// Magic numbers here are used to distinguish files with RGB data of different
+/// type.
 ///
 /// NB: These numbers are used with binary data serialization only; they are
 /// not a part of the commitments, ids or network-serialized packets.

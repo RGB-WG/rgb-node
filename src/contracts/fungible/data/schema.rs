@@ -15,6 +15,7 @@ use core::ops::Neg;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 
+use lnpbp::features;
 use lnpbp::rgb::schema::{
     script, AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema,
     Occurences, Schema, StateFormat, StateSchema, TransitionSchema,
@@ -56,7 +57,7 @@ pub enum FieldType {
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, ToPrimitive, FromPrimitive)]
 #[display(Debug)]
 #[repr(u16)]
-pub enum AssignmentsType {
+pub enum OwnedRightsType {
     Issue = 0,
     Assets = 1,
     Prune = 2,
@@ -73,6 +74,8 @@ pub enum TransitionType {
 
 pub fn schema() -> Schema {
     Schema {
+        rgb_features: features::FlagVec::new(),
+        root_id: Default::default(),
         field_types: type_map! {
             // Rational: if we will use just 26 letters of English alphabet (and
             // we are not limited by them), we will have 26^8 possible tickers,
@@ -96,26 +99,27 @@ pub fn schema() -> Schema {
             //       Current lower time limit is 07/04/2020 @ 1:54pm (UTC)
             FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1593870844, core::i64::MAX as i128)
         },
-        assignment_types: type_map! {
-            AssignmentsType::Issue => StateSchema {
+        owned_right_types: type_map! {
+            OwnedRightsType::Issue => StateSchema {
                 format: StateFormat::Declarative,
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::IssueControl)
                 }
             },
-            AssignmentsType::Assets => StateSchema {
+            OwnedRightsType::Assets => StateSchema {
                 format: StateFormat::DiscreteFiniteField(DiscreteFiniteFieldFormat::Unsigned64bit),
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::ConfidentialAmount)
                 }
             },
-            AssignmentsType::Prune => StateSchema {
+            OwnedRightsType::Prune => StateSchema {
                 format: StateFormat::Declarative,
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Prunning)
                 }
             }
         },
+        public_right_types: Default::default(),
         genesis: GenesisSchema {
             metadata: type_map! {
                 FieldType::Ticker => Occurences::Once,
@@ -127,36 +131,40 @@ pub fn schema() -> Schema {
                 FieldType::Precision => Occurences::Once,
                 FieldType::Timestamp => Occurences::Once
             },
-            defines: type_map! {
-                AssignmentsType::Issue => Occurences::NoneOrOnce,
-                AssignmentsType::Assets => Occurences::NoneOrUpTo(None),
-                AssignmentsType::Prune => Occurences::NoneOrUpTo(None)
+            owned_rights: type_map! {
+                OwnedRightsType::Issue => Occurences::NoneOrOnce,
+                OwnedRightsType::Assets => Occurences::NoneOrUpTo(None),
+                OwnedRightsType::Prune => Occurences::NoneOrUpTo(None)
             },
+            public_rights: Default::default(),
             abi: bmap! {},
         },
+        extensions: Default::default(),
         transitions: type_map! {
             TransitionType::Issue => TransitionSchema {
                 metadata: type_map! {
                     FieldType::IssuedSupply => Occurences::Once
                 },
                 closes: type_map! {
-                    AssignmentsType::Issue => Occurences::Once
+                    OwnedRightsType::Issue => Occurences::Once
                 },
-                defines: type_map! {
-                    AssignmentsType::Issue => Occurences::NoneOrOnce,
-                    AssignmentsType::Prune => Occurences::NoneOrUpTo(None),
-                    AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
+                owned_rights: type_map! {
+                    OwnedRightsType::Issue => Occurences::NoneOrOnce,
+                    OwnedRightsType::Prune => Occurences::NoneOrUpTo(None),
+                    OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
                 },
-            abi: bmap! {}
+                public_rights: Default::default(),
+                abi: bmap! {}
             },
             TransitionType::Transfer => TransitionSchema {
                 metadata: type_map! {},
                 closes: type_map! {
-                    AssignmentsType::Assets => Occurences::OnceOrUpTo(None)
+                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
                 },
-                defines: type_map! {
-                    AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
+                owned_rights: type_map! {
+                    OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
                 },
+                public_rights: Default::default(),
                 abi: bmap! {}
             },
             TransitionType::Prune => TransitionSchema {
@@ -164,13 +172,14 @@ pub fn schema() -> Schema {
                     FieldType::PruneProof => Occurences::NoneOrUpTo(None)
                 },
                 closes: type_map! {
-                    AssignmentsType::Prune => Occurences::OnceOrUpTo(None),
-                    AssignmentsType::Assets => Occurences::OnceOrUpTo(None)
+                    OwnedRightsType::Prune => Occurences::OnceOrUpTo(None),
+                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
                 },
-                defines: type_map! {
-                    AssignmentsType::Prune => Occurences::NoneOrUpTo(None),
-                    AssignmentsType::Assets => Occurences::NoneOrUpTo(None)
+                owned_rights: type_map! {
+                    OwnedRightsType::Prune => Occurences::NoneOrUpTo(None),
+                    OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
                 },
+                public_rights: Default::default(),
                 abi: bmap! {}
             }
         },
@@ -185,7 +194,7 @@ impl Neg for FieldType {
     }
 }
 
-impl Neg for AssignmentsType {
+impl Neg for OwnedRightsType {
     type Output = usize;
 
     fn neg(self) -> Self::Output {

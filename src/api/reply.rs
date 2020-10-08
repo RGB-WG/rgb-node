@@ -11,8 +11,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use crate::DataFormat;
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
-use lnpbp::data_format::DataFormat;
 use lnpbp::lnp;
 use lnpbp::rgb::Consignment;
 
