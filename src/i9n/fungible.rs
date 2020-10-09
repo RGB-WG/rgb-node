@@ -16,13 +16,13 @@ use std::fs::File;
 use std::path::PathBuf;
 
 use lnpbp::bitcoin::consensus::encode::{deserialize, Encodable};
-use lnpbp::bitcoin::util::psbt::{raw::Key, PartiallySignedTransaction};
+use lnpbp::bitcoin::util::psbt::{raw::ProprietaryKey, PartiallySignedTransaction};
 use lnpbp::bitcoin::OutPoint;
 
 use lnpbp::bp;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::Unmarshall;
-use lnpbp::rgb::{Amount, PSBT_FEE_KEY, PSBT_PUBKEY_KEY};
+use lnpbp::rgb::Amount;
 
 use super::{Error, Runtime};
 use crate::api::{fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply};
@@ -92,23 +92,25 @@ impl Runtime {
             Outpoint::Address(_address) => unimplemented!(),
         };
 
-        let pubkey_key = Key {
-            type_value: 0xFC,
-            key: PSBT_PUBKEY_KEY.to_vec(),
+        let pubkey_key = ProprietaryKey {
+            prefix: b"RGB".to_vec(),
+            subtype: 2u8,
+            key: vec![],
         };
-        let fee_key = Key {
-            type_value: 0xFC,
-            key: PSBT_FEE_KEY.to_vec(),
+        let fee_key = ProprietaryKey {
+            prefix: b"RGB".to_vec(),
+            subtype: 1u8,
+            key: vec![],
         };
 
         let psbt_bytes = base64::decode(&prototype_psbt)?;
         let mut psbt: PartiallySignedTransaction = deserialize(&psbt_bytes)?;
 
         psbt.global
-            .unknown
+            .proprietary
             .insert(fee_key, fee.to_be_bytes().to_vec());
         for output in &mut psbt.outputs {
-            output.unknown.insert(
+            output.proprietary.insert(
                 pubkey_key.clone(),
                 output.bip32_derivation.keys().next().unwrap().to_bytes(),
             );

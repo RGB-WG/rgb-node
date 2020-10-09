@@ -172,10 +172,10 @@ impl Runtime {
 
     async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
         trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
-        let message = &*self
-            .unmarshaller
-            .unmarshall(&raw)
-            .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
+        let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
+            error!("Error unmarshalling the data: {}", err);
+            ServiceError::from_rpc(ServiceErrorSource::Contract(s!("fungible")), err)
+        })?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,

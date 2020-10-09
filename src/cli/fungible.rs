@@ -16,10 +16,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use bitcoin::consensus::{Decodable, Encodable};
-use bitcoin::util::psbt::{raw::Key, PartiallySignedTransaction};
+use bitcoin::util::psbt::{raw::ProprietaryKey, PartiallySignedTransaction};
 use bitcoin::OutPoint;
 
-use crate::DataFormat;
 use lnpbp::bitcoin;
 use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::client_side_validation::Conceal;
@@ -31,6 +30,7 @@ use crate::api::fungible::{AcceptApi, Issue, TransferApi};
 use crate::api::{reply, Reply};
 use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, Outpoint};
 use crate::util::file::ReadWrite;
+use crate::DataFormat;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display(Debug)]
@@ -94,6 +94,7 @@ pub enum Command {
 #[display(Debug)]
 pub struct InvoiceCli {
     /// Assets
+    #[clap(parse(try_from_str = ContractId::from_bech32_str))]
     pub asset: ContractId,
 
     /// Amount
@@ -416,13 +417,15 @@ impl TransferCli {
             }
         };
 
-        let pubkey_key = Key {
-            type_value: 0xFC,
-            key: PSBT_PUBKEY_KEY.to_vec(),
+        let pubkey_key = ProprietaryKey {
+            prefix: b"RGB".to_vec(),
+            subtype: 2u8,
+            key: vec![],
         };
-        let fee_key = Key {
-            type_value: 0xFC,
-            key: PSBT_FEE_KEY.to_vec(),
+        let fee_key = ProprietaryKey {
+            prefix: b"RGB".to_vec(),
+            subtype: 1u8,
+            key: vec![],
         };
 
         debug!(
@@ -437,10 +440,10 @@ impl TransferCli {
         })?;
 
         psbt.global
-            .unknown
+            .proprietary
             .insert(fee_key, self.fee.to_be_bytes().to_vec());
         for output in &mut psbt.outputs {
-            output.unknown.insert(
+            output.proprietary.insert(
                 pubkey_key.clone(),
                 output.bip32_derivation.keys().next().unwrap().to_bytes(),
             );
