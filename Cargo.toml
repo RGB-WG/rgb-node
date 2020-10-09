@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -12,8 +12,8 @@ readme = "README.md"
 name = "rgb"
 
 [dependencies]
-amplify = "~1.1.1"
-amplify_derive = "~1.1.1"
+amplify = "~1.2.0"
+amplify_derive = "~1.2.0"
 base64 = "0.12"
 dotenv = "~0.15.0"
 clap = "=3.0.0-beta.2"
@@ -31,24 +31,21 @@ env_logger = "~0.7.1"
 num-traits = "~0.2.12"
 num-derive = "~0.3.0"
 url = "~2.1.1"
-diesel = { version = "~1.4.5", features = ["uuid", "numeric", "chrono"] } # target-specific features are coming, in the meantime keep postgres disabled to compile on android (https://github.com/rust-lang/cargo/issues/7914)
 tokio = { version = "~0.2.21", features = ["full"] }
 futures = "~0.3.5"
 zmq = "~0.9.2"
 tiny_http = "~0.7.0"
 prometheus = "~0.9.0"
-# TODO: Move this dependency to LNP/BP core library
-lightning-invoice = { git = "https://github.com/LNP-BP/rust-lightning-invoice.git", tag = "lnpbp-v0.1.0-beta-4" }
-electrum-client = { git = "https://github.com/LNP-BP/rust-electrum-client.git", branch = "develop" }
+electrum-client = "=0.3.0-beta.1"
 
 [dependencies.lnpbp]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-branch = "master"
+tag = "v0.1.0-rc.1"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-branch = "master"
+tag = "v0.1.0-rc.1"
 
 [target.'cfg(target_os="android")'.dependencies.zmq]
 version = "~0.9"
@@ -64,18 +61,16 @@ collectibles = []
 identities = []
 
 [workspace]
-members = ["ffi"]
+members = [".", "ffi"]
+default-members = ["."]
 
 [patch.crates-io]
-bitcoin = { git = "https://github.com/LNP-BP/rust-bitcoin", branch = "develop" }
-bitcoin_hashes = { git = "https://github.com/LNP-BP/bitcoin_hashes", tag = "lnpbp-v0.1.0-beta-4" }
-lightning = { git = "https://github.com/LNP-BP/rust-lightning", branch = "develop", optional = true }
-# No changes here, just need to import forked `bitcoin` library
-miniscript = { git = "https://github.com/LNP-BP/rust-miniscript", branch = "develop" }
+# We need this b/c of breaking change in tagged hash type generation
+bitcoin_hashes = { git = "https://github.com/LNP-BP/bitcoin_hashes", tag = "lnpbp-v0.1.0-rc1" }
+bitcoin = { git = "https://github.com/LNP-BP/rust-bitcoin", tag = "lnpbp-v0.1.0-rc1" }
+# We need custom branches here just to depend on the same bitcoin master and do
+# not have secp256k1 version conflict
+miniscript = { git = "https://github.com/LNP-BP/rust-miniscript", tag = "lnpbp-v0.1.0-rc1" }
 # Remove this once https://github.com/teawithsand/torut/pull/5 got merged
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }
-# We can remove these two after <https://github.com/LNP-BP/rust-amplify/pull/21>
-# TODO: (new) remove them before 1.0 release
-amplify = { git = "https://github.com/LNP-BP/rust-amplify", branch = "develop" }
-torut = { git = "https://github.com/LNP-BP/torut", branch = "develop" }

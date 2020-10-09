@@ -17,8 +17,9 @@ dependencies = [
 
 [[package]]
 name = "amplify"
-version = "1.1.1"
-source = "git+https://github.com/LNP-BP/rust-amplify?branch=develop#0a8178b684e409aee72eb7a388004922466ddbcb"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f0ebe1cc10cc8b2665dd077e7f076b644e94f33577289ee61c7669d75286753"
 dependencies = [
  "async-trait",
  "ed25519-dalek",
@@ -29,9 +30,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_derive"
-version = "1.1.1"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6e85a39efb3a9220c0e6e23ad97868b2b8e056a26ee6cef2d752468c98cc6c6"
+checksum = "57f080656cc1eb3d55c2446813e6197293f5d43b4cf52ffb1f6cb5ca18e0ac0b"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -149,20 +150,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdcf67bb7ba7797a081cd19009948ab533af7c355d5caf1d08c777582d351e9c"
 
 [[package]]
-name = "bigdecimal"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1374191e2dd25f9ae02e3aa95041ed5d747fc77b3c102b49fe2dd9a8117a6244"
-dependencies = [
- "num-bigint",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
 name = "bitcoin"
 version = "0.25.0"
-source = "git+https://github.com/LNP-BP/rust-bitcoin?branch=develop#d2e76786c9b9e11dc7bae6e8a39a7da84683c972"
+source = "git+https://github.com/LNP-BP/rust-bitcoin?tag=lnpbp-v0.1.0-rc1#dc06d451c01ef7b22509f0eb4db1f817e4e83daa"
 dependencies = [
  "bech32",
  "bitcoin_hashes",
@@ -173,7 +163,7 @@ dependencies = [
 [[package]]
 name = "bitcoin_hashes"
 version = "0.9.0"
-source = "git+https://github.com/LNP-BP/bitcoin_hashes?tag=lnpbp-v0.1.0-beta-4#7269ef478004a6059377bbd0e8b3ffd1839de55c"
+source = "git+https://github.com/LNP-BP/bitcoin_hashes?tag=lnpbp-v0.1.0-rc1#7269ef478004a6059377bbd0e8b3ffd1839de55c"
 dependencies = [
  "serde",
 ]
@@ -442,33 +432,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diesel"
-version = "1.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e2de9deab977a153492a1468d1b1c0662c1cf39e5ea87d0c060ecd59ef18d8c"
-dependencies = [
- "bigdecimal",
- "byteorder",
- "chrono",
- "diesel_derives",
- "num-bigint",
- "num-integer",
- "num-traits",
- "uuid",
-]
-
-[[package]]
-name = "diesel_derives"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45f5098f628d02a7a0f68ddba586fb61e80edec3bdc1be3b921f4ceec60858d3"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote 1.0.7",
- "syn 1.0.42",
-]
-
-[[package]]
 name = "digest"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -523,8 +486,9 @@ dependencies = [
 
 [[package]]
 name = "electrum-client"
-version = "0.2.0-beta.3"
-source = "git+https://github.com/LNP-BP/rust-electrum-client.git?branch=develop#12713feed517a2f01cd812327a4a8fc6d4f95dc5"
+version = "0.3.0-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb3817250d6404c58acfb2ad9e083090f493456171ca6bb90c0596cfd48120fe"
 dependencies = [
  "bitcoin",
  "log",
@@ -883,25 +847,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2448f6066e80e3bfc792e9c98bf705b4b0fc6e8ef5b43e5889aff0eaa9c58743"
 
 [[package]]
-name = "lightning"
-version = "0.0.11"
-source = "git+https://github.com/LNP-BP/rust-lightning?branch=develop#7b7f5b4f710e7b778e000e829ef6b1dad79b0a6a"
-dependencies = [
- "bitcoin",
-]
-
-[[package]]
-name = "lightning-invoice"
-version = "0.3.0"
-source = "git+https://github.com/LNP-BP/rust-lightning-invoice.git?tag=lnpbp-v0.1.0-beta-4#979dce954315a386528fd1ddbde1a27fa89f00c1"
-dependencies = [
- "bech32",
- "bitcoin_hashes",
- "num-traits",
- "secp256k1",
-]
-
-[[package]]
 name = "linked-hash-map"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -909,8 +854,8 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.1.0"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#4a328871defddcf62ba4edbb9d85755985d3e2e7"
+version = "0.1.0-rc.1"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?tag=v0.1.0-rc.1#55519daba8f2aa6311688dd4d7032c265589124e"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -923,7 +868,6 @@ dependencies = [
  "grin_secp256k1zkp",
  "inflate",
  "lazy_static",
- "lightning",
  "lnpbp_derive",
  "miniscript",
  "num-derive",
@@ -931,14 +875,15 @@ dependencies = [
  "serde",
  "serde_with",
  "tokio",
+ "torut",
  "url",
  "zmq",
 ]
 
 [[package]]
 name = "lnpbp_derive"
-version = "0.1.0"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#4a328871defddcf62ba4edbb9d85755985d3e2e7"
+version = "0.1.0-rc.1"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?tag=v0.1.0-rc.1#55519daba8f2aa6311688dd4d7032c265589124e"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -980,7 +925,7 @@ dependencies = [
 [[package]]
 name = "miniscript"
 version = "2.0.0"
-source = "git+https://github.com/LNP-BP/rust-miniscript?branch=develop#ba5010e4375bb07c5653ceba5336e6a4b17e950a"
+source = "git+https://github.com/LNP-BP/rust-miniscript?tag=lnpbp-v0.1.0-rc1#ba436de1b8a5953d5050dbc31fa4642e740e4438"
 dependencies = [
  "bitcoin",
  "serde",
@@ -1066,17 +1011,6 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
-
-[[package]]
-name = "num-bigint"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
-dependencies = [
- "autocfg 1.0.1",
- "num-integer",
- "num-traits",
-]
 
 [[package]]
 name = "num-derive"
@@ -1543,7 +1477,7 @@ dependencies = [
 
 [[package]]
 name = "rgb"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "android_logger",
  "cbindgen",
@@ -1558,7 +1492,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1567,12 +1501,10 @@ dependencies = [
  "bech32",
  "chrono",
  "clap 3.0.0-beta.2",
- "diesel",
  "dotenv",
  "electrum-client",
  "env_logger",
  "futures",
- "lightning-invoice",
  "lnpbp",
  "lnpbp_derive",
  "log",
@@ -2160,15 +2092,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "uuid"
-version = "0.6.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1436e58182935dcd9ce0add9ea0b558e8a87befe01c1a301e6020aeb0876363"
-dependencies = [
- "cfg-if",
-]
-
-[[package]]
 name = "vcpkg"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2415,8 +2338,3 @@ dependencies = [
  "metadeps",
  "zeromq-src",
 ]
-
-[[patch.unused]]
-name = "torut"
-version = "0.1.5"
-source = "git+https://github.com/LNP-BP/torut?branch=develop#91d918c1175ff32bf656461c949ccadd0de767a0"

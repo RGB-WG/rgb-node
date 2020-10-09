@@ -1,6 +1,6 @@
 [package]
 name = "rgb"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 authors = ["Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
            "Alekos Filini <alekos.filini@gmail.com>"]
 edition = "2018"
