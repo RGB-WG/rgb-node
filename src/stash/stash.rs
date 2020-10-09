@@ -55,23 +55,23 @@ impl Stash for Runtime {
     type ExtensionIterator = DumbIter<Extension>;
     type NidIterator = DumbIter<NodeId>;
 
-    fn get_schema(&self, schema_id: SchemaId) -> Result<SchemaId, Self::Error> {
+    fn get_schema(&self, _schema_id: SchemaId) -> Result<SchemaId, Self::Error> {
         unimplemented!()
     }
 
-    fn get_genesis(&self, contract_id: ContractId) -> Result<Genesis, Self::Error> {
+    fn get_genesis(&self, _contract_id: ContractId) -> Result<Genesis, Self::Error> {
         unimplemented!()
     }
 
-    fn get_transition(&self, node_id: NodeId) -> Result<Transition, Self::Error> {
+    fn get_transition(&self, _node_id: NodeId) -> Result<Transition, Self::Error> {
         unimplemented!()
     }
 
-    fn get_extension(&self, node_id: NodeId) -> Result<Extension, Self::Error> {
+    fn get_extension(&self, _node_id: NodeId) -> Result<Extension, Self::Error> {
         unimplemented!()
     }
 
-    fn get_anchor(&self, anchor_id: ContractId) -> Result<Anchor, Self::Error> {
+    fn get_anchor(&self, _anchor_id: ContractId) -> Result<Anchor, Self::Error> {
         unimplemented!()
     }
 
@@ -203,7 +203,7 @@ impl Stash for Runtime {
         Ok(nodes)
     }
 
-    fn forget(&mut self, consignment: Consignment) -> Result<usize, Self::Error> {
+    fn forget(&mut self, _consignment: Consignment) -> Result<usize, Self::Error> {
         unimplemented!()
     }
 
