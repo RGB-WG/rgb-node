@@ -16,9 +16,10 @@ use std::collections::BTreeSet;
 
 use lnpbp::features;
 use lnpbp::rgb::schema::{
+    constants::*,
     script::{Procedure, StandardProcedure},
-    AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisAction, GenesisSchema,
-    Occurences, Schema, StateFormat, StateSchema, TransitionAction, TransitionSchema,
+    AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema, Occurences,
+    Schema, StateFormat, StateSchema, TransitionAction, TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;
@@ -46,12 +47,10 @@ pub enum FieldType {
     Name,
     ContractText,
     Precision,
-    TotalSupply,
     IssuedSupply,
-    ReplacedSupply,
     BurnedSupply,
     Timestamp,
-    BurnedUtxo,
+    BurnUtxo,
     HistoryProof,
     HistoryProofFormat,
 }
@@ -60,7 +59,7 @@ pub enum FieldType {
 #[display(Debug)]
 #[repr(u16)]
 pub enum OwnedRightsType {
-    Issue,
+    Inflation,
     Assets,
     Epoch,
     BurnReplace,
@@ -143,10 +142,11 @@ pub fn schema() -> Schema {
             // the full contract text, where hash must be represented by a
             // hexadecimal string, optionally followed by `\n` and text URL
             FieldType::ContractText => DataFormat::String(core::u16::MAX),
-            FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
+            // We need this b/c allocated amounts are hidden behind Pedersen
+            // commitments
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
-            FieldType::ReplacedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
+            // Supply in either burn or burn-and-replace procedure
             FieldType::BurnedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             // While UNIX timestamps allow negative numbers; in context of RGB
             // Schema, assets can't be issued in the past before RGB or Bitcoin
@@ -155,17 +155,24 @@ pub fn schema() -> Schema {
             FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1602340666, core::i64::MAX as i128),
             FieldType::HistoryProof => DataFormat::Bytes(core::u16::MAX),
             FieldType::HistoryProofFormat => DataFormat::Enum(HistoryProofFormat::all()),
-            FieldType::BurnedUtxo => DataFormat::TxOutPoint
+            FieldType::BurnUtxo => DataFormat::TxOutPoint
         },
         owned_right_types: type_map! {
-            OwnedRightsType::Issue => StateSchema {
-                format: StateFormat::Declarative,
+            OwnedRightsType::Inflation => StateSchema {
+                // How much issuer can issue tokens on this path. If there is no
+                // limit, than `core::u64::MAX` / sum(inflation_assignments)
+                // must be used, as this will be a de-facto limit to the
+                // issuance
+                format: StateFormat::CustomData(DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128)),
+                // Validation involves other state data, so it is performed
+                // at the level of `issue` state transition
                 abi: bmap! {}
             },
             OwnedRightsType::Assets => StateSchema {
                 format: StateFormat::DiscreteFiniteField(DiscreteFiniteFieldFormat::Unsigned64bit),
                 abi: bmap! {
-                    AssignmentAction::Validate => Procedure::Embedded(StandardProcedure::ConfidentialAmount)
+                    // sum(inputs) == sum(outputs)
+                    AssignmentAction::Validate => Procedure::Embedded(StandardProcedure::NoInflationBySum)
                 }
             },
             OwnedRightsType::Epoch => StateSchema {
@@ -187,21 +194,18 @@ pub fn schema() -> Schema {
                 FieldType::Ticker => Once,
                 FieldType::Name => Once,
                 FieldType::ContractText => NoneOrOnce,
-                FieldType::TotalSupply => Once,
-                FieldType::IssuedSupply => Once,
                 FieldType::Precision => Once,
-                FieldType::Timestamp => Once
+                FieldType::Timestamp => Once,
+                FieldType::IssuedSupply => Once
             },
             owned_rights: type_map! {
-                OwnedRightsType::Issue => NoneOrOnce,
+                OwnedRightsType::Inflation => NoneOrUpTo(None),
                 OwnedRightsType::Epoch => NoneOrOnce,
                 OwnedRightsType::Assets => NoneOrUpTo(None),
                 OwnedRightsType::Renomination => NoneOrOnce
             },
             public_rights: bset![],
-            abi: bmap! {
-                GenesisAction::Validate => Procedure::Embedded(StandardProcedure::IssueControl)
-            },
+            abi: bmap! {},
         },
         extensions: bmap![],
         transitions: type_map! {
@@ -210,15 +214,18 @@ pub fn schema() -> Schema {
                     FieldType::IssuedSupply => Once
                 },
                 closes: type_map! {
-                    OwnedRightsType::Issue => Once
+                    OwnedRightsType::Inflation => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Issue => NoneOrOnce,
+                    OwnedRightsType::Inflation => NoneOrUpTo(None),
                     OwnedRightsType::Epoch => NoneOrOnce,
                     OwnedRightsType::Assets => NoneOrUpTo(None)
                 },
                 public_rights: bset! [],
-                abi: bmap! {}
+                abi: bmap! {
+                    // sum(in(inflation)) >= sum(out(inflation), out(assets))
+                    TransitionAction::Validate => Procedure::Embedded(StandardProcedure::InflationControlBySum)
+                }
             },
             TransitionType::Transfer => TransitionSchema {
                 metadata: type_map! {},
@@ -250,7 +257,7 @@ pub fn schema() -> Schema {
                     // single UTXO; however if burn happens as a result of
                     // mistake this will be impossible, so we allow to have
                     // multiple burned UTXOs as a part of a single operation
-                    FieldType::BurnedUtxo => OnceOrUpTo(None),
+                    FieldType::BurnUtxo => OnceOrUpTo(None),
                     FieldType::HistoryProofFormat => Once,
                     FieldType::HistoryProof => NoneOrUpTo(None)
                 },
@@ -258,8 +265,7 @@ pub fn schema() -> Schema {
                     OwnedRightsType::BurnReplace => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::BurnReplace => NoneOrOnce,
-                    OwnedRightsType::Assets => OnceOrUpTo(None)
+                    OwnedRightsType::BurnReplace => NoneOrOnce
                 },
                 public_rights: bset! [],
                 abi: bmap! {
@@ -268,12 +274,12 @@ pub fn schema() -> Schema {
             },
             TransitionType::BurnAndReplace => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::ReplacedSupply => Once,
+                    FieldType::BurnedSupply => Once,
                     // Normally issuer should aggregate burned assets into a
                     // single UTXO; however if burn happens as a result of
                     // mistake this will be impossible, so we allow to have
                     // multiple burned UTXOs as a part of a single operation
-                    FieldType::BurnedUtxo => OnceOrUpTo(None),
+                    FieldType::BurnUtxo => OnceOrUpTo(None),
                     FieldType::HistoryProofFormat => Once,
                     FieldType::HistoryProof => NoneOrUpTo(None)
                 },
@@ -314,18 +320,19 @@ impl Deref for FieldType {
 
     fn deref(&self) -> &Self::Target {
         match self {
+            // Nomination fields:
             FieldType::Ticker => &0,
             FieldType::Name => &1,
             FieldType::ContractText => &2,
             FieldType::Precision => &3,
-            FieldType::TotalSupply => &4,
-            FieldType::IssuedSupply => &5,
-            FieldType::ReplacedSupply => &6,
-            FieldType::BurnedSupply => &7,
-            FieldType::BurnedUtxo => &8,
-            FieldType::Timestamp => &9,
-            FieldType::HistoryProof => &10,
-            FieldType::HistoryProofFormat => &11,
+            FieldType::Timestamp => &4,
+            // Inflation fields:
+            FieldType::IssuedSupply => &FIELD_TYPE_ISSUED_SUPPLY,
+            // Proof-of-burn fields:
+            FieldType::BurnedSupply => &FIELD_TYPE_BURN_SUPPLY,
+            FieldType::BurnUtxo => &FIELD_TYPE_BURN_UTXO,
+            FieldType::HistoryProof => &FIELD_TYPE_HISTORY_PROOF,
+            FieldType::HistoryProofFormat => &FIELD_TYPE_HISTORY_PROOF_FORMAT,
         }
     }
 }
@@ -335,11 +342,13 @@ impl Deref for OwnedRightsType {
 
     fn deref(&self) -> &Self::Target {
         match self {
-            OwnedRightsType::Issue => &0,
-            OwnedRightsType::Assets => &1,
-            OwnedRightsType::Epoch => &2,
-            OwnedRightsType::BurnReplace => &3,
-            OwnedRightsType::Renomination => &4,
+            // Nomination rights:
+            OwnedRightsType::Renomination => &1,
+            // Inflation-control-related rights:
+            OwnedRightsType::Inflation => &STATE_TYPE_FUNGIBLE_INFLATION,
+            OwnedRightsType::Assets => &STATE_TYPE_FUNGIBLE_ASSETS,
+            OwnedRightsType::Epoch => &(STATE_TYPE_FUNGIBLE_INFLATION + 0xA),
+            OwnedRightsType::BurnReplace => &(STATE_TYPE_FUNGIBLE_INFLATION + 0xB),
         }
     }
 }
@@ -349,12 +358,15 @@ impl Deref for TransitionType {
 
     fn deref(&self) -> &Self::Target {
         match self {
-            TransitionType::Issue => &0,
-            TransitionType::Transfer => &1,
-            TransitionType::Epoch => &2,
-            TransitionType::Burn => &3,
-            TransitionType::BurnAndReplace => &4,
-            TransitionType::Renomination => &5,
+            // Asset transfers:
+            TransitionType::Transfer => &0x00,
+            // Nomination transitions:
+            TransitionType::Renomination => &0x01,
+            // Inflation-related transitions:
+            TransitionType::Issue => &TRANSITION_TYPE_FUNGIBLE_ISSUE,
+            TransitionType::Epoch => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 1),
+            TransitionType::Burn => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 2),
+            TransitionType::BurnAndReplace => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 3),
         }
     }
 }

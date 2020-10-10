@@ -190,7 +190,7 @@ impl TryFrom<Genesis> for Asset {
         let issue = Issue {
             id: genesis.contract_id(),
             txo: genesis
-                .known_seal_definitions_by_type(*OwnedRightsType::Issue)
+                .known_seal_definitions_by_type(*OwnedRightsType::Inflation)
                 .first()
                 .and_then(|i| bitcoin::OutPoint::try_from((*i).clone()).ok()),
             supply: supply.clone(),
@@ -225,7 +225,7 @@ impl TryFrom<Genesis> for Asset {
             supply: Supply {
                 known_circulating: supply.clone(),
                 total: Some(Coins::with_sats_precision(
-                    genesis_meta.u64(*FieldType::TotalSupply)?,
+                    0, // TODO: Sum all inflation assigned state values
                     fractional_bits,
                 )),
             },
