@@ -12,14 +12,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use core::ops::Deref;
-use num_derive::{FromPrimitive, ToPrimitive};
-use num_traits::ToPrimitive;
 use std::collections::BTreeSet;
 
 use lnpbp::features;
 use lnpbp::rgb::schema::{
-    script, AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema,
-    Occurences, Schema, StateFormat, StateSchema, TransitionSchema,
+    script, AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisAction,
+    GenesisSchema, Occurences, Schema, StateFormat, StateSchema, TransitionAction,
+    TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;
@@ -40,72 +39,63 @@ impl From<SchemaError> for ServiceErrorDomain {
     }
 }
 
-#[derive(
-    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
-)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display(Debug)]
-#[repr(u16)]
 pub enum FieldType {
-    Ticker = 0,
-    Name = 1,
-    Description = 2,
-    Precision = 3,
-    TotalSupply = 4,
-    IssuedSupply = 5,
-    Timestamp = 6,
-    HistoryProof = 7,
-    HistoryProofFormat = 8,
+    Ticker,
+    Name,
+    Description,
+    Precision,
+    TotalSupply,
+    IssuedSupply,
+    Timestamp,
+    HistoryProof,
+    HistoryProofFormat,
 }
 
-#[derive(
-    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
-)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display(Debug)]
 #[repr(u16)]
 pub enum OwnedRightsType {
-    Issue = 0,
-    Assets = 1,
-    Epoch = 2,
-    Replacement = 3,
-    Renomination = 4,
+    Issue,
+    Assets,
+    Epoch,
+    Replacement,
+    Renomination,
 }
 
-#[derive(
-    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
-)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display(Debug)]
 #[repr(u16)]
 pub enum TransitionType {
-    Issue = 0,
-    Transfer = 1,
-    Epoch = 2,
-    Replacement = 3,
-    Renomination = 4,
+    Issue,
+    Transfer,
+    Epoch,
+    Replacement,
+    Renomination,
 }
 
-#[derive(
-    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, ToPrimitive, FromPrimitive,
-)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display(Debug)]
 #[non_exhaustive]
 #[repr(u8)]
 pub enum HistoryProofFormat {
-    ProofAbsent = 0x0,
-    ProovV1 = 0x1,
-    ProovV2 = 0x2,
-    ProovV3 = 0x3,
-    ProovV4 = 0x4,
-    ProovV5 = 0x5,
-    ProovV6 = 0x6,
-    ProovV7 = 0x7,
-    ProovV8 = 0x8,
-    ProovV9 = 0x9,
-    ProovV10 = 0xA,
-    ProovV11 = 0xB,
-    ProovV12 = 0xC,
-    ProovV13 = 0xD,
-    ProovV14 = 0xE,
-    ProovV15 = 0xF,
+    ProofAbsent,
+    ProovV1,
+    ProovV2,
+    ProovV3,
+    ProovV4,
+    ProovV5,
+    ProovV6,
+    ProovV7,
+    ProovV8,
+    ProovV9,
+    ProovV10,
+    ProovV11,
+    ProovV12,
+    ProovV13,
+    ProovV14,
+    ProovV15,
 }
 
 impl HistoryProofFormat {
@@ -162,14 +152,12 @@ pub fn schema() -> Schema {
         owned_right_types: type_map! {
             OwnedRightsType::Issue => StateSchema {
                 format: StateFormat::Declarative,
-                abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::IssueControl)
-                }
+                abi: bmap! {}
             },
             OwnedRightsType::Assets => StateSchema {
                 format: StateFormat::DiscreteFiniteField(DiscreteFiniteFieldFormat::Unsigned64bit),
                 abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::ConfidentialAmount)
+                    AssignmentAction::Validate => script::Procedure::Embedded(script::StandardProcedure::ConfidentialAmount)
                 }
             },
             OwnedRightsType::Epoch => StateSchema {
@@ -178,9 +166,7 @@ pub fn schema() -> Schema {
             },
             OwnedRightsType::Replacement => StateSchema {
                 format: StateFormat::Declarative,
-                abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Replacement)
-                }
+                abi: bmap! {}
             },
             OwnedRightsType::Renomination => StateSchema {
                 format: StateFormat::Declarative,
@@ -205,7 +191,9 @@ pub fn schema() -> Schema {
                 OwnedRightsType::Renomination => Occurences::NoneOrOnce
             },
             public_rights: bset![],
-            abi: bmap! {},
+            abi: bmap! {
+                GenesisAction::Validate => script::Procedure::Embedded(script::StandardProcedure::IssueControl)
+            },
         },
         extensions: bmap![],
         transitions: type_map! {
@@ -261,7 +249,9 @@ pub fn schema() -> Schema {
                     OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
                 },
                 public_rights: bset! [],
-                abi: bmap! {}
+                abi: bmap! {
+                    TransitionAction::Validate => script::Procedure::Embedded(script::StandardProcedure::ProofOfBurn)
+                }
             },
             TransitionType::Renomination => TransitionSchema {
                 metadata: type_map! {
@@ -287,7 +277,17 @@ impl Deref for FieldType {
     type Target = usize;
 
     fn deref(&self) -> &Self::Target {
-        &self.to_usize().expect("Any enum always fits into usize")
+        match self {
+            FieldType::Ticker => &0,
+            FieldType::Name => &1,
+            FieldType::Description => &2,
+            FieldType::Precision => &3,
+            FieldType::TotalSupply => &4,
+            FieldType::IssuedSupply => &5,
+            FieldType::Timestamp => &6,
+            FieldType::HistoryProof => &7,
+            FieldType::HistoryProofFormat => &8,
+        }
     }
 }
 
@@ -295,7 +295,13 @@ impl Deref for OwnedRightsType {
     type Target = usize;
 
     fn deref(&self) -> &Self::Target {
-        &self.to_usize().expect("Any enum always fits into usize")
+        match self {
+            OwnedRightsType::Issue => &0,
+            OwnedRightsType::Assets => &1,
+            OwnedRightsType::Epoch => &2,
+            OwnedRightsType::Replacement => &3,
+            OwnedRightsType::Renomination => &4,
+        }
     }
 }
 
@@ -303,14 +309,38 @@ impl Deref for TransitionType {
     type Target = usize;
 
     fn deref(&self) -> &Self::Target {
-        &self.to_usize().expect("Any enum always fits into usize")
+        match self {
+            TransitionType::Issue => &0,
+            TransitionType::Transfer => &1,
+            TransitionType::Epoch => &2,
+            TransitionType::Replacement => &3,
+            TransitionType::Renomination => &4,
+        }
     }
 }
 
 impl Deref for HistoryProofFormat {
     type Target = u8;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.to_u8().expect("History proofs always fit into u8")
+        match self {
+            HistoryProofFormat::ProofAbsent => &0x0,
+            HistoryProofFormat::ProovV1 => &0x1,
+            HistoryProofFormat::ProovV2 => &0x2,
+            HistoryProofFormat::ProovV3 => &0x3,
+            HistoryProofFormat::ProovV4 => &0x4,
+            HistoryProofFormat::ProovV5 => &0x5,
+            HistoryProofFormat::ProovV6 => &0x6,
+            HistoryProofFormat::ProovV7 => &0x7,
+            HistoryProofFormat::ProovV8 => &0x8,
+            HistoryProofFormat::ProovV9 => &0x9,
+            HistoryProofFormat::ProovV10 => &0xA,
+            HistoryProofFormat::ProovV11 => &0xB,
+            HistoryProofFormat::ProovV12 => &0xC,
+            HistoryProofFormat::ProovV13 => &0xD,
+            HistoryProofFormat::ProovV14 => &0xE,
+            HistoryProofFormat::ProovV15 => &0xF,
+        }
     }
 }

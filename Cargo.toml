@@ -40,12 +40,12 @@ electrum-client = "=0.3.0-beta.1"
 
 [dependencies.lnpbp]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-tag = "v0.1.0-rc.1"
+branch = "master"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-tag = "v0.1.0-rc.1"
+branch = "master"
 
 [target.'cfg(target_os="android")'.dependencies.zmq]
 version = "~0.9"
