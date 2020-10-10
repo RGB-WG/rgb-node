@@ -16,9 +16,9 @@ use std::collections::BTreeSet;
 
 use lnpbp::features;
 use lnpbp::rgb::schema::{
-    script, AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisAction,
-    GenesisSchema, Occurences, Schema, StateFormat, StateSchema, TransitionAction,
-    TransitionSchema,
+    script::{Procedure, StandardProcedure},
+    AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisAction, GenesisSchema,
+    Occurences, Schema, StateFormat, StateSchema, TransitionAction, TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;
@@ -126,6 +126,8 @@ impl HistoryProofFormat {
 }
 
 pub fn schema() -> Schema {
+    use Occurences::*;
+
     Schema {
         rgb_features: features::FlagVec::new(),
         root_id: Default::default(),
@@ -164,7 +166,7 @@ pub fn schema() -> Schema {
             OwnedRightsType::Assets => StateSchema {
                 format: StateFormat::DiscreteFiniteField(DiscreteFiniteFieldFormat::Unsigned64bit),
                 abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::Embedded(script::StandardProcedure::ConfidentialAmount)
+                    AssignmentAction::Validate => Procedure::Embedded(StandardProcedure::ConfidentialAmount)
                 }
             },
             OwnedRightsType::Epoch => StateSchema {
@@ -183,38 +185,38 @@ pub fn schema() -> Schema {
         public_right_types: bset![],
         genesis: GenesisSchema {
             metadata: type_map! {
-                FieldType::Ticker => Occurences::Once,
-                FieldType::Name => Occurences::Once,
-                FieldType::Description => Occurences::NoneOrOnce,
-                FieldType::TotalSupply => Occurences::Once,
-                FieldType::IssuedSupply => Occurences::Once,
-                FieldType::Precision => Occurences::Once,
-                FieldType::Timestamp => Occurences::Once
+                FieldType::Ticker => Once,
+                FieldType::Name => Once,
+                FieldType::Description => NoneOrOnce,
+                FieldType::TotalSupply => Once,
+                FieldType::IssuedSupply => Once,
+                FieldType::Precision => Once,
+                FieldType::Timestamp => Once
             },
             owned_rights: type_map! {
-                OwnedRightsType::Issue => Occurences::NoneOrOnce,
-                OwnedRightsType::Epoch => Occurences::NoneOrOnce,
-                OwnedRightsType::Assets => Occurences::NoneOrUpTo(None),
-                OwnedRightsType::Renomination => Occurences::NoneOrOnce
+                OwnedRightsType::Issue => NoneOrOnce,
+                OwnedRightsType::Epoch => NoneOrOnce,
+                OwnedRightsType::Assets => NoneOrUpTo(None),
+                OwnedRightsType::Renomination => NoneOrOnce
             },
             public_rights: bset![],
             abi: bmap! {
-                GenesisAction::Validate => script::Procedure::Embedded(script::StandardProcedure::IssueControl)
+                GenesisAction::Validate => Procedure::Embedded(StandardProcedure::IssueControl)
             },
         },
         extensions: bmap![],
         transitions: type_map! {
             TransitionType::Issue => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::IssuedSupply => Occurences::Once
+                    FieldType::IssuedSupply => Once
                 },
                 closes: type_map! {
-                    OwnedRightsType::Issue => Occurences::Once
+                    OwnedRightsType::Issue => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Issue => Occurences::NoneOrOnce,
-                    OwnedRightsType::Epoch => Occurences::NoneOrOnce,
-                    OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
+                    OwnedRightsType::Issue => NoneOrOnce,
+                    OwnedRightsType::Epoch => NoneOrOnce,
+                    OwnedRightsType::Assets => NoneOrUpTo(None)
                 },
                 public_rights: bset! [],
                 abi: bmap! {}
@@ -222,10 +224,10 @@ pub fn schema() -> Schema {
             TransitionType::Transfer => TransitionSchema {
                 metadata: type_map! {},
                 closes: type_map! {
-                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
+                    OwnedRightsType::Assets => OnceOrUpTo(None)
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
+                    OwnedRightsType::Assets => NoneOrUpTo(None)
                 },
                 public_rights: bset! [],
                 abi: bmap! {}
@@ -233,73 +235,73 @@ pub fn schema() -> Schema {
             TransitionType::Epoch => TransitionSchema {
                 metadata: type_map! {},
                 closes: type_map! {
-                    OwnedRightsType::Epoch => Occurences::Once
+                    OwnedRightsType::Epoch => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Epoch => Occurences::NoneOrOnce,
-                    OwnedRightsType::BurnReplace => Occurences::NoneOrOnce
+                    OwnedRightsType::Epoch => NoneOrOnce,
+                    OwnedRightsType::BurnReplace => NoneOrOnce
                 },
                 public_rights: bset! [],
                 abi: bmap! {}
             },
             TransitionType::Burn => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::BurnedSupply => Occurences::Once,
+                    FieldType::BurnedSupply => Once,
                     // Normally issuer should aggregate burned assets into a
                     // single UTXO; however if burn happens as a result of
                     // mistake this will be impossible, so we allow to have
                     // multiple burned UTXOs as a part of a single operation
-                    FieldType::BurnedUtxo => Occurences::OnceOrUpTo(None),
-                    FieldType::HistoryProofFormat => Occurences::Once,
-                    FieldType::HistoryProof => Occurences::NoneOrUpTo(None)
+                    FieldType::BurnedUtxo => OnceOrUpTo(None),
+                    FieldType::HistoryProofFormat => Once,
+                    FieldType::HistoryProof => NoneOrUpTo(None)
                 },
                 closes: type_map! {
-                    OwnedRightsType::BurnReplace => Occurences::Once
+                    OwnedRightsType::BurnReplace => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::BurnReplace => Occurences::NoneOrOnce,
-                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
+                    OwnedRightsType::BurnReplace => NoneOrOnce,
+                    OwnedRightsType::Assets => OnceOrUpTo(None)
                 },
                 public_rights: bset! [],
                 abi: bmap! {
-                    TransitionAction::Validate => script::Procedure::Embedded(script::StandardProcedure::ProofOfBurn)
+                    TransitionAction::Validate => Procedure::Embedded(StandardProcedure::ProofOfBurn)
                 }
             },
             TransitionType::BurnAndReplace => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::ReplacedSupply => Occurences::Once,
+                    FieldType::ReplacedSupply => Once,
                     // Normally issuer should aggregate burned assets into a
                     // single UTXO; however if burn happens as a result of
                     // mistake this will be impossible, so we allow to have
                     // multiple burned UTXOs as a part of a single operation
-                    FieldType::BurnedUtxo => Occurences::OnceOrUpTo(None),
-                    FieldType::HistoryProofFormat => Occurences::Once,
-                    FieldType::HistoryProof => Occurences::NoneOrUpTo(None)
+                    FieldType::BurnedUtxo => OnceOrUpTo(None),
+                    FieldType::HistoryProofFormat => Once,
+                    FieldType::HistoryProof => NoneOrUpTo(None)
                 },
                 closes: type_map! {
-                    OwnedRightsType::BurnReplace => Occurences::Once
+                    OwnedRightsType::BurnReplace => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::BurnReplace => Occurences::NoneOrOnce,
-                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
+                    OwnedRightsType::BurnReplace => NoneOrOnce,
+                    OwnedRightsType::Assets => OnceOrUpTo(None)
                 },
                 public_rights: bset! [],
                 abi: bmap! {
-                    TransitionAction::Validate => script::Procedure::Embedded(script::StandardProcedure::ProofOfBurn)
+                    TransitionAction::Validate => Procedure::Embedded(StandardProcedure::ProofOfBurn)
                 }
             },
             TransitionType::Renomination => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::Ticker => Occurences::NoneOrOnce,
-                    FieldType::Name => Occurences::NoneOrOnce,
-                    FieldType::Description => Occurences::NoneOrOnce,
-                    FieldType::Precision => Occurences::NoneOrOnce
+                    FieldType::Ticker => NoneOrOnce,
+                    FieldType::Name => NoneOrOnce,
+                    FieldType::Description => NoneOrOnce,
+                    FieldType::Precision => NoneOrOnce
                 },
                 closes: type_map! {
-                    OwnedRightsType::Renomination => Occurences::Once
+                    OwnedRightsType::Renomination => Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Renomination => Occurences::NoneOrOnce
+                    OwnedRightsType::Renomination => NoneOrOnce
                 },
                 public_rights: bset! [],
                 abi: bmap! {}
