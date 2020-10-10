@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use core::ops::{Deref, Neg};
+use core::ops::Deref;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::ToPrimitive;
 use std::collections::BTreeSet;
@@ -105,14 +105,6 @@ pub enum HistoryProofFormat {
     ProovV13 = 0xD,
     ProovV14 = 0xE,
     ProovV15 = 0xF,
-}
-
-impl Deref for HistoryProofFormat {
-    type Target = u8;
-
-    fn deref(&self) -> &Self::Target {
-        &self.to_u8().expect("History proofs always fit into u8")
-    }
 }
 
 impl HistoryProofFormat {
@@ -271,26 +263,34 @@ pub fn schema() -> Schema {
     }
 }
 
-impl Neg for FieldType {
-    type Output = usize;
+impl Deref for FieldType {
+    type Target = usize;
 
-    fn neg(self) -> Self::Output {
-        self.to_usize().unwrap()
+    fn deref(&self) -> &Self::Target {
+        &self.to_usize().expect("Any enum always fits into usize")
     }
 }
 
-impl Neg for OwnedRightsType {
-    type Output = usize;
+impl Deref for OwnedRightsType {
+    type Target = usize;
 
-    fn neg(self) -> Self::Output {
-        self.to_usize().unwrap()
+    fn deref(&self) -> &Self::Target {
+        &self.to_usize().expect("Any enum always fits into usize")
     }
 }
 
-impl Neg for TransitionType {
-    type Output = usize;
+impl Deref for TransitionType {
+    type Target = usize;
 
-    fn neg(self) -> Self::Output {
-        self.to_usize().unwrap()
+    fn deref(&self) -> &Self::Target {
+        &self.to_usize().expect("Any enum always fits into usize")
+    }
+}
+
+impl Deref for HistoryProofFormat {
+    type Target = u8;
+
+    fn deref(&self) -> &Self::Target {
+        &self.to_u8().expect("History proofs always fit into u8")
     }
 }

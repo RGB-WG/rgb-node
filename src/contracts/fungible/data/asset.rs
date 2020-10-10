@@ -181,9 +181,9 @@ impl TryFrom<Genesis> for Asset {
             Err(SchemaError::WrongSchemaId)?;
         }
         let genesis_meta = genesis.metadata();
-        let fractional_bits = genesis_meta.u8(-FieldType::Precision)?;
+        let fractional_bits = genesis_meta.u8(*FieldType::Precision)?;
         let supply = Coins::with_sats_precision(
-            genesis_meta.u64(-FieldType::IssuedSupply)?,
+            genesis_meta.u64(*FieldType::IssuedSupply)?,
             fractional_bits,
         );
 
@@ -191,13 +191,13 @@ impl TryFrom<Genesis> for Asset {
         let issue = Issue {
             id: genesis.contract_id(),
             txo: genesis
-                .known_seal_definitions_by_type(-OwnedRightsType::Issue)
+                .known_seal_definitions_by_type(*OwnedRightsType::Issue)
                 .first()
                 .and_then(|i| bitcoin::OutPoint::try_from((*i).clone()).ok()),
             supply: supply.clone(),
         };
         let mut known_allocations = BTreeMap::<bitcoin::OutPoint, Vec<Allocation>>::default();
-        for variant in genesis.owned_rights_by_type(-OwnedRightsType::Assets) {
+        for variant in genesis.owned_rights_by_type(*OwnedRightsType::Assets) {
             if let Assignments::DiscreteFiniteField(tree) = variant {
                 tree.iter().enumerate().for_each(|(index, assign)| {
                     if let OwnedState::Revealed {
@@ -220,22 +220,22 @@ impl TryFrom<Genesis> for Asset {
         Ok(Self {
             id: genesis.contract_id(),
             chain: genesis.chain().clone(),
-            ticker: genesis_meta.string(-FieldType::Ticker)?,
-            name: genesis_meta.string(-FieldType::Name)?,
-            description: genesis_meta.string(-FieldType::Description).next(),
+            ticker: genesis_meta.string(*FieldType::Ticker)?,
+            name: genesis_meta.string(*FieldType::Name)?,
+            description: genesis_meta.string(*FieldType::Description).next(),
             supply: Supply {
                 known_circulating: supply.clone(),
                 total: Some(Coins::with_sats_precision(
-                    genesis_meta.u64(-FieldType::TotalSupply)?,
+                    genesis_meta.u64(*FieldType::TotalSupply)?,
                     fractional_bits,
                 )),
             },
             dust_limit: Coins::with_sats_precision(
-                genesis_meta.u64(-FieldType::DustLimit)?,
+                genesis_meta.u64(*FieldType::DustLimit)?,
                 fractional_bits,
             ),
             fractional_bits,
-            date: NaiveDateTime::from_timestamp(genesis_meta.i64(-FieldType::Timestamp)?, 0),
+            date: NaiveDateTime::from_timestamp(genesis_meta.i64(*FieldType::Timestamp)?, 0),
             unspent_issue_txo: None,
             known_issues: vec![list! { issue }],
             // we assume that each genesis allocation with revealed amount

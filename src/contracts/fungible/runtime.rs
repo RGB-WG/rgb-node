@@ -372,7 +372,7 @@ impl Runtime {
             };
 
             for (_, transition) in &accept.consignment.state_transitions {
-                let set = transition.owned_rights_by_type(-OwnedRightsType::Assets);
+                let set = transition.owned_rights_by_type(*OwnedRightsType::Assets);
                 for variant in set {
                     if let Assignments::DiscreteFiniteField(set) = variant {
                         for (index, assignment) in set.into_iter().enumerate() {

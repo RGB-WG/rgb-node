@@ -82,7 +82,7 @@ impl Processor {
             FieldType::Timestamp => field!(I64, now)
         };
         if let Some(description) = description {
-            metadata.insert(-FieldType::Description, field!(String, description));
+            metadata.insert(*FieldType::Description, field!(String, description));
         }
 
         let mut issued_supply = 0u64;
@@ -96,10 +96,10 @@ impl Processor {
             .collect();
         let mut owned_rights = BTreeMap::new();
         owned_rights.insert(
-            -OwnedRightsType::Assets,
+            *OwnedRightsType::Assets,
             Assignments::zero_balanced(vec![], allocations, vec![]),
         );
-        metadata.insert(-FieldType::IssuedSupply, field!(U64, issued_supply));
+        metadata.insert(*FieldType::IssuedSupply, field!(U64, issued_supply));
 
         let mut total_supply = issued_supply;
         if let IssueStructure::MultipleIssues {
@@ -114,20 +114,20 @@ impl Processor {
                     total_supply, issued_supply
                 )))?;
             }
-            metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
+            metadata.insert(*FieldType::TotalSupply, field!(U64, total_supply));
             owned_rights.insert(
-                -OwnedRightsType::Issue,
+                *OwnedRightsType::Issue,
                 Assignments::Declarative(bset![OwnedState::Revealed {
                     seal_definition: reissue_control.seal_definition(),
                     assigned_state: data::Void
                 }]),
             );
         } else {
-            metadata.insert(-FieldType::TotalSupply, field!(U64, total_supply));
+            metadata.insert(*FieldType::TotalSupply, field!(U64, total_supply));
         }
 
         owned_rights.insert(
-            -OwnedRightsType::Replacement,
+            *OwnedRightsType::Replacement,
             Assignments::Declarative(
                 prune_seals
                     .into_iter()
@@ -217,13 +217,13 @@ impl Processor {
             parent
                 .entry(alloc.node_id)
                 .or_insert(bmap! {})
-                .entry(-OwnedRightsType::Assets)
+                .entry(*OwnedRightsType::Assets)
                 .or_insert(vec![])
                 .push(alloc.index);
         }
 
         let transition = Transition::with(
-            -TransitionType::Transfer,
+            *TransitionType::Transfer,
             metadata.into(),
             parent,
             assignments,
