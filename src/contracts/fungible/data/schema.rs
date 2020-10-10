@@ -44,7 +44,7 @@ impl From<SchemaError> for ServiceErrorDomain {
 pub enum FieldType {
     Ticker,
     Name,
-    Description,
+    ContractText,
     Precision,
     TotalSupply,
     IssuedSupply,
@@ -137,12 +137,12 @@ pub fn schema() -> Schema {
             // i.e. > 208 trillions, which is sufficient amount
             FieldType::Ticker => DataFormat::String(8),
             FieldType::Name => DataFormat::String(256),
-            // Description may contain URL, text or text representation of
+            // Contract text may contain URL, text or text representation of
             // Ricardian contract, up to 64kb. If the contract doesn't fit, a
             // double SHA256 hash and URL should be used instead, pointing to
             // the full contract text, where hash must be represented by a
             // hexadecimal string, optionally followed by `\n` and text URL
-            FieldType::Description => DataFormat::String(core::u16::MAX),
+            FieldType::ContractText => DataFormat::String(core::u16::MAX),
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
@@ -186,7 +186,7 @@ pub fn schema() -> Schema {
             metadata: type_map! {
                 FieldType::Ticker => Once,
                 FieldType::Name => Once,
-                FieldType::Description => NoneOrOnce,
+                FieldType::ContractText => NoneOrOnce,
                 FieldType::TotalSupply => Once,
                 FieldType::IssuedSupply => Once,
                 FieldType::Precision => Once,
@@ -293,7 +293,7 @@ pub fn schema() -> Schema {
                 metadata: type_map! {
                     FieldType::Ticker => NoneOrOnce,
                     FieldType::Name => NoneOrOnce,
-                    FieldType::Description => NoneOrOnce,
+                    FieldType::ContractText => NoneOrOnce,
                     FieldType::Precision => NoneOrOnce
                 },
                 closes: type_map! {
@@ -316,7 +316,7 @@ impl Deref for FieldType {
         match self {
             FieldType::Ticker => &0,
             FieldType::Name => &1,
-            FieldType::Description => &2,
+            FieldType::ContractText => &2,
             FieldType::Precision => &3,
             FieldType::TotalSupply => &4,
             FieldType::IssuedSupply => &5,

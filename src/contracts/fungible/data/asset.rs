@@ -221,7 +221,7 @@ impl TryFrom<Genesis> for Asset {
             chain: genesis.chain().clone(),
             ticker: genesis_meta.string(*FieldType::Ticker)?,
             name: genesis_meta.string(*FieldType::Name)?,
-            description: genesis_meta.string(*FieldType::Description).next(),
+            description: genesis_meta.string(*FieldType::ContractText).next(),
             supply: Supply {
                 known_circulating: supply.clone(),
                 total: Some(Coins::with_sats_precision(
