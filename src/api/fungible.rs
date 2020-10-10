@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp::blind::OutpointReveal;
-use lnpbp::rgb::{Amount, Consignment, ContractId};
+use lnpbp::rgb::{Consignment, ContractId};
 
 use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
@@ -80,10 +80,6 @@ pub struct Issue {
     /// Precision, i.e. number of digits reserved for fractional part
     #[clap(short, long, default_value = "0")]
     pub precision: u8,
-
-    /// Dust limit for asset transfers; defaults to no limit
-    #[clap(short = 'D', long)]
-    pub dust_limit: Option<Amount>,
 
     /// Asset allocation, in form of <amount>@<txid>:<vout>
     #[clap(required = true)]

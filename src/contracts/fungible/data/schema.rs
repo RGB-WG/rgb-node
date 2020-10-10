@@ -49,13 +49,12 @@ pub enum FieldType {
     Ticker = 0,
     Name = 1,
     Description = 2,
-    TotalSupply = 3,
-    IssuedSupply = 4,
-    DustLimit = 5,
-    Precision = 6,
-    Timestamp = 7,
-    HistoryProof = 8,
-    HistoryProofFormat = 9,
+    Precision = 3,
+    TotalSupply = 4,
+    IssuedSupply = 5,
+    Timestamp = 6,
+    HistoryProof = 7,
+    HistoryProofFormat = 8,
 }
 
 #[derive(
@@ -199,7 +198,6 @@ pub fn schema() -> Schema {
                 FieldType::Description => Occurences::NoneOrOnce,
                 FieldType::TotalSupply => Occurences::Once,
                 FieldType::IssuedSupply => Occurences::Once,
-                FieldType::DustLimit => Occurences::NoneOrOnce,
                 FieldType::Precision => Occurences::Once,
                 FieldType::Timestamp => Occurences::Once
             },

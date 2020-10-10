@@ -85,7 +85,6 @@ pub struct Asset {
     name: String,
     description: Option<String>,
     supply: Supply,
-    dust_limit: Coins,
     #[serde(with = "serde_with::rust::display_fromstr")]
     chain: bp::Chain,
     fractional_bits: u8,
@@ -230,10 +229,6 @@ impl TryFrom<Genesis> for Asset {
                     fractional_bits,
                 )),
             },
-            dust_limit: Coins::with_sats_precision(
-                genesis_meta.u64(*FieldType::DustLimit)?,
-                fractional_bits,
-            ),
             fractional_bits,
             date: NaiveDateTime::from_timestamp(genesis_meta.i64(*FieldType::Timestamp)?, 0),
             unspent_issue_txo: None,

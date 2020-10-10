@@ -71,14 +71,12 @@ impl Processor {
         allocations: Vec<Outcoins>,
         precision: u8,
         prune_seals: Vec<SealSpec>,
-        dust_limit: Option<Amount>,
     ) -> Result<(Asset, Genesis), ServiceErrorDomain> {
         let now = Utc::now().timestamp();
         let mut metadata = type_map! {
             FieldType::Ticker => field!(String, ticker),
             FieldType::Name => field!(String, name),
             FieldType::Precision => field!(U8, precision),
-            FieldType::DustLimit => field!(U64, dust_limit.unwrap_or(0)),
             FieldType::Timestamp => field!(I64, now)
         };
         if let Some(description) = description {

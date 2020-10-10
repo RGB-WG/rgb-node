@@ -215,7 +215,6 @@ impl Runtime {
             issue.allocate.clone(),
             issue.precision,
             vec![],
-            issue.dust_limit,
         )?;
 
         self.import_asset(asset, genesis).await?;

@@ -22,7 +22,6 @@ use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::Unmarshall;
-use lnpbp::rgb::Amount;
 
 use super::{Error, Runtime};
 use crate::api::{fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply};
@@ -50,7 +49,6 @@ impl Runtime {
         allocate: Vec<Outcoins>,
         precision: u8,
         _prune_seals: Vec<SealSpec>,
-        dust_limit: Option<Amount>,
     ) -> Result<(), Error> {
         // TODO: Make sure we use the same network
         let (supply, inflatable) = match issue_structure {
@@ -67,7 +65,6 @@ impl Runtime {
             supply,
             inflatable,
             precision,
-            dust_limit,
             allocate,
         });
         match &*self.command(command)? {
