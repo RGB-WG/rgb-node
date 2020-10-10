@@ -151,9 +151,8 @@ pub fn schema() -> Schema {
             // While UNIX timestamps allow negative numbers; in context of RGB
             // Schema, assets can't be issued in the past before RGB or Bitcoin
             // even existed; so we prohibit all the dates before RGB release
-            // TODO: Update lower allowed timestamp value with the first RGB release
-            //       Current lower time limit is 07/04/2020 @ 1:54pm (UTC)
-            FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1593870844, core::i64::MAX as i128),
+            // This timestamp is equal to 10/10/2020 @ 2:37pm (UTC)
+            FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1602340666, core::i64::MAX as i128),
             FieldType::HistoryProof => DataFormat::Bytes(core::u16::MAX),
             FieldType::HistoryProofFormat => DataFormat::Enum(HistoryProofFormat::all()),
             FieldType::BurnedUtxo => DataFormat::TxOutPoint
