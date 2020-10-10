@@ -142,16 +142,17 @@ pub fn schema() -> Schema {
             FieldType::Ticker => DataFormat::String(8),
             FieldType::Name => DataFormat::String(256),
             // Description may contain URL, text or text representation of
-            // Ricardian contract. We use all available size, in case the
-            // contract is long. If the contract still doesn't fit, a hash or
-            // URL should be used instead, pointing to the full contract text
+            // Ricardian contract, up to 64kb. If the contract doesn't fit, a
+            // double SHA256 hash and URL should be used instead, pointing to
+            // the full contract text, where hash must be represented by a
+            // hexadecimal string, optionally followed by `\n` and text URL
             FieldType::Description => DataFormat::String(core::u16::MAX),
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
-            // While UNIX timestamps allow negative numbers; in context of RGB Schema, assets
-            // can't be issued in the past before RGB or Bitcoin even existed; so we prohibit
-            // all the dates before RGB release
+            // While UNIX timestamps allow negative numbers; in context of RGB
+            // Schema, assets can't be issued in the past before RGB or Bitcoin
+            // even existed; so we prohibit all the dates before RGB release
             // TODO: Update lower allowed timestamp value with the first RGB release
             //       Current lower time limit is 07/04/2020 @ 1:54pm (UTC)
             FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1593870844, core::i64::MAX as i128),
