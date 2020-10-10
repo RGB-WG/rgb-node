@@ -68,6 +68,7 @@ pub enum OwnedRightsType {
     Assets = 1,
     Epoch = 2,
     Replacement = 3,
+    Renomination = 4,
 }
 
 #[derive(
@@ -80,6 +81,7 @@ pub enum TransitionType {
     Transfer = 1,
     Epoch = 2,
     Replacement = 3,
+    Renomination = 4,
 }
 
 #[derive(
@@ -181,6 +183,12 @@ pub fn schema() -> Schema {
                 abi: bmap! {
                     AssignmentAction::Validate => script::Procedure::Standard(script::StandardProcedure::Replacement)
                 }
+            },
+            OwnedRightsType::Renomination => StateSchema {
+                format: StateFormat::Declarative,
+                abi: bmap! {
+                    AssignmentAction::Validate => script::Procedure::NoOp
+                }
             }
         },
         public_right_types: Default::default(),
@@ -198,7 +206,8 @@ pub fn schema() -> Schema {
             owned_rights: type_map! {
                 OwnedRightsType::Issue => Occurences::NoneOrOnce,
                 OwnedRightsType::Epoch => Occurences::NoneOrOnce,
-                OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
+                OwnedRightsType::Assets => Occurences::NoneOrUpTo(None),
+                OwnedRightsType::Renomination => Occurences::NoneOrOnce
             },
             public_rights: Default::default(),
             abi: bmap! {},
@@ -255,6 +264,22 @@ pub fn schema() -> Schema {
                 owned_rights: type_map! {
                     OwnedRightsType::Replacement => Occurences::NoneOrOnce,
                     OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
+                },
+                public_rights: Default::default(),
+                abi: bmap! {}
+            },
+            TransitionType::Renomination => TransitionSchema {
+                metadata: type_map! {
+                    FieldType::Ticker => Occurences::NoneOrOnce,
+                    FieldType::Name => Occurences::NoneOrOnce,
+                    FieldType::Description => Occurences::NoneOrOnce,
+                    FieldType::Precision => Occurences::NoneOrOnce
+                },
+                closes: type_map! {
+                    OwnedRightsType::Renomination => Occurences::Once
+                },
+                owned_rights: type_map! {
+                    OwnedRightsType::Renomination => Occurences::NoneOrOnce
                 },
                 public_rights: Default::default(),
                 abi: bmap! {}
