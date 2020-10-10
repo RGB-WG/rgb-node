@@ -14,7 +14,6 @@ use rgb::lnpbp::bitcoin::OutPoint;
 
 use rgb::lnpbp::bp;
 use rgb::lnpbp::lnp::transport::zmq::{SocketLocator, UrlError};
-use rgb::lnpbp::rgb::Amount;
 
 use rgb::fungible::{Invoice, IssueStructure, Outcoins};
 use rgb::i9n::*;
@@ -188,8 +187,6 @@ struct IssueArgs {
     precision: u8,
     #[serde(default)]
     prune_seals: Vec<SealSpec>,
-    #[serde(default)]
-    dust_limit: Option<Amount>,
 }
 
 fn _issue(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
@@ -208,7 +205,6 @@ fn _issue(runtime: &COpaqueStruct, json: *mut c_char) -> Result<(), String> {
             data.allocations,
             data.precision,
             data.prune_seals,
-            data.dust_limit,
         )
         .map_err(|e| format!("{:?}", e))
 }

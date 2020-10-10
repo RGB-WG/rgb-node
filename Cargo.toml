@@ -40,12 +40,12 @@ electrum-client = "=0.3.0-beta.1"
 
 [dependencies.lnpbp]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-tag = "v0.1.0-rc.1"
+branch = "master"
 features = ["all"]
 
 [dependencies.lnpbp_derive]
 git = "https://github.com/LNP-BP/rust-lnpbp"
-tag = "v0.1.0-rc.1"
+branch = "master"
 
 [target.'cfg(target_os="android")'.dependencies.zmq]
 version = "~0.9"
@@ -71,6 +71,5 @@ bitcoin = { git = "https://github.com/LNP-BP/rust-bitcoin", tag = "lnpbp-v0.1.0-
 # We need custom branches here just to depend on the same bitcoin master and do
 # not have secp256k1 version conflict
 miniscript = { git = "https://github.com/LNP-BP/rust-miniscript", tag = "lnpbp-v0.1.0-rc1" }
-# Remove this once https://github.com/teawithsand/torut/pull/5 got merged
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

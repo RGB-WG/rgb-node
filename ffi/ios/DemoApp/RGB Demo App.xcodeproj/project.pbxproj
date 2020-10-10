@@ -348,6 +348,7 @@
 				CODE_SIGN_ENTITLEMENTS = "RGB Demo App/RGB Demo App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BLS4N8A6L6;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "RGB Demo App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -377,6 +378,7 @@
 				CODE_SIGN_ENTITLEMENTS = "RGB Demo App/RGB Demo App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = BLS4N8A6L6;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "RGB Demo App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
