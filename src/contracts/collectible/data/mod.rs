@@ -11,6 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-mod data;
+pub mod schema;
 
-pub use data::schema;
+pub use schema::SchemaError;
