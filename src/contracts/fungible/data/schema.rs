@@ -48,7 +48,10 @@ pub enum FieldType {
     Precision,
     TotalSupply,
     IssuedSupply,
+    ReplacedSupply,
+    BurnedSupply,
     Timestamp,
+    BurnedUtxo,
     HistoryProof,
     HistoryProofFormat,
 }
@@ -140,6 +143,8 @@ pub fn schema() -> Schema {
             FieldType::TotalSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             FieldType::Precision => DataFormat::Unsigned(Bits::Bit8, 0, 18u128),
             FieldType::IssuedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
+            FieldType::ReplacedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
+            FieldType::BurnedSupply => DataFormat::Unsigned(Bits::Bit64, 0, core::u64::MAX as u128),
             // While UNIX timestamps allow negative numbers; in context of RGB
             // Schema, assets can't be issued in the past before RGB or Bitcoin
             // even existed; so we prohibit all the dates before RGB release
@@ -147,7 +152,8 @@ pub fn schema() -> Schema {
             //       Current lower time limit is 07/04/2020 @ 1:54pm (UTC)
             FieldType::Timestamp => DataFormat::Integer(Bits::Bit64, 1593870844, core::i64::MAX as i128),
             FieldType::HistoryProof => DataFormat::Bytes(core::u16::MAX),
-            FieldType::HistoryProofFormat => DataFormat::Enum(HistoryProofFormat::all())
+            FieldType::HistoryProofFormat => DataFormat::Enum(HistoryProofFormat::all()),
+            FieldType::BurnedUtxo => DataFormat::TxOutPoint
         },
         owned_right_types: type_map! {
             OwnedRightsType::Issue => StateSchema {
@@ -238,6 +244,7 @@ pub fn schema() -> Schema {
             TransitionType::Replacement => TransitionSchema {
                 metadata: type_map! {
                     FieldType::IssuedSupply => Occurences::Once,
+                    FieldType::BurnedUtxo => Occurences::OnceOrUpTo(None),
                     FieldType::HistoryProofFormat => Occurences::Once,
                     FieldType::HistoryProof => Occurences::NoneOrUpTo(None)
                 },
@@ -284,9 +291,12 @@ impl Deref for FieldType {
             FieldType::Precision => &3,
             FieldType::TotalSupply => &4,
             FieldType::IssuedSupply => &5,
-            FieldType::Timestamp => &6,
-            FieldType::HistoryProof => &7,
-            FieldType::HistoryProofFormat => &8,
+            FieldType::ReplacedSupply => &6,
+            FieldType::BurnedSupply => &7,
+            FieldType::BurnedUtxo => &8,
+            FieldType::Timestamp => &9,
+            FieldType::HistoryProof => &10,
+            FieldType::HistoryProofFormat => &11,
         }
     }
 }
