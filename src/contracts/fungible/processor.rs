@@ -19,6 +19,7 @@ use std::collections::BTreeMap;
 use lnpbp::bitcoin;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
+use lnpbp::secp256k1zkp;
 
 use bitcoin::OutPoint;
 
@@ -95,33 +96,36 @@ impl Processor {
         let mut owned_rights = BTreeMap::new();
         owned_rights.insert(
             *OwnedRightsType::Assets,
-            Assignments::zero_balanced(vec![], allocations, vec![]),
+            Assignments::zero_balanced(
+                vec![amount::Revealed {
+                    amount: issued_supply,
+                    blinding: secp256k1zkp::key::ONE_KEY,
+                }],
+                allocations,
+                vec![],
+            ),
         );
         metadata.insert(*FieldType::IssuedSupply, field!(U64, issued_supply));
 
-        let mut total_supply = issued_supply;
         if let IssueStructure::MultipleIssues {
             max_supply,
             reissue_control,
         } = issue_structure
         {
-            total_supply = Coins::transmutate(max_supply, precision);
+            let total_supply = Coins::transmutate(max_supply, precision);
             if total_supply < issued_supply {
                 Err(ServiceErrorDomain::Schema(format!(
                     "Total supply ({}) should be greater than the issued supply ({})",
                     total_supply, issued_supply
                 )))?;
             }
-            metadata.insert(*FieldType::TotalSupply, field!(U64, total_supply));
             owned_rights.insert(
-                *OwnedRightsType::Issue,
+                *OwnedRightsType::Inflation,
                 Assignments::Declarative(bset![OwnedState::Revealed {
                     seal_definition: reissue_control.seal_definition(),
                     assigned_state: data::Void
                 }]),
             );
-        } else {
-            metadata.insert(*FieldType::TotalSupply, field!(U64, total_supply));
         }
 
         owned_rights.insert(
