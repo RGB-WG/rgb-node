@@ -63,7 +63,7 @@ pub enum OwnedRightsType {
     Issue,
     Assets,
     Epoch,
-    Replacement,
+    BurnReplace,
     Renomination,
 }
 
@@ -74,7 +74,8 @@ pub enum TransitionType {
     Issue,
     Transfer,
     Epoch,
-    Replacement,
+    Burn,
+    BurnAndReplace,
     Renomination,
 }
 
@@ -170,7 +171,7 @@ pub fn schema() -> Schema {
                 format: StateFormat::Declarative,
                 abi: bmap! {}
             },
-            OwnedRightsType::Replacement => StateSchema {
+            OwnedRightsType::BurnReplace => StateSchema {
                 format: StateFormat::Declarative,
                 abi: bmap! {}
             },
@@ -236,23 +237,50 @@ pub fn schema() -> Schema {
                 },
                 owned_rights: type_map! {
                     OwnedRightsType::Epoch => Occurences::NoneOrOnce,
-                    OwnedRightsType::Replacement => Occurences::NoneOrOnce
+                    OwnedRightsType::BurnReplace => Occurences::NoneOrOnce
                 },
                 public_rights: bset! [],
                 abi: bmap! {}
             },
-            TransitionType::Replacement => TransitionSchema {
+            TransitionType::Burn => TransitionSchema {
                 metadata: type_map! {
-                    FieldType::IssuedSupply => Occurences::Once,
+                    FieldType::BurnedSupply => Occurences::Once,
+                    // Normally issuer should aggregate burned assets into a
+                    // single UTXO; however if burn happens as a result of
+                    // mistake this will be impossible, so we allow to have
+                    // multiple burned UTXOs as a part of a single operation
                     FieldType::BurnedUtxo => Occurences::OnceOrUpTo(None),
                     FieldType::HistoryProofFormat => Occurences::Once,
                     FieldType::HistoryProof => Occurences::NoneOrUpTo(None)
                 },
                 closes: type_map! {
-                    OwnedRightsType::Replacement => Occurences::Once
+                    OwnedRightsType::BurnReplace => Occurences::Once
                 },
                 owned_rights: type_map! {
-                    OwnedRightsType::Replacement => Occurences::NoneOrOnce,
+                    OwnedRightsType::BurnReplace => Occurences::NoneOrOnce,
+                    OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
+                },
+                public_rights: bset! [],
+                abi: bmap! {
+                    TransitionAction::Validate => script::Procedure::Embedded(script::StandardProcedure::ProofOfBurn)
+                }
+            },
+            TransitionType::BurnAndReplace => TransitionSchema {
+                metadata: type_map! {
+                    FieldType::ReplacedSupply => Occurences::Once,
+                    // Normally issuer should aggregate burned assets into a
+                    // single UTXO; however if burn happens as a result of
+                    // mistake this will be impossible, so we allow to have
+                    // multiple burned UTXOs as a part of a single operation
+                    FieldType::BurnedUtxo => Occurences::OnceOrUpTo(None),
+                    FieldType::HistoryProofFormat => Occurences::Once,
+                    FieldType::HistoryProof => Occurences::NoneOrUpTo(None)
+                },
+                closes: type_map! {
+                    OwnedRightsType::BurnReplace => Occurences::Once
+                },
+                owned_rights: type_map! {
+                    OwnedRightsType::BurnReplace => Occurences::NoneOrOnce,
                     OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
                 },
                 public_rights: bset! [],
@@ -309,7 +337,7 @@ impl Deref for OwnedRightsType {
             OwnedRightsType::Issue => &0,
             OwnedRightsType::Assets => &1,
             OwnedRightsType::Epoch => &2,
-            OwnedRightsType::Replacement => &3,
+            OwnedRightsType::BurnReplace => &3,
             OwnedRightsType::Renomination => &4,
         }
     }
@@ -323,8 +351,9 @@ impl Deref for TransitionType {
             TransitionType::Issue => &0,
             TransitionType::Transfer => &1,
             TransitionType::Epoch => &2,
-            TransitionType::Replacement => &3,
-            TransitionType::Renomination => &4,
+            TransitionType::Burn => &3,
+            TransitionType::BurnAndReplace => &4,
+            TransitionType::Renomination => &5,
         }
     }
 }
