@@ -76,6 +76,7 @@ pub enum TransitionType {
     Burn,
     BurnAndReplace,
     Renomination,
+    RightsSplit,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
@@ -224,7 +225,7 @@ pub fn schema() -> Schema {
                 public_rights: bset! [],
                 abi: bmap! {
                     // sum(in(inflation)) >= sum(out(inflation), out(assets))
-                    TransitionAction::Validate => Procedure::Embedded(StandardProcedure::InflationControlBySum)
+                    TransitionAction::Validate => Procedure::Embedded(StandardProcedure::FungibleInflation)
                 }
             },
             TransitionType::Transfer => TransitionSchema {
@@ -310,6 +311,36 @@ pub fn schema() -> Schema {
                 },
                 public_rights: bset! [],
                 abi: bmap! {}
+            },
+            // Allows split of rights if they were occasionally allocated to the
+            // same UTXO, for instance both assets and issuance right. Without
+            // this type of transition either assets or inflation rights will be
+            // lost.
+            TransitionType::RightsSplit => TransitionSchema {
+                metadata: type_map! {},
+                closes: type_map! {
+                    OwnedRightsType::Inflation => NoneOrUpTo(None),
+                    OwnedRightsType::Assets => NoneOrUpTo(None),
+                    OwnedRightsType::Epoch => NoneOrOnce,
+                    OwnedRightsType::BurnReplace => NoneOrOnce,
+                    OwnedRightsType::Renomination => NoneOrOnce
+                },
+                owned_rights: type_map! {
+                    OwnedRightsType::Inflation => NoneOrUpTo(None),
+                    OwnedRightsType::Assets => NoneOrUpTo(None),
+                    OwnedRightsType::Epoch => NoneOrOnce,
+                    OwnedRightsType::BurnReplace => NoneOrOnce,
+                    OwnedRightsType::Renomination => NoneOrOnce
+                },
+                public_rights: bset! [],
+                abi: bmap! {
+                    // We must allocate exactly one or none rights per each
+                    // right used as input (i.e. closed seal); plus we need to
+                    // control that sum of inputs is equal to the sum of outputs
+                    // for each of state types having assigned confidential
+                    // amounts
+                    TransitionAction::Validate => Procedure::Embedded(StandardProcedure::RightsSplit)
+                }
             }
         },
     }
@@ -361,12 +392,13 @@ impl Deref for TransitionType {
             // Asset transfers:
             TransitionType::Transfer => &0x00,
             // Nomination transitions:
-            TransitionType::Renomination => &0x01,
+            TransitionType::Renomination => &0x10,
             // Inflation-related transitions:
             TransitionType::Issue => &TRANSITION_TYPE_FUNGIBLE_ISSUE,
             TransitionType::Epoch => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 1),
             TransitionType::Burn => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 2),
             TransitionType::BurnAndReplace => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 3),
+            TransitionType::RightsSplit => &0xF0,
         }
     }
 }
