@@ -26,3 +26,5 @@ android_logger = "~0.8.6"
 
 [target.'cfg(not(target_os="android"))'.dependencies]
 env_logger = "~0.7.1"
+
+[workspace]

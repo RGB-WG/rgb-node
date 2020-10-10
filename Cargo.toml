@@ -60,10 +60,6 @@ fungibles = []
 collectibles = []
 identities = []
 
-[workspace]
-members = [".", "ffi"]
-default-members = ["."]
-
 [patch.crates-io]
 # We need this b/c of breaking change in tagged hash type generation
 bitcoin_hashes = { git = "https://github.com/LNP-BP/bitcoin_hashes", tag = "lnpbp-v0.1.0-rc1" }
@@ -73,3 +69,7 @@ bitcoin = { git = "https://github.com/LNP-BP/rust-bitcoin", tag = "lnpbp-v0.1.0-
 miniscript = { git = "https://github.com/LNP-BP/rust-miniscript", tag = "lnpbp-v0.1.0-rc1" }
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }
+
+[workspace]
+members = ["."]
+default-members = ["."]

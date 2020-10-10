@@ -1,40 +1,49 @@
+ARG BUILDER_DIR=/srv/rgb
+
+
 FROM rustlang/rust:nightly-slim as builder
+
+ARG SRC_DIR=/usr/local/src/rgb
+ARG BUILDER_DIR
 
 RUN apt-get update \
     && apt-get -y install --no-install-recommends \
         build-essential cmake libpq-dev libssl-dev libzmq3-dev pkg-config
 
-WORKDIR /srv/app
+WORKDIR "$SRC_DIR"
 
-COPY ffi ffi
 COPY src src
 COPY Cargo.lock Cargo.toml README.md ./
 
-RUN cargo build --release
+RUN cargo install --path . --root "${BUILDER_DIR}"
 
 
 FROM debian:buster-slim
 
-ENV APP_DIR=/srv/app USER=rgbnode
-
-RUN adduser --home ${APP_DIR} --shell /bin/bash --disabled-login \
-        --gecos "${USER} user" ${USER}
-
-COPY --from=builder --chown=${USER}:${USER} \
-        ${APP_DIR}/target/release/ /usr/local/bin/
+ARG BUILDER_DIR
+ARG BIN_DIR=/usr/local/bin
+ARG DATA_DIR=/var/lib/rgb
+ARG USER=rgbd
 
 RUN apt-get update \
     && apt-get -y install --no-install-recommends \
-        libssl1.1 tini \
+       libssl1.1 \
+       tini \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-WORKDIR ${APP_DIR}
+RUN adduser --home "${DATA_DIR}" --shell /bin/bash --disabled-login \
+        --gecos "${USER} user" ${USER}
+
+COPY --from=builder --chown=${USER}:${USER} \
+     "${BUILDER_DIR}/bin/" "${BIN_DIR}"
+
+WORKDIR "${BIN_DIR}"
 USER ${USER}
 
-RUN mkdir data
+VOLUME "$DATA_DIR"
 
-VOLUME ["${APP_DIR}/data"]
 ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/usr/local/bin/rgbd", \
-			"--bin-dir", "/usr/local/bin", "--data-dir", "./data"]
+			"--bin-dir", "/usr/local/bin", "--data-dir", "/var/lib/rgb"]
+
 CMD ["-vvvv"]
