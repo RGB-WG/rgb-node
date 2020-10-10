@@ -132,7 +132,7 @@ pub enum ServiceErrorDomain {
     #[from(::std::io::Error)]
     Io,
     Stash,
-    Storage,
+    Storage(String),
     Index,
     Cache,
     Multithreading,

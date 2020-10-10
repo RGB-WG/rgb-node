@@ -15,6 +15,7 @@ mod config;
 mod error;
 pub mod fungible;
 mod runtime;
+pub mod stash;
 
 pub use config::{Config, Opts};
 pub use error::Error;

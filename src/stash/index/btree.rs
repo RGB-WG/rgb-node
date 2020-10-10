@@ -35,8 +35,8 @@ pub enum BTreeIndexError {
 }
 
 impl From<BTreeIndexError> for ServiceErrorDomain {
-    fn from(_: BTreeIndexError) -> Self {
-        ServiceErrorDomain::Storage
+    fn from(err: BTreeIndexError) -> Self {
+        ServiceErrorDomain::Storage(err.to_string())
     }
 }
 

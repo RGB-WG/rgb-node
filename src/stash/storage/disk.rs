@@ -35,12 +35,13 @@ pub enum DiskStorageError {
     Encoding(lnpbp::strict_encoding::Error),
 
     #[from(bitcoin::hashes::hex::Error)]
-    BrokenHexFilenames,
+    #[from(lnpbp::rgb::bech32::Error)]
+    BrokenFilenames,
 }
 
 impl From<DiskStorageError> for ServiceErrorDomain {
-    fn from(_: DiskStorageError) -> Self {
-        ServiceErrorDomain::Storage
+    fn from(err: DiskStorageError) -> Self {
+        ServiceErrorDomain::Storage(err.to_string())
     }
 }
 
@@ -206,7 +207,8 @@ impl Store for DiskStorage {
             .schema_names()?
             .into_iter()
             .try_fold(vec![], |mut list, name| {
-                list.push(SchemaId::from_hex(&name)?);
+                let name = name.replace(".rgb", "");
+                list.push(SchemaId::from_bech32_str(&name)?);
                 Ok(list)
             })
     }

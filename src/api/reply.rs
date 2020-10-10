@@ -37,13 +37,19 @@ pub enum Reply {
     #[lnp_api(type = 0xFF03)]
     Sync(crate::api::reply::SyncFormat),
 
+    #[lnp_api(type = 0xFF07)]
+    SchemaIds(Vec<::lnpbp::rgb::SchemaId>),
+
     #[lnp_api(type = 0xFF05)]
     Genesis(::lnpbp::rgb::Genesis),
 
-    #[lnp_api(type = 0xFF07)]
+    #[lnp_api(type = 0xFF09)]
+    Schema(::lnpbp::rgb::Schema),
+
+    #[lnp_api(type = 0xFF0A)]
     Transitions(Vec<::lnpbp::rgb::Transition>),
 
-    #[lnp_api(type = 0xFF09)]
+    #[lnp_api(type = 0xFF0C)]
     Transfer(crate::api::reply::Transfer),
     //#[lnp_api(type = 0xFF0B)]
     //ValidationStatus(::lnpbp::rgb::validation::Status),

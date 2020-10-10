@@ -18,7 +18,7 @@ use std::path::PathBuf;
 use lnpbp::bp;
 use lnpbp::lnp::transport::zmq::SocketLocator;
 
-use super::{fungible, Error, Runtime};
+use super::{fungible, stash, Error, Runtime};
 use crate::constants::*;
 
 #[derive(Clap, Clone, Debug, Display)]
@@ -40,7 +40,11 @@ pub struct Opts {
 
     /// RPC endpoint of contracts service
     #[clap(short, long, default_value = FUNGIBLED_RPC_ENDPOINT)]
-    pub endpoint: String,
+    pub fungible_endpoint: String,
+
+    /// RPC endpoint of contracts service
+    #[clap(short, long, default_value = STASHD_RPC_ENDPOINT)]
+    pub stash_endpoint: String,
 
     /// Command to execute
     #[clap(subcommand)]
@@ -54,6 +58,18 @@ pub struct Opts {
 #[derive(Clap, Clone, Debug, Display)]
 #[display(Debug)]
 pub enum Command {
+    Schema {
+        /// Subcommand specifying particular operation
+        #[clap(subcommand)]
+        subcommand: stash::SchemaCommand,
+    },
+
+    Genesis {
+        /// Subcommand specifying particular operation
+        #[clap(subcommand)]
+        subcommand: stash::GenesisCommand,
+    },
+
     /// Operations on fungible RGB assets (RGB-20 standard)
     Fungible {
         /// Subcommand specifying particular operation
@@ -70,7 +86,8 @@ pub enum Command {
 pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,
-    pub endpoint: SocketLocator,
+    pub fungible_endpoint: SocketLocator,
+    pub stash_endpoint: SocketLocator,
     pub network: bp::Chain,
 }
 
@@ -82,7 +99,8 @@ impl From<Opts> for Config {
             ..Config::default()
         };
         me.data_dir = me.parse_param(opts.data_dir);
-        me.endpoint = me.parse_param(opts.endpoint);
+        me.fungible_endpoint = me.parse_param(opts.fungible_endpoint);
+        me.stash_endpoint = me.parse_param(opts.stash_endpoint);
         me
     }
 }
@@ -94,9 +112,12 @@ impl Default for Config {
             data_dir: RGB_DATA_DIR
                 .parse()
                 .expect("Error in RGB_DATA_DIR constant value"),
-            endpoint: FUNGIBLED_RPC_ENDPOINT
+            fungible_endpoint: FUNGIBLED_RPC_ENDPOINT
                 .parse()
                 .expect("Broken FUNGIBLED_RPC_ENDPOINT value"),
+            stash_endpoint: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Broken STASHD_RPC_ENDPOINT value"),
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),
@@ -107,7 +128,9 @@ impl Default for Config {
 impl Command {
     pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
-            Command::Fungible { subcommand, .. } => subcommand.exec(runtime),
+            Command::Fungible { subcommand } => subcommand.exec(runtime),
+            Command::Schema { subcommand } => subcommand.exec(runtime),
+            Command::Genesis { subcommand } => subcommand.exec(runtime),
         }
     }
 }

@@ -30,7 +30,7 @@ pub enum Request {
     ListSchemata(),
 
     #[lnp_api(type = 0x0105)]
-    ReadSchemata(Vec<::lnpbp::rgb::SchemaId>),
+    ReadSchema(::lnpbp::rgb::SchemaId),
 
     #[lnp_api(type = 0x0201)]
     AddGenesis(::lnpbp::rgb::Genesis),

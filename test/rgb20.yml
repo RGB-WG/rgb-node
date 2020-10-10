@@ -1,0 +1,197 @@
+---
+rgb_features: ""
+root_id: "0000000000000000000000000000000000000000000000000000000000000000"
+field_types:
+  0:
+    String: 8
+  1:
+    String: 256
+  2:
+    String: 65535
+  3:
+    Unsigned:
+      - Bit8
+      - 0
+      - 18
+  4:
+    Integer:
+      - Bit64
+      - 1602340666
+      - 9223372036854775807
+  160:
+    Unsigned:
+      - Bit64
+      - 0
+      - 18446744073709551615
+  176:
+    Unsigned:
+      - Bit64
+      - 0
+      - 18446744073709551615
+  177: TxOutPoint
+  178:
+    Bytes: 65535
+  179:
+    Enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+owned_right_types:
+  1:
+    format: Declarative
+    abi: {}
+  160:
+    format:
+      CustomData:
+        Unsigned:
+          - Bit64
+          - 0
+          - 18446744073709551615
+    abi: {}
+  161:
+    format:
+      DiscreteFiniteField: Unsigned64bit
+    abi:
+      Validate:
+        Embedded: NoInflationBySum
+  170:
+    format: Declarative
+    abi: {}
+  171:
+    format: Declarative
+    abi: {}
+public_right_types: []
+genesis:
+  metadata:
+    0: Once
+    1: Once
+    2: NoneOrOnce
+    3: Once
+    4: Once
+    160: Once
+  owned_rights:
+    1: NoneOrOnce
+    160:
+      NoneOrUpTo: ~
+    161:
+      NoneOrUpTo: ~
+    170: NoneOrOnce
+  public_rights: []
+  abi: {}
+extensions: {}
+transitions:
+  0:
+    metadata: {}
+    closes:
+      161:
+        OnceOrUpTo: ~
+    owned_rights:
+      161:
+        NoneOrUpTo: ~
+    public_rights: []
+    abi: {}
+  16:
+    metadata:
+      0: NoneOrOnce
+      1: NoneOrOnce
+      2: NoneOrOnce
+      3: NoneOrOnce
+    closes:
+      1: Once
+    owned_rights:
+      1: NoneOrOnce
+    public_rights: []
+    abi: {}
+  160:
+    metadata:
+      160: Once
+    closes:
+      160: Once
+    owned_rights:
+      160:
+        NoneOrUpTo: ~
+      161:
+        NoneOrUpTo: ~
+      170: NoneOrOnce
+    public_rights: []
+    abi:
+      Validate:
+        Embedded: FungibleInflation
+  161:
+    metadata: {}
+    closes:
+      170: Once
+    owned_rights:
+      170: NoneOrOnce
+      171: NoneOrOnce
+    public_rights: []
+    abi: {}
+  162:
+    metadata:
+      176: Once
+      177:
+        OnceOrUpTo: ~
+      178:
+        NoneOrUpTo: ~
+      179: Once
+    closes:
+      171: Once
+    owned_rights:
+      171: NoneOrOnce
+    public_rights: []
+    abi:
+      Validate:
+        Embedded: ProofOfBurn
+  163:
+    metadata:
+      176: Once
+      177:
+        OnceOrUpTo: ~
+      178:
+        NoneOrUpTo: ~
+      179: Once
+    closes:
+      171: Once
+    owned_rights:
+      161:
+        OnceOrUpTo: ~
+      171: NoneOrOnce
+    public_rights: []
+    abi:
+      Validate:
+        Embedded: ProofOfBurn
+  240:
+    metadata: {}
+    closes:
+      1: NoneOrOnce
+      160:
+        NoneOrUpTo: ~
+      161:
+        NoneOrUpTo: ~
+      170: NoneOrOnce
+      171: NoneOrOnce
+    owned_rights:
+      1: NoneOrOnce
+      160:
+        NoneOrUpTo: ~
+      161:
+        NoneOrUpTo: ~
+      170: NoneOrOnce
+      171: NoneOrOnce
+    public_rights: []
+    abi:
+      Validate:
+        Embedded: RightsSplit

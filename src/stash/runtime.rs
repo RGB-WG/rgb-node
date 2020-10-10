@@ -19,8 +19,8 @@ use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
-    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema, Stash,
-    Validity,
+    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema,
+    SchemaId, Stash, Validity,
 };
 
 use super::electrum::ElectrumTxResolver;
@@ -160,9 +160,11 @@ impl Runtime {
             .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
+            Request::ListSchemata() => self.rpc_list_schemata().await,
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
+            Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id).await,
             Request::Consign(consign) => self.rpc_consign(consign).await,
             Request::Validate(consign) => self.rpc_validate(consign).await,
             Request::Merge(merge) => self.rpc_merge(merge).await,
@@ -173,6 +175,12 @@ impl Runtime {
             domain: err,
             service: ServiceErrorSource::Stash,
         })?)
+    }
+
+    async fn rpc_list_schemata(&mut self) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got LIST_SCHEMATA");
+        let ids = self.storage.schema_ids()?;
+        Ok(Reply::SchemaIds(ids))
     }
 
     async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<Reply, ServiceErrorDomain> {
@@ -194,6 +202,12 @@ impl Runtime {
         debug!("Got READ_GENESIS {}", contract_id);
         let genesis = self.storage.genesis(contract_id)?;
         Ok(Reply::Genesis(genesis))
+    }
+
+    async fn rpc_read_schema(&mut self, schema_id: &SchemaId) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got READ_SCHEMA {}", schema_id);
+        let schema = self.storage.schema(schema_id)?;
+        Ok(Reply::Schema(schema))
     }
 
     async fn rpc_consign(&mut self, request: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
@@ -234,7 +248,7 @@ impl Runtime {
         let schema = self
             .storage()
             .schema(&consignment.genesis.schema_id())
-            .map_err(|_| ServiceErrorDomain::Storage)?;
+            .map_err(|err| ServiceErrorDomain::Storage(err.to_string()))?;
 
         // [VALIDATION]: Validate genesis node against the scheme
         let validation_status = consignment.validate(&schema, &self.electrum);
