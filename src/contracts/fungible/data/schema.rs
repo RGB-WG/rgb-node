@@ -173,9 +173,7 @@ pub fn schema() -> Schema {
             },
             OwnedRightsType::Epoch => StateSchema {
                 format: StateFormat::Declarative,
-                abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::NoOp
-                }
+                abi: bmap! {}
             },
             OwnedRightsType::Replacement => StateSchema {
                 format: StateFormat::Declarative,
@@ -185,12 +183,10 @@ pub fn schema() -> Schema {
             },
             OwnedRightsType::Renomination => StateSchema {
                 format: StateFormat::Declarative,
-                abi: bmap! {
-                    AssignmentAction::Validate => script::Procedure::NoOp
-                }
+                abi: bmap! {}
             }
         },
-        public_right_types: Default::default(),
+        public_right_types: bset![],
         genesis: GenesisSchema {
             metadata: type_map! {
                 FieldType::Ticker => Occurences::Once,
@@ -207,10 +203,10 @@ pub fn schema() -> Schema {
                 OwnedRightsType::Assets => Occurences::NoneOrUpTo(None),
                 OwnedRightsType::Renomination => Occurences::NoneOrOnce
             },
-            public_rights: Default::default(),
+            public_rights: bset![],
             abi: bmap! {},
         },
-        extensions: Default::default(),
+        extensions: bmap![],
         transitions: type_map! {
             TransitionType::Issue => TransitionSchema {
                 metadata: type_map! {
@@ -224,7 +220,7 @@ pub fn schema() -> Schema {
                     OwnedRightsType::Epoch => Occurences::NoneOrOnce,
                     OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
                 },
-                public_rights: Default::default(),
+                public_rights: bset! [],
                 abi: bmap! {}
             },
             TransitionType::Transfer => TransitionSchema {
@@ -235,7 +231,7 @@ pub fn schema() -> Schema {
                 owned_rights: type_map! {
                     OwnedRightsType::Assets => Occurences::NoneOrUpTo(None)
                 },
-                public_rights: Default::default(),
+                public_rights: bset! [],
                 abi: bmap! {}
             },
             TransitionType::Epoch => TransitionSchema {
@@ -247,7 +243,7 @@ pub fn schema() -> Schema {
                     OwnedRightsType::Epoch => Occurences::NoneOrOnce,
                     OwnedRightsType::Replacement => Occurences::NoneOrOnce
                 },
-                public_rights: Default::default(),
+                public_rights: bset! [],
                 abi: bmap! {}
             },
             TransitionType::Replacement => TransitionSchema {
@@ -263,7 +259,7 @@ pub fn schema() -> Schema {
                     OwnedRightsType::Replacement => Occurences::NoneOrOnce,
                     OwnedRightsType::Assets => Occurences::OnceOrUpTo(None)
                 },
-                public_rights: Default::default(),
+                public_rights: bset! [],
                 abi: bmap! {}
             },
             TransitionType::Renomination => TransitionSchema {
@@ -279,7 +275,7 @@ pub fn schema() -> Schema {
                 owned_rights: type_map! {
                     OwnedRightsType::Renomination => Occurences::NoneOrOnce
                 },
-                public_rights: Default::default(),
+                public_rights: bset! [],
                 abi: bmap! {}
             }
         },
