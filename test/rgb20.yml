@@ -3,36 +3,36 @@ rgb_features: ""
 root_id: "0000000000000000000000000000000000000000000000000000000000000000"
 field_types:
   0:
-    String: 8
+    string: 8
   1:
-    String: 256
+    string: 256
   2:
-    String: 65535
+    string: 65535
   3:
-    Unsigned:
-      - Bit8
+    unsigned:
+      - bit8
       - 0
       - 18
   4:
-    Integer:
-      - Bit64
+    integer:
+      - bit64
       - 1602340666
       - 9223372036854775807
   160:
-    Unsigned:
-      - Bit64
+    unsigned:
+      - bit64
       - 0
       - 18446744073709551615
   176:
-    Unsigned:
-      - Bit64
+    unsigned:
+      - bit64
       - 0
       - 18446744073709551615
-  177: TxOutPoint
+  177: txoutpoint
   178:
-    Bytes: 65535
+    bytes: 65535
   179:
-    Enum:
+    enum:
       - 0
       - 1
       - 2
@@ -51,44 +51,44 @@ field_types:
       - 15
 owned_right_types:
   1:
-    format: Declarative
+    format: declarative
     abi: {}
   160:
     format:
-      CustomData:
-        Unsigned:
-          - Bit64
+      custom_data:
+        unsigned:
+          - bit64
           - 0
           - 18446744073709551615
     abi: {}
   161:
     format:
-      DiscreteFiniteField: Unsigned64bit
+      discrete_finite_field: unsigned64bit
     abi:
-      Validate:
-        Embedded: NoInflationBySum
+      validate:
+        embedded: no_inflation_by_sum
   170:
-    format: Declarative
+    format: declarative
     abi: {}
   171:
-    format: Declarative
+    format: declarative
     abi: {}
 public_right_types: []
 genesis:
   metadata:
-    0: Once
-    1: Once
-    2: NoneOrOnce
-    3: Once
-    4: Once
-    160: Once
+    0: once
+    1: once
+    2: noneOrOnce
+    3: once
+    4: once
+    160: once
   owned_rights:
-    1: NoneOrOnce
+    1: noneOrOnce
     160:
-      NoneOrUpTo: ~
+      noneOrUpTo: ~
     161:
-      NoneOrUpTo: ~
-    170: NoneOrOnce
+      noneOrUpTo: ~
+    170: noneOrOnce
   public_rights: []
   abi: {}
 extensions: {}
@@ -97,101 +97,101 @@ transitions:
     metadata: {}
     closes:
       161:
-        OnceOrUpTo: ~
+        onceOrUpTo: ~
     owned_rights:
       161:
-        NoneOrUpTo: ~
+        noneOrUpTo: ~
     public_rights: []
     abi: {}
   16:
     metadata:
-      0: NoneOrOnce
-      1: NoneOrOnce
-      2: NoneOrOnce
-      3: NoneOrOnce
+      0: noneOrOnce
+      1: noneOrOnce
+      2: noneOrOnce
+      3: noneOrOnce
     closes:
-      1: Once
+      1: once
     owned_rights:
-      1: NoneOrOnce
+      1: noneOrOnce
     public_rights: []
     abi: {}
   160:
     metadata:
-      160: Once
+      160: once
     closes:
-      160: Once
+      160: once
     owned_rights:
       160:
-        NoneOrUpTo: ~
+        noneOrUpTo: ~
       161:
-        NoneOrUpTo: ~
-      170: NoneOrOnce
+        noneOrUpTo: ~
+      170: noneOrOnce
     public_rights: []
     abi:
-      Validate:
-        Embedded: FungibleInflation
+      validate:
+        embedded: fungible_inflation
   161:
     metadata: {}
     closes:
-      170: Once
+      170: once
     owned_rights:
-      170: NoneOrOnce
-      171: NoneOrOnce
+      170: noneOrOnce
+      171: noneOrOnce
     public_rights: []
     abi: {}
   162:
     metadata:
-      176: Once
+      176: once
       177:
-        OnceOrUpTo: ~
+        onceOrUpTo: ~
       178:
-        NoneOrUpTo: ~
-      179: Once
+        noneOrUpTo: ~
+      179: once
     closes:
-      171: Once
+      171: once
     owned_rights:
-      171: NoneOrOnce
+      171: noneOrOnce
     public_rights: []
     abi:
-      Validate:
-        Embedded: ProofOfBurn
+      validate:
+        embedded: proof_of_burn
   163:
     metadata:
-      176: Once
+      176: once
       177:
-        OnceOrUpTo: ~
+        onceOrUpTo: ~
       178:
-        NoneOrUpTo: ~
-      179: Once
+        noneOrUpTo: ~
+      179: once
     closes:
-      171: Once
+      171: once
     owned_rights:
       161:
-        OnceOrUpTo: ~
-      171: NoneOrOnce
+        onceOrUpTo: ~
+      171: noneOrOnce
     public_rights: []
     abi:
-      Validate:
-        Embedded: ProofOfBurn
+      validate:
+        embedded: proof_of_burn
   240:
     metadata: {}
     closes:
-      1: NoneOrOnce
+      1: noneOrOnce
       160:
-        NoneOrUpTo: ~
+        noneOrUpTo: ~
       161:
-        NoneOrUpTo: ~
-      170: NoneOrOnce
-      171: NoneOrOnce
+        noneOrUpTo: ~
+      170: noneOrOnce
+      171: noneOrOnce
     owned_rights:
-      1: NoneOrOnce
+      1: noneOrOnce
       160:
-        NoneOrUpTo: ~
+        noneOrUpTo: ~
       161:
-        NoneOrUpTo: ~
-      170: NoneOrOnce
-      171: NoneOrOnce
+        noneOrUpTo: ~
+      170: noneOrOnce
+      171: noneOrOnce
     public_rights: []
     abi:
-      Validate:
-        Embedded: RightsSplit
+      validate:
+        embedded: rights_split

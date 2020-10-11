@@ -142,6 +142,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin_num"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "125b6a0228ba7c5f2462f6481db417fff24c4646cf77ee0d44202fd87dbd584a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -795,7 +804,7 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 [[package]]
 name = "lnpbp"
 version = "0.1.0-rc.1"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#d46973a6cee0e51a68e79dd69b8d4c250be3eb9a"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#7b7284a4dc0ba2b8a9dd9614e1934ac03b7d38a1"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -803,6 +812,7 @@ dependencies = [
  "bech32",
  "bitcoin",
  "bitcoin_hashes",
+ "bitcoin_num",
  "deflate",
  "ed25519-dalek",
  "grin_secp256k1zkp",
@@ -823,7 +833,7 @@ dependencies = [
 [[package]]
 name = "lnpbp_derive"
 version = "0.1.0-rc.1"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#d46973a6cee0e51a68e79dd69b8d4c250be3eb9a"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#7b7284a4dc0ba2b8a9dd9614e1934ac03b7d38a1"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1570,6 +1580,7 @@ version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8bac272128fb3b1e98872dca27a05c18d8b78b9bd089d3edb7b5871501b50bce"
 dependencies = [
+ "hex",
  "serde",
  "serde_with_macros",
 ]
