@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::{fs, io};
 
 use lnpbp::bitcoin;
-use lnpbp::bitcoin::hashes::hex::{FromHex, ToHex};
+use lnpbp::bitcoin::hashes::hex::ToHex;
 use lnpbp::rgb::prelude::*;
 
 use super::Store;
@@ -242,7 +242,8 @@ impl Store for DiskStorage {
             .genesis_names()?
             .into_iter()
             .try_fold(vec![], |mut list, name| {
-                list.push(ContractId::from_hex(&name)?);
+                let name = name.replace(".rgb", "");
+                list.push(ContractId::from_bech32_str(&name)?);
                 Ok(list)
             })
     }

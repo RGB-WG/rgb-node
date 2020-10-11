@@ -34,13 +34,16 @@ pub enum Reply {
     #[lnp_api(type = 0x0005)]
     Nothing,
 
-    #[lnp_api(type = 0xFF03)]
+    #[lnp_api(type = 0xFF01)]
     Sync(crate::api::reply::SyncFormat),
 
-    #[lnp_api(type = 0xFF07)]
+    #[lnp_api(type = 0xFF03)]
     SchemaIds(Vec<::lnpbp::rgb::SchemaId>),
 
     #[lnp_api(type = 0xFF05)]
+    ContractIds(Vec<::lnpbp::rgb::ContractId>),
+
+    #[lnp_api(type = 0xFF07)]
     Genesis(::lnpbp::rgb::Genesis),
 
     #[lnp_api(type = 0xFF09)]

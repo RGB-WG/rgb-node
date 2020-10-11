@@ -80,8 +80,18 @@ impl Runtime {
     }
 
     #[inline]
+    pub fn list_geneses(&mut self) -> Result<Arc<Reply>, Error> {
+        Ok(self.stash_command(stash::Request::ListGeneses())?)
+    }
+
+    #[inline]
     pub fn schema(&mut self, schema_id: SchemaId) -> Result<Arc<Reply>, Error> {
         Ok(self.stash_command(stash::Request::ReadSchema(schema_id))?)
+    }
+
+    #[inline]
+    pub fn genesis(&mut self, contract_id: ContractId) -> Result<Arc<Reply>, Error> {
+        Ok(self.stash_command(stash::Request::ReadGenesis(contract_id))?)
     }
 
     #[inline]

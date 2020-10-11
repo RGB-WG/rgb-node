@@ -42,4 +42,6 @@ pub enum Error {
     DataInconsistency,
 
     UnsupportedFunctionality,
+
+    FormatNotSupported,
 }

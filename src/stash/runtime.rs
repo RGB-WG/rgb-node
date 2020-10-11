@@ -161,6 +161,7 @@ impl Runtime {
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
             Request::ListSchemata() => self.rpc_list_schemata().await,
+            Request::ListGeneses() => self.rpc_list_geneses().await,
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
             Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
@@ -181,6 +182,12 @@ impl Runtime {
         debug!("Got LIST_SCHEMATA");
         let ids = self.storage.schema_ids()?;
         Ok(Reply::SchemaIds(ids))
+    }
+
+    async fn rpc_list_geneses(&mut self) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got LIST_GENESES");
+        let ids = self.storage.contract_ids()?;
+        Ok(Reply::ContractIds(ids))
     }
 
     async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<Reply, ServiceErrorDomain> {

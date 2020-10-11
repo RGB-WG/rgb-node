@@ -29,6 +29,7 @@ pub enum OutputFormat {
     Toml,
     Csv,
     Tsv,
+    Bech32,
     PrettyPrint,
     StrictEncode,
 }
