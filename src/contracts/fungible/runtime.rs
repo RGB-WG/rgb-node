@@ -422,11 +422,11 @@ impl Runtime {
             {
                 asset.remove_allocation(
                     outpoint,
-                    allocation.node_id,
-                    allocation.index,
-                    allocation.amount.clone(),
+                    *allocation.node_id(),
+                    *allocation.index(),
+                    allocation.value().clone(),
                 );
-                removal_list.push((allocation.node_id, allocation.index));
+                removal_list.push((*allocation.node_id(), *allocation.index()));
             }
             self.cacher.add_asset(asset)?;
         }

@@ -24,7 +24,7 @@ use lnpbp::secp256k1zkp;
 use bitcoin::OutPoint;
 
 use super::schema::{self, FieldType, OwnedRightsType, TransitionType};
-use super::{Allocation, Asset, Coins, Outcoincealed, Outcoins};
+use super::{AccountingAmount, Allocation, Asset, Outcoincealed, Outcoins};
 
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::SealSpec;
@@ -88,7 +88,7 @@ impl Processor {
         let allocations = allocations
             .into_iter()
             .map(|outcoins| {
-                let amount = Coins::transmutate(outcoins.coins, precision);
+                let amount = AccountingAmount::transmutate(precision, outcoins.coins);
                 issued_supply += amount;
                 (outcoins.seal_definition(), amount)
             })
@@ -97,8 +97,8 @@ impl Processor {
         owned_rights.insert(
             *OwnedRightsType::Assets,
             Assignments::zero_balanced(
-                vec![amount::Revealed {
-                    amount: issued_supply,
+                vec![value::Revealed {
+                    value: issued_supply,
                     blinding: secp256k1zkp::key::ONE_KEY,
                 }],
                 allocations,
@@ -112,7 +112,7 @@ impl Processor {
             reissue_control,
         } = issue_structure
         {
-            let total_supply = Coins::transmutate(max_supply, precision);
+            let total_supply = AccountingAmount::transmutate(precision, max_supply);
             if total_supply < issued_supply {
                 Err(ServiceErrorDomain::Schema(format!(
                     "Total supply ({}) should be greater than the issued supply ({})",
@@ -121,9 +121,9 @@ impl Processor {
             }
             owned_rights.insert(
                 *OwnedRightsType::Inflation,
-                Assignments::Declarative(bset![OwnedState::Revealed {
+                Assignments::Declarative(vec![OwnedState::Revealed {
                     seal_definition: reissue_control.seal_definition(),
-                    assigned_state: data::Void
+                    assigned_state: data::Void,
                 }]),
             );
         }
@@ -180,14 +180,15 @@ impl Processor {
         // Computing sum of inputs
         let total_inputs = input_allocations
             .iter()
-            .fold(0u64, |acc, alloc| acc + alloc.amount.amount);
+            .fold(0u64, |acc, alloc| acc + alloc.value().value);
 
         let metadata = type_map! {};
         let mut total_outputs = 0;
         let allocations_ours = ours
             .into_iter()
             .map(|outcoins| {
-                let amount = Coins::transmutate(outcoins.coins, *asset.fractional_bits());
+                let amount =
+                    AccountingAmount::transmutate(*asset.fractional_bits(), outcoins.coins);
                 total_outputs += amount;
                 (outcoins.seal_definition(), amount)
             })
@@ -195,7 +196,8 @@ impl Processor {
         let allocations_theirs = theirs
             .into_iter()
             .map(|outcoincealed| {
-                let amount = Coins::transmutate(outcoincealed.coins, *asset.fractional_bits());
+                let amount =
+                    AccountingAmount::transmutate(*asset.fractional_bits(), outcoincealed.coins);
                 total_outputs += amount;
                 (outcoincealed.seal_confidential, amount)
             })
@@ -207,7 +209,7 @@ impl Processor {
 
         let input_amounts = input_allocations
             .iter()
-            .map(|alloc| alloc.amount.clone())
+            .map(|alloc| alloc.value().clone())
             .collect();
         let assignments = type_map! {
             OwnedRightsType::Assets =>
@@ -217,11 +219,11 @@ impl Processor {
         let mut parent = ParentOwnedRights::new();
         for alloc in input_allocations {
             parent
-                .entry(alloc.node_id)
+                .entry(*alloc.node_id())
                 .or_insert(bmap! {})
                 .entry(*OwnedRightsType::Assets)
                 .or_insert(vec![])
-                .push(alloc.index);
+                .push(*alloc.index());
         }
 
         let transition = Transition::with(

@@ -16,7 +16,7 @@ mod invoice;
 mod outcoins;
 pub mod schema;
 
-pub use asset::{Allocation, Asset, Coins, Issue, Supply};
+pub use asset::{AccountingAmount, AccountingValue, Allocation, Asset, Issue, Supply};
 pub use invoice::{Invoice, Outpoint, OutpointDescriptor};
 pub use outcoins::{Outcoincealed, Outcoins};
-pub use schema::SchemaError;
+pub use schema::Error;

@@ -25,17 +25,17 @@ use lnpbp::rgb::schema::{
 use crate::error::ServiceErrorDomain;
 use crate::type_map;
 
-#[derive(Debug, Display, Error, From)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(Debug)]
-pub enum SchemaError {
+pub enum Error {
     #[from(core::option::NoneError)]
     NotAllFieldsPresent,
 
     WrongSchemaId,
 }
 
-impl From<SchemaError> for ServiceErrorDomain {
-    fn from(err: SchemaError) -> Self {
+impl From<Error> for ServiceErrorDomain {
+    fn from(err: Error) -> Self {
         ServiceErrorDomain::Schema(format!("{}", err))
     }
 }
