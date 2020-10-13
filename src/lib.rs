@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#![allow(dead_code)]
 #![feature(
     bool_to_option,
     in_band_lifetimes,

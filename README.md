@@ -1,6 +1,10 @@
-# RGB Node & SDK
+# RGB Node
 
 [![TravisCI](https://api.travis-ci.com/LNP-BP/rgb-node.svg?branch=master)](https://api.travis-ci.com/LNP-BP/rgb-node)
+
+This is source for daemon executables and library that can run RGB backend. For
+wallet and exchange integration please check an interface to it and demo 
+projects from [RGB SDK](https://github.com/LNP-BP/RGB-SDK).
 
 This repository contains RGB node source code and SDK for wallet & server-side
 development.
@@ -9,7 +13,65 @@ The node may run as a set of daemons (even in different docker containers);
 a multi-threaded single process or as a set of managed threads within a
 wallet app.
 
-## Build
+## Design
+
+The node (as other nodes maitained by LNP/BP Standards Association and Pandora
+Core company subsidiaries) consists of multiple microservices, communicating
+with each other via LNP ZMQ RPC interface.
+
+![Node architacture](doc/node_arch.jpeg)
+
+The set of microservices representing node can run as either:
+1) single daemon process on desktop or a server;
+2) cloud of docker-based daemons, one per microservice, with instance 
+   scalability and in geo-distributed environment;
+3) inside a single mobile app as threads;
+4) and even different nodes can be combined in their services between themselves
+   into a single executables/mobile apps;
+5) all P2P communications are end-to-end encrypted and work over Tor.
+
+Other nodes, designed an maintained by LNP/BP Standards Association with the 
+same architecture include:
+* [LNP Node](https://github.com/LNP-BP/lnp-node) for running Lightning Network 
+  Protocol (LNP) and Generalized Lightning Channels (GLC).
+* [BP Node](https://github.com/LNP-BP/bp-node) for indexing bitcoin blockchain
+  (you may think of it as a more efficient Electrum server alternative)
+* Bifrost – node for storing/passing client-side-validated data with watchtower 
+  functionality and used for Storm/RGB/DEX infrastructure
+
+Other third parties provide their own nodes:
+* [Keyring](https://github.com/pandoracore/keyring) for managing private key
+  accounts, storage and signatures with support for miniscript and PSBTs
+* [MyCitadel](https://github.com/mycitadel/mycitadel-node) Bitcoin, LN & RGB
+  enabled wallet service with support for other LNP/BP protocols
+
+## Project organization & architecture
+
+* [`src/api/`](src/api/) – LNP messages for all daemons used for message bus
+* [`src/bin/`](src/bin/) – binaries for daemons & CLI launching main process
+* [`src/cli/`](src/cli/) – CLAP-based command line API talking to message bus
+* [`src/i8n/`](src/i8n/) – functions exposed to FFI talking to message bus
+* `src/<name>/` – service/daemon-specific code:
+  - [`src/stash/`](src/stash) – daemon managing RGB stash data and its storage; 
+    you may  configure it (with either config file, environment vars or 
+    command-line arguments) to use different forms of storage drivers;
+  - [`src/contracts`](src/contracts) – daemons supporting high-level APIs for
+    working with different forms of RGB Schema: RGB-20 (fungible assets),
+    RGB-21 (collectionables/NFTs) etc;
+  - [`src/rgbd`](src/rgbd) – daemon orchestrating bootstrapping of stash and
+    contracts daemons
+
+Each daemon (more correctly "microservice", as it can run as a thread, not 
+necessary a process) or other binary (like CLI tool) follows the same  
+organization concept for module/file names:
+* `error.rs` – daemon-specific error types;
+* `config.rs` – CLAP arguments & daemon configuration data;
+* `runtime.rs` – singleton managing main daemon thread and keeping all ZMQ/P2P 
+  connections and sockets; receiving and processing messages through them;
+* `processor.rs` – business logic functions & internal state management which 
+  does not depend on external communications/RPC;
+* `index/`, `storage/`, `cache/` – storage interfaces and engines;
+* `db/` – SQL-specific schema and code, if needed.
 
 ### Local
 
@@ -67,13 +129,6 @@ This will produce consignment. Send it to the receiving party.
 The receiving party must do the following:
 `rgb-cli -d <data_dir> -vvvv fungible accept <consignment_file> <utxo>:<vout> <blinding>`,
 where `utxo` and the `blinding` must be values used in invoice generation
-
-## Language bindings
-
-The following bindings are available:
-- [Android](/ffi/android)
-- [iOS](/ffi/ios)
-- [Node.js](/ffi/nodejs)
 
 ## Developer guidelines
 
