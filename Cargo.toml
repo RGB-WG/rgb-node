@@ -12,7 +12,7 @@ readme = "README.md"
 name = "rgb"
 
 [dependencies]
-amplify = "~1.2.0"
+amplify = "~1.2.1"
 amplify_derive = "~1.2.0"
 base64 = "0.12"
 dotenv = "~0.15.0"
