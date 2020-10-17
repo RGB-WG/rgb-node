@@ -39,6 +39,9 @@ pub extern crate lnpbp;
 #[macro_use]
 pub extern crate lnpbp_derive;
 
+#[macro_use]
+pub extern crate diesel;
+
 pub mod api;
 pub mod cli;
 pub mod constants;
@@ -70,6 +73,10 @@ pub enum DataFormat {
     /// Strict encoding
     #[display("strict-encode")]
     StrictEncode,
+
+    /// Sqlite Database
+    #[display("sqlite")]
+    Sqlite,
 }
 impl_enum_strict_encoding!(DataFormat);
 
@@ -80,6 +87,7 @@ impl DataFormat {
             DataFormat::Json => "json",
             DataFormat::Toml => "toml",
             DataFormat::StrictEncode => "se",
+            DataFormat::Sqlite => "db",
         }
     }
 }
