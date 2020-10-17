@@ -145,6 +145,7 @@ impl FileCache {
                 toml::from_str(&data)?
             }
             DataFormat::StrictEncode => unimplemented!(),
+            DataFormat::Sqlite => unimplemented!(),
         };
         Ok(())
     }
@@ -159,6 +160,7 @@ impl FileCache {
             DataFormat::Json => serde_json::to_writer(&f, &self.assets)?,
             DataFormat::Toml => f.write_all(&toml::to_vec(&self.assets)?)?,
             DataFormat::StrictEncode => unimplemented!(),
+            DataFormat::Sqlite => unimplemented!(),
         }
         Ok(())
     }
@@ -171,6 +173,7 @@ impl FileCache {
             DataFormat::Json => serde_json::to_vec(&assets)?,
             DataFormat::Toml => toml::to_vec(&assets)?,
             DataFormat::StrictEncode => unimplemented!(),
+            DataFormat::Sqlite => unimplemented!(),
         })
     }
 }

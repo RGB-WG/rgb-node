@@ -13,6 +13,7 @@
 
 use lnpbp::rgb::prelude::*;
 
+use super::sql::SqlCacheError;
 use super::FileCacheError;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::fungible::Asset;
@@ -28,7 +29,7 @@ pub trait Cache {
     fn remove_asset(&mut self, id: ContractId) -> Result<bool, Self::Error>;
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
+#[derive(PartialEq, Debug, Display, Error)]
 #[display(Debug)]
 pub enum CacheError {
     Io(String),
@@ -41,6 +42,8 @@ pub enum CacheError {
         details: Option<String>,
     },
     DataIntegrityError(String),
+
+    SqliteDBError(diesel::result::Error),
 }
 
 impl From<CacheError> for ServiceErrorDomain {
@@ -72,6 +75,22 @@ impl From<FileCacheError> for CacheError {
                 Self::DataIntegrityError(format!("TOML serialization/deserialization error"))
             }
             FileCacheError::NotFound => {
+                Self::DataIntegrityError("Data file is not found".to_string())
+            }
+        }
+    }
+}
+
+impl From<SqlCacheError> for CacheError {
+    fn from(err: SqlCacheError) -> Self {
+        match err {
+            SqlCacheError::Io(e) => Self::Io(format!("{:?}", e)),
+            SqlCacheError::DieselError(e) => Self::SqliteDBError(e),
+            SqlCacheError::HexDecodingError => {
+                Self::DataIntegrityError(format!("Wrong hex encoded data in sqlite table"))
+            }
+            SqlCacheError::GenericError(e) => Self::DataIntegrityError(e),
+            SqlCacheError::NotFound => {
                 Self::DataIntegrityError("Data file is not found".to_string())
             }
         }

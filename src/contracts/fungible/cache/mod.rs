@@ -13,6 +13,9 @@
 
 mod cache;
 mod file;
+pub(crate) mod models;
+mod schema;
+pub(crate) mod sql;
 
 pub use cache::{Cache, CacheError};
 pub use file::{FileCache, FileCacheConfig, FileCacheError};
