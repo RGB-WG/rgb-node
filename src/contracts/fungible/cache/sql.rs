@@ -276,12 +276,12 @@ mod test {
     use std::env;
 
     // The following tests are ignored by default, because they will break
-    // Travis CI unless the build setup is updated (TODO). To run these tests, 
+    // Travis CI unless the build setup is updated (TODO). To run these tests,
     // 1. set an environment variable DATABASE_URL=~/.rgb.
     // 2. manually remove the ignore flag and run the rgb-node/test/test_db.sh.
-    
+
     #[test]
-    //#[ignore]
+    #[ignore]
     // Creates a sample table with sample asset data
     fn test_create_tables() {
         let database_url = env::var("DATABASE_URL")
@@ -582,7 +582,7 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
+    #[ignore]
     fn test_asset_cache() {
         let database_url = env::var("DATABASE_URL")
             .expect("Environment Variable 'DATABASE_URL' must be set to run this test");

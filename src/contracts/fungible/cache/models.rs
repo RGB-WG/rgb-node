@@ -17,7 +17,7 @@ use lnpbp::bp::Chain;
 
 /// All the sqlite table structures are defined here.
 /// There are 5 tables namely Asset, Issue, Inflation, AllocationUtxo
-/// and Allocation. The Asset is the major table, and all other tables 
+/// and Allocation. The Asset is the major table, and all other tables
 /// are associated with Asset by sql_asset_id field.
 
 #[derive(Queryable, Insertable, Identifiable, Clone, Debug)]
@@ -39,7 +39,7 @@ pub struct SqlAsset {
 impl SqlAsset {
     /// Create an Sqlite Asset entry from a given Asset data structure.
     /// Note, only the metadata are written into the Asset table,
-    /// All other data for the Asset are to be found from fetching other 
+    /// All other data for the Asset are to be found from fetching other
     /// table entries associated with this Asset entry. So they are implicitly defined
     /// in the table schema.   
     pub fn from_asset(asset: &Asset, connection: &SqliteConnection) -> Result<Self, SqlCacheError> {
@@ -109,7 +109,6 @@ impl SqlInflation {
         table_asset: &SqlAsset,
         connection: &SqliteConnection,
     ) -> Result<Vec<Self>, SqlCacheError> {
-
         // Find the last inflation entry and increase id from there
         let last_inflation = sql_inflation_table
             .load::<SqlInflation>(connection)?
@@ -136,7 +135,7 @@ impl SqlInflation {
             result.push(sql_inflation);
         }
 
-        // We need to keep track on the last added item id 
+        // We need to keep track on the last added item id
         // in the above inflation entry as we need to add
         // unknown inflation entry next.
         let last_added_id;
@@ -163,13 +162,12 @@ impl SqlInflation {
 /// Read Inflation data associated to a table Asset entry
 /// found at a given database connection
 /// This returns the known_inflation and unknown inflation data structures
-/// for the given asset in tupple. Which then can be directly used as fields 
+/// for the given asset in tupple. Which then can be directly used as fields
 /// in Asset data structure.
 pub fn read_inflation(
     asset: &SqlAsset,
     connection: &SqliteConnection,
 ) -> Result<(BTreeMap<OutPoint, AccountingAmount>, AccountingAmount), SqlCacheError> {
-
     let inflations = SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
 
     let mut known_inflation_map = BTreeMap::new();
@@ -224,7 +222,6 @@ impl SqlIssue {
         table_asset: &SqlAsset,
         connection: &SqliteConnection,
     ) -> Result<Vec<Self>, SqlCacheError> {
-
         // get the last issue and increase id from there
         let last_issue = sql_issue_table
             .load::<SqlIssue>(connection)?
@@ -291,15 +288,14 @@ pub struct SqlAllocation {
 /// Create a list of AllocationUtxo and Allocation table entry
 /// with correct associations between them.
 /// The AllocationUtxo entries are associated with the given Asset entry.
-/// 
-/// For a Given Assets structure, this will create the correct AllocationUtxo and 
+///
+/// For a Given Assets structure, this will create the correct AllocationUtxo and
 /// Allocation table entries to write to the database
 pub fn create_allocation_from_asset(
     asset: &Asset,
     table_asset: &SqlAsset,
     connection: &SqliteConnection,
 ) -> Result<(Vec<SqlAllocationUtxo>, Vec<SqlAllocation>), SqlCacheError> {
-
     // get the last allocationutxo and allocation id
     // increase id from there
     let last_alloc_utxo = sql_allocation_utxo_table
@@ -348,7 +344,6 @@ pub fn create_allocation_from_asset(
     Ok((utxos, allocation_vec))
 }
 
-
 /// Read the associated AllocationUtxo and Allocation entries
 /// with the given Asset entry executed over the given database
 /// connection.
@@ -358,7 +353,6 @@ pub fn read_allocations(
     asset: &SqlAsset,
     connection: &SqliteConnection,
 ) -> Result<BTreeMap<OutPoint, Vec<Allocation>>, SqlCacheError> {
-
     // Get the associated utxo with asset entry
     let utxo_list = SqlAllocationUtxo::belonging_to(asset).load::<SqlAllocationUtxo>(connection)?;
 

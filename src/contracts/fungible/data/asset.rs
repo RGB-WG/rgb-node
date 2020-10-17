@@ -145,9 +145,8 @@ pub struct Asset {
 }
 
 impl Asset {
-
     /// Create an Asset structure from an sqlite asset table entry.
-    /// This fetches all the other tables for entries associated with the given asset 
+    /// This fetches all the other tables for entries associated with the given asset
     /// and recreates the full Asset structure. This should be used while reading Asset data from
     /// database table.
     pub fn from_sql_asset(
@@ -192,8 +191,7 @@ pub struct Allocation {
 }
 
 impl Allocation {
-
-    /// Create an Allocation structure by reading the 
+    /// Create an Allocation structure by reading the
     /// corresponding Allocation and AllocationUtxo table entries.
     pub fn from_sql_allocation(
         table_value: &SqlAllocation,
@@ -247,7 +245,7 @@ impl Supply {
 
     /// Supply do not have a corresponding table in the database.
     /// The concerned values are written in the Asset table itself.
-    /// This reads up an asset table entry and create the corresponding 
+    /// This reads up an asset table entry and create the corresponding
     /// supply structure.
     pub fn from_sql_asset(table_value: &SqlAsset) -> Self {
         Self {
