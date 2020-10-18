@@ -30,7 +30,6 @@ use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
 use crate::contracts::fungible::data::Asset;
 
 use crate::error::{BootstrapError, ServiceErrorDomain};
-use crate::DataFormat;
 use std::path::PathBuf;
 
 use super::cache::{Cache, CacheError};
@@ -44,13 +43,19 @@ pub enum SqlCacheError {
     Io(std::io::Error),
 
     #[from]
-    DieselError(diesel::result::Error),
+    Sqlite(diesel::result::Error),
 
     #[from(bitcoin::hashes::hex::Error)]
-    HexDecodingError,
+    HexDecoding,
 
     #[from]
-    GenericError(String),
+    Generic(String),
+
+    #[from]
+    BlindKey(lnpbp::secp256k1zkp::Error),
+
+    #[from]
+    WrongChainData(lnpbp::bp::chain::ParseError),
 
     #[from(std::option::NoneError)]
     NotFound,
@@ -72,20 +77,17 @@ impl From<SqlCacheError> for BootstrapError {
 #[display(Debug)]
 pub struct SqlCacheConfig {
     pub data_dir: PathBuf,
-    pub data_format: DataFormat,
 }
 
 impl SqlCacheConfig {
     #[inline]
     pub fn assets_dir(&self) -> PathBuf {
-        self.data_dir.clone()
+        self.data_dir.join("assets")
     }
 
     #[inline]
     pub fn assets_filename(&self) -> PathBuf {
-        self.assets_dir()
-            .join("assets")
-            .with_extension(self.data_format.extension())
+        self.assets_dir().join("assets").with_extension("db")
     }
 }
 
@@ -289,10 +291,7 @@ mod test {
 
         let filepath = PathBuf::from(&database_url[..]);
 
-        let config = SqlCacheConfig {
-            data_dir: filepath,
-            data_format: DataFormat::Sqlite,
-        };
+        let config = SqlCacheConfig { data_dir: filepath };
 
         println!("{:#?}", config);
 
@@ -314,7 +313,7 @@ mod test {
                         known_circulating_supply: 20000,
                         is_issued_known: Some(true),
                         max_cap: 20000,
-                        chain: "MainNet".to_string(),
+                        chain: lnpbp::bp::Chain::Mainnet.to_string(),
                         fractional_bits: vec![0u8],
                         asset_date: NaiveDate::from_ymd(2016, 7, 8).and_hms(9, 10, 11),
                     };
@@ -337,7 +336,7 @@ mod test {
                         known_circulating_supply: 10000,
                         is_issued_known: Some(true),
                         max_cap: 10000,
-                        chain: "TestNet3".to_string(),
+                        chain: lnpbp::bp::Chain::Testnet3.to_string(),
                         fractional_bits: vec![0u8],
                         asset_date: NaiveDate::from_ymd(2016, 7, 8).and_hms(9, 10, 11),
                     };
@@ -588,10 +587,7 @@ mod test {
             .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
 
         let filepath = PathBuf::from(&database_url[..]);
-        let config = SqlCacheConfig {
-            data_dir: filepath,
-            data_format: DataFormat::Sqlite,
-        };
+        let config = SqlCacheConfig { data_dir: filepath };
 
         let mut cache = SqlCache::new(&config).unwrap();
 

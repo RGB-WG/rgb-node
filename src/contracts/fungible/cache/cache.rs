@@ -29,7 +29,7 @@ pub trait Cache {
     fn remove_asset(&mut self, id: ContractId) -> Result<bool, Self::Error>;
 }
 
-#[derive(PartialEq, Debug, Display, Error)]
+#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
 #[display(Debug)]
 pub enum CacheError {
     Io(String),
@@ -43,7 +43,7 @@ pub enum CacheError {
     },
     DataIntegrityError(String),
 
-    SqliteDBError(diesel::result::Error),
+    Sqlite(String),
 }
 
 impl From<CacheError> for ServiceErrorDomain {
@@ -85,14 +85,24 @@ impl From<SqlCacheError> for CacheError {
     fn from(err: SqlCacheError) -> Self {
         match err {
             SqlCacheError::Io(e) => Self::Io(format!("{:?}", e)),
-            SqlCacheError::DieselError(e) => Self::SqliteDBError(e),
-            SqlCacheError::HexDecodingError => {
-                Self::DataIntegrityError(format!("Wrong hex encoded data in sqlite table"))
+            SqlCacheError::Sqlite(e) => {
+                Self::Sqlite(format!("Error from sqlite asset cache {}", e.to_string()))
             }
-            SqlCacheError::GenericError(e) => Self::DataIntegrityError(e),
+            SqlCacheError::HexDecoding => Self::DataIntegrityError(format!(
+                "Wrong hex encoded data in sqlite asset cache table"
+            )),
+            SqlCacheError::Generic(e) => Self::DataIntegrityError(e),
+            SqlCacheError::WrongChainData(e) => Self::DataIntegrityError(format!(
+                "Wrong Chain data in sqlite asset cache table: {}",
+                e
+            )),
             SqlCacheError::NotFound => {
-                Self::DataIntegrityError("Data file is not found".to_string())
+                Self::DataIntegrityError(format!("Asset cache sqlite database file not found"))
             }
+            SqlCacheError::BlindKey(e) => Self::DataIntegrityError(format!(
+                "Wrong amount blinding factor in asset cache sqlite database: {}",
+                e
+            )),
         }
     }
 }

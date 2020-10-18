@@ -169,7 +169,6 @@ impl Command {
                     DataFormat::Json => serde_json::from_slice(&data)?,
                     DataFormat::Toml => toml::from_slice(&data)?,
                     DataFormat::StrictEncode => unimplemented!(),
-                    DataFormat::Sqlite => unimplemented!(),
                 };
                 let short: Vec<HashMap<&str, String>> = assets
                     .iter()

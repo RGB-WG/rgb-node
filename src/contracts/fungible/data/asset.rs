@@ -16,13 +16,13 @@ use core::ops::{Add, AddAssign};
 use core::option::NoneError;
 use diesel::prelude::*;
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::contracts::fungible::cache::models::{
-    read_allocations, read_chain_from_table, read_inflation, SqlAllocation, SqlAllocationUtxo,
-    SqlAsset, SqlIssue,
+    read_allocations, read_inflation, SqlAllocation, SqlAllocationUtxo, SqlAsset, SqlIssue,
 };
 use crate::contracts::fungible::cache::sql::SqlCacheError;
 use lnpbp::bitcoin;
@@ -153,26 +153,33 @@ impl Asset {
         table_value: &SqlAsset,
         connection: &SqliteConnection,
     ) -> Result<Self, SqlCacheError> {
-        let (known_inflation, unknown_inflation) = read_inflation(table_value, connection).unwrap();
+        let (known_inflation, unknown_inflation) = read_inflation(table_value, connection)?;
+
+        let known_table_issues =
+            SqlIssue::belonging_to(table_value).load::<SqlIssue>(connection)?;
+
+        let mut known_issues = vec![];
+
+        for issue in known_table_issues {
+            known_issues.push(Issue::from_sql_issue(
+                issue,
+                table_value.fractional_bits[0],
+            )?)
+        }
 
         Ok(Self {
-            id: ContractId::from_hex(&table_value.contract_id[..]).unwrap(),
+            id: ContractId::from_hex(&table_value.contract_id[..])?,
             ticker: table_value.ticker.clone(),
             name: table_value.asset_name.clone(),
             description: table_value.asset_description.clone(),
-            supply: Supply::from_sql_asset(table_value),
-            chain: read_chain_from_table(table_value.chain.clone()).unwrap(),
+            supply: Supply::from_sql_asset(&table_value),
+            chain: bp::Chain::from_str(&table_value.chain[..])?,
             fractional_bits: table_value.fractional_bits[0],
             date: table_value.asset_date,
-            known_issues: SqlIssue::belonging_to(table_value)
-                .load::<SqlIssue>(connection)
-                .unwrap()
-                .into_iter()
-                .map(|issue| Issue::from_sql_issue(issue, table_value.fractional_bits[0]).unwrap())
-                .collect(),
+            known_issues: known_issues,
             known_inflation: known_inflation,
             unknown_inflation: unknown_inflation,
-            known_allocations: read_allocations(table_value, connection).unwrap(),
+            known_allocations: read_allocations(&table_value, connection)?,
         })
     }
 }
@@ -198,19 +205,18 @@ impl Allocation {
         outpoint: &SqlAllocationUtxo,
     ) -> Result<Self, SqlCacheError> {
         Ok(Self {
-            node_id: NodeId::from_hex(&table_value.node_id[..]).unwrap(),
+            node_id: NodeId::from_hex(&table_value.node_id[..])?,
             index: table_value.assignment_index as u16,
             outpoint: OutPoint {
-                txid: Txid::from_hex(&outpoint.txid[..]).unwrap(),
+                txid: Txid::from_hex(&outpoint.txid[..])?,
                 vout: outpoint.vout as u32,
             },
             value: value::Revealed {
                 value: table_value.amount as AtomicValue,
                 blinding: SecretKey::from_slice(
                     &Secp256k1::new(),
-                    &Vec::<u8>::from_hex(&table_value.blinding[..]).unwrap()[..],
-                )
-                .unwrap(),
+                    &Vec::<u8>::from_hex(&table_value.blinding[..])?[..],
+                )?,
             },
         })
     }
@@ -251,12 +257,12 @@ impl Supply {
         Self {
             known_circulating: AccountingAmount::from_fractioned_accounting_value(
                 table_value.fractional_bits[0],
-                table_value.known_circulating_supply.clone() as AccountingValue,
+                table_value.known_circulating_supply as AccountingValue,
             ),
-            is_issued_known: table_value.is_issued_known.clone(),
+            is_issued_known: table_value.is_issued_known,
             max_cap: AccountingAmount::from_fractioned_accounting_value(
                 table_value.fractional_bits[0],
-                table_value.max_cap.clone() as AccountingValue,
+                table_value.max_cap as AccountingValue,
             ),
         }
     }
@@ -295,15 +301,15 @@ impl Issue {
         fraction_bits: u8,
     ) -> Result<Issue, SqlCacheError> {
         Ok(Issue {
-            id: NodeId::from_hex(&table_value.node_id[..]).unwrap(),
-            asset_id: ContractId::from_hex(&table_value.contract_id[..]).unwrap(),
+            id: NodeId::from_hex(&table_value.node_id[..])?,
+            asset_id: ContractId::from_hex(&table_value.contract_id[..])?,
             amount: AccountingAmount::from_fractioned_accounting_value(
                 fraction_bits,
-                table_value.amount.clone() as AccountingValue,
+                table_value.amount as AccountingValue,
             ),
             origin: match (table_value.origin_txid, table_value.origin_vout) {
                 (Some(txid), Some(vout)) => Some(OutPoint {
-                    txid: Txid::from_hex(&txid[..]).unwrap(),
+                    txid: Txid::from_hex(&txid[..])?,
                     vout: vout as u32,
                 }),
                 _ => None,

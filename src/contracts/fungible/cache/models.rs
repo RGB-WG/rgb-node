@@ -13,8 +13,6 @@ use crate::contracts::fungible::data::{AccountingAmount, AccountingValue, Alloca
 use diesel::prelude::*;
 use lnpbp::bitcoin::{OutPoint, Txid};
 use lnpbp::bitcoin_hashes::hex::{FromHex, ToHex};
-use lnpbp::bp::Chain;
-
 /// All the sqlite table structures are defined here.
 /// There are 5 tables namely Asset, Issue, Inflation, AllocationUtxo
 /// and Allocation. The Asset is the major table, and all other tables
@@ -61,31 +59,10 @@ impl SqlAsset {
             known_circulating_supply: asset.supply().known_circulating().accounting_value() as i64,
             is_issued_known: asset.supply().is_issued_known().clone(),
             max_cap: asset.supply().max_cap().accounting_value() as i64,
-            chain: write_chain_to_table(asset.chain())?,
+            chain: asset.chain().to_string(),
             fractional_bits: vec![asset.fractional_bits().clone()],
             asset_date: asset.date().clone(),
         })
-    }
-}
-
-// TODO: Implement handling for other chain variants
-pub fn read_chain_from_table(table_value: String) -> Result<Chain, SqlCacheError> {
-    match &table_value[..] {
-        "MainNet" => Ok(Chain::Mainnet),
-        "TestNet3" => Ok(Chain::Testnet3),
-        _ => Err(SqlCacheError::GenericError(
-            "Unsupported Chain value".to_string(),
-        )),
-    }
-}
-
-pub fn write_chain_to_table(chain: &Chain) -> Result<String, SqlCacheError> {
-    match chain {
-        Chain::Mainnet => Ok(String::from("MainNet")),
-        Chain::Testnet3 => Ok(String::from("TestNet3")),
-        _ => Err(SqlCacheError::GenericError(
-            "Unsupported Chain value".to_string(),
-        )),
     }
 }
 

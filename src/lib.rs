@@ -73,10 +73,6 @@ pub enum DataFormat {
     /// Strict encoding
     #[display("strict-encode")]
     StrictEncode,
-
-    /// Sqlite Database
-    #[display("sqlite")]
-    Sqlite,
 }
 impl_enum_strict_encoding!(DataFormat);
 
@@ -87,7 +83,6 @@ impl DataFormat {
             DataFormat::Json => "json",
             DataFormat::Toml => "toml",
             DataFormat::StrictEncode => "se",
-            DataFormat::Sqlite => "db",
         }
     }
 }
