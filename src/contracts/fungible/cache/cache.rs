@@ -13,6 +13,7 @@
 
 use lnpbp::rgb::prelude::*;
 
+use super::sql::SqlCacheError;
 use super::FileCacheError;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::fungible::Asset;
@@ -41,6 +42,8 @@ pub enum CacheError {
         details: Option<String>,
     },
     DataIntegrityError(String),
+
+    Sqlite(String),
 }
 
 impl From<CacheError> for ServiceErrorDomain {
@@ -74,6 +77,32 @@ impl From<FileCacheError> for CacheError {
             FileCacheError::NotFound => {
                 Self::DataIntegrityError("Data file is not found".to_string())
             }
+        }
+    }
+}
+
+impl From<SqlCacheError> for CacheError {
+    fn from(err: SqlCacheError) -> Self {
+        match err {
+            SqlCacheError::Io(e) => Self::Io(format!("{:?}", e)),
+            SqlCacheError::Sqlite(e) => {
+                Self::Sqlite(format!("Error from sqlite asset cache {}", e.to_string()))
+            }
+            SqlCacheError::HexDecoding => Self::DataIntegrityError(format!(
+                "Wrong hex encoded data in sqlite asset cache table"
+            )),
+            SqlCacheError::Generic(e) => Self::DataIntegrityError(e),
+            SqlCacheError::WrongChainData(e) => Self::DataIntegrityError(format!(
+                "Wrong Chain data in sqlite asset cache table: {}",
+                e
+            )),
+            SqlCacheError::NotFound => {
+                Self::DataIntegrityError(format!("Asset cache sqlite database file not found"))
+            }
+            SqlCacheError::BlindKey(e) => Self::DataIntegrityError(format!(
+                "Wrong amount blinding factor in asset cache sqlite database: {}",
+                e
+            )),
         }
     }
 }

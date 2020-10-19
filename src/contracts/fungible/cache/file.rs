@@ -21,7 +21,6 @@ use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
 
 use super::Cache;
-use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::fungible::cache::CacheError;
 use crate::fungible::Asset;
 use crate::util::file::*;
@@ -53,18 +52,6 @@ pub enum FileCacheError {
 
     #[from(std::option::NoneError)]
     NotFound,
-}
-
-impl From<FileCacheError> for ServiceErrorDomain {
-    fn from(_: FileCacheError) -> Self {
-        ServiceErrorDomain::Cache
-    }
-}
-
-impl From<FileCacheError> for BootstrapError {
-    fn from(_: FileCacheError) -> Self {
-        BootstrapError::CacheError
-    }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]

@@ -39,6 +39,9 @@ pub extern crate lnpbp;
 #[macro_use]
 pub extern crate lnpbp_derive;
 
+#[macro_use]
+pub extern crate diesel;
+
 pub mod api;
 pub mod cli;
 pub mod constants;
