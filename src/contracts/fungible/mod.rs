@@ -26,6 +26,6 @@ pub use data::{
 pub use config::{Config, Opts};
 pub use runtime::{main_with_config, Runtime};
 
-pub use cache::CacheError;
+pub use cache::{CacheError, FileCacheError, SqlCacheError};
 pub use processor::IssueStructure;
 pub(self) use processor::Processor;

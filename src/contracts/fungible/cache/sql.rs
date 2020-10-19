@@ -29,7 +29,6 @@ use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
 
 use crate::contracts::fungible::data::Asset;
 
-use crate::error::{BootstrapError, ServiceErrorDomain};
 use std::path::PathBuf;
 
 use super::cache::{Cache, CacheError};
@@ -59,18 +58,6 @@ pub enum SqlCacheError {
 
     #[from(std::option::NoneError)]
     NotFound,
-}
-
-impl From<SqlCacheError> for ServiceErrorDomain {
-    fn from(_: SqlCacheError) -> Self {
-        ServiceErrorDomain::Cache
-    }
-}
-
-impl From<SqlCacheError> for BootstrapError {
-    fn from(_: SqlCacheError) -> Self {
-        BootstrapError::CacheError
-    }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]

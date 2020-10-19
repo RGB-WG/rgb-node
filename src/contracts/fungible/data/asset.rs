@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use crate::contracts::fungible::cache::models::{
     read_allocations, read_inflation, SqlAllocation, SqlAllocationUtxo, SqlAsset, SqlIssue,
 };
-use crate::contracts::fungible::cache::sql::SqlCacheError;
+use crate::contracts::fungible::cache::SqlCacheError;
 use lnpbp::bitcoin;
 use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bitcoin::{OutPoint, Txid};

@@ -46,6 +46,8 @@ pub enum BootstrapError {
 
     StorageError,
 
+    #[from(crate::contracts::fungible::FileCacheError)]
+    #[from(crate::contracts::fungible::SqlCacheError)]
     CacheError,
 
     Other,
@@ -134,6 +136,8 @@ pub enum ServiceErrorDomain {
     Stash,
     Storage(String),
     Index,
+    #[from(crate::contracts::fungible::FileCacheError)]
+    #[from(crate::contracts::fungible::SqlCacheError)]
     Cache,
     Multithreading,
     P2pwire,
