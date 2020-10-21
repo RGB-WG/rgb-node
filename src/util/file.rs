@@ -18,11 +18,11 @@ pub enum FileMode {
 
 #[inline]
 pub fn file(filename: PathBuf, mode: FileMode) -> Result<fs::File, io::Error> {
-    fs::File::with_options()
-        .read(true)
-        .write(mode == FileMode::Write || mode == FileMode::Create)
-        .create(mode == FileMode::Create)
-        .open(filename)
+    match mode {
+        FileMode::Read => fs::File::open(filename),
+        FileMode::Write => fs::OpenOptions::new().write(true).open(filename),
+        FileMode::Create => fs::File::create(filename),
+    }
 }
 
 pub fn read_file(filename: PathBuf) -> Result<(u32, Vec<u8>), io::Error> {

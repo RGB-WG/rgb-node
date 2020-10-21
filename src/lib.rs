@@ -11,8 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#![feature(with_options)]
-
 #[macro_use]
 extern crate clap;
 #[macro_use]

@@ -69,7 +69,7 @@ impl BTreeIndex {
     }
 
     pub fn load(config: BTreeIndexConfig) -> Result<Self, BTreeIndexError> {
-        if let Ok(file) = fs::File::with_options().read(true).open(&config.index_file) {
+        if let Ok(file) = fs::File::open(&config.index_file) {
             debug!("Loading RGB index from file {:?} ...", &config.index_file);
             Ok(Self {
                 config,
@@ -83,10 +83,7 @@ impl BTreeIndex {
     pub fn store(&self) -> Result<(), BTreeIndexError> {
         debug!("Saving RGB index to file {:?} ...", &self.config.index_file);
         let _ = fs::remove_file(&self.config.index_file);
-        let file = fs::File::with_options()
-            .write(true)
-            .create(true)
-            .open(&self.config.index_file)?;
+        let file = fs::File::create(&self.config.index_file)?;
         self.index.strict_encode(file)?;
         Ok(())
     }
