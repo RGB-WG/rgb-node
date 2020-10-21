@@ -179,9 +179,9 @@ impl Stash for Runtime {
         let mut nodes: Vec<Box<dyn Node>> = vec![];
         consignment.state_transitions.into_iter().try_for_each(
             |(anchor, transition)| -> Result<(), Error> {
-                self.storage
-                    .add_transition(&transition)?
-                    .then(|| nodes.push(Box::new(transition)));
+                if self.storage.add_transition(&transition)? {
+                    nodes.push(Box::new(transition));
+                }
                 self.storage.add_anchor(&anchor)?;
                 self.indexer.index_anchor(&anchor)?;
                 Ok(())
@@ -189,16 +189,16 @@ impl Stash for Runtime {
         )?;
         consignment.state_extensions.into_iter().try_for_each(
             |extension| -> Result<(), Error> {
-                self.storage
-                    .add_extension(&extension)?
-                    .then(|| nodes.push(Box::new(extension)));
+                if self.storage.add_extension(&extension)? {
+                    nodes.push(Box::new(extension));
+                }
                 Ok(())
             },
         )?;
         let genesis = consignment.genesis;
-        self.storage
-            .add_genesis(&genesis)?
-            .then(|| nodes.push(Box::new(genesis)));
+        if self.storage.add_genesis(&genesis)? {
+            nodes.push(Box::new(genesis));
+        }
 
         Ok(nodes)
     }

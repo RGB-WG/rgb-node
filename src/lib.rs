@@ -12,14 +12,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 #![feature(
-    bool_to_option,
     in_band_lifetimes,
     never_type,
     try_trait,
     unwrap_infallible,
-    with_options
+    with_options,
+    vec_remove_item
 )]
-#![feature(vec_remove_item)]
 
 #[macro_use]
 extern crate clap;
