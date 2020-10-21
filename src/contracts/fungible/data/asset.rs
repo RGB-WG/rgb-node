@@ -432,7 +432,7 @@ impl TryFrom<Genesis> for Asset {
                         );
                     }
                     OwnedState::ConfidentialSeal { assigned_state, .. } => {
-                        if unknown_inflation.atomic_value() < u64::MAX {
+                        if unknown_inflation.atomic_value() < core::u64::MAX {
                             unknown_inflation += AccountingAmount::from_fractioned_atomic_value(
                                 fractional_bits,
                                 assigned_state
@@ -444,7 +444,7 @@ impl TryFrom<Genesis> for Asset {
                     _ => {
                         unknown_inflation = AccountingAmount::from_fractioned_atomic_value(
                             fractional_bits,
-                            u64::MAX,
+                            core::u64::MAX,
                         );
                     }
                 }
