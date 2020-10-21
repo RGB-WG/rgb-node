@@ -202,7 +202,10 @@ impl ServiceError {
         }
     }
 
-    pub fn from_rpc(service: ServiceErrorSource, err: lnp::presentation::Error) -> Self {
+    pub fn from_rpc(
+        service: ServiceErrorSource,
+        err: lnp::presentation::Error,
+    ) -> Self {
         Self {
             domain: ServiceErrorDomain::from(err),
             service,

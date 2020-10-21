@@ -184,13 +184,21 @@ impl SqlCache {
         // Create and write table entries from updated cached data
         for item in self.assets.clone().into_iter() {
             let table_asset = SqlAsset::from_asset(&item.1, &self.connection)?;
-            let table_issues = SqlIssue::from_asset(&item.1, &table_asset, &self.connection)?;
+            let table_issues =
+                SqlIssue::from_asset(&item.1, &table_asset, &self.connection)?;
 
-            let table_inflations =
-                SqlInflation::from_asset(&item.1, &table_asset, &self.connection)?;
+            let table_inflations = SqlInflation::from_asset(
+                &item.1,
+                &table_asset,
+                &self.connection,
+            )?;
 
             let (table_utxos, table_allocations) =
-                create_allocation_from_asset(&item.1, &table_asset, &self.connection)?;
+                create_allocation_from_asset(
+                    &item.1,
+                    &table_asset,
+                    &self.connection,
+                )?;
 
             diesel::insert_into(sql_asset_table)
                 .values(table_asset)
@@ -282,8 +290,9 @@ mod test {
     #[ignore]
     // Creates a sample table with sample asset data
     fn test_create_tables() {
-        let database_url = env::var("DATABASE_URL")
-            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
+        let database_url = env::var("DATABASE_URL").expect(
+            "Environment Variable 'DATABASE_URL' must be set to run this test",
+        );
 
         let filepath = PathBuf::from(&database_url[..]);
 
@@ -579,8 +588,9 @@ mod test {
     #[test]
     #[ignore]
     fn test_asset_cache() {
-        let database_url = env::var("DATABASE_URL")
-            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
+        let database_url = env::var("DATABASE_URL").expect(
+            "Environment Variable 'DATABASE_URL' must be set to run this test",
+        );
 
         let filepath = PathBuf::from(&database_url[..]);
         let config = SqlCacheConfig { data_dir: filepath };
@@ -648,10 +658,12 @@ mod test {
             .cloned()
             .unwrap();
 
-        first_sql_asset.contract_id =
-            String::from("9b9dc7065be8fe0a965f42dc4d64bd1e15aa56cf05d3c72fc472c55490936bb3");
+        first_sql_asset.contract_id = String::from(
+            "9b9dc7065be8fe0a965f42dc4d64bd1e15aa56cf05d3c72fc472c55490936bb3",
+        );
 
-        let new_asset = Asset::from_sql_asset(&first_sql_asset, &cache.connection).unwrap();
+        let new_asset =
+            Asset::from_sql_asset(&first_sql_asset, &cache.connection).unwrap();
 
         assert!(cache.add_asset(new_asset).is_ok());
 

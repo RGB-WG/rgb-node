@@ -37,7 +37,8 @@ pub struct Opts {
     #[clap(short, long, default_value = RGB_DATA_DIR, env = "RGB_DATA_DIR")]
     pub data_dir: String,
 
-    /// Connection string to stash (exact format depends on used storage engine)
+    /// Connection string to stash (exact format depends on used storage
+    /// engine)
     #[clap(short, long, default_value = STASHD_STASH, env = "RGB_STASHD_STASH")]
     pub stash: String,
 
@@ -153,6 +154,8 @@ impl Config {
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
             .replace("{node_id}", &self.node_auth.node_id().to_string())
             .parse()
-            .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
+            .unwrap_or_else(|err| {
+                panic!("Error parsing parameter `{}`: {}", param, err)
+            })
     }
 }

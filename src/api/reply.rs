@@ -54,8 +54,8 @@ pub enum Reply {
 
     #[lnp_api(type = 0xFF0C)]
     Transfer(crate::api::reply::Transfer),
-    //#[lnp_api(type = 0xFF0B)]
-    //ValidationStatus(::lnpbp::rgb::validation::Status),
+    /* #[lnp_api(type = 0xFF0B)]
+    ValidationStatus(::lnpbp::rgb::validation::Status), */
 }
 
 impl From<lnp::presentation::Error> for Reply {

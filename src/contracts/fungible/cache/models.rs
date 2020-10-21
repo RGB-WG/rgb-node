@@ -9,7 +9,9 @@ use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
 use cache_schema::*;
 
 use super::sql::SqlCacheError;
-use crate::contracts::fungible::data::{AccountingAmount, AccountingValue, Allocation, Asset};
+use crate::contracts::fungible::data::{
+    AccountingAmount, AccountingValue, Allocation, Asset,
+};
 use diesel::prelude::*;
 use lnpbp::bitcoin::{OutPoint, Txid};
 use lnpbp::bitcoin_hashes::hex::{FromHex, ToHex};
@@ -38,9 +40,12 @@ impl SqlAsset {
     /// Create an Sqlite Asset entry from a given Asset data structure.
     /// Note, only the metadata are written into the Asset table,
     /// All other data for the Asset are to be found from fetching other
-    /// table entries associated with this Asset entry. So they are implicitly defined
-    /// in the table schema.   
-    pub fn from_asset(asset: &Asset, connection: &SqliteConnection) -> Result<Self, SqlCacheError> {
+    /// table entries associated with this Asset entry. So they are implicitly
+    /// defined in the table schema.   
+    pub fn from_asset(
+        asset: &Asset,
+        connection: &SqliteConnection,
+    ) -> Result<Self, SqlCacheError> {
         // Find the last entry and increase index by 1
         let last_asset = sql_asset_table
             .load::<SqlAsset>(connection)?
@@ -56,7 +61,11 @@ impl SqlAsset {
             ticker: asset.ticker().clone(),
             asset_name: asset.name().clone(),
             asset_description: asset.description().clone(),
-            known_circulating_supply: asset.supply().known_circulating().accounting_value() as i64,
+            known_circulating_supply: asset
+                .supply()
+                .known_circulating()
+                .accounting_value()
+                as i64,
             is_issued_known: asset.supply().is_issued_known().clone(),
             max_cap: asset.supply().max_cap().accounting_value() as i64,
             chain: asset.chain().to_string(),
@@ -129,7 +138,8 @@ impl SqlInflation {
             sql_asset_id: table_asset.id,
             outpoint_txid: None,
             outpoint_vout: None,
-            accounting_amount: asset.unknown_inflation().accounting_value() as i64,
+            accounting_amount: asset.unknown_inflation().accounting_value()
+                as i64,
         });
 
         Ok(result)
@@ -144,8 +154,12 @@ impl SqlInflation {
 pub fn read_inflation(
     asset: &SqlAsset,
     connection: &SqliteConnection,
-) -> Result<(BTreeMap<OutPoint, AccountingAmount>, AccountingAmount), SqlCacheError> {
-    let inflations = SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
+) -> Result<
+    (BTreeMap<OutPoint, AccountingAmount>, AccountingAmount),
+    SqlCacheError,
+> {
+    let inflations =
+        SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
 
     let mut known_inflation_map = BTreeMap::new();
 
@@ -239,7 +253,16 @@ impl SqlIssue {
 /// Together these two tables represent the `known_allocations` field
 /// in the Asset data structure.
 #[derive(
-    Queryable, Insertable, Identifiable, Associations, Clone, Debug, Ord, PartialOrd, Eq, PartialEq,
+    Queryable,
+    Insertable,
+    Identifiable,
+    Associations,
+    Clone,
+    Debug,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
 )]
 #[table_name = "sql_allocation_utxo"]
 #[belongs_to(SqlAsset)]
@@ -266,8 +289,8 @@ pub struct SqlAllocation {
 /// with correct associations between them.
 /// The AllocationUtxo entries are associated with the given Asset entry.
 ///
-/// For a Given Assets structure, this will create the correct AllocationUtxo and
-/// Allocation table entries to write to the database
+/// For a Given Assets structure, this will create the correct AllocationUtxo
+/// and Allocation table entries to write to the database
 pub fn create_allocation_from_asset(
     asset: &Asset,
     table_asset: &SqlAsset,
@@ -305,7 +328,9 @@ pub fn create_allocation_from_asset(
         for (index, alloc) in item.1.into_iter().enumerate() {
             allocation_vec.push(SqlAllocation {
                 id: match last_alloc.clone() {
-                    Some(alloc) => alloc.id + added_allocations + index as i32 + 1,
+                    Some(alloc) => {
+                        alloc.id + added_allocations + index as i32 + 1
+                    }
                     None => 0 + added_allocations + index as i32,
                 },
                 sql_allocation_utxo_id: this_utxo_id,
@@ -331,7 +356,8 @@ pub fn read_allocations(
     connection: &SqliteConnection,
 ) -> Result<BTreeMap<OutPoint, Vec<Allocation>>, SqlCacheError> {
     // Get the associated utxo with asset entry
-    let utxo_list = SqlAllocationUtxo::belonging_to(asset).load::<SqlAllocationUtxo>(connection)?;
+    let utxo_list = SqlAllocationUtxo::belonging_to(asset)
+        .load::<SqlAllocationUtxo>(connection)?;
 
     // Get the associated allocations with the above utxos
     let allocations = SqlAllocation::belonging_to(&utxo_list)
@@ -339,7 +365,8 @@ pub fn read_allocations(
         .grouped_by(&utxo_list);
 
     // Group them accordingly and zip the two vectors by correct groupings
-    let grouped_allocation = utxo_list.into_iter().zip(&allocations).collect::<Vec<_>>();
+    let grouped_allocation =
+        utxo_list.into_iter().zip(&allocations).collect::<Vec<_>>();
 
     let mut allocation_map = BTreeMap::new();
 
@@ -353,7 +380,8 @@ pub fn read_allocations(
     for item in allocation_map.into_iter() {
         let mut allocations = vec![];
         for allocation in item.1 {
-            allocations.push(Allocation::from_sql_allocation(&allocation, &item.0)?);
+            allocations
+                .push(Allocation::from_sql_allocation(&allocation, &item.0)?);
         }
         known_allocation.insert(
             OutPoint {

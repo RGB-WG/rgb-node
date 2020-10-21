@@ -34,8 +34,8 @@ use crate::api::{
     Reply,
 };
 use crate::error::{
-    ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
-    ServiceErrorSource,
+    ApiErrorType, BootstrapError, RuntimeError, ServiceError,
+    ServiceErrorDomain, ServiceErrorSource,
 };
 use crate::service::TryService;
 
@@ -78,7 +78,10 @@ impl Runtime {
         &self.cacher
     }
 
-    pub fn init(config: Config, mut context: &mut zmq::Context) -> Result<Self, BootstrapError> {
+    pub fn init(
+        config: Config,
+        mut context: &mut zmq::Context,
+    ) -> Result<Self, BootstrapError> {
         let processor = Processor::new()?;
 
         let cacher = FileCache::new(FileCacheConfig {
@@ -140,7 +143,9 @@ impl TryService for Runtime {
         debug!("Registering RGB20 schema");
         self.register_schema().await.map_err(|_| {
             error!("Unable to register RGB20 schema");
-            RuntimeError::Internal("Unable to register RGB20 schema".to_string())
+            RuntimeError::Internal(
+                "Unable to register RGB20 schema".to_string(),
+            )
         })?;
 
         loop {
@@ -174,23 +179,35 @@ impl Runtime {
         trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
         let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
             error!("Error unmarshalling the data: {}", err);
-            ServiceError::from_rpc(ServiceErrorSource::Contract(s!("fungible")), err)
+            ServiceError::from_rpc(
+                ServiceErrorSource::Contract(s!("fungible")),
+                err,
+            )
         })?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
             Request::Issue(issue) => self.rpc_issue(issue).await,
             Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
-            Request::Validate(consignment) => self.rpc_validate(consignment).await,
+            Request::Validate(consignment) => {
+                self.rpc_validate(consignment).await
+            }
             Request::Accept(accept) => self.rpc_accept(accept).await,
             Request::Forget(outpoint) => self.rpc_forget(outpoint).await,
-            Request::ImportAsset(genesis) => self.rpc_import_asset(genesis).await,
-            Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id).await,
+            Request::ImportAsset(genesis) => {
+                self.rpc_import_asset(genesis).await
+            }
+            Request::ExportAsset(asset_id) => {
+                self.rpc_export_asset(asset_id).await
+            }
             Request::Sync => self.rpc_sync().await,
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
     }
 
-    async fn rpc_issue(&mut self, issue: &Issue) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_issue(
+        &mut self,
+        issue: &Issue,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
         let issue_structure = match issue.inflatable {
@@ -224,11 +241,14 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
-    async fn rpc_transfer(&mut self, transfer: &TransferApi) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_transfer(
+        &mut self,
+        transfer: &TransferApi,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", transfer);
 
-        // TODO: Check inputs that they really exist and have sufficient amount of
-        //       asset for the transfer operation
+        // TODO: Check inputs that they really exist and have sufficient amount
+        // of       asset for the transfer operation
 
         trace!("Looking for asset information");
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
@@ -272,12 +292,18 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
-    async fn rpc_accept(&mut self, accept: &AcceptApi) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_accept(
+        &mut self,
+        accept: &AcceptApi,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
         Ok(self.accept(accept.clone()).await?)
     }
 
-    async fn rpc_forget(&mut self, outpoint: &OutPoint) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_forget(
+        &mut self,
+        outpoint: &OutPoint,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got FORGET");
         Ok(self.forget(outpoint.clone()).await?)
     }
@@ -288,7 +314,10 @@ impl Runtime {
         Ok(Reply::Sync(reply::SyncFormat(self.config.format, data)))
     }
 
-    async fn rpc_import_asset(&mut self, genesis: &Genesis) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_import_asset(
+        &mut self,
+        genesis: &Genesis,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got IMPORT_ASSET");
         self.import_asset(Asset::try_from(genesis.clone())?, genesis.clone())
             .await?;
@@ -328,7 +357,10 @@ impl Runtime {
         }
     }
 
-    async fn export_asset(&mut self, asset_id: ContractId) -> Result<Genesis, ServiceErrorDomain> {
+    async fn export_asset(
+        &mut self,
+        asset_id: ContractId,
+    ) -> Result<Genesis, ServiceErrorDomain> {
         match self
             .stash_req_rep(api::stash::Request::ReadGenesis(asset_id))
             .await?
@@ -338,7 +370,10 @@ impl Runtime {
         }
     }
 
-    async fn consign(&mut self, consign_req: ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
+    async fn consign(
+        &mut self,
+        consign_req: ConsignRequest,
+    ) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
             .stash_req_rep(api::stash::Request::Consign(consign_req))
             .await?;
@@ -349,7 +384,10 @@ impl Runtime {
         }
     }
 
-    async fn validate(&mut self, consignment: Consignment) -> Result<Reply, ServiceErrorDomain> {
+    async fn validate(
+        &mut self,
+        consignment: Consignment,
+    ) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
             .stash_req_rep(api::stash::Request::Validate(consignment))
             .await?;
@@ -360,7 +398,10 @@ impl Runtime {
         }
     }
 
-    async fn accept(&mut self, accept: AcceptApi) -> Result<Reply, ServiceErrorDomain> {
+    async fn accept(
+        &mut self,
+        accept: AcceptApi,
+    ) -> Result<Reply, ServiceErrorDomain> {
         let reply = self
             .stash_req_rep(api::stash::Request::Merge(MergeRequest {
                 consignment: accept.consignment.clone(),
@@ -376,14 +417,21 @@ impl Runtime {
             };
 
             for (_, transition) in &accept.consignment.state_transitions {
-                let set = transition.owned_rights_by_type(*OwnedRightsType::Assets);
+                let set =
+                    transition.owned_rights_by_type(*OwnedRightsType::Assets);
                 for variant in set {
                     if let Assignments::DiscreteFiniteField(set) = variant {
                         for (index, assignment) in set.into_iter().enumerate() {
-                            if let Some(seal) = accept.reveal_outpoints.iter().find(|op| {
-                                op.conceal() == assignment.seal_definition_confidential()
-                            }) {
-                                if let Some(assigned_state) = assignment.assigned_state() {
+                            if let Some(seal) =
+                                accept.reveal_outpoints.iter().find(|op| {
+                                    op.conceal()
+                                        == assignment
+                                            .seal_definition_confidential()
+                                })
+                            {
+                                if let Some(assigned_state) =
+                                    assignment.assigned_state()
+                                {
                                     asset.add_allocation(
                                         seal.clone().into(),
                                         transition.node_id(),
@@ -392,7 +440,8 @@ impl Runtime {
                                     );
                                 } else {
                                     Err(ServiceErrorDomain::Internal(
-                                        "Consignment structure is broken".to_string(),
+                                        "Consignment structure is broken"
+                                            .to_string(),
                                     ))?
                                 }
                             }
@@ -410,7 +459,10 @@ impl Runtime {
         }
     }
 
-    async fn forget(&mut self, outpoint: OutPoint) -> Result<Reply, ServiceErrorDomain> {
+    async fn forget(
+        &mut self,
+        outpoint: OutPoint,
+    ) -> Result<Reply, ServiceErrorDomain> {
         let mut removal_list = Vec::<_>::new();
         let assets = self
             .cacher

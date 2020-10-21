@@ -92,7 +92,10 @@ impl BTreeIndex {
 impl Index for BTreeIndex {
     type Error = BTreeIndexError;
 
-    fn anchor_id_by_transition_id(&self, _tsid: NodeId) -> Result<AnchorId, Self::Error> {
+    fn anchor_id_by_transition_id(
+        &self,
+        _tsid: NodeId,
+    ) -> Result<AnchorId, Self::Error> {
         unimplemented!()
     }
 

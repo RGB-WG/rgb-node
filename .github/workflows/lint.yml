@@ -1,4 +1,4 @@
-name: Rust
+name: Lints
 
 on:
   push:
@@ -10,23 +10,18 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  fmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly-2020-10-12
-            override: true
-            components: rustfmt
-      - name: Dependencies
-        run: sudo apt-get install -y libzmq3-dev libpcre3-dev libpq-dev libssl-dev
-      - name: Build
-        run: cargo build --verbose
-      - name: Run tests
-        run: cargo test --verbose
+          toolchain: nightly
+          override: true
+          components: rustfmt
       - uses: actions-rs/cargo@v1
+        name: Lints
         with:
           command: fmt
           args: --all -- --check

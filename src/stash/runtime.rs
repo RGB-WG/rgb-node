@@ -18,8 +18,8 @@ use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
 use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
 use lnpbp::rgb::{
-    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId, Schema,
-    SchemaId, Stash, Validity,
+    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
+    NodeId, Schema, SchemaId, Stash, Validity,
 };
 
 use super::electrum::ElectrumTxResolver;
@@ -30,7 +30,8 @@ use super::Config;
 use crate::api::stash::{ConsignRequest, MergeRequest, Request};
 use crate::api::{reply, Reply};
 use crate::error::{
-    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
+    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
+    ServiceErrorSource,
 };
 use crate::service::TryService;
 use crate::stash::index::BTreeIndexConfig;
@@ -82,7 +83,10 @@ impl Runtime {
         &self.storage
     }
 
-    pub fn init(config: Config, mut context: &mut zmq::Context) -> Result<Self, BootstrapError> {
+    pub fn init(
+        config: Config,
+        mut context: &mut zmq::Context,
+    ) -> Result<Self, BootstrapError> {
         #[cfg(not(store_hammersbald))] // Default store
         let storage = DiskStorage::new(DiskStorageConfig {
             data_dir: PathBuf::from(config.stash.clone()),
@@ -154,22 +158,27 @@ impl Runtime {
 
     async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
         trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
-        let message = &*self
-            .unmarshaller
-            .unmarshall(&raw)
-            .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
+        let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
+            ServiceError::from_rpc(ServiceErrorSource::Stash, err)
+        })?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
             Request::ListSchemata() => self.rpc_list_schemata().await,
             Request::ListGeneses() => self.rpc_list_geneses().await,
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
             Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
-            Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id).await,
-            Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id).await,
+            Request::ReadGenesis(contract_id) => {
+                self.rpc_read_genesis(contract_id).await
+            }
+            Request::ReadSchema(schema_id) => {
+                self.rpc_read_schema(schema_id).await
+            }
             Request::Consign(consign) => self.rpc_consign(consign).await,
             Request::Validate(consign) => self.rpc_validate(consign).await,
             Request::Merge(merge) => self.rpc_merge(merge).await,
-            Request::Forget(removal_list) => self.rpc_forget(removal_list).await,
+            Request::Forget(removal_list) => {
+                self.rpc_forget(removal_list).await
+            }
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -190,13 +199,19 @@ impl Runtime {
         Ok(Reply::ContractIds(ids))
     }
 
-    async fn rpc_add_schema(&mut self, schema: &Schema) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_add_schema(
+        &mut self,
+        schema: &Schema,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ADD_SCHEMA {}", schema);
         self.storage.add_schema(schema)?;
         Ok(Reply::Success)
     }
 
-    async fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_add_genesis(
+        &mut self,
+        genesis: &Genesis,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ADD_GENESIS {}", genesis);
         self.storage.add_genesis(genesis)?;
         Ok(Reply::Success)
@@ -211,13 +226,19 @@ impl Runtime {
         Ok(Reply::Genesis(genesis))
     }
 
-    async fn rpc_read_schema(&mut self, schema_id: &SchemaId) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_read_schema(
+        &mut self,
+        schema_id: &SchemaId,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got READ_SCHEMA {}", schema_id);
         let schema = self.storage.schema(schema_id)?;
         Ok(Reply::Schema(schema))
     }
 
-    async fn rpc_consign(&mut self, request: &ConsignRequest) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_consign(
+        &mut self,
+        request: &ConsignRequest,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got CONSIGN {}", request);
 
         let mut transitions = request.other_transition_ids.clone();
@@ -264,10 +285,12 @@ impl Runtime {
 
         match validation_status.validity() {
             Validity::Valid => Ok(Reply::Success),
-            Validity::UnresolvedTransactions => Ok(Reply::Failure(reply::Failure {
-                code: 1,
-                info: format!("{:?}", validation_status.unresolved_txids),
-            })),
+            Validity::UnresolvedTransactions => {
+                Ok(Reply::Failure(reply::Failure {
+                    code: 1,
+                    info: format!("{:?}", validation_status.unresolved_txids),
+                }))
+            }
             Validity::Invalid => Ok(Reply::Failure(reply::Failure {
                 code: 2,
                 info: format!("{:?}", validation_status.failures),
@@ -278,7 +301,10 @@ impl Runtime {
         //Ok(Reply::ValidationStatus(validation_status))
     }
 
-    async fn rpc_merge(&mut self, merge: &MergeRequest) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_merge(
+        &mut self,
+        merge: &MergeRequest,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got MERGE CONSIGNMENT");
 
         let known_seals = &merge.reveal_outpoints;
@@ -286,29 +312,30 @@ impl Runtime {
         // [PRIVACY]:
         // Update transition data with the revealed state information that we
         // kept since we did an invoice (and the sender did not know).
-        let reveal_known_seals = |(_, assignments): (&usize, &mut Assignments)| match assignments {
-            Assignments::Declarative(_) => {}
-            Assignments::DiscreteFiniteField(set) => {
-                *set = set
-                    .iter()
-                    .map(|a| {
-                        let mut a = a.clone();
-                        a.reveal_seals(known_seals.iter());
-                        a
-                    })
-                    .collect();
-            }
-            Assignments::CustomData(set) => {
-                *set = set
-                    .iter()
-                    .map(|a| {
-                        let mut a = a.clone();
-                        a.reveal_seals(known_seals.iter());
-                        a
-                    })
-                    .collect();
-            }
-        };
+        let reveal_known_seals =
+            |(_, assignments): (&usize, &mut Assignments)| match assignments {
+                Assignments::Declarative(_) => {}
+                Assignments::DiscreteFiniteField(set) => {
+                    *set = set
+                        .iter()
+                        .map(|a| {
+                            let mut a = a.clone();
+                            a.reveal_seals(known_seals.iter());
+                            a
+                        })
+                        .collect();
+                }
+                Assignments::CustomData(set) => {
+                    *set = set
+                        .iter()
+                        .map(|a| {
+                            let mut a = a.clone();
+                            a.reveal_seals(known_seals.iter());
+                            a
+                        })
+                        .collect();
+                }
+            };
 
         for (anchor, transition) in &merge.consignment.state_transitions {
             let mut transition = transition.clone();

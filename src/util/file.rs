@@ -44,12 +44,16 @@ pub fn read_dir_filenames(
         let entry = entry?;
         let path = entry.path();
         if let Some(ext) = filter_extensions {
-            if ext != path.extension().map(|s| s.to_str().unwrap()).unwrap_or("") {
+            if ext
+                != path.extension().map(|s| s.to_str().unwrap()).unwrap_or("")
+            {
                 continue;
             }
         }
         if !path.is_dir() {
-            if let Some(name) = path.file_name().map(|s| s.to_str().unwrap().to_string()) {
+            if let Some(name) =
+                path.file_name().map(|s| s.to_str().unwrap().to_string())
+            {
                 list.push(name);
             }
         }

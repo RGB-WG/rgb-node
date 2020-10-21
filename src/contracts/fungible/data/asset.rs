@@ -21,7 +21,8 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::contracts::fungible::cache::models::{
-    read_allocations, read_inflation, SqlAllocation, SqlAllocationUtxo, SqlAsset, SqlIssue,
+    read_allocations, read_inflation, SqlAllocation, SqlAllocationUtxo,
+    SqlAsset, SqlIssue,
 };
 use crate::contracts::fungible::cache::SqlCacheError;
 use lnpbp::bitcoin;
@@ -39,19 +40,39 @@ use crate::error::ServiceErrorDomain;
 
 pub type AccountingValue = f32;
 
-#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default)]
+#[derive(
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Debug,
+    Display,
+    Default,
+)]
 #[display(Debug)]
 pub struct AccountingAmount(AtomicValue, u8);
 
 impl AccountingAmount {
     #[inline]
-    pub fn transmutate(fractional_bits: u8, accounting_value: AccountingValue) -> AtomicValue {
-        AccountingAmount::from_fractioned_accounting_value(fractional_bits, accounting_value)
-            .atomic_value()
+    pub fn transmutate(
+        fractional_bits: u8,
+        accounting_value: AccountingValue,
+    ) -> AtomicValue {
+        AccountingAmount::from_fractioned_accounting_value(
+            fractional_bits,
+            accounting_value,
+        )
+        .atomic_value()
     }
 
     #[inline]
-    pub fn from_asset_accounting_value(asset: &Asset, accounting_value: AccountingValue) -> Self {
+    pub fn from_asset_accounting_value(
+        asset: &Asset,
+        accounting_value: AccountingValue,
+    ) -> Self {
         let bits = asset.fractional_bits;
         let full = (accounting_value.trunc() as u64) << bits as u64;
         let fract = accounting_value.fract() as u64;
@@ -59,22 +80,29 @@ impl AccountingAmount {
     }
 
     #[inline]
-    fn from_fractioned_atomic_value(fractional_bits: u8, atomic_value: AtomicValue) -> Self {
+    pub fn from_fractioned_atomic_value(
+        fractional_bits: u8,
+        atomic_value: AtomicValue,
+    ) -> Self {
         Self(atomic_value, fractional_bits)
     }
 
     #[inline]
-    pub(crate) fn from_fractioned_accounting_value(
+    pub fn from_fractioned_accounting_value(
         fractional_bits: u8,
         accounting_value: AccountingValue,
     ) -> Self {
         let fract = (accounting_value.fract()
-            * 10u64.pow(fractional_bits as u32) as AccountingValue) as u64;
+            * 10u64.pow(fractional_bits as u32) as AccountingValue)
+            as u64;
         Self(accounting_value.trunc() as u64 + fract, fractional_bits)
     }
 
     #[inline]
-    fn from_asset_atomic_value(asset: &Asset, atomic_value: AtomicValue) -> Self {
+    pub fn from_asset_atomic_value(
+        asset: &Asset,
+        atomic_value: AtomicValue,
+    ) -> Self {
         Self(atomic_value, asset.fractional_bits)
     }
 
@@ -83,7 +111,8 @@ impl AccountingAmount {
         let full = self.0 >> self.1;
         let fract = self.0 ^ (full << self.1);
         full as AccountingValue
-            + fract as AccountingValue / 10u64.pow(self.1 as u32) as AccountingValue
+            + fract as AccountingValue
+                / 10u64.pow(self.1 as u32) as AccountingValue
     }
 
     #[inline]
@@ -137,7 +166,8 @@ pub struct Asset {
     /// Specifies outpoints which when spent may indicate inflation happenning
     /// up to specific amount.
     known_inflation: BTreeMap<bitcoin::OutPoint, AccountingAmount>,
-    /// Specifies max amount to which asset can be inflated without our knowledge
+    /// Specifies max amount to which asset can be inflated without our
+    /// knowledge
     unknown_inflation: AccountingAmount,
     /// Specifies outpoints controlling certain amounts of assets
     known_allocations: BTreeMap<bitcoin::OutPoint, Vec<Allocation>>,
@@ -145,14 +175,15 @@ pub struct Asset {
 
 impl Asset {
     /// Create an Asset structure from an sqlite asset table entry.
-    /// This fetches all the other tables for entries associated with the given asset
-    /// and recreates the full Asset structure. This should be used while reading Asset data from
-    /// database table.
+    /// This fetches all the other tables for entries associated with the given
+    /// asset and recreates the full Asset structure. This should be used
+    /// while reading Asset data from database table.
     pub fn from_sql_asset(
         table_value: &SqlAsset,
         connection: &SqliteConnection,
     ) -> Result<Self, SqlCacheError> {
-        let (known_inflation, unknown_inflation) = read_inflation(table_value, connection)?;
+        let (known_inflation, unknown_inflation) =
+            read_inflation(table_value, connection)?;
 
         let known_table_issues =
             SqlIssue::belonging_to(table_value).load::<SqlIssue>(connection)?;
@@ -222,17 +253,27 @@ impl Allocation {
 }
 
 #[derive(
-    Clone, Copy, Getters, Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Display, Default,
+    Clone,
+    Copy,
+    Getters,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Debug,
+    Display,
+    Default,
 )]
 #[display(Debug)]
 pub struct Supply {
     // Sum of all issued amounts
     known_circulating: AccountingAmount,
-    // Specifies if all issuances are known (i.e. there are data for issue state
-    // transitions for all already spent `inflation` single-use-seals). In this
-    // case `known_circulating` will be equal to `total_circulating`.
-    // The parameter is option since the fact that the UTXO is spend may be
-    // unknown without blockchain access
+    // Specifies if all issuances are known (i.e. there are data for issue
+    // state transitions for all already spent `inflation`
+    // single-use-seals). In this case `known_circulating` will be equal to
+    // `total_circulating`. The parameter is option since the fact that the
+    // UTXO is spend may be unknown without blockchain access
     is_issued_known: Option<bool>,
     // We always know total supply, b/c even for assets without defined cap the
     // cap *de facto* equals to u64::MAX
@@ -254,10 +295,11 @@ impl Supply {
     /// supply structure.
     pub fn from_sql_asset(table_value: &SqlAsset) -> Self {
         Self {
-            known_circulating: AccountingAmount::from_fractioned_accounting_value(
-                table_value.fractional_bits[0],
-                table_value.known_circulating_supply as AccountingValue,
-            ),
+            known_circulating:
+                AccountingAmount::from_fractioned_accounting_value(
+                    table_value.fractional_bits[0],
+                    table_value.known_circulating_supply as AccountingValue,
+                ),
             is_issued_known: table_value.is_issued_known,
             max_cap: AccountingAmount::from_fractioned_accounting_value(
                 table_value.fractional_bits[0],
@@ -267,7 +309,18 @@ impl Supply {
     }
 }
 
-#[derive(Clone, Copy, Getters, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Display)]
+#[derive(
+    Clone,
+    Copy,
+    Getters,
+    Debug,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    Hash,
+    Display,
+)]
 #[display(Debug)]
 pub struct Issue {
     // Unique primary key; equals to the state transition id that performs
@@ -323,7 +376,10 @@ impl Asset {
     }
 
     #[inline]
-    pub fn allocations(&self, seal: &bitcoin::OutPoint) -> Option<&Vec<Allocation>> {
+    pub fn allocations(
+        &self,
+        seal: &bitcoin::OutPoint,
+    ) -> Option<&Vec<Allocation>> {
         self.known_allocations.get(seal)
     }
 
@@ -340,7 +396,8 @@ impl Asset {
             outpoint,
             value,
         };
-        let allocations = self.known_allocations.entry(outpoint).or_insert(vec![]);
+        let allocations =
+            self.known_allocations.entry(outpoint).or_insert(vec![]);
         if !allocations.contains(&new_allocation) {
             allocations.push(new_allocation);
             true
@@ -362,8 +419,11 @@ impl Asset {
             outpoint,
             value,
         };
-        let allocations = self.known_allocations.entry(outpoint).or_insert(vec![]);
-        if let Some(index) = allocations.iter().position(|a| *a == old_allocation) {
+        let allocations =
+            self.known_allocations.entry(outpoint).or_insert(vec![]);
+        if let Some(index) =
+            allocations.iter().position(|a| *a == old_allocation)
+        {
             allocations.remove(index);
             true
         } else {
@@ -414,7 +474,9 @@ impl TryFrom<Genesis> for Asset {
         let mut known_inflation = BTreeMap::<_, _>::default();
         let mut unknown_inflation = AccountingAmount::default();
 
-        for assignment in genesis.owned_rights_by_type(*OwnedRightsType::Inflation) {
+        for assignment in
+            genesis.owned_rights_by_type(*OwnedRightsType::Inflation)
+        {
             for state in assignment.to_custom_state() {
                 match state {
                     OwnedState::Revealed {
@@ -425,27 +487,29 @@ impl TryFrom<Genesis> for Asset {
                             seal_definition.try_into()?,
                             AccountingAmount::from_fractioned_atomic_value(
                                 fractional_bits,
-                                assigned_state
-                                    .u64()
-                                    .ok_or(schema::Error::NotAllFieldsPresent)?,
+                                assigned_state.u64().ok_or(
+                                    schema::Error::NotAllFieldsPresent,
+                                )?,
                             ),
                         );
                     }
                     OwnedState::ConfidentialSeal { assigned_state, .. } => {
                         if unknown_inflation.atomic_value() < core::u64::MAX {
-                            unknown_inflation += AccountingAmount::from_fractioned_atomic_value(
-                                fractional_bits,
-                                assigned_state
-                                    .u64()
-                                    .ok_or(schema::Error::NotAllFieldsPresent)?,
-                            )
+                            unknown_inflation +=
+                                AccountingAmount::from_fractioned_atomic_value(
+                                    fractional_bits,
+                                    assigned_state.u64().ok_or(
+                                        schema::Error::NotAllFieldsPresent,
+                                    )?,
+                                )
                         };
                     }
                     _ => {
-                        unknown_inflation = AccountingAmount::from_fractioned_atomic_value(
-                            fractional_bits,
-                            core::u64::MAX,
-                        );
+                        unknown_inflation =
+                            AccountingAmount::from_fractioned_atomic_value(
+                                fractional_bits,
+                                core::u64::MAX,
+                            );
                     }
                 }
             }
@@ -458,15 +522,18 @@ impl TryFrom<Genesis> for Asset {
             amount: supply.clone(),
             origin: None, // This is a primary issue, so no origin here
         };
-        let mut known_allocations = BTreeMap::<bitcoin::OutPoint, Vec<Allocation>>::default();
-        for assignment in genesis.owned_rights_by_type(*OwnedRightsType::Assets) {
+        let mut known_allocations =
+            BTreeMap::<bitcoin::OutPoint, Vec<Allocation>>::default();
+        for assignment in genesis.owned_rights_by_type(*OwnedRightsType::Assets)
+        {
             assignment
                 .to_discrete_state()
                 .into_iter()
                 .enumerate()
                 .for_each(|(index, assign)| {
                     if let OwnedState::Revealed {
-                        seal_definition: seal::Revealed::TxOutpoint(outpoint_reveal),
+                        seal_definition:
+                            seal::Revealed::TxOutpoint(outpoint_reveal),
                         assigned_state,
                     } = assign
                     {

@@ -26,14 +26,21 @@ use lnpbp::lnp::Unmarshall;
 use lnpbp::rgb::PSBT_OUT_PUBKEY;
 
 use super::{Error, Runtime};
-use crate::api::{fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply};
+use crate::api::{
+    fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply,
+};
 use crate::error::ServiceErrorDomain;
-use crate::fungible::{Invoice, IssueStructure, Outcoincealed, Outcoins, Outpoint};
+use crate::fungible::{
+    Invoice, IssueStructure, Outcoincealed, Outcoins, Outpoint,
+};
 use crate::util::file::ReadWrite;
 use crate::util::SealSpec;
 
 impl Runtime {
-    fn command(&mut self, command: Request) -> Result<Arc<Reply>, ServiceErrorDomain> {
+    fn command(
+        &mut self,
+        command: Request,
+    ) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.encode()?;
         self.session_rpc.send_raw_message(data)?;
         let raw = self.session_rpc.recv_raw_message()?;
@@ -132,8 +139,8 @@ impl Runtime {
                 transfer
                     .consignment
                     .write_file(PathBuf::from(&consignment_file))?;
-                let out_file =
-                    File::create(&transaction_file).expect("can't create output transaction file");
+                let out_file = File::create(&transaction_file)
+                    .expect("can't create output transaction file");
                 transfer.psbt.consensus_encode(out_file)?;
                 println!(
                     "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",

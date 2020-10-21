@@ -1,13 +1,38 @@
 Change Log
 ==========
 
+v0.1.0
+------
+
+### Core features
+- RGB Stash daemon operating client-validated data and managing their file 
+  storage
+- Fungible daemon operating RGB-20 assets and managing their storage (both file
+  and SQLite)
+- RGB-20 asset issuance, invoicing, trnasfer and transfer acceptance
+- Command-line tool for daemons operations
+- Itegration functions packed as a compiled library
+
+### New features since RC2
+- SQLite storage for assets cached data
+- Storage of public key tweaking information in PSBT
+- Support of Rust stable and old version up to 1.41.1
+- Update to the latest public releases of upstream bitcoin and LNP/BP libraries
+  (migration from self-maintained forks)
+
+### Breaking changes
+- Standard-compliant use of PSBT extension fields.
+- Removed requirements to specify fee for the transaction (it is now computed 
+  from PSBT data)
+
+
 v0.1.0-rc.2
 -----------
 
 ### Main updates
 - FFI and demo apps are moved into a separate 
   [**RGB SDK**](https://github.com/LNP-BP/rgb-sdk) project
-- Big update and refactoring in RGB-20 achema (fungible assets)
+- Big update and refactoring in RGB-20 schema (fungible assets)
   * Multiple inflation rights with better control over total inflation
   * Epoch-based burn and burn-and-replace procedures; enhanced with UTXO set and
     versioned proofs of burn data, supporting up to 15 burn proof variants 

@@ -139,13 +139,12 @@ impl TryService for Runtime {
 
         handlers.push(self.daemon("stashd")?);
 
-        self.config
-            .contracts
-            .iter()
-            .try_for_each(|contract_name| -> Result<(), DaemonError> {
+        self.config.contracts.iter().try_for_each(
+            |contract_name| -> Result<(), DaemonError> {
                 handlers.push(self.daemon(contract_name.daemon_name())?);
                 Ok(())
-            })?;
+            },
+        )?;
 
         join_all(handlers.into_iter().map(|d| d.future()))
             .await

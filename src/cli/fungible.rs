@@ -53,7 +53,8 @@ pub enum Command {
     },
 
     Export {
-        /// Bech32 representation of the asset ID (contract id of the asset genesis)
+        /// Bech32 representation of the asset ID (contract id of the asset
+        /// genesis)
         asset: ContractId,
     },
 
@@ -77,7 +78,8 @@ pub enum Command {
         /// Consignment file
         consignment: PathBuf,
 
-        /// Locally-controlled outpoint (specified when the invoice was created)
+        /// Locally-controlled outpoint (specified when the invoice was
+        /// created)
         outpoint: OutPoint,
 
         /// Outpoint blinding factor (generated when the invoice was created)
@@ -133,8 +135,12 @@ pub struct TransferCli {
 impl Command {
     pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
-            Command::List { format, long } => self.exec_list(runtime, format, long),
-            Command::Import { ref asset } => self.exec_import(runtime, asset.clone()),
+            Command::List { format, long } => {
+                self.exec_list(runtime, format, long)
+            }
+            Command::Import { ref asset } => {
+                self.exec_import(runtime, asset.clone())
+            }
             Command::Export { asset } => self.exec_export(runtime, asset),
             Command::Invoice(invoice) => invoice.exec(runtime),
             Command::Issue(issue) => issue.exec(runtime),
@@ -146,7 +152,12 @@ impl Command {
                 ref consignment,
                 outpoint,
                 blinding_factor,
-            } => self.exec_accept(runtime, consignment.clone(), outpoint, blinding_factor),
+            } => self.exec_accept(
+                runtime,
+                consignment.clone(),
+                outpoint,
+                blinding_factor,
+            ),
             Command::Forget { outpoint } => self.exec_forget(runtime, outpoint),
         }
     }
@@ -210,7 +221,11 @@ impl Command {
         Ok(())
     }
 
-    fn exec_import(&self, mut runtime: Runtime, genesis: Genesis) -> Result<(), Error> {
+    fn exec_import(
+        &self,
+        mut runtime: Runtime,
+        genesis: Genesis,
+    ) -> Result<(), Error> {
         info!("Importing asset ...");
 
         match &*runtime.import(genesis)? {
@@ -229,7 +244,11 @@ impl Command {
         Ok(())
     }
 
-    fn exec_export(&self, mut runtime: Runtime, asset_id: ContractId) -> Result<(), Error> {
+    fn exec_export(
+        &self,
+        mut runtime: Runtime,
+        asset_id: ContractId,
+    ) -> Result<(), Error> {
         info!("Exporting asset ...");
 
         match &*runtime.export(asset_id)? {
@@ -249,13 +268,21 @@ impl Command {
         Ok(())
     }
 
-    fn exec_validate(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
+    fn exec_validate(
+        &self,
+        mut runtime: Runtime,
+        filename: PathBuf,
+    ) -> Result<(), Error> {
         info!("Validating asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
-        let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
-            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
-        })?;
+        let consignment =
+            Consignment::read_file(filename.clone()).map_err(|err| {
+                Error::InputFileFormatError(
+                    format!("{:?}", filename),
+                    format!("{}", err),
+                )
+            })?;
         trace!("{:?}", strict_encode(&consignment));
 
         match &*runtime.validate(consignment)? {
@@ -284,12 +311,17 @@ impl Command {
         info!("Accepting asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
-        let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
-            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
-        })?;
+        let consignment =
+            Consignment::read_file(filename.clone()).map_err(|err| {
+                Error::InputFileFormatError(
+                    format!("{:?}", filename),
+                    format!("{}", err),
+                )
+            })?;
         trace!("{:?}", strict_encode(&consignment));
 
-        let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0) {
+        let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0)
+        {
             let outpoint_reveal = OutpointReveal {
                 blinding: blinding_factor,
                 txid: outpoint.txid,
@@ -325,7 +357,11 @@ impl Command {
         Ok(())
     }
 
-    fn exec_forget(&self, mut runtime: Runtime, outpoint: OutPoint) -> Result<(), Error> {
+    fn exec_forget(
+        &self,
+        mut runtime: Runtime,
+        outpoint: OutPoint,
+    ) -> Result<(), Error> {
         info!(
             "Forgetting assets allocated to specific bitcoin transaction output that was spent..."
         );
@@ -422,14 +458,23 @@ impl TransferCli {
         let filepath = format!("{:?}", &self.prototype);
         let file = fs::File::open(self.prototype)
             .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
-        let mut psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
-            Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))
-        })?;
+        let mut psbt = PartiallySignedTransaction::consensus_decode(file)
+            .map_err(|err| {
+                Error::InputFileFormatError(
+                    format!("{:?}", filepath),
+                    format!("{}", err),
+                )
+            })?;
 
         for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
             if let Some(key) = output.hd_keypaths.keys().next() {
                 let key = key.clone();
-                output.insert_proprietary_key(b"RGB".to_vec(), PSBT_OUT_PUBKEY, vec![], &key.key);
+                output.insert_proprietary_key(
+                    b"RGB".to_vec(),
+                    PSBT_OUT_PUBKEY,
+                    vec![],
+                    &key.key,
+                );
                 debug!("Output #{} commitment key will be {}", index, key);
             } else {
                 warn!(

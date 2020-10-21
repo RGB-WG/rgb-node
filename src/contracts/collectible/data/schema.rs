@@ -16,8 +16,9 @@ use core::ops::Deref;
 use lnpbp::rgb::schema::{
     constants::*,
     script::{Procedure, StandardProcedure},
-    AssignmentAction, Bits, DataFormat, GenesisAction, GenesisSchema, Occurences, Schema,
-    StateFormat, StateSchema, TransitionAction, TransitionSchema,
+    AssignmentAction, Bits, DataFormat, GenesisAction, GenesisSchema,
+    Occurences, Schema, StateFormat, StateSchema, TransitionAction,
+    TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;

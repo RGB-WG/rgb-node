@@ -26,7 +26,6 @@ use crate::api::Reply;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 
 pub struct Runtime {
-    config: Config,
     stash_rpc: Session<NoEncryption, transport::zmq::Connection>,
     fungible_rpc: Session<NoEncryption, transport::zmq::Connection>,
     unmarshaller: Unmarshaller<Reply>,
@@ -48,14 +47,16 @@ impl Runtime {
             None,
         )?;
         Ok(Self {
-            config,
             stash_rpc,
             fungible_rpc,
             unmarshaller: Reply::create_unmarshaller(),
         })
     }
 
-    fn stash_command(&mut self, command: stash::Request) -> Result<Arc<Reply>, ServiceErrorDomain> {
+    fn stash_command(
+        &mut self,
+        command: stash::Request,
+    ) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.encode()?;
         self.stash_rpc.send_raw_message(data)?;
         let raw = self.stash_rpc.recv_raw_message()?;
@@ -90,7 +91,10 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn genesis(&mut self, contract_id: ContractId) -> Result<Arc<Reply>, Error> {
+    pub fn genesis(
+        &mut self,
+        contract_id: ContractId,
+    ) -> Result<Arc<Reply>, Error> {
         Ok(self.stash_command(stash::Request::ReadGenesis(contract_id))?)
     }
 
@@ -105,7 +109,10 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn export(&mut self, asset_id: ContractId) -> Result<Arc<Reply>, Error> {
+    pub fn export(
+        &mut self,
+        asset_id: ContractId,
+    ) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::ExportAsset(asset_id))?)
     }
 
@@ -115,12 +122,18 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn transfer(&mut self, transfer: TransferApi) -> Result<Arc<Reply>, Error> {
+    pub fn transfer(
+        &mut self,
+        transfer: TransferApi,
+    ) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Transfer(transfer))?)
     }
 
     #[inline]
-    pub fn validate(&mut self, consignment: Consignment) -> Result<Arc<Reply>, Error> {
+    pub fn validate(
+        &mut self,
+        consignment: Consignment,
+    ) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Validate(consignment))?)
     }
 

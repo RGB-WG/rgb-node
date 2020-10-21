@@ -53,7 +53,15 @@ pub enum Request {
 }
 
 #[derive(
-    Clap, Clone, PartialEq, Serialize, Deserialize, StrictEncode, StrictDecode, Debug, Display,
+    Clap,
+    Clone,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    StrictEncode,
+    StrictDecode,
+    Debug,
+    Display,
 )]
 #[display(Debug)]
 pub struct Issue {

@@ -49,11 +49,13 @@ impl Outcoins {
         let mut rng = rand::thread_rng();
         let entropy = rng.next_u64(); // Not an amount blinding factor but outpoint blinding
         match self.txid {
-            Some(txid) => SealDefinition::TxOutpoint(bp::blind::OutpointReveal {
-                blinding: entropy,
-                txid,
-                vout: self.vout,
-            }),
+            Some(txid) => {
+                SealDefinition::TxOutpoint(bp::blind::OutpointReveal {
+                    blinding: entropy,
+                    txid,
+                    vout: self.vout,
+                })
+            }
             None => SealDefinition::WitnessVout {
                 vout: self.vout,
                 blinding: entropy,
@@ -65,7 +67,10 @@ impl Outcoins {
 impl StrictEncode for Outcoins {
     type Error = strict_encoding::Error;
 
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
+    fn strict_encode<E: io::Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, Self::Error> {
         Ok(strict_encode_list!(e; self.coins, self.vout, self.txid))
     }
 }
@@ -85,7 +90,10 @@ impl StrictDecode for Outcoins {
 impl StrictEncode for Outcoincealed {
     type Error = strict_encoding::Error;
 
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Self::Error> {
+    fn strict_encode<E: io::Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, Self::Error> {
         Ok(strict_encode_list!(e; self.coins, self.seal_confidential))
     }
 }

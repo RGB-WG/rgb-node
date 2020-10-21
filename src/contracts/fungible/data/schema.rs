@@ -17,14 +17,27 @@ use std::collections::BTreeSet;
 use lnpbp::rgb::schema::{
     constants::*,
     script::{Procedure, StandardProcedure},
-    AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema, Occurences,
-    Schema, StateFormat, StateSchema, TransitionAction, TransitionSchema,
+    AssignmentAction, Bits, DataFormat, DiscreteFiniteFieldFormat,
+    GenesisSchema, Occurences, Schema, StateFormat, StateSchema,
+    TransitionAction, TransitionSchema,
 };
 
 use crate::error::ServiceErrorDomain;
 use crate::type_map;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    Error,
+    From,
+)]
 #[display(Debug)]
 pub enum Error {
     NotAllFieldsPresent,
@@ -377,7 +390,9 @@ impl Deref for OwnedRightsType {
             OwnedRightsType::Inflation => &STATE_TYPE_FUNGIBLE_INFLATION,
             OwnedRightsType::Assets => &STATE_TYPE_FUNGIBLE_ASSETS,
             OwnedRightsType::Epoch => &(STATE_TYPE_FUNGIBLE_INFLATION + 0xA),
-            OwnedRightsType::BurnReplace => &(STATE_TYPE_FUNGIBLE_INFLATION + 0xB),
+            OwnedRightsType::BurnReplace => {
+                &(STATE_TYPE_FUNGIBLE_INFLATION + 0xB)
+            }
         }
     }
 }
@@ -395,7 +410,9 @@ impl Deref for TransitionType {
             TransitionType::Issue => &TRANSITION_TYPE_FUNGIBLE_ISSUE,
             TransitionType::Epoch => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 1),
             TransitionType::Burn => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 2),
-            TransitionType::BurnAndReplace => &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 3),
+            TransitionType::BurnAndReplace => {
+                &(TRANSITION_TYPE_FUNGIBLE_ISSUE + 3)
+            }
             TransitionType::RightsSplit => &0xF0,
         }
     }

@@ -11,6 +11,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+#![allow(dead_code)]
+
 #[macro_use]
 extern crate clap;
 #[macro_use]
@@ -47,7 +49,18 @@ pub use contracts::*;
 
 use std::str::FromStr;
 
-#[derive(Clap, Copy, Clone, PartialEq, Eq, Hash, Debug, Display, FromPrimitive, ToPrimitive)]
+#[derive(
+    Clap,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Debug,
+    Display,
+    FromPrimitive,
+    ToPrimitive,
+)]
 pub enum DataFormat {
     /// JSON
     #[display("json")]

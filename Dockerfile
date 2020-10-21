@@ -1,7 +1,7 @@
 ARG BUILDER_DIR=/srv/rgb
 
 
-FROM rustlang/rust:nightly-slim as builder
+FROM rustlang/rust:stable-slim as builder
 
 ARG SRC_DIR=/usr/local/src/rgb
 ARG BUILDER_DIR

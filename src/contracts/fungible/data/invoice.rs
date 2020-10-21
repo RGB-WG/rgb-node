@@ -64,7 +64,9 @@ impl From<OutpointDescriptor> for Outpoint {
     #[inline]
     fn from(descriptor: OutpointDescriptor) -> Self {
         match descriptor {
-            OutpointDescriptor::Utxo(outpoint) => Self::BlindedUtxo(outpoint.into()),
+            OutpointDescriptor::Utxo(outpoint) => {
+                Self::BlindedUtxo(outpoint.into())
+            }
             OutpointDescriptor::Address(addr) => Self::Address(addr),
         }
     }
@@ -88,7 +90,9 @@ impl FromStr for Outpoint {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match (Address::from_str(s), Bech32::from_str(s)) {
             (Ok(addr), _) => Ok(Self::Address(addr)),
-            (_, Ok(Bech32::BlindedUtxo(outpoint))) => Ok(Self::BlindedUtxo(outpoint)),
+            (_, Ok(Bech32::BlindedUtxo(outpoint))) => {
+                Ok(Self::BlindedUtxo(outpoint))
+            }
             _ => Err(Error::WrongOutpoint),
         }
     }
@@ -115,8 +119,8 @@ impl FromStr for Invoice {
             .query_pairs()
             .find(|(x, _)| x == "asset")
             .ok_or(Error::NoAsset)?;
-        let contract_id =
-            ContractId::from_bech32_str(&contract_id).map_err(|_| Error::WrongAssetEncoding)?;
+        let contract_id = ContractId::from_bech32_str(&contract_id)
+            .map_err(|_| Error::WrongAssetEncoding)?;
         Ok(Invoice {
             contract_id,
             outpoint,
@@ -137,7 +141,9 @@ impl Display for OutpointDescriptor {
 impl Display for Outpoint {
     fn fmt(&self, f: &mut Formatter<'_>) -> ::core::fmt::Result {
         match self {
-            Self::BlindedUtxo(outpoint) => write!(f, "{}", Bech32::BlindedUtxo(outpoint.clone())),
+            Self::BlindedUtxo(outpoint) => {
+                write!(f, "{}", Bech32::BlindedUtxo(outpoint.clone()))
+            }
             Self::Address(addr) => write!(f, "{}", addr),
         }
     }

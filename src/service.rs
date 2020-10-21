@@ -55,9 +55,16 @@ pub trait Exec {
     fn exec(&self, runtime: &mut Self::Runtime) -> Result<(), Self::Error>;
 }
 
-fn handle_failure<T>(service_name: &str, result: Result<T, impl ::std::error::Error>) -> String {
+fn handle_failure<T>(
+    service_name: &str,
+    result: Result<T, impl ::std::error::Error>,
+) -> String {
     match result {
-        Err(err) => format!("{} run loop has failed with error {}", service_name, err),
-        Ok(_) => format!("{} has failed without reporting a error", service_name),
+        Err(err) => {
+            format!("{} run loop has failed with error {}", service_name, err)
+        }
+        Ok(_) => {
+            format!("{} has failed without reporting a error", service_name)
+        }
     }
 }

@@ -68,7 +68,11 @@ impl SchemaCommand {
         }
     }
 
-    fn exec_list(&self, mut runtime: Runtime, format: OutputFormat) -> Result<(), Error> {
+    fn exec_list(
+        &self,
+        mut runtime: Runtime,
+        format: OutputFormat,
+    ) -> Result<(), Error> {
         match &*runtime.list_schemata()? {
             Reply::Failure(failure) => {
                 eprintln!("Server returned error: {}", failure);
@@ -131,7 +135,11 @@ impl GenesisCommand {
         }
     }
 
-    fn exec_list(&self, mut runtime: Runtime, format: OutputFormat) -> Result<(), Error> {
+    fn exec_list(
+        &self,
+        mut runtime: Runtime,
+        format: OutputFormat,
+    ) -> Result<(), Error> {
         match &*runtime.list_geneses()? {
             Reply::Failure(failure) => {
                 eprintln!("Server returned error: {}", failure);

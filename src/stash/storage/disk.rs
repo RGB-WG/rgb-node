@@ -203,14 +203,14 @@ impl Store for DiskStorage {
     type Error = DiskStorageError;
 
     fn schema_ids(&self) -> Result<Vec<SchemaId>, Self::Error> {
-        self.config
-            .schema_names()?
-            .into_iter()
-            .try_fold(vec![], |mut list, name| {
+        self.config.schema_names()?.into_iter().try_fold(
+            vec![],
+            |mut list, name| {
                 let name = name.replace(".rgb", "");
                 list.push(SchemaId::from_bech32_str(&name)?);
                 Ok(list)
-            })
+            },
+        )
     }
 
     #[inline]
@@ -238,14 +238,14 @@ impl Store for DiskStorage {
     }
 
     fn contract_ids(&self) -> Result<Vec<ContractId>, Self::Error> {
-        self.config
-            .genesis_names()?
-            .into_iter()
-            .try_fold(vec![], |mut list, name| {
+        self.config.genesis_names()?.into_iter().try_fold(
+            vec![],
+            |mut list, name| {
                 let name = name.replace(".rgb", "");
                 list.push(ContractId::from_bech32_str(&name)?);
                 Ok(list)
-            })
+            },
+        )
     }
 
     #[inline]
@@ -303,7 +303,10 @@ impl Store for DiskStorage {
         Ok(self.config.transition_filename(id).as_path().exists())
     }
 
-    fn add_transition(&self, transition: &Transition) -> Result<bool, Self::Error> {
+    fn add_transition(
+        &self,
+        transition: &Transition,
+    ) -> Result<bool, Self::Error> {
         let filename = self.config.transition_filename(&transition.node_id());
         let exists = filename.as_path().exists();
         transition.write_file(filename)?;
@@ -325,7 +328,10 @@ impl Store for DiskStorage {
         Ok(self.config.extension_filename(id).as_path().exists())
     }
 
-    fn add_extension(&self, extension: &Extension) -> Result<bool, Self::Error> {
+    fn add_extension(
+        &self,
+        extension: &Extension,
+    ) -> Result<bool, Self::Error> {
         let filename = self.config.extension_filename(&extension.node_id());
         let exists = filename.as_path().exists();
         extension.write_file(filename)?;

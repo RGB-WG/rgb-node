@@ -1,6 +1,11 @@
 # RGB Node
 
-[![TravisCI](https://api.travis-ci.com/LNP-BP/rgb-node.svg?branch=master)](https://api.travis-ci.com/LNP-BP/rgb-node)
+![Build](https://github.com/LNP-BP/rgb-node/workflows/Build/badge.svg)
+![Lints](https://github.com/LNP-BP/rgb-node/workflows/Lints/badge.svg)
+
+[![crates.io](https://meritbadge.herokuapp.com/rgb_node)](https://crates.io/crates/rgb_node)
+[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 This is source for daemon executables and library that can run RGB backend. For
 wallet and exchange integration please check an interface to it and demo 
@@ -73,14 +78,17 @@ organization concept for module/file names:
 * `index/`, `storage/`, `cache/` – storage interfaces and engines;
 * `db/` – SQL-specific schema and code, if needed.
 
+## Install
+
+Minimum supported rust compiler version (MSRV): 1.41.1
+
 ### Local
 
-To compile the node, please install [cargo](https://doc.rust-lang.org/cargo/)
-and [rustup](https://rustup.rs/), then run the following commands:
+To compile the node, please install [cargo](https://doc.rust-lang.org/cargo/),
+then run the following commands:
 
     sudo apt update
     sudo apt install -y build-essential pkg-config libzmq3-dev libssl-dev libpq-dev cmake
-    rustup default nightly
     git clone https://github.com/LNP-BP/rgb-node.git
     cd rgb-node
     cargo build --release
@@ -135,6 +143,8 @@ where `utxo` and the `blinding` must be values used in invoice generation
 In order to update the project dependencies, run `cargo update`.
 If any dependency updates, the `Cargo.lock` file will be updated, keeping
 track of the exact package version.
+
 After an update, run tests (`cargo test`) and manually test the software
 in order to stimulate function calls from updated libraries.
+
 If any problem arises, open an issue.

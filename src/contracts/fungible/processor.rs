@@ -81,14 +81,16 @@ impl Processor {
             FieldType::Timestamp => field!(I64, now)
         };
         if let Some(description) = description {
-            metadata.insert(*FieldType::ContractText, field!(String, description));
+            metadata
+                .insert(*FieldType::ContractText, field!(String, description));
         }
 
         let mut issued_supply = 0u64;
         let allocations = allocations
             .into_iter()
             .map(|outcoins| {
-                let amount = AccountingAmount::transmutate(precision, outcoins.coins);
+                let amount =
+                    AccountingAmount::transmutate(precision, outcoins.coins);
                 issued_supply += amount;
                 (outcoins.seal_definition(), amount)
             })
@@ -112,7 +114,8 @@ impl Processor {
             reissue_control,
         } = issue_structure
         {
-            let total_supply = AccountingAmount::transmutate(precision, max_supply);
+            let total_supply =
+                AccountingAmount::transmutate(precision, max_supply);
             if total_supply < issued_supply {
                 Err(ServiceErrorDomain::Schema(format!(
                     "Total supply ({}) should be greater than the issued supply ({})",
@@ -187,8 +190,10 @@ impl Processor {
         let allocations_ours = ours
             .into_iter()
             .map(|outcoins| {
-                let amount =
-                    AccountingAmount::transmutate(*asset.fractional_bits(), outcoins.coins);
+                let amount = AccountingAmount::transmutate(
+                    *asset.fractional_bits(),
+                    outcoins.coins,
+                );
                 total_outputs += amount;
                 (outcoins.seal_definition(), amount)
             })
@@ -196,8 +201,10 @@ impl Processor {
         let allocations_theirs = theirs
             .into_iter()
             .map(|outcoincealed| {
-                let amount =
-                    AccountingAmount::transmutate(*asset.fractional_bits(), outcoincealed.coins);
+                let amount = AccountingAmount::transmutate(
+                    *asset.fractional_bits(),
+                    outcoincealed.coins,
+                );
                 total_outputs += amount;
                 (outcoincealed.seal_confidential, amount)
             })

@@ -52,7 +52,18 @@ pub struct Opts {
     pub network: bp::Chain,
 }
 
-#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Deserialize)]
+#[derive(
+    Clap,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    Deserialize,
+)]
 #[display(Debug)]
 #[repr(u8)]
 #[non_exhaustive]

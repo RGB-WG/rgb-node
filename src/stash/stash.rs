@@ -16,8 +16,8 @@ use std::collections::VecDeque;
 use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bp::blind::OutpointHash;
 use lnpbp::rgb::{
-    Anchor, AutoConceal, Consignment, ContractId, Disclosure, Extension, Genesis, Node, NodeId,
-    SchemaId, Stash, Transition,
+    Anchor, AutoConceal, Consignment, ContractId, Disclosure, Extension,
+    Genesis, Node, NodeId, SchemaId, Stash, Transition,
 };
 
 use super::index::Index;
@@ -55,23 +55,38 @@ impl Stash for Runtime {
     type ExtensionIterator = DumbIter<Extension>;
     type NidIterator = DumbIter<NodeId>;
 
-    fn get_schema(&self, _schema_id: SchemaId) -> Result<SchemaId, Self::Error> {
+    fn get_schema(
+        &self,
+        _schema_id: SchemaId,
+    ) -> Result<SchemaId, Self::Error> {
         unimplemented!()
     }
 
-    fn get_genesis(&self, _contract_id: ContractId) -> Result<Genesis, Self::Error> {
+    fn get_genesis(
+        &self,
+        _contract_id: ContractId,
+    ) -> Result<Genesis, Self::Error> {
         unimplemented!()
     }
 
-    fn get_transition(&self, _node_id: NodeId) -> Result<Transition, Self::Error> {
+    fn get_transition(
+        &self,
+        _node_id: NodeId,
+    ) -> Result<Transition, Self::Error> {
         unimplemented!()
     }
 
-    fn get_extension(&self, _node_id: NodeId) -> Result<Extension, Self::Error> {
+    fn get_extension(
+        &self,
+        _node_id: NodeId,
+    ) -> Result<Extension, Self::Error> {
         unimplemented!()
     }
 
-    fn get_anchor(&self, _anchor_id: ContractId) -> Result<Anchor, Self::Error> {
+    fn get_anchor(
+        &self,
+        _anchor_id: ContractId,
+    ) -> Result<Anchor, Self::Error> {
         unimplemented!()
     }
 
@@ -102,12 +117,16 @@ impl Stash for Runtime {
 
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];
-        if let Some(transition) = node.as_any().downcast_ref::<Transition>().clone() {
+        if let Some(transition) =
+            node.as_any().downcast_ref::<Transition>().clone()
+        {
             let mut transition = transition.clone();
             transition.conceal_except(&expose);
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));
-        } else if let Some(extension) = node.as_any().downcast_ref::<Extension>().clone() {
+        } else if let Some(extension) =
+            node.as_any().downcast_ref::<Extension>().clone()
+        {
             let mut extension = extension.clone();
             extension.conceal_except(&expose);
             state_extensions.push(extension.clone());
@@ -116,8 +135,10 @@ impl Stash for Runtime {
         }
 
         let mut sources = VecDeque::<NodeId>::new();
-        sources.extend(node.parent_owned_rights().into_iter().map(|(id, _)| id));
-        sources.extend(node.parent_public_rights().into_iter().map(|(id, _)| id));
+        sources
+            .extend(node.parent_owned_rights().into_iter().map(|(id, _)| id));
+        sources
+            .extend(node.parent_public_rights().into_iter().map(|(id, _)| id));
         while let Some(node_id) = sources.pop_front() {
             if node_id.into_inner() == genesis.contract_id().into_inner() {
                 continue;
@@ -166,7 +187,8 @@ impl Stash for Runtime {
         }
 
         let node_id = node.node_id();
-        let extended_endpoints = expose.iter().map(|op| (node_id, *op)).collect();
+        let extended_endpoints =
+            expose.iter().map(|op| (node_id, *op)).collect();
         Ok(Consignment::with(
             genesis,
             extended_endpoints,
@@ -175,7 +197,10 @@ impl Stash for Runtime {
         ))
     }
 
-    fn merge(&mut self, consignment: Consignment) -> Result<Vec<Box<dyn Node>>, Error> {
+    fn merge(
+        &mut self,
+        consignment: Consignment,
+    ) -> Result<Vec<Box<dyn Node>>, Error> {
         let mut nodes: Vec<Box<dyn Node>> = vec![];
         consignment.state_transitions.into_iter().try_for_each(
             |(anchor, transition)| -> Result<(), Error> {
@@ -203,7 +228,10 @@ impl Stash for Runtime {
         Ok(nodes)
     }
 
-    fn forget(&mut self, _consignment: Consignment) -> Result<usize, Self::Error> {
+    fn forget(
+        &mut self,
+        _consignment: Consignment,
+    ) -> Result<usize, Self::Error> {
         unimplemented!()
     }
 

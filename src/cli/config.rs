@@ -145,6 +145,8 @@ impl Config {
             .replace("{network}", &self.network.to_string())
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
             .parse()
-            .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
+            .unwrap_or_else(|err| {
+                panic!("Error parsing parameter `{}`: {}", param, err)
+            })
     }
 }
