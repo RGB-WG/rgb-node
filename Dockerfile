@@ -1,14 +1,15 @@
 ARG BUILDER_DIR=/srv/rgb
 
 
-FROM rustlang/rust:stable-slim as builder
+FROM rust:1.47.0-slim-buster as builder
 
 ARG SRC_DIR=/usr/local/src/rgb
 ARG BUILDER_DIR
 
 RUN apt-get update \
     && apt-get -y install --no-install-recommends \
-        build-essential cmake libpq-dev libssl-dev libzmq3-dev pkg-config
+        build-essential cmake git pkg-config \
+        libpq-dev libssl-dev libzmq3-dev libsqlite3-dev
 
 WORKDIR "$SRC_DIR"
 
@@ -27,6 +28,7 @@ ARG USER=rgbd
 
 RUN apt-get update \
     && apt-get -y install --no-install-recommends \
+       libsqlite3-0 \
        libssl1.1 \
        tini \
     && apt-get clean \
