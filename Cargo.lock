@@ -122,6 +122,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdcf67bb7ba7797a081cd19009948ab533af7c355d5caf1d08c777582d351e9c"
 
 [[package]]
+name = "bigdecimal"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1374191e2dd25f9ae02e3aa95041ed5d747fc77b3c102b49fe2dd9a8117a6244"
+dependencies = [
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "bitcoin"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -370,6 +381,34 @@ dependencies = [
  "regex",
  "rustc_version",
  "syn 0.15.44",
+]
+
+[[package]]
+name = "diesel"
+version = "1.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2de9deab977a153492a1468d1b1c0662c1cf39e5ea87d0c060ecd59ef18d8c"
+dependencies = [
+ "bigdecimal",
+ "byteorder",
+ "chrono",
+ "diesel_derives",
+ "libsqlite3-sys",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "uuid",
+]
+
+[[package]]
+name = "diesel_derives"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45f5098f628d02a7a0f68ddba586fb61e80edec3bdc1be3b921f4ceec60858d3"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.7",
+ "syn 1.0.45",
 ]
 
 [[package]]
@@ -788,6 +827,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2448f6066e80e3bfc792e9c98bf705b4b0fc6e8ef5b43e5889aff0eaa9c58743"
 
 [[package]]
+name = "libsqlite3-sys"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e704a02bcaecd4a08b93a23f6be59d0bd79cd161e0963e9499165a0a35df7bd"
+dependencies = [
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
 name = "linked-hash-map"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -795,8 +844,9 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.1.0-rc.2"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#6e2e1ab1aa5eda7b023eef7fda0813742516cae6"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62d05cfe75d18256b165c2b569a40e606b7b7be7deef3b28a2b4af424243bb3d"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -823,8 +873,9 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_derive"
-version = "0.1.0-rc.2"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=master#6e2e1ab1aa5eda7b023eef7fda0813742516cae6"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8a7977c9c4d47f996d38b345dbc2c9cb34ce92948c375307242fa2531b5b951"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -953,6 +1004,17 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
+name = "num-bigint"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
+dependencies = [
+ "autocfg 1.0.1",
+ "num-integer",
+ "num-traits",
+]
 
 [[package]]
 name = "num-derive"
@@ -1416,7 +1478,7 @@ checksum = "8cab7a364d15cde1e505267766a2d3c4e22a843e1a601f0fa7564c0f82ced11c"
 
 [[package]]
 name = "rgb_node"
-version = "0.1.0-rc.3"
+version = "0.1.0"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1425,6 +1487,7 @@ dependencies = [
  "bech32",
  "chrono",
  "clap",
+ "diesel",
  "dotenv",
  "electrum-client",
  "env_logger",
@@ -2005,6 +2068,15 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+]
+
+[[package]]
+name = "uuid"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1436e58182935dcd9ce0add9ea0b558e8a87befe01c1a301e6020aeb0876363"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]

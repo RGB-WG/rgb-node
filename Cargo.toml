@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.1.0-rc.3"
+version = "0.1.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -14,6 +14,8 @@ name = "rgb"
 [dependencies]
 amplify = { version = "~2.0.6", features = ["all"] }
 amplify_derive = "~2.0.6"
+lnpbp = { version = "~0.1.0", features = ["all"] }
+lnpbp_derive = "~0.1.0"
 base64 = "0.12"
 dotenv = "~0.15.0"
 clap = "=3.0.0-beta.2"
@@ -38,15 +40,6 @@ tiny_http = "~0.7.0"
 prometheus = "~0.9.0"
 electrum-client = "=0.3.0-beta.1"
 diesel = { version = "1.4.4", features = ["sqlite", "uuid", "numeric", "chrono"] }
-
-[dependencies.lnpbp]
-git = "https://github.com/LNP-BP/rust-lnpbp"
-branch = "master"
-features = ["all"]
-
-[dependencies.lnpbp_derive]
-git = "https://github.com/LNP-BP/rust-lnpbp"
-branch = "master"
 
 [target.'cfg(target_os="android")'.dependencies.zmq]
 version = "~0.9"

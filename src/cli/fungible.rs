@@ -429,12 +429,7 @@ impl TransferCli {
         for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
             if let Some(key) = output.hd_keypaths.keys().next() {
                 let key = key.clone();
-                output.insert_proprietary_key(
-                    b"RGB".to_vec(),
-                    PSBT_OUT_PUBKEY,
-                    vec![],
-                    &key.to_bytes(),
-                );
+                output.insert_proprietary_key(b"RGB".to_vec(), PSBT_OUT_PUBKEY, vec![], &key.key);
                 debug!("Output #{} commitment key will be {}", index, key);
             } else {
                 warn!(

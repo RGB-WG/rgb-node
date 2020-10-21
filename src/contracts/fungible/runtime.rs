@@ -230,15 +230,20 @@ impl Runtime {
         // TODO: Check inputs that they really exist and have sufficient amount of
         //       asset for the transfer operation
 
+        trace!("Looking for asset information");
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
+        debug!("Transferring asset {}", asset);
 
+        trace!("Preparing state transition");
         let transition = self.processor.transfer(
             &mut asset,
             transfer.inputs.clone(),
             transfer.ours.clone(),
             transfer.theirs.clone(),
         )?;
+        debug!("State transition: {}", transition);
 
+        trace!("Requesting consignment from stash daemon");
         let reply = self
             .consign(ConsignRequest {
                 contract_id: transfer.contract_id,

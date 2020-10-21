@@ -121,7 +121,7 @@ Send the invoice string to the payee.
 
 Doing transfer: this requires preparation of PSBT; here we use ones from our 
 sample directory
-`rgb-cli -d <data_dir> -vvvv fungible transfer "<invoice>" test/source_tx.psbt 1 <consignment_file> test/dest_tx.psbt -i <input_utxo> [-a <amount>@<change_utxo>]`
+`rgb-cli -d <data_dir> -vvvv fungible transfer "<invoice>" test/source_tx.psbt <consignment_file> test/dest_tx.psbt -i <input_utxo> [-a <amount>@<change_utxo>]`
 NB: input amount must be equal to the sum of invoice amount and change amounts.
 
 This will produce consignment. Send it to the receiving party.
