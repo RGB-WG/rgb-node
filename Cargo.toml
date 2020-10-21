@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -12,8 +12,8 @@ readme = "README.md"
 name = "rgb"
 
 [dependencies]
-amplify = "~1.2.1"
-amplify_derive = "~1.2.0"
+amplify = { version = "~2.0.6", features = ["all"] }
+amplify_derive = "~2.0.6"
 base64 = "0.12"
 dotenv = "~0.15.0"
 clap = "=3.0.0-beta.2"
@@ -62,11 +62,5 @@ collectibles = []
 identities = []
 
 [patch.crates-io]
-# We need this b/c of breaking change in tagged hash type generation
-bitcoin_hashes = { git = "https://github.com/LNP-BP/bitcoin_hashes", tag = "lnpbp-v0.1.0-rc1" }
-bitcoin = { git = "https://github.com/LNP-BP/rust-bitcoin", tag = "lnpbp-v0.1.0-rc1" }
-# We need custom branches here just to depend on the same bitcoin master and do
-# not have secp256k1 version conflict
-miniscript = { git = "https://github.com/LNP-BP/rust-miniscript", tag = "lnpbp-v0.1.0-rc1" }
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
 zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

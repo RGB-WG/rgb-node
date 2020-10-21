@@ -15,7 +15,6 @@ use ::core::borrow::Borrow;
 use ::core::convert::TryFrom;
 use ::std::path::PathBuf;
 
-use amplify::TryService;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::lnp::presentation::Encode;
@@ -38,6 +37,7 @@ use crate::error::{
     ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
     ServiceErrorSource,
 };
+use crate::service::TryService;
 
 pub struct Runtime {
     /// Original configuration object

@@ -49,6 +49,7 @@ mod contracts;
 pub mod error;
 pub mod i9n;
 pub mod rgbd;
+pub mod service;
 pub mod stash;
 pub mod util;
 

@@ -15,12 +15,10 @@ use clap::Clap;
 use futures::future::join_all;
 use tokio::{process, task};
 
-use amplify::TryService;
-
 use super::Config;
-use crate::error::{BootstrapError, RuntimeError};
-
 use crate::contracts::fungible;
+use crate::error::{BootstrapError, RuntimeError};
+use crate::service::TryService;
 use crate::stash;
 
 pub struct Runtime {

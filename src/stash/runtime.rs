@@ -13,7 +13,6 @@
 
 use std::path::PathBuf;
 
-use amplify::TryService;
 use lnpbp::bitcoin::{Transaction, Txid};
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmq::ApiType;
@@ -33,6 +32,7 @@ use crate::api::{reply, Reply};
 use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
 };
+use crate::service::TryService;
 use crate::stash::index::BTreeIndexConfig;
 
 pub struct Runtime {

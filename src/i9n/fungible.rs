@@ -16,12 +16,14 @@ use std::fs::File;
 use std::path::PathBuf;
 
 use lnpbp::bitcoin::consensus::encode::{deserialize, Encodable};
-use lnpbp::bitcoin::util::psbt::{raw::ProprietaryKey, PartiallySignedTransaction};
+use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
 
 use lnpbp::bp;
+use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::Unmarshall;
+use lnpbp::rgb::PSBT_OUT_PUBKEY;
 
 use super::{Error, Runtime};
 use crate::api::{fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply};
@@ -80,7 +82,6 @@ impl Runtime {
         allocate: Vec<Outcoins>,
         invoice: Invoice,
         prototype_psbt: String,
-        fee: u64,
         consignment_file: String,
         transaction_file: String,
     ) -> Result<(), Error> {
@@ -89,30 +90,30 @@ impl Runtime {
             Outpoint::Address(_address) => unimplemented!(),
         };
 
-        let pubkey_key = ProprietaryKey {
-            prefix: b"RGB".to_vec(),
-            subtype: 2u8,
-            key: vec![],
-        };
-        let fee_key = ProprietaryKey {
-            prefix: b"RGB".to_vec(),
-            subtype: 1u8,
-            key: vec![],
-        };
-
         let psbt_bytes = base64::decode(&prototype_psbt)?;
         let mut psbt: PartiallySignedTransaction = deserialize(&psbt_bytes)?;
 
-        psbt.global
-            .proprietary
-            .insert(fee_key, fee.to_be_bytes().to_vec());
-        for output in &mut psbt.outputs {
-            output.proprietary.insert(
-                pubkey_key.clone(),
-                output.bip32_derivation.keys().next().unwrap().to_bytes(),
-            );
+        for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
+            if let Some(key) = output.hd_keypaths.keys().next() {
+                let key = key.clone();
+                output.insert_proprietary_key(
+                    b"RGB".to_vec(),
+                    PSBT_OUT_PUBKEY,
+                    vec![],
+                    &key.to_bytes(),
+                );
+                debug!("Output #{} commitment key will be {}", index, key);
+            } else {
+                warn!(
+                    "No public key information found for output #{}; \
+                    LNPBP1/2 commitment will be impossible.\
+                    In order to allow commitment pls add known keys derivation \
+                    information to PSBT output map",
+                    index
+                );
+            }
         }
-        // trace!("{:?}", psbt);
+        trace!("{:?}", psbt);
 
         let api = TransferApi {
             psbt,
