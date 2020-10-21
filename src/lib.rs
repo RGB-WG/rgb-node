@@ -11,14 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#![feature(
-    in_band_lifetimes,
-    never_type,
-    try_trait,
-    unwrap_infallible,
-    with_options,
-    vec_remove_item
-)]
+#![feature(with_options)]
 
 #[macro_use]
 extern crate clap;

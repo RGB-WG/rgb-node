@@ -56,7 +56,6 @@ pub enum SqlCacheError {
     #[from]
     WrongChainData(lnpbp::bp::chain::ParseError),
 
-    #[from(std::option::NoneError)]
     NotFound,
 }
 
@@ -116,8 +115,13 @@ impl SqlCache {
 
         if filename.exists() {
             // Create connection to db
-            let connection = SqliteConnection::establish(config.assets_filename().to_str()?)
-                .expect(&format!("Error connecting to asset.db"));
+            let connection = SqliteConnection::establish(
+                config
+                    .assets_filename()
+                    .to_str()
+                    .ok_or(SqlCacheError::NotFound)?,
+            )
+            .expect(&format!("Error connecting to asset.db"));
 
             let mut sql_cache = Self {
                 connection,
@@ -133,8 +137,13 @@ impl SqlCache {
             File::create(config.assets_filename())?;
 
             // Create connection to db
-            let connection = SqliteConnection::establish(config.assets_filename().to_str()?)
-                .expect(&format!("Error connecting to asset.db"));
+            let connection = SqliteConnection::establish(
+                config
+                    .assets_filename()
+                    .to_str()
+                    .ok_or(SqlCacheError::NotFound)?,
+            )
+            .expect(&format!("Error connecting to asset.db"));
 
             let sql_cache = Self {
                 connection,

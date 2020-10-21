@@ -27,7 +27,6 @@ use crate::type_map;
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(Debug)]
 pub enum Error {
-    #[from(core::option::NoneError)]
     NotAllFieldsPresent,
 
     WrongSchemaId,

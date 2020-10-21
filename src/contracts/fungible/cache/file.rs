@@ -50,7 +50,6 @@ pub enum FileCacheError {
     #[from(toml::ser::Error)]
     SerdeToml,
 
-    #[from(std::option::NoneError)]
     NotFound,
 }
 

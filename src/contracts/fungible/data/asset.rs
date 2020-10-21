@@ -13,7 +13,6 @@
 
 use core::convert::{TryFrom, TryInto};
 use core::ops::{Add, AddAssign};
-use core::option::NoneError;
 use diesel::prelude::*;
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -393,12 +392,6 @@ impl From<Error> for ServiceErrorDomain {
     }
 }
 
-impl From<NoneError> for Error {
-    fn from(_: NoneError) -> Self {
-        Error::Schema(schema::Error::NotAllFieldsPresent)
-    }
-}
-
 impl TryFrom<Genesis> for Asset {
     type Error = Error;
 
@@ -407,10 +400,16 @@ impl TryFrom<Genesis> for Asset {
             Err(schema::Error::WrongSchemaId)?;
         }
         let genesis_meta = genesis.metadata();
-        let fractional_bits = *genesis_meta.u8(*FieldType::Precision).first()?;
+        let fractional_bits = *genesis_meta
+            .u8(*FieldType::Precision)
+            .first()
+            .ok_or(schema::Error::NotAllFieldsPresent)?;
         let supply = AccountingAmount::from_fractioned_atomic_value(
             fractional_bits,
-            *genesis_meta.u64(*FieldType::IssuedSupply).first()?,
+            *genesis_meta
+                .u64(*FieldType::IssuedSupply)
+                .first()
+                .ok_or(schema::Error::NotAllFieldsPresent)?,
         );
         let mut known_inflation = BTreeMap::<_, _>::default();
         let mut unknown_inflation = AccountingAmount::default();
@@ -426,7 +425,9 @@ impl TryFrom<Genesis> for Asset {
                             seal_definition.try_into()?,
                             AccountingAmount::from_fractioned_atomic_value(
                                 fractional_bits,
-                                assigned_state.u64()?,
+                                assigned_state
+                                    .u64()
+                                    .ok_or(schema::Error::NotAllFieldsPresent)?,
                             ),
                         );
                     }
@@ -434,7 +435,9 @@ impl TryFrom<Genesis> for Asset {
                         if unknown_inflation.atomic_value() < u64::MAX {
                             unknown_inflation += AccountingAmount::from_fractioned_atomic_value(
                                 fractional_bits,
-                                assigned_state.u64()?,
+                                assigned_state
+                                    .u64()
+                                    .ok_or(schema::Error::NotAllFieldsPresent)?,
                             )
                         };
                     }
@@ -482,8 +485,16 @@ impl TryFrom<Genesis> for Asset {
         Ok(Self {
             id: genesis.contract_id(),
             chain: genesis.chain().clone(),
-            ticker: genesis_meta.string(*FieldType::Ticker).first()?.clone(),
-            name: genesis_meta.string(*FieldType::Name).first()?.clone(),
+            ticker: genesis_meta
+                .string(*FieldType::Ticker)
+                .first()
+                .ok_or(schema::Error::NotAllFieldsPresent)?
+                .clone(),
+            name: genesis_meta
+                .string(*FieldType::Name)
+                .first()
+                .ok_or(schema::Error::NotAllFieldsPresent)?
+                .clone(),
             description: genesis_meta
                 .string(*FieldType::ContractText)
                 .first()
@@ -510,7 +521,10 @@ impl TryFrom<Genesis> for Asset {
             },
             fractional_bits,
             date: NaiveDateTime::from_timestamp(
-                *genesis_meta.i64(*FieldType::Timestamp).first()?,
+                *genesis_meta
+                    .i64(*FieldType::Timestamp)
+                    .first()
+                    .ok_or(schema::Error::NotAllFieldsPresent)?,
                 0,
             ),
             known_inflation,
