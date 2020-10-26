@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use serde_json;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::{fs, io, io::Read, io::Write};
 
@@ -191,5 +191,35 @@ impl Cache for FileCache {
         let existed = self.assets.remove(&id).is_some();
         self.save()?;
         Ok(existed)
+    }
+
+    fn utxo_allocation_map(
+        &self,
+        contract_id: ContractId,
+    ) -> Result<BTreeMap<bitcoin::OutPoint, AtomicValue>, CacheError> {
+        let asset = self.asset(contract_id).unwrap();
+
+        let allocation_map = asset.known_allocations();
+
+        let mut result = BTreeMap::new();
+
+        for item in allocation_map {
+            let mut sum = 0;
+            for alloc in item.1 {
+                sum += alloc.value().value;
+            }
+
+            result.insert(item.0.clone(), sum);
+        }
+
+        Ok(result)
+    }
+
+    // TODO: Implement it for FileCache
+    fn asset_allocation_map(
+        &self,
+        _utxo: &bitcoin::OutPoint,
+    ) -> Result<BTreeMap<String, u32>, CacheError> {
+        unimplemented!();
     }
 }

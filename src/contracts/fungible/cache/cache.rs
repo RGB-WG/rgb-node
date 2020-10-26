@@ -11,7 +11,9 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
+use std::collections::BTreeMap;
 
 use super::sql::SqlCacheError;
 use super::FileCacheError;
@@ -27,6 +29,18 @@ pub trait Cache {
     fn has_asset(&self, id: ContractId) -> Result<bool, Self::Error>;
     fn add_asset(&mut self, asset: Asset) -> Result<bool, Self::Error>;
     fn remove_asset(&mut self, id: ContractId) -> Result<bool, Self::Error>;
+
+    /// Return the map of Utxo-Allocation_amount for a given asset
+    fn utxo_allocation_map(
+        &self,
+        contract_id: ContractId,
+    ) -> Result<BTreeMap<bitcoin::OutPoint, AtomicValue>, Self::Error>;
+
+    /// Returns the map of Asset-Allocation_amount for a given Outpoint
+    fn asset_allocation_map(
+        &self,
+        utxo: &bitcoin::OutPoint,
+    ) -> Result<BTreeMap<String, u32>, CacheError>;
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]

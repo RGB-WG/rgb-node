@@ -7,6 +7,10 @@ diesel migration run --database-url $DATABASE_URL/assets/assets.db --config-file
 
 cd ../..
 
-cargo test test_create_tables
+cargo test test_sqlite_create_tables
 
-cargo test test_asset_cache
+cargo test test_sqlite_asset_cache
+
+cargo test test_sqlite_utxo_allocation
+
+cargo test test_sqlite_asset_allocation
