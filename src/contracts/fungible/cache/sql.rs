@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use diesel::prelude::*;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::{fmt, fs, fs::File};
 
 use crate::contracts::fungible::cache::schema as cache_schema;
@@ -268,7 +268,7 @@ impl Cache for SqlCache {
     fn utxo_allocation_map(
         &self,
         contract_id: ContractId,
-    ) -> Result<BTreeMap<bitcoin::OutPoint, AtomicValue>, CacheError> {
+    ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
         // Get the required asset from cache
         let asset = self.asset(contract_id)?;
 
@@ -276,14 +276,14 @@ impl Cache for SqlCache {
         let allocation_map = asset.known_allocations();
 
         // Process known_allocation map to produce the intended map
-        let mut result = BTreeMap::new();
+        let mut result = HashMap::new();
 
         for item in allocation_map {
-            let mut sum = 0;
+            let mut alloc_amount = vec![];
             for alloc in item.1 {
-                sum += alloc.value().value;
+                alloc_amount.push(alloc.value().value);
             }
-            result.insert(item.0.clone(), sum);
+            result.insert(item.0.clone(), alloc_amount);
         }
 
         Ok(result)
@@ -292,7 +292,7 @@ impl Cache for SqlCache {
     fn asset_allocation_map(
         &self,
         utxo: &bitcoin::OutPoint,
-    ) -> Result<BTreeMap<String, u32>, CacheError> {
+    ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError> {
         // Explicitly local import
         // Will cause name clash in global scope otherwise
         use cache_schema::sql_allocation_utxo::dsl::*;
@@ -319,23 +319,27 @@ impl Cache for SqlCache {
             sql_utxos.into_iter().zip(allocations).collect::<Vec<_>>();
 
         // Create the empty result map
-        let mut result: BTreeMap<String, u32> = BTreeMap::new();
+        let mut result = HashMap::new();
 
         // Process the above groups to produce the required map
         for item in utxo_allocation_groups {
-            let asset_name = sql_asset_table
+            let contract_id_string = sql_asset_table
                 .find(item.0.sql_asset_id)
                 .first::<SqlAsset>(&self.connection)
                 .map_err(|e| SqlCacheError::Sqlite(e))?
-                .asset_name
+                .contract_id
                 .clone();
 
-            let sum = item
+            let contract_id =
+                ContractId::from_hex(&contract_id_string[..]).unwrap();
+
+            let sum: Vec<AtomicValue> = item
                 .1
                 .iter()
-                .fold(0, |acc, alloc| acc + alloc.amount as u32);
+                .map(|alloc| alloc.amount as AtomicValue)
+                .collect();
 
-            result.insert(asset_name, sum);
+            result.insert(contract_id, sum);
         }
 
         Ok(result)
@@ -828,14 +832,19 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_sqlite_utxo_allocation() {
-        // Setup sqlite database connection
+    fn test_sqlite_mappings() {
+        //----------------------------------------------
+        // SETUP SQLITE DB CONNECTION
+
         let database_url = env::var("DATABASE_URL").expect(
             "Environment Variable 'DATABASE_URL' must be set to run this test",
         );
         let filepath = PathBuf::from(&database_url[..]);
         let config = SqlCacheConfig { data_dir: filepath };
         let cache = SqlCache::new(&config).unwrap();
+
+        //----------------------------------------------
+        // TEST UTXO-ALLOCATION MAP
 
         // Test Contract_id to fetch data against
         let contract_id = ContractId::from_hex(
@@ -845,7 +854,7 @@ mod test {
 
         // Construct expected allocation-utxo mapping for the given asset
         // associated with the above contract_id
-        let mut expected_map = BTreeMap::new();
+        let mut expected_map = HashMap::new();
 
         expected_map.insert(
             bitcoin::OutPoint {
@@ -855,7 +864,7 @@ mod test {
                 .unwrap(),
                 vout: 4,
             },
-            16u64,
+            vec![7 as AtomicValue, 9],
         );
 
         expected_map.insert(
@@ -866,7 +875,7 @@ mod test {
                 .unwrap(),
                 vout: 5,
             },
-            24u64,
+            vec![11 as AtomicValue, 13],
         );
 
         expected_map.insert(
@@ -877,7 +886,7 @@ mod test {
                 .unwrap(),
                 vout: 3,
             },
-            9u64,
+            vec![1 as AtomicValue, 3, 5],
         );
 
         // Fetch the allocation-utxo map using cache api
@@ -885,18 +894,9 @@ mod test {
 
         // Assert calculation meets expectation
         assert_eq!(expected_map, calculated_map);
-    }
 
-    #[test]
-    #[ignore]
-    fn test_sqlite_asset_allocation() {
-        // Setup sqlite database connection
-        let database_url = env::var("DATABASE_URL").expect(
-            "Environment Variable 'DATABASE_URL' must be set to run this test",
-        );
-        let filepath = PathBuf::from(&database_url[..]);
-        let config = SqlCacheConfig { data_dir: filepath };
-        let cache = SqlCache::new(&config).unwrap();
+        //----------------------------------------------
+        // TEST ASSET-ALLOCATION MAP
 
         // Test utxo against which Asset allocations to be found
         let utxo = bitcoin::OutPoint {
@@ -910,9 +910,9 @@ mod test {
         // Construct the expected mapping. The above utxo holds allocation
         // for 2 assets, Bitcoin and Ethereum. The target map is Map[Asset_name,
         // Allocated_amount]
-        let mut expected_map = BTreeMap::new();
-        expected_map.insert(String::from("Bitcoin"), 9u32);
-        expected_map.insert(String::from("Ethereum"), 32u32);
+        let mut expected_map = HashMap::new();
+        expected_map.insert(ContractId::from_hex("5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc").unwrap(), vec![1 as AtomicValue, 3, 5]);
+        expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
 
         // Fetch the asset-amount map for the above utxo using cache api
         let allocation_map_calculated =
