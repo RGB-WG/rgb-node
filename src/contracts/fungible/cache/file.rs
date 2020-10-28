@@ -63,7 +63,7 @@ pub struct FileCacheConfig {
 impl FileCacheConfig {
     #[inline]
     pub fn assets_dir(&self) -> PathBuf {
-        self.data_dir.clone()
+        self.data_dir.join("assets")
     }
 
     #[inline]
@@ -191,5 +191,171 @@ impl Cache for FileCache {
         let existed = self.assets.remove(&id).is_some();
         self.save()?;
         Ok(existed)
+    }
+
+    fn asset_allocations(
+        &self,
+        contract_id: ContractId,
+    ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
+        // Process known_allocation map to produce the intended map
+        let result: HashMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
+            .asset(contract_id)?
+            .known_allocations()
+            .into_iter()
+            .map(|(outpoint, allocations)| {
+                (
+                    *outpoint,
+                    allocations.into_iter().map(|a| a.value().value).collect(),
+                )
+            })
+            .collect();
+
+        Ok(result)
+    }
+
+    fn output_assets(
+        &self,
+        utxo: &bitcoin::OutPoint,
+    ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError> {
+        let mut result = HashMap::new();
+
+        for asset in self.assets()?.into_iter().cloned().collect::<Vec<Asset>>()
+        {
+            let allocations: Vec<AtomicValue> =
+                match asset.known_allocations().get(utxo) {
+                    Some(allocations) => allocations
+                        .into_iter()
+                        .map(|alloc| alloc.value().value)
+                        .collect(),
+                    None => continue,
+                };
+
+            result.insert(*asset.id(), allocations);
+        }
+
+        Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::super::sql::{SqlCache, SqlCacheConfig};
+    use super::*;
+    use lnpbp::bitcoin_hashes::hex::FromHex;
+    use std::env;
+
+    #[test]
+    #[ignore]
+    fn test_filecache_mappings() {
+        // -------------------------------------------------
+        // Setup sqlite database connection
+        // This is done to easily copy test assets data
+        // from sqlite database to required file format
+        // As a consequence this should be run after running tests
+        // in sql.rs module.
+
+        let database_url = env::var("DATABASE_URL").expect(
+            "Environment Variable 'DATABASE_URL' must be set to run this test",
+        );
+        let filepath = PathBuf::from(&database_url[..]);
+        let config = SqlCacheConfig {
+            data_dir: filepath.clone(),
+        };
+        let sql_cache = SqlCache::new(&config).unwrap();
+
+        // Get the test assets
+        let assets = sql_cache.assets().unwrap();
+
+        // Setup a new Filecache with same Pathbuf and Json extension from above
+        let filecache_config = FileCacheConfig {
+            data_dir: filepath.clone(),
+            data_format: DataFormat::Json,
+        };
+
+        // Init new FileCache
+        let mut filecache = FileCache::new(filecache_config).unwrap();
+
+        // Save the test assets inside FileCache
+        // You should see an assets.json file in the DataDir
+        for asset in assets {
+            filecache.add_asset(asset.clone()).unwrap();
+        }
+
+        // -------------------------------------------------
+        // TEST UTXO-ALLOCATION MAP
+
+        // Test Contract_id to fetch data against
+        let contract_id = ContractId::from_hex(
+            "5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc",
+        )
+        .unwrap();
+
+        // Construct expected allocation-utxo mapping for the given asset
+        // associated with the above contract_id
+        let mut expected_map = HashMap::new();
+
+        expected_map.insert(
+            bitcoin::OutPoint {
+                txid: bitcoin::Txid::from_hex(
+                    "db2f3035e05795d72e2744dc0e88b2f72acbed97ee9a54c2c7f52d426ae05627",
+                )
+                .unwrap(),
+                vout: 4,
+            },
+            vec![7 as AtomicValue, 9],
+        );
+
+        expected_map.insert(
+            bitcoin::OutPoint {
+                txid: bitcoin::Txid::from_hex(
+                    "d47df6cf7a0eff79d3afeab7614404e43a0fa4498ff081918a2e75d7366cd730",
+                )
+                .unwrap(),
+                vout: 5,
+            },
+            vec![11 as AtomicValue, 13],
+        );
+
+        expected_map.insert(
+            bitcoin::OutPoint {
+                txid: bitcoin::Txid::from_hex(
+                    "fc63f797af718cc5a11988f69507701d5fe84e58cdd900e1b02856c0ea5a058a",
+                )
+                .unwrap(),
+                vout: 3,
+            },
+            vec![1 as AtomicValue, 3, 5],
+        );
+
+        // Fetch the allocation-utxo map using cache api
+        let calculated_map = filecache.asset_allocations(contract_id).unwrap();
+
+        // Assert calculation meets expectation
+        assert_eq!(expected_map, calculated_map);
+
+        //-----------------------------------------------------
+        // TEST ASSET-ALLOCATION MAP
+
+        // Test utxo against which Asset allocations to be found
+        let utxo = bitcoin::OutPoint {
+            txid: bitcoin::Txid::from_hex(
+                "fc63f797af718cc5a11988f69507701d5fe84e58cdd900e1b02856c0ea5a058a",
+            )
+            .unwrap(),
+            vout: 3,
+        };
+
+        // Construct the expected mapping. The above utxo holds allocation
+        // for 2 assets, Bitcoin and Ethereum. The target map is Map[Asset_name,
+        // Allocated_amount]
+        let mut expected_map = HashMap::new();
+        expected_map.insert(ContractId::from_hex("5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc").unwrap(), vec![1 as AtomicValue, 3, 5]);
+        expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
+
+        // Fetch the asset-amount map for the above utxo using cache api
+        let allocation_map_calculated = filecache.output_assets(&utxo).unwrap();
+
+        // Assert caclulation meets expectation
+        assert_eq!(expected_map, allocation_map_calculated);
     }
 }
