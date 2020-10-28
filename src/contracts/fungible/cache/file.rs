@@ -193,39 +193,33 @@ impl Cache for FileCache {
         Ok(existed)
     }
 
-    fn utxo_allocation_map(
+    fn asset_allocations(
         &self,
         contract_id: ContractId,
     ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
-        let asset = self.asset(contract_id).unwrap();
-
-        let allocation_map = asset.known_allocations();
-
-        let mut result = HashMap::new();
-
-        for item in allocation_map {
-            let mut alloc_amount = vec![];
-            for alloc in item.1 {
-                alloc_amount.push(alloc.value().value);
-            }
-            result.insert(item.0.clone(), alloc_amount);
-        }
+        // Process known_allocation map to produce the intended map
+        let result: HashMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
+            .asset(contract_id)?
+            .known_allocations()
+            .into_iter()
+            .map(|(outpoint, allocations)| {
+                (
+                    *outpoint,
+                    allocations.into_iter().map(|a| a.value().value).collect(),
+                )
+            })
+            .collect();
 
         Ok(result)
     }
 
-    fn asset_allocation_map(
+    fn output_assets(
         &self,
         utxo: &bitcoin::OutPoint,
     ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError> {
         let mut result = HashMap::new();
 
-        for asset in self
-            .assets()
-            .unwrap()
-            .into_iter()
-            .cloned()
-            .collect::<Vec<Asset>>()
+        for asset in self.assets()?.into_iter().cloned().collect::<Vec<Asset>>()
         {
             let allocations: Vec<AtomicValue> =
                 match asset.known_allocations().get(utxo) {
@@ -236,7 +230,7 @@ impl Cache for FileCache {
                     None => continue,
                 };
 
-            result.insert(asset.id().clone(), allocations);
+            result.insert(*asset.id(), allocations);
         }
 
         Ok(result)
@@ -334,8 +328,7 @@ mod test {
         );
 
         // Fetch the allocation-utxo map using cache api
-        let calculated_map =
-            filecache.utxo_allocation_map(contract_id).unwrap();
+        let calculated_map = filecache.asset_allocations(contract_id).unwrap();
 
         // Assert calculation meets expectation
         assert_eq!(expected_map, calculated_map);
@@ -360,8 +353,7 @@ mod test {
         expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
 
         // Fetch the asset-amount map for the above utxo using cache api
-        let allocation_map_calculated =
-            filecache.asset_allocation_map(&utxo).unwrap();
+        let allocation_map_calculated = filecache.output_assets(&utxo).unwrap();
 
         // Assert caclulation meets expectation
         assert_eq!(expected_map, allocation_map_calculated);

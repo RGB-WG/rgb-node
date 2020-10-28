@@ -265,31 +265,27 @@ impl Cache for SqlCache {
         Ok(existed)
     }
 
-    fn utxo_allocation_map(
+    fn asset_allocations(
         &self,
         contract_id: ContractId,
     ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
-        // Get the required asset from cache
-        let asset = self.asset(contract_id)?;
-
-        // Fetch its known_allocation map
-        let allocation_map = asset.known_allocations();
-
         // Process known_allocation map to produce the intended map
-        let mut result = HashMap::new();
-
-        for item in allocation_map {
-            let mut alloc_amount = vec![];
-            for alloc in item.1 {
-                alloc_amount.push(alloc.value().value);
-            }
-            result.insert(item.0.clone(), alloc_amount);
-        }
+        let result: HashMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
+            .asset(contract_id)?
+            .known_allocations()
+            .into_iter()
+            .map(|(outpoint, allocations)| {
+                (
+                    *outpoint,
+                    allocations.into_iter().map(|a| a.value().value).collect(),
+                )
+            })
+            .collect();
 
         Ok(result)
     }
 
-    fn asset_allocation_map(
+    fn output_assets(
         &self,
         utxo: &bitcoin::OutPoint,
     ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError> {
@@ -322,24 +318,23 @@ impl Cache for SqlCache {
         let mut result = HashMap::new();
 
         // Process the above groups to produce the required map
-        for item in utxo_allocation_groups {
+        for (utxo, allocations) in utxo_allocation_groups {
             let contract_id_string = sql_asset_table
-                .find(item.0.sql_asset_id)
+                .find(utxo.sql_asset_id)
                 .first::<SqlAsset>(&self.connection)
                 .map_err(|e| SqlCacheError::Sqlite(e))?
                 .contract_id
                 .clone();
 
-            let contract_id =
-                ContractId::from_hex(&contract_id_string[..]).unwrap();
+            let contract_id = ContractId::from_hex(&contract_id_string[..])
+                .map_err(|_e| SqlCacheError::HexDecoding)?;
 
-            let sum: Vec<AtomicValue> = item
-                .1
+            let allocs: Vec<AtomicValue> = allocations
                 .iter()
                 .map(|alloc| alloc.amount as AtomicValue)
                 .collect();
 
-            result.insert(contract_id, sum);
+            result.insert(contract_id, allocs);
         }
 
         Ok(result)
@@ -890,7 +885,7 @@ mod test {
         );
 
         // Fetch the allocation-utxo map using cache api
-        let calculated_map = cache.utxo_allocation_map(contract_id).unwrap();
+        let calculated_map = cache.asset_allocations(contract_id).unwrap();
 
         // Assert calculation meets expectation
         assert_eq!(expected_map, calculated_map);
@@ -915,8 +910,7 @@ mod test {
         expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
 
         // Fetch the asset-amount map for the above utxo using cache api
-        let allocation_map_calculated =
-            cache.asset_allocation_map(&utxo).unwrap();
+        let allocation_map_calculated = cache.output_assets(&utxo).unwrap();
 
         // Assert caclulation meets expectation
         assert_eq!(expected_map, allocation_map_calculated);

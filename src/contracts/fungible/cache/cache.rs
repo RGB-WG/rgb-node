@@ -31,13 +31,13 @@ pub trait Cache {
     fn remove_asset(&mut self, id: ContractId) -> Result<bool, Self::Error>;
 
     /// Returns the map of Utxo-Allocation_amount for a given asset
-    fn utxo_allocation_map(
+    fn asset_allocations(
         &self,
         contract_id: ContractId,
     ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, Self::Error>;
 
     /// Returns the map of Asset-Allocation_amount for a given Outpoint
-    fn asset_allocation_map(
+    fn output_assets(
         &self,
         utxo: &bitcoin::OutPoint,
     ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError>;
