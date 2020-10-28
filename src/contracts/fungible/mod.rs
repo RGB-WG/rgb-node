@@ -19,8 +19,8 @@ mod runtime;
 pub(self) mod cache;
 
 pub use data::{
-    schema, AccountingAmount, Allocation, Asset, Error, Invoice, Issue,
-    Outcoincealed, Outcoins, Outpoint, OutpointDescriptor, Supply,
+    schema, AccountingAmount, Allocation, Asset, Error, Invoice, InvoiceError,
+    Issue, Outcoincealed, Outcoins, Outpoint, OutpointDescriptor, Supply,
 };
 
 pub use config::{Config, Opts};
