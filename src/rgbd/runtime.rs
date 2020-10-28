@@ -53,10 +53,7 @@ impl Runtime {
 
     fn daemon(&self, bin: &str) -> Result<DaemonHandle, DaemonError> {
         let args = [
-            "-v",
-            "-v",
-            "-v",
-            "-v",
+            "-vvvv",
             "--data-dir",
             self.config
                 .data_dir
