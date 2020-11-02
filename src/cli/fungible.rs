@@ -55,6 +55,7 @@ pub enum Command {
     Export {
         /// Bech32 representation of the asset ID (contract id of the asset
         /// genesis)
+        #[clap(parse(try_from_str = ContractId::from_bech32_str))]
         asset: ContractId,
     },
 
