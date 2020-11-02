@@ -284,6 +284,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits 0.2.14",
+ "serde 1.0.117",
  "time",
  "winapi 0.3.9",
 ]
@@ -1689,7 +1690,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "rgb_node"
-version = "0.2.0-rc.1"
+version = "0.2.0-beta.1"
 dependencies = [
  "amplify",
  "amplify_derive",

@@ -17,7 +17,9 @@ use lnpbp::lnp;
 use lnpbp::rgb::Consignment;
 
 #[cfg(feature = "node")]
-use crate::error::{RuntimeError, ServiceError};
+use crate::error::RuntimeError;
+#[cfg(any(feature = "node", feature = "client"))]
+use crate::error::ServiceError;
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
@@ -77,7 +79,7 @@ impl From<RuntimeError> for Reply {
     }
 }
 
-#[cfg(feature = "node")]
+#[cfg(any(feature = "node", feature = "client"))]
 impl From<ServiceError> for Reply {
     fn from(err: ServiceError) -> Self {
         Reply::Failure(Failure::from(err))
@@ -137,7 +139,7 @@ impl From<RuntimeError> for Failure {
     }
 }
 
-#[cfg(feature = "node")]
+#[cfg(any(feature = "node", feature = "client"))]
 impl From<ServiceError> for Failure {
     fn from(err: ServiceError) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after

@@ -159,10 +159,6 @@ pub struct Asset {
     supply: Supply,
     chain: bp::Chain,
     fractional_bits: u8,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::rust::display_fromstr")
-    )]
     date: NaiveDateTime,
     known_issues: Vec<Issue>,
     /// Specifies outpoints which when spent may indicate inflation happenning

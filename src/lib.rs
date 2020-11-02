@@ -19,6 +19,7 @@ extern crate clap;
 extern crate amplify;
 #[macro_use]
 extern crate amplify_derive;
+#[cfg(feature = "async-trait")]
 #[macro_use]
 extern crate async_trait;
 #[macro_use]

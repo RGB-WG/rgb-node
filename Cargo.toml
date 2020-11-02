@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.2.0-rc.1"
+version = "0.2.0-beta.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -89,7 +89,8 @@ default = ["client", "fungibles", "collectibles", "identities"]
 # Server is a standalone application that runs daemon
 server = ["node", "shell", "nix", "lnpbp_services/server"]
 # Feature is required for any applications that talks to daemon processes
-client = ["zmq", "lnpbp_services/client", "lnpbp/keygen"]
+client = ["zmq", "lnpbp_services/client", "lnpbp/keygen", "async-trait",
+          "regex", "tokio", "electrum-client", "base64"]
 # Embedded is an app that contains ndoe in itself and that talks to it through
 # integration layer
 embedded = ["client", "node", "lnpbp_services/embedded"]
@@ -105,9 +106,9 @@ shell = [
 # and other types of clients; thus `server` != `node`.
 # This feature results in building with features not required for CLI
 node = ["serde", "lnpbp/keygen", "tokio", "lnpbp/tokio", "zmq", "lnpbp_services/node",
-    "url", "lnpbp/url"]
-serde = ["serde_crate", "serde_with", "serde_yaml", "toml",
-    "amplify/serde", "lnpbp/serde", "lnpbp_services/serde"]
+        "url", "lnpbp/url", "async-trait", "regex", "electrum-client", "base64"]
+serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",
+         "amplify/serde", "lnpbp/serde", "lnpbp_services/serde", "chrono/serde"]
 # Schema-specific components exposed as features:
 fungibles = []
 collectibles = []

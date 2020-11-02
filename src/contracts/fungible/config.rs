@@ -126,16 +126,16 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             cache: FUNGIBLED_CACHE.to_string(),
             format: DataFormat::Yaml,
-            rpc_endpoint: "ipc:/tmp"
+            rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
+                .parse()
+                .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),
+            pub_endpoint: FUNGIBLED_PUB_ENDPOINT
+                .parse()
+                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
+            stash_rpc: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            pub_endpoint: "ipc:/tmp"
-                .parse()
-                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
-            stash_rpc: "ipc:/tmp"
-                .parse()
-                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            stash_sub: "ipc:/tmp"
+            stash_sub: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK
