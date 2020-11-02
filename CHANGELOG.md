@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+v0.2.0-beta.1
+-------------
+Migrated to the second version of LNP/BP Core Library (v0.2, currently beta-1).
+
+### Fixes:
+- Fixed `rgb-cli export` command (now it parses Bech32-formatted asset name)
+- Updated feature structure, fixed feature interdependencies
+
 v0.1.1
 ------
 
