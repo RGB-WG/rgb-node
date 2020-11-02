@@ -14,7 +14,7 @@
 use std::collections::HashMap;
 
 use lnpbp::bp;
-use lnpbp::lnp::transport::zmq::SocketLocator;
+use lnpbp::lnp::transport::zmqsocket::ZmqSocketAddr;
 
 use crate::constants::*;
 use crate::rgbd::ContractName;
@@ -22,8 +22,8 @@ use crate::rgbd::ContractName;
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 pub struct Config {
-    pub stash_endpoint: SocketLocator,
-    pub contract_endpoints: HashMap<ContractName, SocketLocator>,
+    pub stash_endpoint: ZmqSocketAddr,
+    pub contract_endpoints: HashMap<ContractName, ZmqSocketAddr>,
     pub network: bp::Chain,
     pub threaded: bool,
     pub data_dir: String,

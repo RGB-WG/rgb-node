@@ -15,8 +15,11 @@ use std::path::PathBuf;
 
 use lnpbp::bitcoin::{Transaction, Txid};
 use lnpbp::lnp::presentation::Encode;
-use lnpbp::lnp::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
+use lnpbp::lnp::zmqsocket::ZmqType;
+use lnpbp::lnp::{
+    session, transport, CreateUnmarshaller, PlainTranscoder, Session,
+    Unmarshall, Unmarshaller,
+};
 use lnpbp::rgb::{
     validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
     NodeId, Schema, SchemaId, Stash, Validity,
@@ -41,10 +44,12 @@ pub struct Runtime {
     config: Config,
 
     /// Request-response API socket
-    session_rpc: Session<NoEncryption, transport::zmq::Connection>,
+    session_rpc:
+        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// Publish-subscribe API socket
-    session_pub: Session<NoEncryption, transport::zmq::Connection>,
+    session_pub:
+        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// RGB Index: fast, mostly in-memory key-value indexing service.
     /// Must be exclusive for the current service
@@ -83,10 +88,7 @@ impl Runtime {
         &self.storage
     }
 
-    pub fn init(
-        config: Config,
-        mut context: &mut zmq::Context,
-    ) -> Result<Self, BootstrapError> {
+    pub fn init(config: Config) -> Result<Self, BootstrapError> {
         #[cfg(not(store_hammersbald))] // Default store
         let storage = DiskStorage::new(DiskStorageConfig {
             data_dir: PathBuf::from(config.stash.clone()),
@@ -96,17 +98,17 @@ impl Runtime {
             index_file: PathBuf::from(config.index.clone()),
         })?;
 
-        let session_rpc = Session::new_zmq_unencrypted(
-            ApiType::Server,
-            &mut context,
-            config.rpc_endpoint.clone(),
+        let session_rpc = session::Raw::with_zmq_unencrypted(
+            ZmqType::Rep,
+            &config.rpc_endpoint,
+            None,
             None,
         )?;
 
-        let session_pub = Session::new_zmq_unencrypted(
-            ApiType::Publish,
-            &mut context,
-            config.pub_endpoint.clone(),
+        let session_pub = session::Raw::with_zmq_unencrypted(
+            ZmqType::Pub,
+            &config.pub_endpoint,
+            None,
             None,
         )?;
 
@@ -152,7 +154,7 @@ impl Runtime {
             "Sending {} bytes back to the client over ZMQ RPC",
             data.len()
         );
-        self.session_rpc.send_raw_message(data)?;
+        self.session_rpc.send_raw_message(&data)?;
         Ok(())
     }
 
@@ -387,8 +389,7 @@ impl validation::TxResolver for DummyTxResolver {
 }
 
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
-    let mut context = zmq::Context::new();
-    let runtime = Runtime::init(config, &mut context)?;
+    let runtime = Runtime::init(config)?;
     runtime.run_or_panic("Stashd runtime").await;
 
     unreachable!()

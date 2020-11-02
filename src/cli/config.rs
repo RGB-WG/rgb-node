@@ -16,7 +16,7 @@ use core::str::FromStr;
 use std::path::PathBuf;
 
 use lnpbp::bp;
-use lnpbp::lnp::transport::zmq::SocketLocator;
+use lnpbp::lnp::transport::zmqsocket::ZmqSocketAddr;
 
 use super::{fungible, stash, Error, Runtime};
 use crate::constants::*;
@@ -86,8 +86,8 @@ pub enum Command {
 pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,
-    pub fungible_endpoint: SocketLocator,
-    pub stash_endpoint: SocketLocator,
+    pub fungible_endpoint: ZmqSocketAddr,
+    pub stash_endpoint: ZmqSocketAddr,
     pub network: bp::Chain,
 }
 

@@ -40,19 +40,13 @@ use crate::error::ServiceErrorDomain;
 
 pub type AccountingValue = f32;
 
-#[derive(
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    Hash,
-    Debug,
-    Display,
-    Default,
-)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display, Default)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub struct AccountingAmount(AtomicValue, u8);
 
 impl AccountingAmount {
@@ -150,7 +144,12 @@ impl AddAssign for AccountingAmount {
     }
 }
 
-#[derive(Clone, Getters, Serialize, Deserialize, PartialEq, Debug, Display)]
+#[derive(Clone, Getters, PartialEq, Debug, Display)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[display(Debug)]
 pub struct Asset {
     id: ContractId, // This is a unique primary key
@@ -158,9 +157,12 @@ pub struct Asset {
     name: String,
     description: Option<String>,
     supply: Supply,
-    #[serde(with = "serde_with::rust::display_fromstr")]
     chain: bp::Chain,
     fractional_bits: u8,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::rust::display_fromstr")
+    )]
     date: NaiveDateTime,
     known_issues: Vec<Issue>,
     /// Specifies outpoints which when spent may indicate inflation happenning
@@ -214,8 +216,13 @@ impl Asset {
     }
 }
 
-#[derive(Clone, Getters, Serialize, Deserialize, PartialEq, Debug, Display)]
+#[derive(Clone, Getters, PartialEq, Debug, Display)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub struct Allocation {
     // Unique primary key is `node_id` + `index`
     node_id: NodeId,
@@ -252,20 +259,13 @@ impl Allocation {
     }
 }
 
-#[derive(
-    Clone,
-    Copy,
-    Getters,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    Hash,
-    Debug,
-    Display,
-    Default,
-)]
+#[derive(Clone, Copy, Getters, PartialEq, Eq, Hash, Debug, Display, Default)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub struct Supply {
     // Sum of all issued amounts
     known_circulating: AccountingAmount,
@@ -309,19 +309,13 @@ impl Supply {
     }
 }
 
-#[derive(
-    Clone,
-    Copy,
-    Getters,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    Hash,
-    Display,
-)]
+#[derive(Clone, Copy, Getters, Debug, PartialEq, Eq, Hash, Display)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub struct Issue {
     // Unique primary key; equals to the state transition id that performs
     // issuance (i.e. of `issue` type)

@@ -16,8 +16,8 @@ use core::str::FromStr;
 use std::path::PathBuf;
 
 use lnpbp::bp;
-use lnpbp::lnp::transport::zmq::SocketLocator;
-use lnpbp::lnp::{LocalNode, NodeLocator};
+use lnpbp::lnp::transport::zmqsocket::ZmqSocketAddr;
+use lnpbp::lnp::{LocalNode, PartialNodeAddr};
 
 use crate::constants::*;
 
@@ -90,9 +90,9 @@ pub struct Config {
     pub data_dir: PathBuf,
     pub stash: String,
     pub index: String,
-    pub p2p_endpoint: Option<NodeLocator>,
-    pub rpc_endpoint: SocketLocator,
-    pub pub_endpoint: SocketLocator,
+    pub p2p_endpoint: Option<PartialNodeAddr>,
+    pub rpc_endpoint: ZmqSocketAddr,
+    pub pub_endpoint: ZmqSocketAddr,
     pub network: bp::Chain,
     pub electrum_server: String,
 }

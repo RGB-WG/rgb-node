@@ -25,7 +25,12 @@ use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 
 use crate::error::ParseError;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 #[display(Debug)]
 pub struct SealSpec {
     pub vout: u32,

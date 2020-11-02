@@ -53,12 +53,6 @@ pub enum BootstrapError {
     Other,
 }
 
-impl From<BootstrapError> for String {
-    fn from(err: BootstrapError) -> Self {
-        format!("{}", err)
-    }
-}
-
 impl From<&str> for BootstrapError {
     fn from(err: &str) -> Self {
         BootstrapError::ArgParseError(err.to_string())
@@ -105,19 +99,19 @@ pub enum RuntimeError {
 
 impl RuntimeError {
     pub fn zmq_request(socket: &str, err: zmq::Error) -> Self {
-        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
     }
 
     pub fn zmq_reply(socket: &str, err: zmq::Error) -> Self {
-        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
     }
 
     pub fn zmq_publish(socket: &str, err: zmq::Error) -> Self {
-        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
     }
 
     pub fn zmq_subscribe(socket: &str, err: zmq::Error) -> Self {
-        Self::Zmq(ServiceSocketType::Request, socket.to_string(), err)
+        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
     }
 }
 

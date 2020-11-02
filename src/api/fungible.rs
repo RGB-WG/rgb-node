@@ -52,18 +52,13 @@ pub enum Request {
     Sync,
 }
 
-#[derive(
-    Clap,
-    Clone,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    StrictEncode,
-    StrictDecode,
-    Debug,
-    Display,
-)]
+#[derive(Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub struct Issue {
     /// Asset ticker
     #[clap(validator=ticker_validator)]

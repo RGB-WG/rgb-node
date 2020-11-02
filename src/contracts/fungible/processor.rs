@@ -32,7 +32,12 @@ use crate::{field, type_map};
 
 pub struct Processor {}
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub enum IssueStructure {
     SingleIssue,
     MultipleIssues {

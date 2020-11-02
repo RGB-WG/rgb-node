@@ -1,58 +1,114 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.1.1"
+version = "0.2.0-rc.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
 edition = "2018"
 readme = "README.md"
-exclude = [".github", "/data", "/doc", "/test", "Dockerfile"]
+exclude = [".github", "/doc", "/test", "Dockerfile"]
 
 [lib]
 name = "rgb"
 
+[[bin]]
+name = "rgbd"
+required-features = ["server"]
+
+[[bin]]
+name = "stashd"
+required-features = ["server"]
+
+[[bin]]
+name = "fungibled"
+required-features = ["server"]
+
+[[bin]]
+name = "rgb-cli"
+required-features = ["cli"]
+
 [dependencies]
-amplify = { version = "~2.0.6", features = ["all"] }
-amplify_derive = "~2.0.6"
-lnpbp = { version = "~0.1.0", features = ["all"] }
-lnpbp_derive = "~0.1.0"
-base64 = "0.12"
-dotenv = "~0.15.0"
-clap = "=3.0.0-beta.2"
-chrono = { version = "~0.4.11", features = [ "serde" ] }
-serde = { version = "~1.0.111", features = ["derive"] }
-serde_with = "~1.5.0"
-serde_json = "~1.0.55"
-serde_yaml = "~0.8.13"
-toml = "~0.5.6"
-bech32 = "~0.7.2"
-log = { version = "~0.4", features = ["max_level_trace", "release_max_level_debug"] }
-async-trait = "~0.1.35"
-regex = "~1.3.9"
-env_logger = "~0.7.1"
+# LNP/BP crates
+amplify = "~2.2.1"
+amplify_derive = "~2.2.2"
+lnpbp = { version = "~0.2.0-beta.1", features = ["lnp", "url", "websockets"] }
+lnpbp_derive = "=0.2.0-beta.1"
+lnpbp_services = "=0.2.0-beta.1"
+lazy_static = "~1.4.0"
+# Rust language
+nix = { version = "~0.19.0", optional = true }
+chrono = "~0.4.19"
+# Bitcoin
+electrum-client = { version = "=0.3.0-beta.1", optional = true }
+# Serialization & parsing
+serde_crate = { package = "serde", version = "~1.0.106", features = ["derive"], optional = true }
+serde_with = { version = "~1.5.0", optional = true }
+serde_json = { version = "~1.0.55", optional = true }
+serde_yaml = { version = "~0.8.13", optional = true }
+toml = { version = "~0.5.6", optional = true }
+bech32 = { version = "~0.7.2", optional = true }
+base64 = { version = "~0.12.1", optional = true }
+regex = { version = "~1.3.9", optional = true }
+url = { version = "~2.1.1", optional = true }
+# Congig & logging
+settings = { version = "~0.10.1", package = "config", optional = true }
+configure_me = { version = "0.3.4", optional = true }
+dotenv = { version = "~0.15.0", optional = true }
+clap = { version = "=3.0.0-beta.2", optional = true }
+log = { version = "~0.4.8", optional = true, features = ["max_level_trace", "release_max_level_debug"] }
+env_logger = { version = "~0.7.1", optional = true }
+colored = { version = "~2.0.0", optional = true }
+shellexpand = { version = "~2.0.0", optional = true }
+# Processes & IPC
+async-trait = { version = "~0.1.35", optional = true }
+tokio = { version = "~0.2.21", features = ["full"], optional = true }
+zmq = { version = "~0.9.2", optional = true }
+
 num-traits = "~0.2.12"
 num-derive = "~0.3.0"
-url = "~2.1.1"
-tokio = { version = "~0.2.21", features = ["full"] }
 futures = "~0.3.5"
-zmq = "~0.9.2"
-electrum-client = "=0.3.0-beta.1"
 diesel = { version = "1.4.4", features = ["sqlite", "uuid", "numeric", "chrono"] }
 
-[target.'cfg(target_os="android")'.dependencies.zmq]
-version = "~0.9"
-features = ["vendored"]
+[target.'cfg(target_os="android")'.dependencies]
+zmq = { version = "~0.9", features = ["vendored"] }
 
+[target.'cfg(target_os="android")'.patch.crates-io]
+# Use this for Android builds
+# Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
+zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }
+
+# Recommended set of features:
+# 1. Standalone node: `server` (=`node`+`shell`)
+# 2. Cli to remote node: `cli` (auto includes `shell` and `integration`)
+# 3. Mobile app talking to a server: `client`
+# 4. Mobile app with embedded node: `embedded` (auto includes `client` + `node`)
+# 5. Simple cli utility app: `shell`
 [features]
-default = ["daemon", "fungibles", "collectibles", "identities"]
-service = []
-daemon = ["service"]
-cli = []
+default = ["client", "fungibles", "collectibles", "identities"]
+# Server is a standalone application that runs daemon
+server = ["node", "shell", "nix", "lnpbp_services/server"]
+# Feature is required for any applications that talks to daemon processes
+client = ["zmq", "lnpbp_services/client", "lnpbp/keygen"]
+# Embedded is an app that contains ndoe in itself and that talks to it through
+# integration layer
+embedded = ["client", "node", "lnpbp_services/embedded"]
+# Command-line application feature
+cli = ["shell", "client", "lnpbp_services/cli", "url", "lnpbp/url"]
+# Required for all apps that can be launched from command-line shell as binaries
+# (i.e. both servers and cli)
+shell = [
+    "dotenv", "clap", "settings", "configure_me", "log", "env_logger", "serde",
+    "amplify/parse_arg", "lnpbp_services/shell", "shellexpand", "colored"
+]
+# Besides server node can be run as a part of mobile app
+# and other types of clients; thus `server` != `node`.
+# This feature results in building with features not required for CLI
+node = ["serde", "lnpbp/keygen", "tokio", "lnpbp/tokio", "zmq", "lnpbp_services/node",
+    "url", "lnpbp/url"]
+serde = ["serde_crate", "serde_with", "serde_yaml", "toml",
+    "amplify/serde", "lnpbp/serde", "lnpbp_services/serde"]
+# Schema-specific components exposed as features:
 fungibles = []
 collectibles = []
 identities = []
-
-[patch.crates-io]
-# Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
-zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }

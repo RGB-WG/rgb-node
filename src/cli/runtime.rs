@@ -15,8 +15,11 @@ use std::sync::Arc;
 
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::lnp::presentation::Encode;
-use lnpbp::lnp::transport::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshall, Unmarshaller};
+use lnpbp::lnp::transport::zmqsocket::ZmqType;
+use lnpbp::lnp::{
+    session, transport, CreateUnmarshaller, PlainTranscoder, Session,
+    Unmarshall, Unmarshaller,
+};
 use lnpbp::rgb::{Consignment, ContractId, Genesis, SchemaId};
 
 use super::{Config, Error};
@@ -26,24 +29,24 @@ use crate::api::Reply;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 
 pub struct Runtime {
-    stash_rpc: Session<NoEncryption, transport::zmq::Connection>,
-    fungible_rpc: Session<NoEncryption, transport::zmq::Connection>,
+    stash_rpc: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    fungible_rpc:
+        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
     unmarshaller: Unmarshaller<Reply>,
 }
 
 impl Runtime {
     pub async fn init(config: Config) -> Result<Self, BootstrapError> {
-        let mut context = zmq::Context::new();
-        let fungible_rpc = Session::new_zmq_unencrypted(
-            ApiType::Client,
-            &mut context,
-            config.fungible_endpoint.clone(),
+        let fungible_rpc = session::Raw::with_zmq_unencrypted(
+            ZmqType::Req,
+            &config.fungible_endpoint,
+            None,
             None,
         )?;
-        let stash_rpc = Session::new_zmq_unencrypted(
-            ApiType::Client,
-            &mut context,
-            config.stash_endpoint.clone(),
+        let stash_rpc = session::Raw::with_zmq_unencrypted(
+            ZmqType::Req,
+            &config.stash_endpoint,
+            None,
             None,
         )?;
         Ok(Self {
@@ -58,7 +61,7 @@ impl Runtime {
         command: stash::Request,
     ) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.encode()?;
-        self.stash_rpc.send_raw_message(data)?;
+        self.stash_rpc.send_raw_message(&data)?;
         let raw = self.stash_rpc.recv_raw_message()?;
         let reply = self.unmarshaller.unmarshall(&raw)?;
         Ok(reply)
@@ -69,7 +72,7 @@ impl Runtime {
         command: fungible::Request,
     ) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.encode()?;
-        self.fungible_rpc.send_raw_message(data)?;
+        self.fungible_rpc.send_raw_message(&data)?;
         let raw = self.fungible_rpc.recv_raw_message()?;
         let reply = self.unmarshaller.unmarshall(&raw)?;
         Ok(reply)

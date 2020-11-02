@@ -16,7 +16,7 @@ use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use lnpbp::lnp;
 use lnpbp::rgb::Consignment;
 
-#[cfg(feature = "service")]
+#[cfg(feature = "node")]
 use crate::error::{RuntimeError, ServiceError};
 
 #[derive(Clone, Debug, Display, LnpApi)]
@@ -70,14 +70,14 @@ impl From<lnp::transport::Error> for Reply {
     }
 }
 
-#[cfg(feature = "service")]
+#[cfg(feature = "node")]
 impl From<RuntimeError> for Reply {
     fn from(err: RuntimeError) -> Self {
         Reply::Failure(Failure::from(err))
     }
 }
 
-#[cfg(feature = "service")]
+#[cfg(feature = "node")]
 impl From<ServiceError> for Reply {
     fn from(err: ServiceError) -> Self {
         Reply::Failure(Failure::from(err))
@@ -125,7 +125,7 @@ impl From<lnp::transport::Error> for Failure {
     }
 }
 
-#[cfg(feature = "service")]
+#[cfg(feature = "node")]
 impl From<RuntimeError> for Failure {
     fn from(err: RuntimeError) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after
@@ -137,7 +137,7 @@ impl From<RuntimeError> for Failure {
     }
 }
 
-#[cfg(feature = "service")]
+#[cfg(feature = "node")]
 impl From<ServiceError> for Failure {
     fn from(err: ServiceError) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after

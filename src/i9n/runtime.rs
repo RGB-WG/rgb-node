@@ -13,8 +13,10 @@
 
 use std::thread;
 
-use lnpbp::lnp::transport::zmq::ApiType;
-use lnpbp::lnp::{transport, NoEncryption, Session, Unmarshaller};
+use lnpbp::lnp::transport::zmqsocket::ZmqType;
+use lnpbp::lnp::{
+    session, transport, CreateUnmarshaller, PlainTranscoder, Unmarshaller,
+};
 
 use super::Config;
 use crate::api::Reply;
@@ -23,8 +25,8 @@ use crate::rgbd::{self, ContractName};
 
 pub struct Runtime {
     pub(super) config: Config,
-    pub(super) context: zmq::Context,
-    pub(super) session_rpc: Session<NoEncryption, transport::zmq::Connection>,
+    pub(super) session_rpc:
+        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
     pub(super) unmarshaller: Unmarshaller<Reply>,
 }
 
@@ -53,20 +55,19 @@ impl Runtime {
             });
         }
 
-        let mut context = zmq::Context::new();
-        let session_rpc = Session::new_zmq_unencrypted(
-            ApiType::Client,
-            &mut context,
+        let session_rpc = session::Raw::with_zmq_unencrypted(
+            ZmqType::Req,
             config
                 .contract_endpoints
                 .get(&ContractName::Fungible)
-                .expect("Fungible engine is not connected in the configuration")
-                .clone(),
+                .expect(
+                    "Fungible engine is not connected in the configuration",
+                ),
+            None,
             None,
         )?;
         Ok(Self {
             config,
-            context,
             session_rpc,
             unmarshaller: Reply::create_unmarshaller(),
         })

@@ -28,7 +28,12 @@ use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 use super::AccountingValue;
 use crate::error::ParseError;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
+#[derive(Clone, Debug, PartialEq, Display)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 #[display(Debug)]
 pub struct Outcoins {
     pub coins: AccountingValue,
@@ -36,7 +41,12 @@ pub struct Outcoins {
     pub txid: Option<Txid>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Display)]
+#[derive(Clone, Debug, PartialEq, Display)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 #[display(Debug)]
 pub struct Outcoincealed {
     pub coins: AccountingValue,

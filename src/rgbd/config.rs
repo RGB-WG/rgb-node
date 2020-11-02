@@ -52,19 +52,13 @@ pub struct Opts {
     pub network: bp::Chain,
 }
 
-#[derive(
-    Clap,
-    Clone,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Debug,
-    Display,
-    Deserialize,
-)]
+#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 #[repr(u8)]
 #[non_exhaustive]
 pub enum ContractName {

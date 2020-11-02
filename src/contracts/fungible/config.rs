@@ -17,7 +17,7 @@ use std::path::PathBuf;
 
 use crate::DataFormat;
 use lnpbp::bp;
-use lnpbp::lnp::transport::zmq::SocketLocator;
+use lnpbp::lnp::transport::zmqsocket::ZmqSocketAddr;
 
 use crate::constants::*;
 
@@ -93,10 +93,10 @@ pub struct Config {
     pub data_dir: PathBuf,
     pub cache: String,
     pub format: DataFormat,
-    pub rpc_endpoint: SocketLocator,
-    pub pub_endpoint: SocketLocator,
-    pub stash_rpc: SocketLocator,
-    pub stash_sub: SocketLocator,
+    pub rpc_endpoint: ZmqSocketAddr,
+    pub pub_endpoint: ZmqSocketAddr,
+    pub stash_rpc: ZmqSocketAddr,
+    pub stash_sub: ZmqSocketAddr,
     pub network: bp::Chain,
 }
 
