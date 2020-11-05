@@ -16,14 +16,15 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{fs, io, io::Read, io::Write};
 
-use crate::DataFormat;
 use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
+use lnpbp::strict_encoding::strict_encode;
 
 use super::Cache;
 use crate::fungible::cache::CacheError;
 use crate::fungible::Asset;
 use crate::util::file::*;
+use crate::DataFormat;
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
@@ -151,12 +152,12 @@ impl FileCache {
 
     pub fn export(&self) -> Result<Vec<u8>, FileCacheError> {
         trace!("Exporting assets information ...");
-        let assets = self.assets.values().collect::<Vec<&Asset>>();
+        let assets = self.assets.values().cloned().collect::<Vec<Asset>>();
         Ok(match self.config.data_format {
             DataFormat::Yaml => serde_yaml::to_vec(&assets)?,
             DataFormat::Json => serde_json::to_vec(&assets)?,
             DataFormat::Toml => toml::to_vec(&assets)?,
-            DataFormat::StrictEncode => unimplemented!(),
+            DataFormat::StrictEncode => strict_encode(&assets)?,
         })
     }
 }

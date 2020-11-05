@@ -40,11 +40,22 @@ use crate::error::ServiceErrorDomain;
 
 pub type AccountingValue = f32;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Display, Default)]
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Debug,
+    Display,
+    Default,
+    StrictEncode,
+    StrictDecode,
+)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
-    derive(Serialize, Deserialize,),
+    derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
 pub struct AccountingAmount(AtomicValue, u8);
@@ -144,7 +155,9 @@ impl AddAssign for AccountingAmount {
     }
 }
 
-#[derive(Clone, Getters, PartialEq, Debug, Display)]
+#[derive(
+    Clone, Getters, PartialEq, Debug, Display, StrictEncode, StrictDecode,
+)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -212,7 +225,9 @@ impl Asset {
     }
 }
 
-#[derive(Clone, Getters, PartialEq, Debug, Display)]
+#[derive(
+    Clone, Getters, PartialEq, Debug, Display, StrictEncode, StrictDecode,
+)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -255,7 +270,19 @@ impl Allocation {
     }
 }
 
-#[derive(Clone, Copy, Getters, PartialEq, Eq, Hash, Debug, Display, Default)]
+#[derive(
+    Clone,
+    Copy,
+    Getters,
+    PartialEq,
+    Eq,
+    Hash,
+    Debug,
+    Display,
+    Default,
+    StrictEncode,
+    StrictDecode,
+)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -305,7 +332,18 @@ impl Supply {
     }
 }
 
-#[derive(Clone, Copy, Getters, Debug, PartialEq, Eq, Hash, Display)]
+#[derive(
+    Clone,
+    Copy,
+    Getters,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    Display,
+    StrictEncode,
+    StrictDecode,
+)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
