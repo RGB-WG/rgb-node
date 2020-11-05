@@ -35,6 +35,7 @@ use crate::fungible::{
 };
 use crate::util::file::ReadWrite;
 use crate::util::SealSpec;
+use crate::DataFormat;
 
 impl Runtime {
     fn command(
@@ -153,8 +154,11 @@ impl Runtime {
         }
     }
 
-    pub fn sync(&mut self) -> Result<reply::SyncFormat, Error> {
-        match &*self.command(Request::Sync)? {
+    pub fn sync(
+        &mut self,
+        data_format: DataFormat,
+    ) -> Result<reply::SyncFormat, Error> {
+        match &*self.command(Request::Sync(data_format))? {
             Reply::Sync(data) => Ok(data.clone()),
             Reply::Failure(failmsg) => Err(Error::Reply(failmsg.clone())),
             _ => Err(Error::UnexpectedResponse),

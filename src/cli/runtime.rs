@@ -26,7 +26,9 @@ use super::{Config, Error};
 use crate::api::fungible::{self, AcceptApi, Issue, TransferApi};
 use crate::api::stash;
 use crate::api::Reply;
+use crate::cli::OutputFormat;
 use crate::error::{BootstrapError, ServiceErrorDomain};
+use crate::DataFormat;
 
 pub struct Runtime {
     stash_rpc: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
@@ -102,8 +104,18 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn list(&mut self) -> Result<Arc<Reply>, Error> {
-        Ok(self.fungible_command(fungible::Request::Sync)?)
+    pub fn list(
+        &mut self,
+        output_format: OutputFormat,
+    ) -> Result<Arc<Reply>, Error> {
+        let data_format = match output_format {
+            OutputFormat::Yaml => DataFormat::Yaml,
+            OutputFormat::Json => DataFormat::Json,
+            OutputFormat::Toml => DataFormat::Toml,
+            OutputFormat::StrictEncode => DataFormat::StrictEncode,
+            _ => unimplemented!("The provided output format is not supported for this operation")
+        };
+        Ok(self.fungible_command(fungible::Request::Sync(data_format))?)
     }
 
     #[inline]

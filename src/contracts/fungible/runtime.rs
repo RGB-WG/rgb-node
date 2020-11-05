@@ -41,6 +41,7 @@ use crate::error::{
     ServiceErrorDomain, ServiceErrorSource,
 };
 use crate::service::TryService;
+use crate::DataFormat;
 
 pub struct Runtime {
     /// Original configuration object
@@ -201,7 +202,7 @@ impl Runtime {
             Request::ExportAsset(asset_id) => {
                 self.rpc_export_asset(asset_id).await
             }
-            Request::Sync => self.rpc_sync().await,
+            Request::Sync(data_format) => self.rpc_sync(*data_format).await,
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
     }
@@ -310,9 +311,12 @@ impl Runtime {
         Ok(self.forget(outpoint.clone()).await?)
     }
 
-    async fn rpc_sync(&mut self) -> Result<Reply, ServiceErrorDomain> {
+    async fn rpc_sync(
+        &mut self,
+        data_format: DataFormat,
+    ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got SYNC");
-        let data = self.cacher.export()?;
+        let data = self.cacher.export(Some(data_format))?;
         Ok(Reply::Sync(reply::SyncFormat(self.config.format, data)))
     }
 

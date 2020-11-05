@@ -167,7 +167,7 @@ impl Command {
         output_format: OutputFormat,
         long: bool,
     ) -> Result<(), Error> {
-        match &*runtime.list()? {
+        match &*runtime.list(output_format)? {
             Reply::Failure(failure) => {
                 eprintln!("Server returned error: {}", failure);
             }

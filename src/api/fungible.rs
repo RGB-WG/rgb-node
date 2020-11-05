@@ -21,6 +21,7 @@ use lnpbp::rgb::{Consignment, ContractId};
 
 use crate::fungible::{Outcoincealed, Outcoins};
 use crate::util::SealSpec;
+use crate::DataFormat;
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[lnp_api(encoding = "strict")]
@@ -49,7 +50,7 @@ pub enum Request {
     Forget(::lnpbp::bitcoin::OutPoint),
 
     #[lnp_api(type = 0xFF01)]
-    Sync,
+    Sync(DataFormat),
 }
 
 #[derive(Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
