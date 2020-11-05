@@ -15,11 +15,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-use bitcoin::consensus::{Decodable, Encodable};
-use bitcoin::util::psbt::PartiallySignedTransaction;
-use bitcoin::OutPoint;
-
-use lnpbp::bitcoin;
+use lnpbp::bitcoin::consensus::{Decodable, Encodable};
+use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
+use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::client_side_validation::Conceal;

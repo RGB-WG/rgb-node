@@ -59,7 +59,7 @@ impl From<&str> for BootstrapError {
     }
 }
 
-use lnpbp::bitcoin::hashes::hex;
+use lnpbp::hex;
 use std::num::{ParseFloatError, ParseIntError};
 
 #[derive(Clone, Copy, Debug, Display, Error)]
@@ -79,7 +79,7 @@ impl From<ParseIntError> for ParseError {
 }
 
 impl From<hex::Error> for ParseError {
-    fn from(_: hex::Error) -> Self {
+    fn from(_: lnpbp::hex::Error) -> Self {
         Self
     }
 }

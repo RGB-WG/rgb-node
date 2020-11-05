@@ -16,12 +16,10 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::io;
 
-use bitcoin::hashes::hex::FromHex;
-use bitcoin::Txid;
-
-use bp::blind::OutpointHash;
-use lnpbp::bitcoin;
+use lnpbp::bitcoin::Txid;
 use lnpbp::bp;
+use lnpbp::bp::blind::OutpointHash;
+use lnpbp::hex::FromHex;
 use lnpbp::rgb::SealDefinition;
 use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 

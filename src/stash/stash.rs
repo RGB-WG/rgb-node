@@ -13,8 +13,8 @@
 
 use std::collections::VecDeque;
 
-use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bp::blind::OutpointHash;
+use lnpbp::hashes::Hash;
 use lnpbp::rgb::{
     Anchor, AutoConceal, Consignment, ContractId, Disclosure, Extension,
     Genesis, Node, NodeId, SchemaId, Stash, Transition,

@@ -13,6 +13,7 @@
 
 #![allow(dead_code)]
 
+#[cfg(feature = "clap")]
 #[macro_use]
 extern crate clap;
 #[macro_use]

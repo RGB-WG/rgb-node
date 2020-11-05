@@ -14,7 +14,7 @@ use crate::contracts::fungible::data::{
 };
 use diesel::prelude::*;
 use lnpbp::bitcoin::{OutPoint, Txid};
-use lnpbp::bitcoin_hashes::hex::{FromHex, ToHex};
+use lnpbp::hex::{FromHex, ToHex};
 /// All the sqlite table structures are defined here.
 /// There are 5 tables namely Asset, Issue, Inflation, AllocationUtxo
 /// and Allocation. The Asset is the major table, and all other tables

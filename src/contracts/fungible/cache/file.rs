@@ -31,10 +31,10 @@ pub enum FileCacheError {
     #[from]
     Io(io::Error),
 
-    #[from(bitcoin::hashes::Error)]
+    #[from(lnpbp::hashes::Error)]
     HashName,
 
-    #[from(bitcoin::hashes::hex::Error)]
+    #[from(lnpbp::hex::Error)]
     BrokenHexFilenames,
 
     #[from]
@@ -241,7 +241,7 @@ impl Cache for FileCache {
 mod test {
     use super::super::sql::{SqlCache, SqlCacheConfig};
     use super::*;
-    use lnpbp::bitcoin_hashes::hex::FromHex;
+    use lnpbp::hex::FromHex;
     use std::env;
 
     #[test]

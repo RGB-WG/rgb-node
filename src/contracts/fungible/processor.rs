@@ -16,12 +16,10 @@ use core::convert::TryFrom;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
-use lnpbp::bitcoin;
+use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp;
 use lnpbp::rgb::prelude::*;
 use lnpbp::secp256k1zkp;
-
-use bitcoin::OutPoint;
 
 use super::schema::{self, FieldType, OwnedRightsType, TransitionType};
 use super::{AccountingAmount, Allocation, Asset, Outcoincealed, Outcoins};

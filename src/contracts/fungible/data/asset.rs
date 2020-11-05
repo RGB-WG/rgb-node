@@ -26,10 +26,10 @@ use crate::contracts::fungible::cache::models::{
 };
 use crate::contracts::fungible::cache::SqlCacheError;
 use lnpbp::bitcoin;
-use lnpbp::bitcoin::hashes::Hash;
 use lnpbp::bitcoin::{OutPoint, Txid};
-use lnpbp::bitcoin_hashes::hex::FromHex;
 use lnpbp::bp;
+use lnpbp::hashes::Hash;
+use lnpbp::hex::FromHex;
 use lnpbp::rgb::prelude::*;
 use lnpbp::rgb::seal::WitnessVoutError;
 use lnpbp::secp256k1zkp::key::SecretKey;

@@ -14,8 +14,7 @@
 use std::path::PathBuf;
 use std::{fs, io};
 
-use lnpbp::bitcoin;
-use lnpbp::bitcoin::hashes::hex::ToHex;
+use lnpbp::hex::ToHex;
 use lnpbp::rgb::prelude::*;
 
 use super::Store;
@@ -28,13 +27,13 @@ pub enum DiskStorageError {
     #[from]
     Io(io::Error),
 
-    #[from(bitcoin::hashes::Error)]
+    #[from(lnpbp::hashes::Error)]
     HashName,
 
     #[from]
     Encoding(lnpbp::strict_encoding::Error),
 
-    #[from(bitcoin::hashes::hex::Error)]
+    #[from(lnpbp::hex::Error)]
     #[from(lnpbp::rgb::bech32::Error)]
     BrokenFilenames,
 }

@@ -18,7 +18,7 @@ use std::{fmt, fs, fs::File};
 use crate::contracts::fungible::cache::schema as cache_schema;
 
 use lnpbp::bitcoin;
-use lnpbp::bitcoin_hashes::hex::{FromHex, ToHex};
+use lnpbp::hex::{FromHex, ToHex};
 use lnpbp::rgb::prelude::*;
 
 use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
@@ -44,7 +44,7 @@ pub enum SqlCacheError {
     #[from]
     Sqlite(diesel::result::Error),
 
-    #[from(bitcoin::hashes::hex::Error)]
+    #[from(lnpbp::hex::Error)]
     HexDecoding,
 
     #[from]
@@ -346,7 +346,7 @@ mod test {
     use super::*;
     use crate::contracts::fungible::data::Asset;
     use chrono::NaiveDate;
-    use lnpbp::bitcoin_hashes::hex::FromHex;
+    use lnpbp::hex::FromHex;
     use lnpbp::rgb::ContractId;
 
     use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
