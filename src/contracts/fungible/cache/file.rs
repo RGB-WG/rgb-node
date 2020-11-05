@@ -12,13 +12,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use serde_json;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::{fs, io, io::Read, io::Write};
 
 use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::strict_encode;
+use lnpbp::strict_encoding::{strict_encode, StrictDecode, StrictEncode};
 
 use super::Cache;
 use crate::fungible::cache::CacheError;
@@ -80,7 +80,7 @@ impl FileCacheConfig {
 #[display(Debug)]
 pub struct FileCache {
     config: FileCacheConfig,
-    assets: HashMap<ContractId, Asset>,
+    assets: BTreeMap<ContractId, Asset>,
 }
 
 impl FileCache {
@@ -106,7 +106,7 @@ impl FileCache {
 
         let mut me = Self {
             config,
-            assets: map![],
+            assets: bmap![],
         };
         let filename = me.config.assets_filename();
         if filename.exists() {
@@ -131,7 +131,7 @@ impl FileCache {
                 f.read_to_string(&mut data)?;
                 toml::from_str(&data)?
             }
-            DataFormat::StrictEncode => unimplemented!(),
+            DataFormat::StrictEncode => StrictDecode::strict_decode(f)?,
         };
         Ok(())
     }
@@ -145,7 +145,9 @@ impl FileCache {
             DataFormat::Yaml => serde_yaml::to_writer(&f, &self.assets)?,
             DataFormat::Json => serde_json::to_writer(&f, &self.assets)?,
             DataFormat::Toml => f.write_all(&toml::to_vec(&self.assets)?)?,
-            DataFormat::StrictEncode => unimplemented!(),
+            DataFormat::StrictEncode => {
+                self.assets.strict_encode(f)?;
+            }
         }
         Ok(())
     }
