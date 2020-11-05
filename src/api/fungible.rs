@@ -51,6 +51,12 @@ pub enum Request {
 
     #[lnp_api(type = 0xFF01)]
     Sync(DataFormat),
+
+    #[lnp_api(type = 0xFF02)]
+    Assets(OutPoint),
+
+    #[lnp_api(type = 0xFF03)]
+    Allocations(ContractId),
 }
 
 #[derive(Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]

@@ -203,6 +203,10 @@ impl Runtime {
                 self.rpc_export_asset(asset_id).await
             }
             Request::Sync(data_format) => self.rpc_sync(*data_format).await,
+            Request::Assets(outpoint) => self.rpc_assets(*outpoint).await,
+            Request::Allocations(contract_id) => {
+                self.rpc_allocations(*contract_id).await
+            }
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
     }
@@ -318,6 +322,24 @@ impl Runtime {
         debug!("Got SYNC");
         let data = self.cacher.export(Some(data_format))?;
         Ok(Reply::Sync(reply::SyncFormat(self.config.format, data)))
+    }
+
+    async fn rpc_assets(
+        &mut self,
+        outpoint: OutPoint,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ASSETS");
+        let data = self.cacher.outpoint_assets(outpoint)?;
+        Ok(Reply::Assets(data))
+    }
+
+    async fn rpc_allocations(
+        &mut self,
+        contract_id: ContractId,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ALLOCATIONS");
+        let data = self.cacher.asset_allocations(contract_id)?;
+        Ok(Reply::Allocations(data))
     }
 
     async fn rpc_import_asset(

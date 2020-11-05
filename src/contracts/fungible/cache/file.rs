@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use serde_json;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::{fs, io, io::Read, io::Write};
 
@@ -202,9 +202,9 @@ impl Cache for FileCache {
     fn asset_allocations(
         &self,
         contract_id: ContractId,
-    ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
+    ) -> Result<BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
         // Process known_allocation map to produce the intended map
-        let result: HashMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
+        let result: BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
             .asset(contract_id)?
             .known_allocations()
             .into_iter()
@@ -219,16 +219,16 @@ impl Cache for FileCache {
         Ok(result)
     }
 
-    fn output_assets(
+    fn outpoint_assets(
         &self,
-        utxo: &bitcoin::OutPoint,
-    ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError> {
-        let mut result = HashMap::new();
+        outpoint: bitcoin::OutPoint,
+    ) -> Result<BTreeMap<ContractId, Vec<AtomicValue>>, CacheError> {
+        let mut result = BTreeMap::new();
 
         for asset in self.assets()?.into_iter().cloned().collect::<Vec<Asset>>()
         {
             let allocations: Vec<AtomicValue> =
-                match asset.known_allocations().get(utxo) {
+                match asset.known_allocations().get(&outpoint) {
                     Some(allocations) => allocations
                         .into_iter()
                         .map(|alloc| alloc.value().value)
@@ -298,7 +298,7 @@ mod test {
 
         // Construct expected allocation-utxo mapping for the given asset
         // associated with the above contract_id
-        let mut expected_map = HashMap::new();
+        let mut expected_map = BTreeMap::new();
 
         expected_map.insert(
             bitcoin::OutPoint {
@@ -354,12 +354,13 @@ mod test {
         // Construct the expected mapping. The above utxo holds allocation
         // for 2 assets, Bitcoin and Ethereum. The target map is Map[Asset_name,
         // Allocated_amount]
-        let mut expected_map = HashMap::new();
+        let mut expected_map = BTreeMap::new();
         expected_map.insert(ContractId::from_hex("5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc").unwrap(), vec![1 as AtomicValue, 3, 5]);
         expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
 
         // Fetch the asset-amount map for the above utxo using cache api
-        let allocation_map_calculated = filecache.output_assets(&utxo).unwrap();
+        let allocation_map_calculated =
+            filecache.outpoint_assets(utxo).unwrap();
 
         // Assert caclulation meets expectation
         assert_eq!(expected_map, allocation_map_calculated);

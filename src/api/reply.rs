@@ -11,10 +11,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::DataFormat;
-use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
+use std::collections::BTreeMap;
+
+use lnpbp::bitcoin::OutPoint;
+use lnpbp::bp::Psbt;
 use lnpbp::lnp;
-use lnpbp::rgb::Consignment;
+use lnpbp::rgb::{AtomicValue, Consignment, ContractId};
+
+use crate::DataFormat;
 
 #[cfg(feature = "node")]
 use crate::error::RuntimeError;
@@ -39,7 +43,13 @@ pub enum Reply {
     #[lnp_api(type = 0xFF01)]
     Sync(crate::api::reply::SyncFormat),
 
+    #[lnp_api(type = 0xFF02)]
+    Assets(BTreeMap<ContractId, Vec<AtomicValue>>),
+
     #[lnp_api(type = 0xFF03)]
+    Allocations(BTreeMap<OutPoint, Vec<AtomicValue>>),
+
+    #[lnp_api(type = 0xFF04)]
     SchemaIds(Vec<::lnpbp::rgb::SchemaId>),
 
     #[lnp_api(type = 0xFF05)]

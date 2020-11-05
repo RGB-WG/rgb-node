@@ -13,7 +13,7 @@
 
 use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use super::sql::SqlCacheError;
 use super::FileCacheError;
@@ -34,13 +34,13 @@ pub trait Cache {
     fn asset_allocations(
         &self,
         contract_id: ContractId,
-    ) -> Result<HashMap<bitcoin::OutPoint, Vec<AtomicValue>>, Self::Error>;
+    ) -> Result<BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>>, Self::Error>;
 
     /// Returns the map of Asset-Allocation_amount for a given Outpoint
-    fn output_assets(
+    fn outpoint_assets(
         &self,
-        utxo: &bitcoin::OutPoint,
-    ) -> Result<HashMap<ContractId, Vec<AtomicValue>>, CacheError>;
+        outpoint: bitcoin::OutPoint,
+    ) -> Result<BTreeMap<ContractId, Vec<AtomicValue>>, CacheError>;
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
