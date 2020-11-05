@@ -90,12 +90,15 @@ default = ["client", "fungibles", "collectibles", "identities"]
 server = ["node", "shell", "nix", "lnpbp_services/server"]
 # Feature is required for any applications that talks to daemon processes
 client = ["zmq", "lnpbp_services/client", "lnpbp/keygen", "async-trait",
-          "regex", "tokio", "electrum-client", "base64"]
+          "regex", "tokio", "electrum-client", "base64",
+          "url", "lnpbp/url", "log", "env_logger",
+          # TODO: Femove the following after feature gates debugging:
+          "clap"]
 # Embedded is an app that contains ndoe in itself and that talks to it through
 # integration layer
 embedded = ["client", "node", "lnpbp_services/embedded"]
 # Command-line application feature
-cli = ["shell", "client", "lnpbp_services/cli", "url", "lnpbp/url"]
+cli = ["shell", "client", "lnpbp_services/cli"]
 # Required for all apps that can be launched from command-line shell as binaries
 # (i.e. both servers and cli)
 shell = [

@@ -41,17 +41,26 @@ pub extern crate lnpbp_derive;
 #[macro_use]
 pub extern crate diesel;
 
+#[cfg(any(feature = "node", feature = "client"))]
 pub mod api;
+#[cfg(feature = "cli")]
 pub mod cli;
 pub mod constants;
-mod contracts;
 pub mod error;
+#[cfg(any(feature = "node"))]
 pub mod i9n;
-pub mod rgbd;
-pub mod service;
-pub mod stash;
 pub mod util;
 
+#[cfg(any(feature = "node", feature = "client"))]
+mod contracts;
+#[cfg(any(feature = "node", feature = "client"))]
+pub mod rgbd;
+#[cfg(any(feature = "node", feature = "client"))]
+pub mod service;
+#[cfg(feature = "node")]
+pub mod stash;
+
+#[cfg(any(feature = "node", feature = "client"))]
 pub use contracts::*;
 
 use std::str::FromStr;

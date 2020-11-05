@@ -1019,7 +1019,7 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 [[package]]
 name = "lnpbp"
 version = "0.2.0-beta.2"
-source = "git+git://github.com/LNP-BP/rust-lnpbp#9bc21363675c75235159f77bdf696040a1555f1b"
+source = "git+git://github.com/LNP-BP/rust-lnpbp#2584f3e90ddb746ab57d5f7d0ae85d76a05573dd"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1050,7 +1050,7 @@ dependencies = [
 [[package]]
 name = "lnpbp_derive"
 version = "0.2.0-beta.2"
-source = "git+git://github.com/LNP-BP/rust-lnpbp#9bc21363675c75235159f77bdf696040a1555f1b"
+source = "git+git://github.com/LNP-BP/rust-lnpbp#2584f3e90ddb746ab57d5f7d0ae85d76a05573dd"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1060,7 +1060,7 @@ dependencies = [
 [[package]]
 name = "lnpbp_services"
 version = "0.2.0-beta.2"
-source = "git+git://github.com/LNP-BP/rust-lnpbp#9bc21363675c75235159f77bdf696040a1555f1b"
+source = "git+git://github.com/LNP-BP/rust-lnpbp#2584f3e90ddb746ab57d5f7d0ae85d76a05573dd"
 dependencies = [
  "amplify",
  "amplify_derive",

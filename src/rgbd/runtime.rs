@@ -11,14 +11,19 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+#[cfg(any(feature = "node"))]
 use clap::Clap;
+#[cfg(any(feature = "node"))]
 use futures::future::join_all;
 use tokio::{process, task};
 
 use super::Config;
+#[cfg(any(feature = "node"))]
 use crate::contracts::fungible;
 use crate::error::{BootstrapError, RuntimeError};
+#[cfg(any(feature = "node"))]
 use crate::service::TryService;
+#[cfg(feature = "node")]
 use crate::stash;
 
 pub struct Runtime {
@@ -30,6 +35,7 @@ impl Runtime {
         Ok(Self { config })
     }
 
+    #[cfg(any(feature = "node"))]
     fn get_task_for(
         name: &str,
         args: &[&str],
@@ -51,6 +57,7 @@ impl Runtime {
         }
     }
 
+    #[cfg(any(feature = "node"))]
     fn daemon(&self, bin: &str) -> Result<DaemonHandle, DaemonError> {
         let args = [
             "-vvvv",
@@ -127,6 +134,7 @@ impl DaemonHandle {
     }
 }
 
+#[cfg(any(feature = "node"))]
 #[async_trait]
 impl TryService for Runtime {
     type ErrorType = DaemonError;
@@ -155,6 +163,7 @@ impl TryService for Runtime {
     }
 }
 
+#[cfg(any(feature = "node"))]
 pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let runtime = Runtime::init(config).await?;
     runtime.run_or_panic("RGBd runtime").await;

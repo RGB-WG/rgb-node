@@ -15,4 +15,7 @@ mod config;
 mod runtime;
 
 pub use config::{Config, ContractName, Opts};
-pub use runtime::{main_with_config, Runtime};
+pub use runtime::Runtime;
+
+#[cfg(feature = "node")]
+pub use runtime::main_with_config;
