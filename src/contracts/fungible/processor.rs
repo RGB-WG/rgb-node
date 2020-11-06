@@ -134,18 +134,20 @@ impl Processor {
             );
         }
 
-        owned_rights.insert(
-            *OwnedRightsType::BurnReplace,
-            Assignments::Declarative(
-                prune_seals
-                    .into_iter()
-                    .map(|seal_spec| OwnedState::Revealed {
-                        seal_definition: seal_spec.seal_definition(),
-                        assigned_state: data::Void,
-                    })
-                    .collect(),
-            ),
-        );
+        if prune_seals.len() > 0 {
+            owned_rights.insert(
+                *OwnedRightsType::BurnReplace,
+                Assignments::Declarative(
+                    prune_seals
+                        .into_iter()
+                        .map(|seal_spec| OwnedState::Revealed {
+                            seal_definition: seal_spec.seal_definition(),
+                            assigned_state: data::Void,
+                        })
+                        .collect(),
+                ),
+            );
+        }
 
         let genesis = Genesis::with(
             schema::schema().schema_id(),
