@@ -23,7 +23,7 @@ use lnpbp::bp;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::{Session, Unmarshall};
-use lnpbp::rgb::{Consignment, PSBT_OUT_PUBKEY};
+use lnpbp::rgb::{Consignment, ContractId, PSBT_OUT_PUBKEY};
 
 use super::{Error, Runtime};
 use crate::api::{
@@ -181,6 +181,33 @@ impl Runtime {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Success => {
                 println!("Validate succeeded");
+
+                Ok(())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn asset_allocations(
+        &mut self,
+        contract_id: ContractId,
+    ) -> Result<(), Error> {
+        match &*self.command(Request::Allocations(contract_id))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                println!("Asset allocations succeeded");
+
+                Ok(())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn outpoint_assets(&mut self, outpoint: OutPoint) -> Result<(), Error> {
+        match &*self.command(Request::Assets(outpoint))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                println!("Outpoint assets succeeded");
 
                 Ok(())
             }
