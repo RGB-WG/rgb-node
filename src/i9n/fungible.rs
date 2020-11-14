@@ -23,11 +23,12 @@ use lnpbp::bp;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::{Session, Unmarshall};
-use lnpbp::rgb::PSBT_OUT_PUBKEY;
+use lnpbp::rgb::{Consignment, PSBT_OUT_PUBKEY};
 
 use super::{Error, Runtime};
 use crate::api::{
-    fungible::Issue, fungible::Request, fungible::TransferApi, reply, Reply,
+    fungible::AcceptApi, fungible::Issue, fungible::Request,
+    fungible::TransferApi, reply, Reply,
 };
 use crate::error::ServiceErrorDomain;
 use crate::fungible::{
@@ -147,6 +148,39 @@ impl Runtime {
                     "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
                     consignment_file, transaction_file
                 );
+
+                Ok(())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn accept(
+        &mut self,
+        consignment: Consignment,
+        reveal_outpoints: Vec<bp::blind::OutpointReveal>,
+    ) -> Result<(), Error> {
+        let api = AcceptApi {
+            consignment,
+            reveal_outpoints,
+        };
+
+        match &*self.command(Request::Accept(api))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                println!("Accept succeeded");
+
+                Ok(())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn validate(&mut self, consignment: Consignment) -> Result<(), Error> {
+        match &*self.command(Request::Validate(consignment))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                println!("Validate succeeded");
 
                 Ok(())
             }
