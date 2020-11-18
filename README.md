@@ -18,6 +18,9 @@ The node may run as a set of daemons (even in different docker containers);
 a multi-threaded single process or as a set of managed threads within a
 wallet app.
 
+For an easy test setup that allows to experience the node's capabilities, you 
+can check out the [0.1 demo](doc/demo-0.1/).
+
 ## Design
 
 The node (as other nodes maitained by LNP/BP Standards Association and Pandora
