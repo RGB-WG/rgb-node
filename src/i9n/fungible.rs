@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use ::std::sync::Arc;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::PathBuf;
 
@@ -23,7 +24,7 @@ use lnpbp::bp;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::{Session, Unmarshall};
-use lnpbp::rgb::{Consignment, ContractId, PSBT_OUT_PUBKEY};
+use lnpbp::rgb::{AtomicValue, Consignment, ContractId, PSBT_OUT_PUBKEY};
 
 use super::{Error, Runtime};
 use crate::api::{
@@ -191,25 +192,28 @@ impl Runtime {
     pub fn asset_allocations(
         &mut self,
         contract_id: ContractId,
-    ) -> Result<(), Error> {
+    ) -> Result<BTreeMap<OutPoint, Vec<AtomicValue>>, Error> {
         match &*self.command(Request::Allocations(contract_id))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Success => {
+            Reply::Allocations(response) => {
                 println!("Asset allocations succeeded");
 
-                Ok(())
+                Ok(response.clone())
             }
             _ => Err(Error::UnexpectedResponse),
         }
     }
 
-    pub fn outpoint_assets(&mut self, outpoint: OutPoint) -> Result<(), Error> {
+    pub fn outpoint_assets(
+        &mut self,
+        outpoint: OutPoint,
+    ) -> Result<BTreeMap<ContractId, Vec<AtomicValue>>, Error> {
         match &*self.command(Request::Assets(outpoint))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Success => {
+            Reply::Assets(response) => {
                 println!("Outpoint assets succeeded");
 
-                Ok(())
+                Ok(response.clone())
             }
             _ => Err(Error::UnexpectedResponse),
         }
