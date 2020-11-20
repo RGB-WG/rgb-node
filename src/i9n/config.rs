@@ -14,7 +14,6 @@
 use std::collections::HashMap;
 
 use lnpbp::bp;
-use lnpbp::lnp::transport::zmqsocket::ZmqSocketAddr;
 
 use crate::constants::*;
 use crate::rgbd::ContractName;
@@ -22,8 +21,8 @@ use crate::rgbd::ContractName;
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 pub struct Config {
-    pub stash_endpoint: ZmqSocketAddr,
-    pub contract_endpoints: HashMap<ContractName, ZmqSocketAddr>,
+    pub stash_rpc_endpoint: String,
+    pub contract_endpoints: HashMap<ContractName, String>,
     pub network: bp::Chain,
     pub threaded: bool,
     pub data_dir: String,
@@ -32,7 +31,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            stash_endpoint: STASHD_RPC_ENDPOINT
+            stash_rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
             contract_endpoints: map! {

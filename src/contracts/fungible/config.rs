@@ -54,7 +54,7 @@ pub struct Opts {
     )]
     pub rpc_endpoint: String,
 
-    /// ZMQ socket address string for PUB/SUb API
+    /// ZMQ socket address string for PUB/SUB API
     #[clap(
         long = "pub",
         default_value = FUNGIBLED_PUB_ENDPOINT,
@@ -152,6 +152,7 @@ impl Config {
         T::Err: Display,
     {
         param
+            .replace("{id}", "default")
             .replace("{network}", &self.network.to_string())
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
             .parse()

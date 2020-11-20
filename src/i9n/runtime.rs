@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::str::FromStr;
 use std::thread;
 
 use lnpbp::lnp::transport::zmqsocket::ZmqType;
@@ -35,7 +36,6 @@ impl Runtime {
         // Start rgbd on a separate thread
         if config.threaded {
             let rgbd_opts = rgbd::Opts {
-                verbose: 5,
                 bin_dir: String::new(),
                 data_dir: config.data_dir.clone(),
                 contracts: config
@@ -43,8 +43,15 @@ impl Runtime {
                     .iter()
                     .map(|(k, _)| k.clone())
                     .collect(),
+                fungible_rpc_endpoint: config
+                    .contract_endpoints
+                    .get(&ContractName::Fungible)
+                    .unwrap()
+                    .clone(),
+                stash_rpc_endpoint: config.stash_rpc_endpoint.clone(),
                 network: config.network.clone(),
                 threaded: true,
+                ..rgbd::Opts::default()
             };
 
             thread::spawn(move || {
@@ -60,6 +67,8 @@ impl Runtime {
             config
                 .contract_endpoints
                 .get(&ContractName::Fungible)
+                .map(|s| transport::ZmqSocketAddr::from_str(&s).unwrap())
+                .as_ref()
                 .expect(
                     "Fungible engine is not connected in the configuration",
                 ),
