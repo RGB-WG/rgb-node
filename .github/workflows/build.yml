@@ -18,7 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: sudo apt-get install -y libzmq3-dev libpcre3-dev libpq-dev libssl-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libzmq3-dev libpcre3-dev libpq-dev libssl-dev
       - name: Install rust ${{matrix.toolchain}}
         uses: actions-rs/toolchain@v1
         with:
