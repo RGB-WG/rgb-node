@@ -88,7 +88,7 @@ client = ["zmq", "lnpbp_services/client", "lnpbp/keygen", "async-trait",
           "regex", "tokio", "electrum-client", "base64",
           "url", "lnpbp/url", "log", "env_logger",
           # TODO: Femove the following after feature gates debugging:
-          "clap"]
+          "clap", "serde"]
 # Embedded is an app that contains ndoe in itself and that talks to it through
 # integration layer
 embedded = ["client", "node", "lnpbp_services/embedded"]
