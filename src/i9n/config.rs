@@ -22,6 +22,8 @@ use crate::rgbd::ContractName;
 #[display(Debug)]
 pub struct Config {
     pub stash_rpc_endpoint: String,
+    pub stash_pub_endpoint: String,
+    pub fungible_pub_endpoint: String,
     pub contract_endpoints: HashMap<ContractName, String>,
     pub network: bp::Chain,
     pub threaded: bool,
@@ -34,6 +36,12 @@ impl Default for Config {
             stash_rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
+            stash_pub_endpoint: STASHD_PUB_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
+            fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT
+                .parse()
+                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
             contract_endpoints: map! {
                 ContractName::Fungible
                     => FUNGIBLED_RPC_ENDPOINT

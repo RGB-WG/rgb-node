@@ -50,6 +50,8 @@ impl Runtime {
                     .unwrap_or(&FUNGIBLED_RPC_ENDPOINT.to_string())
                     .clone(),
                 stash_rpc_endpoint: config.stash_rpc_endpoint.clone(),
+                stash_pub_endpoint: config.stash_pub_endpoint.clone(),
+                fungible_pub_endpoint: config.fungible_pub_endpoint.clone(),
                 network: config.network.clone(),
                 threaded: true,
                 ..rgbd::Opts::default()
