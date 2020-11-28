@@ -21,7 +21,6 @@ use lnpbp::lnp::{
 
 use super::Config;
 use crate::api::Reply;
-use crate::constants::FUNGIBLED_RPC_ENDPOINT;
 use crate::error::BootstrapError;
 use crate::rgbd::{self, ContractName};
 
@@ -47,7 +46,9 @@ impl Runtime {
                 fungible_rpc_endpoint: config
                     .contract_endpoints
                     .get(&ContractName::Fungible)
-                    .unwrap_or(&FUNGIBLED_RPC_ENDPOINT.to_string())
+                    .ok_or(BootstrapError::ArgParseError(s!(
+                        "Fungible endpoint is unconfigured"
+                    )))?
                     .clone(),
                 stash_rpc_endpoint: config.stash_rpc_endpoint.clone(),
                 stash_pub_endpoint: config.stash_pub_endpoint.clone(),
