@@ -38,7 +38,7 @@ impl Runtime {
     #[cfg(any(feature = "node"))]
     fn get_task_for(
         name: &str,
-        args: &[&str],
+        args: &[String],
     ) -> Result<task::JoinHandle<Result<(), DaemonError>>, DaemonError> {
         match name {
             "stashd" => {
@@ -59,14 +59,61 @@ impl Runtime {
 
     #[cfg(any(feature = "node"))]
     fn daemon(&self, bin: &str) -> Result<DaemonHandle, DaemonError> {
-        let args = [
-            "-vvvv",
-            "--data-dir",
+        let common_args: Vec<String> = vec![
+            s!("-v"), // required flag but doesn't change verbosity
+            s!("--data-dir"),
             self.config
                 .data_dir
                 .to_str()
-                .expect("Datadir path is wrong"),
+                .expect("Datadir path is wrong")
+                .to_string(),
+            s!("--network"),
+            self.config.network.to_string(),
         ];
+        let mut fungibled_args: Vec<String> = common_args.clone();
+        let mut stashd_args: Vec<String> = common_args.clone();
+        fungibled_args.extend(
+            vec![
+                s!("--rpc"),
+                self.config.fungible_rpc_endpoint.to_string(),
+                s!("--pub"),
+                self.config.fungible_pub_endpoint.to_string(),
+                s!("--stash-rpc"),
+                self.config.stash_rpc_endpoint.to_string(),
+                s!("--stash-sub"),
+                self.config.stash_pub_endpoint.to_string(),
+                s!("--stash"),
+                self.config.stash.to_string(),
+                s!("--format"),
+                self.config.format.to_string(),
+            ]
+            .iter()
+            .cloned(),
+        );
+        stashd_args.extend(vec![
+            s!("--rpc"),
+            self.config.stash_rpc_endpoint.to_string(),
+            s!("--pub"),
+            self.config.stash_pub_endpoint.to_string(),
+            s!("--stash"),
+            self.config.stash.to_string(),
+            s!("--index"),
+            self.config.index.to_string(),
+            s!("--bind"),
+            self.config.p2p_endpoint.to_string(),
+            s!("--electrum"),
+            self.config.electrum_server.to_string(),
+        ]);
+        let args;
+        match bin {
+            "stashd" => {
+                args = stashd_args;
+            }
+            "fungibled" => {
+                args = fungibled_args;
+            }
+            _ => args = [].to_vec(),
+        }
 
         if self.config.threaded {
             Ok(DaemonHandle::Task(Self::get_task_for(bin, &args)?))

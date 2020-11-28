@@ -17,7 +17,7 @@ use std::path::PathBuf;
 
 use lnpbp::bp;
 use lnpbp::lnp::transport::zmqsocket::ZmqSocketAddr;
-use lnpbp::lnp::{LocalNode, PartialNodeAddr};
+use lnpbp::lnp::LocalNode;
 
 use crate::constants::*;
 
@@ -47,10 +47,10 @@ pub struct Opts {
     pub index: String,
 
     /// LNP socket address string for P2P API
-    #[clap(long = "bind", env = "RGB_STASHD_BIND")]
-    pub p2p_endpoint: Option<String>,
+    #[clap(long = "bind", default_value = STASHD_P2P_ENDPOINT, env = "RGB_STASHD_BIND")]
+    pub p2p_endpoint: String,
 
-    /// ZMQ socket address string for RPC API
+    /// ZMQ socket address string for REQ/REP API
     #[clap(
         long = "rpc",
         default_value = STASHD_RPC_ENDPOINT,
@@ -90,7 +90,7 @@ pub struct Config {
     pub data_dir: PathBuf,
     pub stash: String,
     pub index: String,
-    pub p2p_endpoint: Option<PartialNodeAddr>,
+    pub p2p_endpoint: String,
     pub rpc_endpoint: ZmqSocketAddr,
     pub pub_endpoint: ZmqSocketAddr,
     pub network: bp::Chain,
@@ -109,7 +109,7 @@ impl From<Opts> for Config {
         me.index = me.parse_param(opts.index);
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
         me.pub_endpoint = me.parse_param(opts.pub_endpoint);
-        me.p2p_endpoint = opts.p2p_endpoint.map(|ep| me.parse_param(ep));
+        me.p2p_endpoint = me.parse_param(opts.p2p_endpoint);
         me.electrum_server = me.parse_param(opts.electrum_server);
         me
     }
@@ -125,7 +125,7 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: None,
+            p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),
             rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
