@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+v0.2.0-beta.4
+-------------
+
+### Fixes:
+- Fixes to configuration in integration mode
+- Fixes default builds when serde is not used
+
+
+v0.2.0-beta.3
+-------------
+
+### Features
+- Asset `validate`, `accept`, `asset_allocations` and `outpoint_assets` methods
+  in integration mod
+
+
 v0.2.0-beta.2
 -------------
 

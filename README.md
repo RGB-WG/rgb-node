@@ -44,11 +44,10 @@ same architecture include:
 * Bifrost – node for storing/passing client-side-validated data with watchtower 
   functionality and used for Storm/RGB/DEX infrastructure
 
-Other third parties provide their own nodes:
+Other third parties provide their own nodes designed with the same architecture,
+for instance:
 * [Keyring](https://github.com/pandoracore/keyring) for managing private key
   accounts, storage and signatures with support for miniscript and PSBTs
-* [MyCitadel](https://github.com/mycitadel/mycitadel-node) Bitcoin, LN & RGB
-  enabled wallet service with support for other LNP/BP protocols
 
 ## Project organization & architecture
 
@@ -147,4 +146,15 @@ track of the exact package version.
 After an update, run tests (`cargo test`) and manually test the software
 in order to stimulate function calls from updated libraries.
 
+Please check [software using RGB Node](#software-using-rgb-node) for integration
+examples.
+
 If any problem arises, open an issue.
+
+
+## Software using RGB Node
+
+* [Bitcoin Pro](https://github.com/pandoracore/bitcoin-pro): tool for
+  RGB asset issue & management for asset by the issuers
+* [MyCitadel](https://github.com/mycitadel) Bitcoin, LN & RGB
+  enabled wallet service with support for other LNP/BP protocols
