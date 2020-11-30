@@ -85,12 +85,15 @@ impl From<FileCacheError> for CacheError {
             FileCacheError::BrokenHexFilenames => Self::DataIntegrityError(
                 "Broken filename structure in storage".to_string(),
             ),
+            #[cfg(feature = "serde_json")]
             FileCacheError::SerdeJson(e) => {
                 Self::DataIntegrityError(format!("{:?}", e))
             }
+            #[cfg(feature = "serde_yaml")]
             FileCacheError::SerdeYaml(e) => {
                 Self::DataIntegrityError(format!("{:?}", e))
             }
+            #[cfg(feature = "toml")]
             FileCacheError::SerdeToml => Self::DataIntegrityError(format!(
                 "TOML serialization/deserialization error"
             )),

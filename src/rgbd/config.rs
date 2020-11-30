@@ -15,6 +15,7 @@ use clap::{ArgEnum, Clap};
 use lnpbp::bp;
 use std::path::PathBuf;
 
+#[cfg(feature = "serde")]
 use serde::Deserialize;
 
 use crate::constants::*;
@@ -221,7 +222,10 @@ impl Default for Config {
             stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_string(),
             stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_string(),
             cache: FUNGIBLED_CACHE.to_string(),
+            #[cfg(feature = "serde_yaml")]
             format: DataFormat::Yaml,
+            #[cfg(not(feature = "serde_yaml"))]
+            format: DataFormat::StrictEncode,
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
             p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),
@@ -253,7 +257,10 @@ impl Default for Opts {
             stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_string(),
             stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_string(),
             cache: FUNGIBLED_CACHE.to_string(),
+            #[cfg(feature = "serde_yaml")]
             format: DataFormat::Yaml,
+            #[cfg(not(feature = "serde_yaml"))]
+            format: DataFormat::StrictEncode,
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
             p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),

@@ -18,6 +18,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use chrono::NaiveDateTime;
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::contracts::fungible::cache::models::{

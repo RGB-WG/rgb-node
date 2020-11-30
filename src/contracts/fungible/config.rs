@@ -125,7 +125,10 @@ impl Default for Config {
                 .parse()
                 .expect("Error in RGB_DATA_DIR constant value"),
             cache: FUNGIBLED_CACHE.to_string(),
+            #[cfg(feature = "serde_yaml")]
             format: DataFormat::Yaml,
+            #[cfg(not(feature = "serde"))]
+            format: DataFormat::StrictEncode,
             rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
                 .parse()
                 .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),

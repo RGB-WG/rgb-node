@@ -77,16 +77,20 @@ use std::str::FromStr;
     FromPrimitive,
     ToPrimitive,
 )]
+#[non_exhaustive]
 pub enum DataFormat {
     /// JSON
+    #[cfg(feature = "serde_json")]
     #[display("json")]
     Json,
 
     /// YAML
+    #[cfg(feature = "serde_yaml")]
     #[display("yaml")]
     Yaml,
 
     /// TOML
+    #[cfg(feature = "toml")]
     #[display("toml")]
     Toml,
 
@@ -99,8 +103,11 @@ impl_enum_strict_encoding!(DataFormat);
 impl DataFormat {
     pub fn extension(&self) -> &'static str {
         match self {
+            #[cfg(feature = "serde_yaml")]
             DataFormat::Yaml => "yaml",
+            #[cfg(feature = "serde_json")]
             DataFormat::Json => "json",
+            #[cfg(feature = "toml")]
             DataFormat::Toml => "toml",
             DataFormat::StrictEncode => "se",
         }
@@ -119,8 +126,11 @@ impl FromStr for DataFormat {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match &s.to_lowercase() {
+            #[cfg(feature = "serde_yaml")]
             s if s.starts_with("yaml") || s.starts_with("yml") => Self::Yaml,
+            #[cfg(feature = "serde_json")]
             s if s.starts_with("json") => Self::Json,
+            #[cfg(feature = "toml")]
             s if s.starts_with("toml") => Self::Toml,
             s if s.starts_with("se")
                 || s.starts_with("dat")

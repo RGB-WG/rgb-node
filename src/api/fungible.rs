@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use regex::Regex;
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;

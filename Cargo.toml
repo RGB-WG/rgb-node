@@ -32,9 +32,9 @@ required-features = ["cli"]
 # LNP/BP crates
 amplify = "~2.3.1"
 amplify_derive = "~2.3.0"
-lnpbp = { version = "=0.2.0-beta.2", features = ["lnp", "url", "websockets"] }
-lnpbp_derive = "=0.2.0-beta.2"
-lnpbp_services = "=0.2.0-beta.2"
+lnpbp = { version = "=0.2.0-beta.3", features = ["lnp", "url", "websockets"] }
+lnpbp_derive = "=0.2.0-beta.3"
+lnpbp_services = "=0.2.0-beta.3"
 # Rust language
 lazy_static = "~1.4.0"
 nix = { version = "~0.19.0", optional = true }
@@ -104,7 +104,9 @@ shell = [
 # and other types of clients; thus `server` != `node`.
 # This feature results in building with features not required for CLI
 node = ["serde", "lnpbp/keygen", "tokio", "lnpbp/tokio", "zmq", "lnpbp_services/node",
-        "url", "lnpbp/url", "async-trait", "regex", "electrum-client", "base64"]
+        "url", "lnpbp/url", "async-trait", "regex", "electrum-client", "base64",
+        # Required for storing config and cache
+        "serde_yaml", "toml"]
 serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",
          "amplify/serde", "lnpbp/serde", "lnpbp_services/serde", "chrono/serde"]
 # Schema-specific components exposed as features:
