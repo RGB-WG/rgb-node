@@ -13,6 +13,7 @@
 
 use chrono::Utc;
 use core::convert::TryFrom;
+#[cfg(feature = "serde")]
 use serde::Deserialize;
 use std::collections::BTreeMap;
 

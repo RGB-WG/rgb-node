@@ -11,10 +11,17 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+#[cfg(feature = "serde")]
 use serde_json;
 use std::collections::BTreeMap;
+#[cfg(any(
+    feature = "serde_yaml",
+    feature = "serde_json",
+    feature = "toml"
+))]
+use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::{fs, io, io::Read, io::Write};
+use std::{fs, io};
 
 use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
@@ -28,6 +35,7 @@ use crate::DataFormat;
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum FileCacheError {
     #[from]
     Io(io::Error),
@@ -41,12 +49,15 @@ pub enum FileCacheError {
     #[from]
     Encoding(lnpbp::strict_encoding::Error),
 
+    #[cfg(feature = "serde")]
     #[from]
     SerdeJson(serde_json::Error),
 
+    #[cfg(feature = "serde")]
     #[from]
     SerdeYaml(serde_yaml::Error),
 
+    #[cfg(feature = "serde")]
     #[from(toml::de::Error)]
     #[from(toml::ser::Error)]
     SerdeToml,
@@ -124,14 +135,17 @@ impl FileCache {
         let filename = self.config.assets_filename();
         let mut f = file(filename, FileMode::Read)?;
         self.assets = match self.config.data_format {
+            #[cfg(feature = "serde_yaml")]
             DataFormat::Yaml => serde_yaml::from_reader(&f)?,
+            #[cfg(feature = "serde_json")]
             DataFormat::Json => serde_json::from_reader(&f)?,
+            #[cfg(feature = "toml")]
             DataFormat::Toml => {
                 let mut data = String::new();
                 f.read_to_string(&mut data)?;
                 toml::from_str(&data)?
             }
-            DataFormat::StrictEncode => StrictDecode::strict_decode(f)?,
+            DataFormat::StrictEncode => StrictDecode::strict_decode(&mut f)?,
         };
         Ok(())
     }
@@ -142,11 +156,14 @@ impl FileCache {
         let _ = fs::remove_file(&filename);
         let mut f = file(filename, FileMode::Create)?;
         match self.config.data_format {
+            #[cfg(feature = "serde_yaml")]
             DataFormat::Yaml => serde_yaml::to_writer(&f, &self.assets)?,
+            #[cfg(feature = "serde_json")]
             DataFormat::Json => serde_json::to_writer(&f, &self.assets)?,
+            #[cfg(feature = "toml")]
             DataFormat::Toml => f.write_all(&toml::to_vec(&self.assets)?)?,
             DataFormat::StrictEncode => {
-                self.assets.strict_encode(f)?;
+                self.assets.strict_encode(&mut f)?;
             }
         }
         Ok(())
@@ -159,8 +176,11 @@ impl FileCache {
         trace!("Exporting assets information ...");
         let assets = self.assets.values().cloned().collect::<Vec<Asset>>();
         Ok(match data_format.unwrap_or(self.config.data_format) {
+            #[cfg(feature = "serde_yaml")]
             DataFormat::Yaml => serde_yaml::to_vec(&assets)?,
+            #[cfg(feature = "serde_json")]
             DataFormat::Json => serde_json::to_vec(&assets)?,
+            #[cfg(feature = "toml")]
             DataFormat::Toml => toml::to_vec(&assets)?,
             DataFormat::StrictEncode => strict_encode(&assets)?,
         })
@@ -275,7 +295,10 @@ mod test {
         // Setup a new Filecache with same Pathbuf and Json extension from above
         let filecache_config = FileCacheConfig {
             data_dir: filepath.clone(),
+            #[cfg(feature = "serde_json")]
             data_format: DataFormat::Json,
+            #[cfg(not(feature = "serde_json"))]
+            data_format: DataFormat::StrictEncode,
         };
 
         // Init new FileCache
