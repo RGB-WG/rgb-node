@@ -41,6 +41,8 @@ pub extern crate lnpbp_derive;
 #[macro_use]
 pub extern crate diesel;
 
+extern crate hammersbald;
+
 #[cfg(any(feature = "node", feature = "client"))]
 pub mod api;
 #[cfg(feature = "cli")]

@@ -222,14 +222,14 @@ impl Store for DiskStorage {
         Ok(self.config.schema_filename(id).as_path().exists())
     }
 
-    fn add_schema(&self, schema: &Schema) -> Result<bool, Self::Error> {
+    fn add_schema(&mut self, schema: &Schema) -> Result<bool, Self::Error> {
         let filename = self.config.schema_filename(&schema.schema_id());
         let exists = filename.as_path().exists();
         schema.write_file(filename)?;
         Ok(exists)
     }
 
-    fn remove_schema(&self, id: &SchemaId) -> Result<bool, Self::Error> {
+    fn remove_schema(&mut self, id: &SchemaId) -> Result<bool, Self::Error> {
         let filename = self.config.schema_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
@@ -257,7 +257,7 @@ impl Store for DiskStorage {
         Ok(self.config.genesis_filename(id).as_path().exists())
     }
 
-    fn add_genesis(&self, genesis: &Genesis) -> Result<bool, Self::Error> {
+    fn add_genesis(&mut self, genesis: &Genesis) -> Result<bool, Self::Error> {
         let filename = self.config.genesis_filename(&genesis.contract_id());
         let exists = filename.as_path().exists();
         genesis.write_file(filename)?;
@@ -265,7 +265,7 @@ impl Store for DiskStorage {
     }
 
     #[inline]
-    fn remove_genesis(&self, id: &ContractId) -> Result<bool, Self::Error> {
+    fn remove_genesis(&mut self, id: &ContractId) -> Result<bool, Self::Error> {
         let filename = self.config.genesis_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
@@ -280,14 +280,14 @@ impl Store for DiskStorage {
         Ok(self.config.anchor_filename(id).as_path().exists())
     }
 
-    fn add_anchor(&self, anchor: &Anchor) -> Result<bool, Self::Error> {
+    fn add_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
         let filename = self.config.anchor_filename(&anchor.anchor_id());
         let exists = filename.as_path().exists();
         anchor.write_file(filename)?;
         Ok(exists)
     }
 
-    fn remove_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error> {
+    fn remove_anchor(&mut self, id: &AnchorId) -> Result<bool, Self::Error> {
         let filename = self.config.anchor_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
@@ -303,7 +303,7 @@ impl Store for DiskStorage {
     }
 
     fn add_transition(
-        &self,
+        &mut self,
         transition: &Transition,
     ) -> Result<bool, Self::Error> {
         let filename = self.config.transition_filename(&transition.node_id());
@@ -312,7 +312,7 @@ impl Store for DiskStorage {
         Ok(exists)
     }
 
-    fn remove_transition(&self, id: &NodeId) -> Result<bool, Self::Error> {
+    fn remove_transition(&mut self, id: &NodeId) -> Result<bool, Self::Error> {
         let filename = self.config.transition_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
@@ -328,7 +328,7 @@ impl Store for DiskStorage {
     }
 
     fn add_extension(
-        &self,
+        &mut self,
         extension: &Extension,
     ) -> Result<bool, Self::Error> {
         let filename = self.config.extension_filename(&extension.node_id());
@@ -337,7 +337,7 @@ impl Store for DiskStorage {
         Ok(exists)
     }
 
-    fn remove_extension(&self, id: &NodeId) -> Result<bool, Self::Error> {
+    fn remove_extension(&mut self, id: &NodeId) -> Result<bool, Self::Error> {
         let filename = self.config.extension_filename(id);
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
