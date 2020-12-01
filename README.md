@@ -87,7 +87,7 @@ To compile the node, please install [cargo](https://doc.rust-lang.org/cargo/),
 then run the following commands:
 
     sudo apt update
-    sudo apt install -y build-essential pkg-config libzmq3-dev libssl-dev libpq-dev cmake
+    sudo apt install -y build-essential cmake libpq-dev libsqlite3-dev libssl-dev libzmq3-dev pkg-config
     git clone https://github.com/LNP-BP/rgb-node.git
     cd rgb-node
     cargo build --release
