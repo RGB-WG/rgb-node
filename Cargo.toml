@@ -32,9 +32,9 @@ required-features = ["cli"]
 # LNP/BP crates
 amplify = "~2.3.1"
 amplify_derive = "~2.3.0"
-lnpbp = { version = "=0.2.0-beta.3", features = ["lnp", "url", "websockets"] }
-lnpbp_derive = "=0.2.0-beta.3"
-lnpbp_services = "=0.2.0-beta.3"
+lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "fix/tokio-break", features = ["lnp", "url", "websockets"] }
+lnpbp_derive = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "fix/tokio-break" }
+lnpbp_services = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "fix/tokio-break" }
 # Rust language
 lazy_static = "~1.4.0"
 nix = { version = "~0.19.0", optional = true }
@@ -63,7 +63,7 @@ colored = { version = "~2.0.0", optional = true }
 shellexpand = { version = "~2.0.0", optional = true }
 # Processes & IPC
 async-trait = { version = "~0.1.35", optional = true }
-tokio = { version = "~0.2.21", features = ["full"], optional = true }
+tokio = { version = "~0.2.18", features = ["full"], optional = true }
 zmq = { version = "~0.9.2", optional = true }
 # These should be removed with the next major update
 num-traits = "~0.2.12"
@@ -72,6 +72,10 @@ futures = "~0.3.5"
 
 [target.'cfg(target_os="android")'.dependencies]
 zmq = { version = "~0.9", features = ["vendored"] }
+
+[patch.crates-io]
+# Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
+zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cmake" }
 
 # Recommended set of features:
 # 1. Standalone node: `server` (=`node`+`shell`)

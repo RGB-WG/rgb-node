@@ -362,9 +362,9 @@ dependencies = [
 
 [[package]]
 name = "cmake"
-version = "0.1.45"
+version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb6210b637171dfba4cda12e579ac6dc73f5165ad56133e5d72ef3131f320855"
+checksum = "49f97562167906afc51aa3fd7e6c83c10a5c96d33bd18f98a4c06a1413134caa"
 dependencies = [
  "cc",
 ]
@@ -1031,8 +1031,7 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 [[package]]
 name = "lnpbp"
 version = "0.2.0-beta.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42be0d7b543571cc4bb5f345b003f362c85a44ae5d195ae0613fa6e3a5f87c30"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/tokio-break#04a53c6b49809fe30547c4a4145ef0d1d197edf9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1057,7 +1056,6 @@ dependencies = [
  "serde 1.0.117",
  "serde_with",
  "serde_with_macros",
- "socket2",
  "tokio 0.2.23",
  "torut",
  "url",
@@ -1068,8 +1066,7 @@ dependencies = [
 [[package]]
 name = "lnpbp_derive"
 version = "0.2.0-beta.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dbc3371ec613de05537bf9466a9351e12f1af3e5d2323bab85e0b0656ae621d"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/tokio-break#04a53c6b49809fe30547c4a4145ef0d1d197edf9"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1079,8 +1076,7 @@ dependencies = [
 [[package]]
 name = "lnpbp_services"
 version = "0.2.0-beta.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5466fbc98f97128ce7f49008ccf61153367bf98050b1964cb116abeb1c1c95a8"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/tokio-break#04a53c6b49809fe30547c4a4145ef0d1d197edf9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -2643,8 +2639,7 @@ dependencies = [
 [[package]]
 name = "zeromq-src"
 version = "0.1.10+4.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df9133d366817fcffe22e4356043ba187ae122ec5db63d7ce73d1e6a18efa2f1"
+source = "git+https://github.com/LNP-BP/zeromq-src-rs?branch=fix/cmake#e95a4e68136a6897d61c936622933bf259ebdd7f"
 dependencies = [
  "cmake",
 ]
