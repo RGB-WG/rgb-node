@@ -1030,9 +1030,9 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42be0d7b543571cc4bb5f345b003f362c85a44ae5d195ae0613fa6e3a5f87c30"
+checksum = "1b5f4c049389c31a9e4413e7ce3f6b4570c42cb74efd6f1a9765ed4df7f5f96d"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1049,7 +1049,7 @@ dependencies = [
  "inflate",
  "lazy_static",
  "lightning-invoice",
- "lnpbp_derive 0.2.0-beta.3",
+ "lnpbp_derive",
  "miniscript",
  "num-derive",
  "num-traits 0.2.14",
@@ -1057,43 +1057,6 @@ dependencies = [
  "serde 1.0.117",
  "serde_with",
  "serde_with_macros",
- "socket2",
- "tokio 0.2.23",
- "torut",
- "url",
- "zeromq-src",
- "zmq",
-]
-
-[[package]]
-name = "lnpbp"
-version = "0.2.0-beta.4"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=v0.2#3396f3b0cc60be11a8256ca58c20324630c036e8"
-dependencies = [
- "amplify",
- "amplify_derive",
- "async-trait",
- "bech32",
- "bitcoin",
- "bitcoin_hashes 0.9.4",
- "cc",
- "chacha20poly1305",
- "chrono",
- "deflate",
- "ed25519-dalek",
- "grin_secp256k1zkp",
- "inflate",
- "lazy_static",
- "lightning-invoice",
- "lnpbp_derive 0.2.0-beta.3",
- "miniscript",
- "num-derive",
- "num-traits 0.2.14",
- "openssl",
- "serde 1.0.117",
- "serde_with",
- "serde_with_macros",
- "socket2",
  "tokio 0.2.23",
  "torut",
  "url",
@@ -1103,19 +1066,9 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_derive"
-version = "0.2.0-beta.3"
+version = "0.2.0-beta.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dbc3371ec613de05537bf9466a9351e12f1af3e5d2323bab85e0b0656ae621d"
-dependencies = [
- "amplify",
- "quote 1.0.7",
- "syn 1.0.53",
-]
-
-[[package]]
-name = "lnpbp_derive"
-version = "0.2.0-beta.4"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=v0.2#3396f3b0cc60be11a8256ca58c20324630c036e8"
+checksum = "012ed466b7086e494aa8c8f3545d60ecf21a67f569c953cf2bdd480b8e6ca053"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1125,7 +1078,8 @@ dependencies = [
 [[package]]
 name = "lnpbp_services"
 version = "0.2.0-beta.4"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=v0.2#3396f3b0cc60be11a8256ca58c20324630c036e8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50f2d33fd3dfb8ad19dc7bd89dc42e484b3d11e4eb171d3655482f9d75b464b4"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1133,8 +1087,8 @@ dependencies = [
  "config",
  "dotenv",
  "env_logger",
- "lnpbp 0.2.0-beta.3",
- "lnpbp_derive 0.2.0-beta.3",
+ "lnpbp",
+ "lnpbp_derive",
  "log",
  "serde 1.0.117",
  "serde_with",
@@ -1777,7 +1731,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "rgb_node"
-version = "0.2.0-rc.1"
+version = "0.2.0-beta.5"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1795,8 +1749,8 @@ dependencies = [
  "env_logger",
  "futures",
  "lazy_static",
- "lnpbp 0.2.0-beta.4",
- "lnpbp_derive 0.2.0-beta.4",
+ "lnpbp",
+ "lnpbp_derive",
  "lnpbp_services",
  "log",
  "nix",
