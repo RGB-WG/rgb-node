@@ -94,7 +94,7 @@ then run the following commands:
 
 Now, to run the node you can execute
 
-    target/release/rgbd --data-dir ~/.rgb --bin-dir target/release -vvvv - contract fungible
+    target/release/rgbd --data-dir ~/.rgb --bin-dir target/release -vvvv --contract fungible
 
 ### In docker
 
