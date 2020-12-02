@@ -1031,7 +1031,8 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 [[package]]
 name = "lnpbp"
 version = "0.2.0-beta.3"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/tokio-break#04a53c6b49809fe30547c4a4145ef0d1d197edf9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42be0d7b543571cc4bb5f345b003f362c85a44ae5d195ae0613fa6e3a5f87c30"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1048,7 +1049,7 @@ dependencies = [
  "inflate",
  "lazy_static",
  "lightning-invoice",
- "lnpbp_derive",
+ "lnpbp_derive 0.2.0-beta.3",
  "miniscript",
  "num-derive",
  "num-traits 0.2.14",
@@ -1056,6 +1057,43 @@ dependencies = [
  "serde 1.0.117",
  "serde_with",
  "serde_with_macros",
+ "socket2",
+ "tokio 0.2.23",
+ "torut",
+ "url",
+ "zeromq-src",
+ "zmq",
+]
+
+[[package]]
+name = "lnpbp"
+version = "0.2.0-beta.4"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=v0.2#3396f3b0cc60be11a8256ca58c20324630c036e8"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "async-trait",
+ "bech32",
+ "bitcoin",
+ "bitcoin_hashes 0.9.4",
+ "cc",
+ "chacha20poly1305",
+ "chrono",
+ "deflate",
+ "ed25519-dalek",
+ "grin_secp256k1zkp",
+ "inflate",
+ "lazy_static",
+ "lightning-invoice",
+ "lnpbp_derive 0.2.0-beta.3",
+ "miniscript",
+ "num-derive",
+ "num-traits 0.2.14",
+ "openssl",
+ "serde 1.0.117",
+ "serde_with",
+ "serde_with_macros",
+ "socket2",
  "tokio 0.2.23",
  "torut",
  "url",
@@ -1066,7 +1104,18 @@ dependencies = [
 [[package]]
 name = "lnpbp_derive"
 version = "0.2.0-beta.3"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/tokio-break#04a53c6b49809fe30547c4a4145ef0d1d197edf9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dbc3371ec613de05537bf9466a9351e12f1af3e5d2323bab85e0b0656ae621d"
+dependencies = [
+ "amplify",
+ "quote 1.0.7",
+ "syn 1.0.53",
+]
+
+[[package]]
+name = "lnpbp_derive"
+version = "0.2.0-beta.4"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=v0.2#3396f3b0cc60be11a8256ca58c20324630c036e8"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1075,8 +1124,8 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_services"
-version = "0.2.0-beta.3"
-source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/tokio-break#04a53c6b49809fe30547c4a4145ef0d1d197edf9"
+version = "0.2.0-beta.4"
+source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=v0.2#3396f3b0cc60be11a8256ca58c20324630c036e8"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1084,8 +1133,8 @@ dependencies = [
  "config",
  "dotenv",
  "env_logger",
- "lnpbp",
- "lnpbp_derive",
+ "lnpbp 0.2.0-beta.3",
+ "lnpbp_derive 0.2.0-beta.3",
  "log",
  "serde 1.0.117",
  "serde_with",
@@ -1746,8 +1795,8 @@ dependencies = [
  "env_logger",
  "futures",
  "lazy_static",
- "lnpbp",
- "lnpbp_derive",
+ "lnpbp 0.2.0-beta.4",
+ "lnpbp_derive 0.2.0-beta.4",
  "lnpbp_services",
  "log",
  "nix",

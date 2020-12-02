@@ -32,9 +32,9 @@ required-features = ["cli"]
 # LNP/BP crates
 amplify = "~2.3.1"
 amplify_derive = "~2.3.0"
-lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "fix/tokio-break", features = ["lnp", "url", "websockets"] }
-lnpbp_derive = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "fix/tokio-break" }
-lnpbp_services = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "fix/tokio-break" }
+lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "v0.2", features = ["lnp", "url", "websockets"] }
+lnpbp_derive = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "v0.2" }
+lnpbp_services = { git = "https://github.com/LNP-BP/rust-lnpbp", branch = "v0.2" }
 # Rust language
 lazy_static = "~1.4.0"
 nix = { version = "~0.19.0", optional = true }
