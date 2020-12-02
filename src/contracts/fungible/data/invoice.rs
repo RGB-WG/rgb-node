@@ -20,6 +20,8 @@ use lnpbp::bitcoin::Address;
 use lnpbp::bp::blind::OutpointHash;
 use lnpbp::rgb::{Bech32, ContractId, FromBech32, ToBech32};
 
+use super::AccountingValue;
+
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]
 pub enum Error {
@@ -57,7 +59,7 @@ pub enum Outpoint {
 pub struct Invoice {
     pub contract_id: ContractId,
     pub outpoint: Outpoint,
-    pub amount: f32,
+    pub amount: AccountingValue,
 }
 
 impl From<OutpointDescriptor> for Outpoint {

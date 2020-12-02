@@ -39,7 +39,7 @@ use lnpbp::secp256k1zkp::Secp256k1;
 use super::schema::{self, FieldType, OwnedRightsType};
 use crate::error::ServiceErrorDomain;
 
-pub type AccountingValue = f32;
+pub type AccountingValue = f64;
 
 #[derive(
     Clone,

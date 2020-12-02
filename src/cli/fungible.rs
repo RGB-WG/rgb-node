@@ -27,7 +27,9 @@ use lnpbp::strict_encoding::strict_encode;
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{AcceptApi, Issue, TransferApi};
 use crate::api::{reply, Reply};
-use crate::fungible::{Asset, ConsealCoins, Invoice, Outpoint, SealCoins};
+use crate::fungible::{
+    AccountingValue, Asset, ConsealCoins, Invoice, Outpoint, SealCoins,
+};
 use crate::util::file::ReadWrite;
 use crate::DataFormat;
 
@@ -100,7 +102,7 @@ pub struct InvoiceCli {
     pub asset: ContractId,
 
     /// Amount
-    pub amount: f32,
+    pub amount: AccountingValue,
 
     /// Receive assets to a given bitcoin address or UTXO
     pub outpoint: OutPoint,
