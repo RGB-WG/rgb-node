@@ -175,7 +175,7 @@ pub struct Asset {
     fractional_bits: u8,
     date: NaiveDateTime,
     known_issues: Vec<Issue>,
-    /// Specifies outpoints which when spent may indicate inflation happenning
+    /// Specifies outpoints which when spent may indicate inflation happening
     /// up to specific amount.
     known_inflation: BTreeMap<bitcoin::OutPoint, AccountingAmount>,
     /// Specifies max amount to which asset can be inflated without our
