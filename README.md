@@ -90,7 +90,7 @@ then run the following commands:
     sudo apt install -y build-essential cmake libpq-dev libsqlite3-dev libssl-dev libzmq3-dev pkg-config
     git clone https://github.com/LNP-BP/rgb-node.git
     cd rgb-node
-    cargo build --release
+    cargo build --all-features --release
 
 Now, to run the node you can execute
 
