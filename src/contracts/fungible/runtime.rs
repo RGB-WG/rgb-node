@@ -27,7 +27,7 @@ use lnpbp::rgb::{Assignments, Consignment, ContractId, Genesis, Node};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::schema::OwnedRightsType;
-use super::{schema, Asset, Config, IssueStructure, Processor};
+use super::{processor, schema, Asset, Config, IssueStructure};
 use crate::api::stash::MergeRequest;
 use crate::api::{
     self,
@@ -65,9 +65,6 @@ pub struct Runtime {
     /// friendly asset information with clients
     cacher: FileCache,
 
-    /// Processor instance: handles business logic outside of stash scope
-    processor: Processor,
-
     /// Unmarshaller instance used for parsing RPC request
     unmarshaller: Unmarshaller<Request>,
 
@@ -85,8 +82,6 @@ impl Runtime {
     }
 
     pub fn init(config: Config) -> Result<Self, BootstrapError> {
-        let processor = Processor::new()?;
-
         let cacher = FileCache::new(FileCacheConfig {
             data_dir: PathBuf::from(&config.cache),
             data_format: config.format,
@@ -131,7 +126,6 @@ impl Runtime {
             stash_rpc,
             stash_sub,
             cacher,
-            processor,
             unmarshaller: Request::create_unmarshaller(),
             reply_unmarshaller: Reply::create_unmarshaller(),
         })
@@ -230,7 +224,7 @@ impl Runtime {
             },
         };
 
-        let (asset, genesis) = self.processor.issue(
+        let (asset, genesis) = processor::issue(
             self.config.network.clone(),
             issue.ticker.clone(),
             issue.title.clone(),
@@ -262,7 +256,7 @@ impl Runtime {
         debug!("Transferring asset {}", asset);
 
         trace!("Preparing state transition");
-        let transition = self.processor.transfer(
+        let transition = processor::transfer(
             &mut asset,
             transfer.inputs.clone(),
             transfer.ours.clone(),

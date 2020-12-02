@@ -13,7 +13,7 @@
 
 mod config;
 mod data;
-mod processor;
+pub mod processor;
 mod runtime;
 
 pub(self) mod cache;
@@ -28,4 +28,3 @@ pub use runtime::{main_with_config, Runtime};
 
 pub use cache::{CacheError, FileCacheError, SqlCacheError};
 pub use processor::IssueStructure;
-pub(self) use processor::Processor;
