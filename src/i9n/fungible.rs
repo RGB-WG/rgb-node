@@ -11,15 +11,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use ::std::sync::Arc;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs::File;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use lnpbp::bitcoin::consensus::encode::{deserialize, Encodable};
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
-
 use lnpbp::bp;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::lnp::presentation::Encode;
@@ -33,10 +32,9 @@ use crate::api::{
 };
 use crate::error::ServiceErrorDomain;
 use crate::fungible::{
-    Invoice, IssueStructure, Outcoincealed, Outcoins, Outpoint,
+    ConsealCoins, Invoice, Outpoint, OutpointCoins, SealCoins,
 };
 use crate::util::file::ReadWrite;
-use crate::util::SealSpec;
 use crate::DataFormat;
 
 impl Runtime {
@@ -53,31 +51,29 @@ impl Runtime {
 
     pub fn issue(
         &mut self,
-        _network: bp::Chain,
+        chain: bp::Chain,
         ticker: String,
-        title: String,
+        name: String,
         description: Option<String>,
-        issue_structure: IssueStructure,
-        allocate: Vec<Outcoins>,
         precision: u8,
-        _prune_seals: Vec<SealSpec>,
+        allocation: Vec<OutpointCoins>,
+        inflation: HashSet<OutpointCoins>,
+        renomination: Option<OutPoint>,
+        epoch: Option<OutPoint>,
     ) -> Result<(), Error> {
         // TODO: Make sure we use the same network
-        let (supply, inflatable) = match issue_structure {
-            IssueStructure::SingleIssue => (None, None),
-            IssueStructure::MultipleIssues {
-                max_supply,
-                reissue_control,
-            } => (Some(max_supply), Some(reissue_control)),
-        };
+        if self.config.network != chain {
+            Err(Error::WrongNetwork)?;
+        }
         let command = Request::Issue(Issue {
             ticker,
-            title,
+            name,
             description,
-            supply,
-            inflatable,
             precision,
-            allocate,
+            allocation,
+            inflation: inflation.into_iter().collect(),
+            renomination,
+            epoch,
         });
         match &*self.command(command)? {
             Reply::Success => Ok(()),
@@ -89,7 +85,7 @@ impl Runtime {
     pub fn transfer(
         &mut self,
         inputs: Vec<OutPoint>,
-        allocate: Vec<Outcoins>,
+        allocate: Vec<SealCoins>,
         invoice: Invoice,
         prototype_psbt: String,
         consignment_file: String,
@@ -130,7 +126,7 @@ impl Runtime {
             contract_id: invoice.contract_id,
             inputs,
             ours: allocate,
-            theirs: vec![Outcoincealed {
+            theirs: vec![ConsealCoins {
                 coins: invoice.amount,
                 seal_confidential,
             }],

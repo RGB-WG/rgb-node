@@ -15,56 +15,63 @@ use core::str::FromStr;
 use regex::Regex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::io;
+use std::fmt::{self, Display, Formatter};
 
-use lnpbp::bitcoin::Txid;
-use lnpbp::bp;
-use lnpbp::bp::blind::OutpointHash;
+use lnpbp::bitcoin::{OutPoint, Txid};
+use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
 use lnpbp::hex::FromHex;
 use lnpbp::rgb::SealDefinition;
-use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
 
 use super::AccountingValue;
 use crate::error::ParseError;
 
-#[derive(Clone, Debug, PartialEq, Display)]
+#[derive(Clone, Debug, PartialEq, StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize,),
     serde(crate = "serde_crate")
 )]
-#[display(Debug)]
-pub struct Outcoins {
+pub struct SealCoins {
     pub coins: AccountingValue,
     pub vout: u32,
     pub txid: Option<Txid>,
 }
 
-#[derive(Clone, Debug, PartialEq, Display)]
+#[derive(Clone, Debug, PartialEq, Display, StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize,),
     serde(crate = "serde_crate")
 )]
-#[display(Debug)]
-pub struct Outcoincealed {
+#[display("{coins}@{outpoint}")]
+pub struct OutpointCoins {
+    pub coins: AccountingValue,
+    pub outpoint: OutPoint,
+}
+
+#[derive(Clone, Debug, PartialEq, Display, StrictEncode, StrictDecode)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
+#[display("{coins}@{seal_confidential}")]
+pub struct ConsealCoins {
     pub coins: AccountingValue,
     pub seal_confidential: OutpointHash,
 }
 
-impl Outcoins {
+impl SealCoins {
     pub fn seal_definition(&self) -> SealDefinition {
         use lnpbp::bitcoin::secp256k1::rand::{self, RngCore};
         let mut rng = rand::thread_rng();
         let entropy = rng.next_u64(); // Not an amount blinding factor but outpoint blinding
         match self.txid {
-            Some(txid) => {
-                SealDefinition::TxOutpoint(bp::blind::OutpointReveal {
-                    blinding: entropy,
-                    txid,
-                    vout: self.vout,
-                })
-            }
+            Some(txid) => SealDefinition::TxOutpoint(OutpointReveal {
+                blinding: entropy,
+                txid,
+                vout: self.vout,
+            }),
             None => SealDefinition::WitnessVout {
                 vout: self.vout,
                 blinding: entropy,
@@ -73,52 +80,30 @@ impl Outcoins {
     }
 }
 
-impl StrictEncode for Outcoins {
-    type Error = strict_encoding::Error;
-
-    fn strict_encode<E: io::Write>(
-        &self,
-        mut e: E,
-    ) -> Result<usize, Self::Error> {
-        Ok(strict_encode_list!(e; self.coins, self.vout, self.txid))
-    }
-}
-
-impl StrictDecode for Outcoins {
-    type Error = strict_encoding::Error;
-
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
-        Ok(Self {
-            coins: f32::strict_decode(&mut d)?,
-            vout: u32::strict_decode(&mut d)?,
-            txid: Option::<Txid>::strict_decode(&mut d)?,
+impl OutpointCoins {
+    pub fn seal_definition(&self) -> SealDefinition {
+        use lnpbp::bitcoin::secp256k1::rand::{self, RngCore};
+        let mut rng = rand::thread_rng();
+        let entropy = rng.next_u64(); // Not an amount blinding factor but outpoint blinding
+        SealDefinition::TxOutpoint(OutpointReveal {
+            blinding: entropy,
+            txid: self.outpoint.txid,
+            vout: self.outpoint.vout,
         })
     }
 }
 
-impl StrictEncode for Outcoincealed {
-    type Error = strict_encoding::Error;
-
-    fn strict_encode<E: io::Write>(
-        &self,
-        mut e: E,
-    ) -> Result<usize, Self::Error> {
-        Ok(strict_encode_list!(e; self.coins, self.seal_confidential))
+impl Display for SealCoins {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}@", self.coins)?;
+        if let Some(txid) = self.txid {
+            write!(f, "{}:", txid)?;
+        }
+        f.write_str(&self.vout.to_string())
     }
 }
 
-impl StrictDecode for Outcoincealed {
-    type Error = strict_encoding::Error;
-
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
-        Ok(Self {
-            coins: f32::strict_decode(&mut d)?,
-            seal_confidential: OutpointHash::strict_decode(&mut d)?,
-        })
-    }
-}
-
-impl FromStr for Outcoins {
+impl FromStr for SealCoins {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let re = Regex::new(
@@ -151,7 +136,22 @@ impl FromStr for Outcoins {
     }
 }
 
-impl FromStr for Outcoincealed {
+impl FromStr for OutpointCoins {
+    type Err = ParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut iter = s.split('@');
+        match (iter.next(), iter.next(), iter.next()) {
+            (Some(amount), Some(outpoint), None) => Ok(Self {
+                coins: amount.parse()?,
+                outpoint: outpoint.parse()?,
+            }),
+            (Some(_), Some(_), _) => Err(ParseError),
+            _ => Err(ParseError),
+        }
+    }
+}
+
+impl FromStr for ConsealCoins {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let re = Regex::new(

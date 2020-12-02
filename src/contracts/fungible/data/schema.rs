@@ -167,7 +167,7 @@ pub fn schema() -> Schema {
                     FieldType::IssuedSupply => Once
                 },
                 closes: type_map! {
-                    OwnedRightsType::Inflation => Once
+                    OwnedRightsType::Inflation => OnceOrMore
                 },
                 owned_rights: type_map! {
                     OwnedRightsType::Inflation => NoneOrMore,
@@ -274,14 +274,14 @@ pub fn schema() -> Schema {
                     OwnedRightsType::Inflation => NoneOrMore,
                     OwnedRightsType::Assets => NoneOrMore,
                     OwnedRightsType::Epoch => NoneOrOnce,
-                    OwnedRightsType::BurnReplace => NoneOrOnce,
+                    OwnedRightsType::BurnReplace => NoneOrMore,
                     OwnedRightsType::Renomination => NoneOrOnce
                 },
                 owned_rights: type_map! {
                     OwnedRightsType::Inflation => NoneOrMore,
                     OwnedRightsType::Assets => NoneOrMore,
                     OwnedRightsType::Epoch => NoneOrOnce,
-                    OwnedRightsType::BurnReplace => NoneOrOnce,
+                    OwnedRightsType::BurnReplace => NoneOrMore,
                     OwnedRightsType::Renomination => NoneOrOnce
                 },
                 public_rights: none!(),

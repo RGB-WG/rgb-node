@@ -15,22 +15,35 @@ use crate::api::reply;
 use crate::error::ServiceErrorDomain;
 
 #[derive(Debug, Display, Error, From)]
-#[display(Debug)]
+#[display(inner)]
 pub enum Error {
+    /// Integration module internal error
     #[from]
     ServiceError(ServiceErrorDomain),
 
+    /// RGB Node returned error: {0}
+    #[display(doc_comments)]
     #[from]
     Reply(reply::Failure),
 
+    /// Error decoding the provided data from Base64 encoding
     #[from]
     Base64(base64::DecodeError),
 
+    /// Error decoding the provided data from bitcoin consensus encoding
     #[from]
     Bitcoin(lnpbp::bitcoin::consensus::encode::Error),
 
+    /// Error decoding the provided data from LNP/BP strict encoding
     #[from]
     Encoding(lnpbp::strict_encoding::Error),
 
+    /// Unexpected server response; please check that RGB node uses the same
+    /// API version as the client
+    #[display(doc_comments)]
     UnexpectedResponse,
+
+    /// The provided network id does not match the network used by the RGB node
+    #[display(doc_comments)]
+    WrongNetwork,
 }

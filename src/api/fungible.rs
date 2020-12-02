@@ -20,8 +20,7 @@ use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::rgb::{Consignment, ContractId};
 
-use crate::fungible::{Outcoincealed, Outcoins};
-use crate::util::SealSpec;
+use crate::fungible::{ConsealCoins, OutpointCoins, SealCoins};
 use crate::DataFormat;
 
 #[derive(Clone, Debug, Display, LnpApi)]
@@ -68,33 +67,40 @@ pub enum Request {
     serde(crate = "serde_crate")
 )]
 pub struct Issue {
-    /// Asset ticker
+    /// Asset ticker (up to 8 characters, always converted to uppercase)
     #[clap(validator=ticker_validator)]
     pub ticker: String,
 
-    /// Asset title
-    pub title: String,
+    /// Asset name (up to 32 characters)
+    pub name: String,
 
     /// Asset description
     #[clap(short, long)]
     pub description: Option<String>,
-
-    /// Limit for the total supply; ignored if the asset can't be inflated
-    #[clap(short, long)]
-    pub supply: Option<f32>,
-
-    /// Enables secondary issuance/inflation; takes UTXO seal definition
-    /// as its value
-    #[clap(short, long, requires("supply"))]
-    pub inflatable: Option<SealSpec>,
 
     /// Precision, i.e. number of digits reserved for fractional part
     #[clap(short, long, default_value = "0")]
     pub precision: u8,
 
     /// Asset allocation, in form of <amount>@<txid>:<vout>
-    #[clap(required = true)]
-    pub allocate: Vec<Outcoins>,
+    #[clap(short, long)]
+    pub allocation: Vec<OutpointCoins>,
+
+    /// Outputs controlling inflation (secondary issue);
+    /// in form of <amount>@<txid>:<vout>
+    #[clap(short, long)]
+    pub inflation: Vec<OutpointCoins>,
+
+    /// Enable renomination procedure; parameter takes argument in form of
+    /// <txid>:<vout> specifying output controlling renomination right
+    #[clap(short, long)]
+    pub renomination: Option<OutPoint>,
+
+    /// Enable epoch-based burn & replacement procedure; parameter takes
+    /// argument in form of <txid>:<vout> specifying output controlling the
+    /// right of opening the first epoch
+    #[clap(short, long)]
+    pub epoch: Option<OutPoint>,
 }
 
 #[derive(Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
@@ -112,14 +118,14 @@ pub struct TransferApi {
     /// Asset change allocations
     ///
     /// Here we always know an explicit outpoint that will contain the assets
-    pub ours: Vec<Outcoins>,
+    pub ours: Vec<SealCoins>,
 
     /// Receiver's allocations.
     ///
     /// They are kept separate from change allocations since here we do not
     /// know the actual seals and only know hashes derived from seal data and
     /// blinding entropy.
-    pub theirs: Vec<Outcoincealed>,
+    pub theirs: Vec<ConsealCoins>,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]

@@ -27,7 +27,7 @@ use lnpbp::rgb::{Assignments, Consignment, ContractId, Genesis, Node};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::schema::OwnedRightsType;
-use super::{processor, schema, Asset, Config, IssueStructure};
+use super::{processor, schema, Asset, Config, OutpointCoins};
 use crate::api::stash::MergeRequest;
 use crate::api::{
     self,
@@ -36,6 +36,7 @@ use crate::api::{
     stash::ConsignRequest,
     Reply,
 };
+use crate::contracts::fungible::AccountingAmount;
 use crate::error::{
     ApiErrorType, BootstrapError, RuntimeError, ServiceError,
     ServiceErrorDomain, ServiceErrorSource,
@@ -211,28 +212,30 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
-        let issue_structure = match issue.inflatable {
-            None => IssueStructure::SingleIssue,
-            Some(ref seal_spec) => IssueStructure::MultipleIssues {
-                max_supply: issue.supply.ok_or(ServiceErrorDomain::Api(
-                    ApiErrorType::MissedArgument {
-                        request: "Issue".to_string(),
-                        argument: "supply".to_string(),
-                    },
-                ))?,
-                reissue_control: seal_spec.clone(),
-            },
-        };
-
+        let issue = issue.clone();
+        let precision = issue.precision;
         let (asset, genesis) = processor::issue(
             self.config.network.clone(),
-            issue.ticker.clone(),
-            issue.title.clone(),
-            issue.description.clone(),
-            issue_structure,
-            issue.allocate.clone(),
+            issue.ticker,
+            issue.name,
+            issue.description,
             issue.precision,
-            vec![],
+            issue
+                .allocation
+                .into_iter()
+                .map(|OutpointCoins { coins, outpoint }| {
+                    (outpoint, AccountingAmount::transmutate(precision, coins))
+                })
+                .collect(),
+            issue
+                .inflation
+                .into_iter()
+                .map(|OutpointCoins { coins, outpoint }| {
+                    (outpoint, AccountingAmount::transmutate(precision, coins))
+                })
+                .collect(),
+            issue.renomination,
+            issue.epoch,
         )?;
 
         self.import_asset(asset, genesis).await?;

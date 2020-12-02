@@ -13,8 +13,6 @@
 
 use chrono::Utc;
 use core::convert::TryFrom;
-#[cfg(feature = "serde")]
-use serde::Deserialize;
 use std::collections::BTreeMap;
 
 use lnpbp::bitcoin::OutPoint;
@@ -23,39 +21,25 @@ use lnpbp::rgb::prelude::*;
 use lnpbp::secp256k1zkp;
 
 use super::schema::{self, FieldType, OwnedRightsType, TransitionType};
-use super::{AccountingAmount, Allocation, Asset, Outcoincealed, Outcoins};
+use super::{AccountingAmount, Allocation, Asset, ConsealCoins, SealCoins};
 
 use crate::error::ServiceErrorDomain;
-use crate::util::SealSpec;
 use crate::{field, type_map};
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize,),
-    serde(crate = "serde_crate")
-)]
-pub enum IssueStructure {
-    SingleIssue,
-    MultipleIssues {
-        max_supply: f32,
-        reissue_control: SealSpec,
-    },
-}
-
 pub fn issue(
-    network: bp::Chain,
+    chain: bp::Chain,
     ticker: String,
     name: String,
     description: Option<String>,
-    issue_structure: IssueStructure,
-    allocations: Vec<Outcoins>,
     precision: u8,
-    prune_seals: Vec<SealSpec>,
+    allocation: Vec<(OutPoint, AtomicValue)>,
+    inflation: BTreeMap<OutPoint, AtomicValue>,
+    renomination: Option<OutPoint>,
+    epoch: Option<OutPoint>,
 ) -> Result<(Asset, Genesis), ServiceErrorDomain> {
     let now = Utc::now().timestamp();
     let mut metadata = type_map! {
-        FieldType::Ticker => field!(String, ticker),
+        FieldType::Ticker => field!(String, ticker.to_uppercase()),
         FieldType::Name => field!(String, name),
         FieldType::Precision => field!(U8, precision),
         FieldType::Timestamp => field!(I64, now)
@@ -65,13 +49,11 @@ pub fn issue(
     }
 
     let mut issued_supply = 0u64;
-    let allocations = allocations
+    let allocations = allocation
         .into_iter()
-        .map(|outcoins| {
-            let amount =
-                AccountingAmount::transmutate(precision, outcoins.coins);
-            issued_supply += amount;
-            (outcoins.seal_definition(), amount)
+        .map(|(outpoint, value)| {
+            issued_supply += value;
+            (SealDefinition::TxOutpoint(outpoint.into()), value)
         })
         .collect();
     let mut owned_rights = BTreeMap::new();
@@ -88,45 +70,46 @@ pub fn issue(
     );
     metadata.insert(*FieldType::IssuedSupply, field!(U64, issued_supply));
 
-    if let IssueStructure::MultipleIssues {
-        max_supply,
-        reissue_control,
-    } = issue_structure
-    {
-        let total_supply = AccountingAmount::transmutate(precision, max_supply);
-        if total_supply < issued_supply {
-            Err(ServiceErrorDomain::Schema(format!(
-                "Total supply ({}) should be greater than the issued supply ({})",
-                total_supply, issued_supply
-            )))?;
-        }
+    if !inflation.is_empty() {
         owned_rights.insert(
             *OwnedRightsType::Inflation,
-            Assignments::Declarative(vec![OwnedState::Revealed {
-                seal_definition: reissue_control.seal_definition(),
-                assigned_state: data::Void,
-            }]),
-        );
-    }
-
-    if prune_seals.len() > 0 {
-        owned_rights.insert(
-            *OwnedRightsType::BurnReplace,
-            Assignments::Declarative(
-                prune_seals
+            Assignments::CustomData(
+                inflation
                     .into_iter()
-                    .map(|seal_spec| OwnedState::Revealed {
-                        seal_definition: seal_spec.seal_definition(),
-                        assigned_state: data::Void,
+                    .map(|(outpoint, value)| OwnedState::Revealed {
+                        seal_definition: SealDefinition::TxOutpoint(
+                            outpoint.into(),
+                        ),
+                        assigned_state: data::Revealed::U64(value),
                     })
                     .collect(),
             ),
         );
     }
 
+    if let Some(outpoint) = renomination {
+        owned_rights.insert(
+            *OwnedRightsType::Renomination,
+            Assignments::Declarative(vec![OwnedState::Revealed {
+                seal_definition: SealDefinition::TxOutpoint(outpoint.into()),
+                assigned_state: data::Void,
+            }]),
+        );
+    }
+
+    if let Some(outpoint) = epoch {
+        owned_rights.insert(
+            *OwnedRightsType::BurnReplace,
+            Assignments::Declarative(vec![OwnedState::Revealed {
+                seal_definition: SealDefinition::TxOutpoint(outpoint.into()),
+                assigned_state: data::Void,
+            }]),
+        );
+    }
+
     let genesis = Genesis::with(
         schema::schema().schema_id(),
-        network,
+        chain,
         metadata.into(),
         owned_rights,
         bset![],
@@ -143,8 +126,8 @@ pub fn issue(
 pub fn transfer(
     asset: &mut Asset,
     inputs: Vec<OutPoint>,
-    ours: Vec<Outcoins>,
-    theirs: Vec<Outcoincealed>,
+    ours: Vec<SealCoins>,
+    theirs: Vec<ConsealCoins>,
 ) -> Result<Transition, ServiceErrorDomain> {
     // Collecting all input allocations
     let mut input_allocations = Vec::<Allocation>::new();

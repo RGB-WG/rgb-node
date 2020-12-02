@@ -27,7 +27,7 @@ use lnpbp::strict_encoding::strict_encode;
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{AcceptApi, Issue, TransferApi};
 use crate::api::{reply, Reply};
-use crate::fungible::{Asset, Invoice, Outcoincealed, Outcoins, Outpoint};
+use crate::fungible::{Asset, ConsealCoins, Invoice, Outpoint, SealCoins};
 use crate::util::file::ReadWrite;
 use crate::DataFormat;
 
@@ -116,7 +116,7 @@ pub struct TransferCli {
     /// Adds additional asset allocations; MUST use transaction inputs
     /// controlled by the local party
     #[clap(short, long)]
-    pub allocate: Vec<Outcoins>,
+    pub allocate: Vec<SealCoins>,
 
     /// Invoice to pay
     pub invoice: Invoice,
@@ -492,7 +492,7 @@ impl TransferCli {
             contract_id: self.invoice.contract_id,
             inputs: self.inputs,
             ours: self.allocate,
-            theirs: vec![Outcoincealed {
+            theirs: vec![ConsealCoins {
                 coins: self.invoice.amount,
                 seal_confidential,
             }],

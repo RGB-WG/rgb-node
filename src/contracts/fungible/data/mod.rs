@@ -22,5 +22,5 @@ pub use asset::{
 pub use invoice::{
     Error as InvoiceError, Invoice, Outpoint, OutpointDescriptor,
 };
-pub use outcoins::{Outcoincealed, Outcoins};
+pub use outcoins::{ConsealCoins, OutpointCoins, SealCoins};
 pub use schema::Error;

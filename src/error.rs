@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::io;
 use tokio::task::JoinError;
 
+use lnpbp::bitcoin::blockdata::transaction::ParseOutPointError;
 use lnpbp::lnp;
 
 #[derive(Debug, Display, Error, From)]
@@ -62,27 +63,14 @@ impl From<&str> for BootstrapError {
 use lnpbp::hex;
 use std::num::{ParseFloatError, ParseIntError};
 
-#[derive(Clone, Copy, Debug, Display, Error)]
-#[display(Debug)]
+#[derive(Clone, Copy, Debug, Display, Error, From)]
+#[display(doc_comments)]
+#[from(ParseFloatError)]
+#[from(ParseIntError)]
+#[from(ParseOutPointError)]
+#[from(hex::Error)]
+/// Error parsing data
 pub struct ParseError;
-
-impl From<ParseFloatError> for ParseError {
-    fn from(_: ParseFloatError) -> Self {
-        Self
-    }
-}
-
-impl From<ParseIntError> for ParseError {
-    fn from(_: ParseIntError) -> Self {
-        Self
-    }
-}
-
-impl From<hex::Error> for ParseError {
-    fn from(_: lnpbp::hex::Error) -> Self {
-        Self
-    }
-}
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]

@@ -19,12 +19,12 @@ mod runtime;
 pub(self) mod cache;
 
 pub use data::{
-    schema, AccountingAmount, Allocation, Asset, Error, Invoice, InvoiceError,
-    Issue, Outcoincealed, Outcoins, Outpoint, OutpointDescriptor, Supply,
+    schema, AccountingAmount, Allocation, Asset, ConsealCoins, Error, Invoice,
+    InvoiceError, Issue, Outpoint, OutpointCoins, OutpointDescriptor,
+    SealCoins, Supply,
 };
 
 pub use config::{Config, Opts};
 pub use runtime::{main_with_config, Runtime};
 
 pub use cache::{CacheError, FileCacheError, SqlCacheError};
-pub use processor::IssueStructure;
