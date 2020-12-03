@@ -83,7 +83,6 @@ pub struct Issue {
     pub precision: u8,
 
     /// Asset allocation, in form of <amount>@<txid>:<vout>
-    #[clap(short, long)]
     pub allocation: Vec<OutpointCoins>,
 
     /// Outputs controlling inflation (secondary issue);

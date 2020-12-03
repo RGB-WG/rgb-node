@@ -252,7 +252,7 @@ impl Runtime {
         debug!("Got TRANSFER {}", transfer);
 
         // TODO: Check inputs that they really exist and have sufficient amount
-        // of       asset for the transfer operation
+        //       of asset for the transfer operation
 
         trace!("Looking for asset information");
         let mut asset = self.cacher.asset(transfer.contract_id)?.clone();

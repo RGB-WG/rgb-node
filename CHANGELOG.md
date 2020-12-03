@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+v0.2.0-rc.1
+-----------
+- Updating issuance to match the latest RGB20 schema changes
+- Internal optimizations for RGB20 processor mod
+- Typos and dependency fixes
+- Using f64 instead of f32 for internal accounting amounts representations
+
 v0.2.0-beta.4
 -------------
 

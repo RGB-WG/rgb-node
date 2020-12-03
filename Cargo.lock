@@ -1030,9 +1030,9 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.2.0-beta.4"
+version = "0.2.0-rc.1+2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5f4c049389c31a9e4413e7ce3f6b4570c42cb74efd6f1a9765ed4df7f5f96d"
+checksum = "264b2cc436e3830a601adc9315d869cd43c8e8351b071a5482a92e25a5ea4b34"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1057,7 +1057,8 @@ dependencies = [
  "serde 1.0.117",
  "serde_with",
  "serde_with_macros",
- "tokio 0.2.23",
+ "socket2",
+ "tokio 0.3.5",
  "torut",
  "url",
  "zeromq-src",
@@ -1066,9 +1067,9 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_derive"
-version = "0.2.0-beta.4"
+version = "0.2.0-rc.1+2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "012ed466b7086e494aa8c8f3545d60ecf21a67f569c953cf2bdd480b8e6ca053"
+checksum = "f30ed712c096ddb491362aa8d9bb617d0ded52c6a921316cc8cf0802c0e153bf"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1077,9 +1078,9 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_services"
-version = "0.2.0-beta.4"
+version = "0.2.0-rc.1+2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50f2d33fd3dfb8ad19dc7bd89dc42e484b3d11e4eb171d3655482f9d75b464b4"
+checksum = "e86c71fd9f59c8256fed0575dcde6562cc15e16ec83c3786d85f3764ec73ada5"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1092,7 +1093,7 @@ dependencies = [
  "log",
  "serde 1.0.117",
  "serde_with",
- "tokio 0.2.23",
+ "tokio 0.3.5",
  "toml 0.5.7",
  "zmq",
 ]
@@ -1731,7 +1732,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "rgb_node"
-version = "0.2.0-beta.5"
+version = "0.2.0-rc.1"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -2271,14 +2272,15 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dfe2523e6fa84ddf5e688151d4e5fddc51678de9752c6512a24714c23818d61"
+checksum = "a12a3eb39ee2c231be64487f1fcbe726c8f2514876a55480a5ab8559fc374252"
 dependencies = [
  "autocfg 1.0.1",
  "bytes 0.6.0",
  "memchr",
  "pin-project-lite 0.2.0",
+ "slab",
 ]
 
 [[package]]
@@ -2335,7 +2337,7 @@ dependencies = [
  "sha1",
  "sha2 0.8.2",
  "sha3",
- "tokio 0.3.4",
+ "tokio 0.3.5",
 ]
 
 [[package]]

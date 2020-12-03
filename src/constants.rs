@@ -35,5 +35,4 @@ pub const FUNGIBLED_RPC_ENDPOINT: &'static str =
 pub const FUNGIBLED_PUB_ENDPOINT: &'static str =
     "lnpz:{data_dir}/{network}/fungibled.pub";
 
-pub const DEFAULT_ELECTRUM_ENDPOINT: &'static str =
-    "electrum.blockstream.info:60001";
+pub const DEFAULT_ELECTRUM_ENDPOINT: &'static str = "pandora.network:60001";
