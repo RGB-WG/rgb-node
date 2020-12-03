@@ -59,7 +59,7 @@ impl Runtime {
             };
 
             thread::spawn(move || {
-                let mut rt = tokio::runtime::Runtime::new().unwrap();
+                let rt = tokio::runtime::Runtime::new().unwrap();
                 rt.block_on(async {
                     rgbd::main_with_config(rgbd_opts.into()).await.unwrap();
                 });
