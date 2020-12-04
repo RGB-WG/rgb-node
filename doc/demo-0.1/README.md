@@ -1,7 +1,7 @@
 RGB-NODE DEMO
 ===
 
-### introduction
+### Introduction
 This document contains a textual version of the [rgb-node demo]( https://www.youtube.com/watch?v=t_EtUf4601A). It is meant to demonstrate rgb-node's functionality and interface as for [version 0.1.1](https://github.com/LNP-BP/rgb-node/releases/tag/v0.1.1).
 
 Two different setups are available:
