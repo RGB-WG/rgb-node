@@ -2,7 +2,7 @@ RGB-NODE DEMO
 ===
 
 ### introduction
-This document contains a textual version of the [rgb-node demo]( https://www.youtube.com/watch?v=t_EtUf4601A). It is meant to demonstrate current rgb-node's functionality and interface.
+This document contains a textual version of the [rgb-node demo]( https://www.youtube.com/watch?v=t_EtUf4601A). It is meant to demonstrate rgb-node's functionality and interface as for [version 0.1.1](https://github.com/LNP-BP/rgb-node/releases/tag/v0.1.1).
 
 Two different setups are available:
 - [local installation](#local)
@@ -68,7 +68,7 @@ alias rgb1-cli="docker exec -it rgb-node-1 rgb-cli"
 ```
 
 ## Demo
-In this demo, `rgb-node-0` takes the part of the issuer and transfers some of the newly minted asset to a user, `rgb-node-1`.
+In this demo, `rgb-node-0` act as an issuer and transfers some of the newly minted asset to the user, `rgb-node-1`.
 
 In order to get an idea of the functionality exposed by `rgb-cli`, you can run for instance:
 ```bash=
@@ -77,12 +77,12 @@ rgb0-cli fungible help
 rgb0-cli fungible help list
 rgb0-cli genesis help
 ```
-### premise
+### Premise
 
-RGB-node does not handle wallet-related functionalities, it just performs RGB-specific tasks over data that will be provided by an external wallet such as [bitcoind](https://github.com/bitcoin/bitcoin). In particular, in order to demonstrate a basic workflow with issuance and a transfer, we will need:
-- an `issuance_utxo` to which `rgb-node-0` will bind newly issued asset
-- a `change_utxo` on which `rgb-node-0` receives asset change
-- a `receive_utxo` on which `rgb-node-1` receives asset
+RGB-node does not handle wallet-related functionality, it just performs RGB-specific tasks over data that will be provided by an external wallet such as [bitcoind](https://github.com/bitcoin/bitcoin). In particular, in order to demonstrate a basic workflow with issuance and transfer, we will need:
+- an `issuance_utxo` to which `rgb-node-0` will bind the newly issued asset
+- a `change_utxo` on which `rgb-node-0` receives the asset change
+- a `receive_utxo` on which `rgb-node-1` receives the asset
 - a partially signed bitcoin transaction (`transfer_psbt`), whose output pubkey will be tweaked to include a commitment to the transfer.
 
 For the purposes of this demo, since we are skipping the blockchain verification part, you can use "fake" data generated with a testnet or regtest bitcoin node. The following hardcoded utxos (that will be used later) will work:
@@ -130,7 +130,7 @@ rgb1-cli fungible invoice <asset-id> 100 79d0191dab03ffbccc27500a740f20a75cb175e
 To be able to accept transfers related to this invoice, we will need the original `receive_utxo` and the `blinding_factor` that was used to include it in the invoice.
 
 ### Transfer
-To transfer some amounts of asset to `rgb-node-1` to pay the new invoice, `rgb-node-0` needs to create a consignment and commit to it into a bitcoin transaction. So we will need the invoice and a partially signed bitcoin transaction that we will modify to include the commitment. Furthermore, `-i` and `-a` options allow to provide an input utxo from which to take asset and an allocation for the change in the form `<amount>@<utxo>`.
+To transfer some amounts of the asset to `rgb-node-1` to pay the new invoice, `rgb-node-0` needs to create a consignment and commit to it into a bitcoin transaction. So we will need the invoice and a partially signed bitcoin transaction that we will modify to include the commitment. Furthermore, `-i` and `-a` options allow to provide an input utxo from which to take the asset and an allocation for the change in the form `<amount>@<utxo>`.
 
 ```bash=
 # NB: pass the invoice between quotes to avoid misinterpretation of the & character it contains
