@@ -68,7 +68,7 @@ alias rgb1-cli="docker exec -it rgb-node-1 rgb-cli"
 ```
 
 ## Demo
-In this demo, `rgb-node-0` act as an issuer and transfers some of the newly minted asset to the user, `rgb-node-1`.
+In this demo, `rgb-node-0` acts as an issuer and transfers some of the newly minted asset to the user, `rgb-node-1`.
 
 In order to get an idea of the functionality exposed by `rgb-cli`, you can run for instance:
 ```bash=
