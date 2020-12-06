@@ -111,7 +111,7 @@ impl From<SqlCacheError> for CacheError {
             SqlCacheError::Sqlite(e) => {
                 Self::Sqlite(format!("Error from sqlite asset cache {}", e.to_string()))
             }
-            SqlCacheError::HexDecoding => Self::DataIntegrityError(format!(
+            SqlCacheError::HexDecoding(_) => Self::DataIntegrityError(format!(
                 "Wrong hex encoded data in sqlite asset cache table"
             )),
             SqlCacheError::Generic(e) => Self::DataIntegrityError(e),
@@ -126,6 +126,7 @@ impl From<SqlCacheError> for CacheError {
                 "Wrong amount blinding factor in asset cache sqlite database: {}",
                 e
             )),
+            SqlCacheError::Bech32(e) => Self::DataIntegrityError(e.to_string()),
         }
     }
 }

@@ -11,32 +11,29 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use chrono::NaiveDateTime;
 use core::convert::{TryFrom, TryInto};
 use core::ops::{Add, AddAssign};
 use diesel::prelude::*;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use chrono::NaiveDateTime;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use amplify::Wrapper;
+use lnpbp::bitcoin::{self, OutPoint, Txid};
+use lnpbp::bp::{self, TaggedHash};
+use lnpbp::hex::FromHex;
+use lnpbp::rgb::prelude::*;
+use lnpbp::rgb::seal::WitnessVoutError;
+use lnpbp::secp256k1zkp::{key::SecretKey, Secp256k1};
 
+use super::schema::{self, FieldType, OwnedRightsType};
 use crate::contracts::fungible::cache::models::{
     read_allocations, read_inflation, SqlAllocation, SqlAllocationUtxo,
     SqlAsset, SqlIssue,
 };
 use crate::contracts::fungible::cache::SqlCacheError;
-use lnpbp::bitcoin;
-use lnpbp::bitcoin::{OutPoint, Txid};
-use lnpbp::bp;
-use lnpbp::hashes::Hash;
-use lnpbp::hex::FromHex;
-use lnpbp::rgb::prelude::*;
-use lnpbp::rgb::seal::WitnessVoutError;
-use lnpbp::secp256k1zkp::key::SecretKey;
-use lnpbp::secp256k1zkp::Secp256k1;
-
-use super::schema::{self, FieldType, OwnedRightsType};
 use crate::error::ServiceErrorDomain;
 
 pub type AccountingValue = f64;
@@ -210,7 +207,7 @@ impl Asset {
         }
 
         Ok(Self {
-            id: ContractId::from_hex(&table_value.contract_id[..])?,
+            id: ContractId::from_str(&table_value.contract_id[..])?,
             ticker: table_value.ticker.clone(),
             name: table_value.asset_name.clone(),
             description: table_value.asset_description.clone(),
@@ -352,14 +349,17 @@ impl Supply {
     serde(crate = "serde_crate")
 )]
 pub struct Issue {
-    // Unique primary key; equals to the state transition id that performs
-    // issuance (i.e. of `issue` type)
+    /// Unique primary key; equals to the state transition id that performs
+    /// issuance (i.e. of `issue` type)
     id: NodeId,
-    // Foreign key for linking to assets
+
+    /// Foreign key for linking to assets
     asset_id: ContractId,
-    // In db we can store it as a simple u64 field converting it on read/write
-    // using `fractional_bits` parameter of the asset
+
+    /// In db we can store it as a simple u64 field converting it on read/write
+    /// using `fractional_bits` parameter of the asset
     amount: AccountingAmount,
+
     /// Indicates transaction output which had an assigned inflation right and
     /// which spending produced this issue. `None` signifies that the issue
     /// was produced by genesis (i.e. it is a primary issue)

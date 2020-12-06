@@ -87,8 +87,7 @@ impl FileCacheConfig {
 }
 
 /// Keeps all source/binary RGB contract data, stash etc
-#[derive(Debug, Display)]
-#[display(Debug)]
+#[derive(Debug)]
 pub struct FileCache {
     config: FileCacheConfig,
     assets: BTreeMap<ContractId, Asset>,
@@ -267,6 +266,7 @@ impl Cache for FileCache {
 mod test {
     use super::super::sql::{SqlCache, SqlCacheConfig};
     use super::*;
+    use lnpbp::bp::TaggedHash;
     use lnpbp::hex::FromHex;
     use std::env;
 

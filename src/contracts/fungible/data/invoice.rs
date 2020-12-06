@@ -43,6 +43,8 @@ pub enum Error {
     WrongOutpoint,
 }
 
+// TODO: Move RGB outpoints into LNP/BP Core library
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum OutpointDescriptor {
     Utxo(bitcoin::OutPoint),

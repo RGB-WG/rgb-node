@@ -13,12 +13,14 @@
 
 use diesel::prelude::*;
 use std::collections::{BTreeMap, HashMap};
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::{fmt, fs, fs::File};
 
-use crate::contracts::fungible::cache::schema as cache_schema;
-
+use amplify::IoError;
 use lnpbp::bitcoin;
-use lnpbp::hex::{FromHex, ToHex};
+use lnpbp::hex::ToHex;
+use lnpbp::rgb::bech32;
 use lnpbp::rgb::prelude::*;
 
 use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
@@ -27,25 +29,25 @@ use cache_schema::sql_assets::dsl::sql_assets as sql_asset_table;
 use cache_schema::sql_inflation::dsl::sql_inflation as sql_inflation_table;
 use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
 
+use super::cache::{Cache, CacheError};
+use super::models::*;
+use crate::contracts::fungible::cache::schema as cache_schema;
 use crate::contracts::fungible::data::Asset;
 
-use std::path::PathBuf;
-
-use super::cache::{Cache, CacheError};
-
-use super::models::*;
-
 #[derive(Debug, Display, Error, From)]
-#[display(Debug)]
+#[display(inner)]
 pub enum SqlCacheError {
-    #[from]
-    Io(std::io::Error),
+    #[from(std::io::Error)]
+    Io(IoError),
 
     #[from]
     Sqlite(diesel::result::Error),
 
-    #[from(lnpbp::hex::Error)]
-    HexDecoding,
+    #[from]
+    HexDecoding(lnpbp::hex::Error),
+
+    #[from]
+    Bech32(bech32::Error),
 
     #[from]
     Generic(String),
@@ -56,6 +58,7 @@ pub enum SqlCacheError {
     #[from]
     WrongChainData(lnpbp::bp::chain::ParseError),
 
+    #[display("Item not found")]
     NotFound,
 }
 
@@ -162,7 +165,7 @@ impl SqlCache {
 
         for asset in assets {
             asset_map.insert(
-                ContractId::from_hex(&asset.contract_id[..])?,
+                ContractId::from_str(&asset.contract_id[..])?,
                 Asset::from_sql_asset(&asset, &self.connection)?,
             );
         }
@@ -326,8 +329,8 @@ impl Cache for SqlCache {
                 .contract_id
                 .clone();
 
-            let contract_id = ContractId::from_hex(&contract_id_string[..])
-                .map_err(|_e| SqlCacheError::HexDecoding)?;
+            let contract_id = ContractId::from_str(&contract_id_string[..])
+                .map_err(|e| SqlCacheError::Bech32(e))?;
 
             let allocs: Vec<AtomicValue> = allocations
                 .iter()
@@ -346,15 +349,16 @@ mod test {
     use super::*;
     use crate::contracts::fungible::data::Asset;
     use chrono::NaiveDate;
+    use lnpbp::bp::TaggedHash;
     use lnpbp::hex::FromHex;
     use lnpbp::rgb::ContractId;
+    use std::env;
 
     use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
     use cache_schema::sql_allocations::dsl::sql_allocations as sql_allocation_table;
     use cache_schema::sql_assets::dsl::sql_assets as sql_asset_table;
     use cache_schema::sql_inflation::dsl::sql_inflation as sql_inflation_table;
     use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
-    use std::env;
 
     // The following tests are ignored by default, because they will break
     // Travis CI unless the build setup is updated (TODO). To run these tests,
