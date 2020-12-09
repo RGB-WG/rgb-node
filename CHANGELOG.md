@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+v0.2.0-rc.3
+-----------
+- Updated to LNP/BP Core Lib v0.2 release
+
+v0.2.0-rc.2
+-----------
+- Updated to LNP/BP Core Lib RC2
+- Fixed broken semversioning of the upstream dependencies in tokio and other
+  crates
+
 v0.2.0-rc.1
 -----------
 - Updating issuance to match the latest RGB20 schema changes

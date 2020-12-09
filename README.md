@@ -82,7 +82,7 @@ organization concept for module/file names:
 
 ## Install
 
-Minimum supported rust compiler version (MSRV): 1.41.1
+Minimum supported rust compiler version (MSRV): 1.45
 
 ### Local
 
@@ -93,7 +93,7 @@ then run the following commands:
     sudo apt install -y build-essential cmake libpq-dev libsqlite3-dev libssl-dev libzmq3-dev pkg-config
     git clone https://github.com/LNP-BP/rgb-node.git
     cd rgb-node
-    cargo build --all-features --release
+    cargo build --release
 
 Now, to run the node you can execute
 
