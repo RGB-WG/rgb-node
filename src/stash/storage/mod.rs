@@ -11,17 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+mod disk;
+mod hammersbald;
 mod store;
 
-#[cfg(not(store_hammersbald))] // Default store
-mod disk;
-#[cfg(all(store_hammersbald, not(any(store_disk))))]
-mod hammersbald;
-
-pub(super) use store::Store;
-
-#[cfg(not(store_hammersbald))] // Default store
-pub(super) use disk::{DiskStorage, DiskStorageConfig, DiskStorageError};
-
-#[cfg(all(store_hammersbald, not(any(store_disk))))]
-pub(super) use hammersbald::HammersbaldStorage;
+pub use self::hammersbald::HammersbaldStorage;
+pub use disk::{DiskStorage, DiskStorageConfig, DiskStorageError};
+pub use store::Store;
