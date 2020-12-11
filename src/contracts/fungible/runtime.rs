@@ -318,7 +318,7 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got SYNC");
         let data = self.cacher.export(Some(data_format))?;
-        Ok(Reply::Sync(reply::SyncFormat(self.config.format, data)))
+        Ok(Reply::Sync(reply::SyncFormat(data_format, data)))
     }
 
     async fn rpc_assets(

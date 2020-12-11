@@ -15,7 +15,9 @@ use core::str::FromStr;
 use regex::Regex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
 
 use lnpbp::bitcoin::{OutPoint, Txid};
 use lnpbp::bp::blind::{OutpointHash, OutpointReveal};
@@ -173,5 +175,25 @@ impl FromStr for ConsealCoins {
         } else {
             Err(ParseError)
         }
+    }
+}
+
+impl Eq for OutpointCoins {}
+
+impl PartialOrd for OutpointCoins {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for OutpointCoins {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.outpoint.cmp(&other.outpoint)
+    }
+}
+
+impl Hash for OutpointCoins {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.outpoint.hash(state);
     }
 }
