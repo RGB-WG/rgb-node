@@ -52,6 +52,11 @@ pub enum OutpointDescriptor {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize,),
+    serde(crate = "serde_crate")
+)]
 pub enum Outpoint {
     BlindedUtxo(OutpointHash),
     Address(bitcoin::Address),

@@ -23,7 +23,9 @@ use lnpbp::bp;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::{Session, Unmarshall};
-use lnpbp::rgb::{AtomicValue, Consignment, ContractId, PSBT_OUT_PUBKEY};
+use lnpbp::rgb::{
+    AtomicValue, Consignment, ContractId, Genesis, PSBT_OUT_PUBKEY,
+};
 
 use super::{Error, Runtime};
 use crate::api::{
@@ -215,13 +217,44 @@ impl Runtime {
         }
     }
 
-    pub fn sync(
+    pub fn export_asset(
+        &mut self,
+        asset_id: ContractId,
+    ) -> Result<Genesis, Error> {
+        match &*self.command(Request::ExportAsset(asset_id))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Genesis(response) => {
+                println!("Export asset succeeded");
+
+                Ok(response.clone())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn import_asset(&mut self, genesis: Genesis) -> Result<(), Error> {
+        match &*self.command(Request::ImportAsset(genesis))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                println!("Import asset succeeded");
+
+                Ok(())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn list_assets(
         &mut self,
         data_format: DataFormat,
     ) -> Result<reply::SyncFormat, Error> {
         match &*self.command(Request::Sync(data_format))? {
-            Reply::Sync(data) => Ok(data.clone()),
-            Reply::Failure(failmsg) => Err(Error::Reply(failmsg.clone())),
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Sync(response) => {
+                println!("List assets succeeded");
+
+                Ok(response.clone())
+            }
             _ => Err(Error::UnexpectedResponse),
         }
     }
