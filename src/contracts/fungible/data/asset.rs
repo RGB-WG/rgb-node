@@ -163,7 +163,7 @@ impl AddAssign for AccountingAmount {
 )]
 #[display(Debug)]
 pub struct Asset {
-    id: ContractId, // This is a unique primary key
+    pub id: ContractId, // This is a unique primary key
     ticker: String,
     name: String,
     description: Option<String>,
