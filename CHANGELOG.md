@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.2.0-rc.4
+-----------
+- Added asset import and export methods into I9N (integration) mod
+
 v0.2.0-rc.3
 -----------
 - Updated to LNP/BP Core Lib v0.2 release
