@@ -11,9 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use ::core::borrow::Borrow;
-use ::core::convert::TryFrom;
-use ::std::path::PathBuf;
+use core::borrow::Borrow;
+use core::convert::TryFrom;
+use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
@@ -227,13 +228,18 @@ impl Runtime {
                     (outpoint, AccountingAmount::transmutate(precision, coins))
                 })
                 .collect(),
-            issue
-                .inflation
-                .into_iter()
-                .map(|OutpointCoins { coins, outpoint }| {
-                    (outpoint, AccountingAmount::transmutate(precision, coins))
-                })
-                .collect(),
+            issue.inflation.into_iter().fold(
+                BTreeMap::new(),
+                |mut map, OutpointCoins { coins, outpoint }| {
+                    // We may have only a single secondary issuance right per
+                    // outpoint, so folding all outpoints
+                    let coins = AccountingAmount::transmutate(precision, coins);
+                    map.entry(outpoint)
+                        .and_modify(|amount| *amount += coins)
+                        .or_insert(coins);
+                    map
+                },
+            ),
             issue.renomination,
             issue.epoch,
         )?;

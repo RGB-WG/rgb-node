@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -59,11 +59,10 @@ impl Runtime {
         description: Option<String>,
         precision: u8,
         allocation: Vec<OutpointCoins>,
-        inflation: HashSet<OutpointCoins>,
+        inflation: Vec<OutpointCoins>,
         renomination: Option<OutPoint>,
         epoch: Option<OutPoint>,
     ) -> Result<(), Error> {
-        // TODO: Make sure we use the same network
         if self.config.network != chain {
             Err(Error::WrongNetwork)?;
         }
@@ -73,7 +72,7 @@ impl Runtime {
             description,
             precision,
             allocation,
-            inflation: inflation.into_iter().collect(),
+            inflation,
             renomination,
             epoch,
         });
