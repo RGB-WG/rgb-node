@@ -143,7 +143,7 @@ impl Runtime {
                 let out_file = File::create(&transaction_file)
                     .expect("can't create output transaction file");
                 transfer.psbt.consensus_encode(out_file)?;
-                println!(
+                info!(
                     "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
                     consignment_file, transaction_file
                 );
@@ -167,8 +167,7 @@ impl Runtime {
         match &*self.command(Request::Accept(api))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Success => {
-                println!("Accept succeeded");
-
+                info!("Accept command succeeded");
                 Ok(())
             }
             _ => Err(Error::UnexpectedResponse),
@@ -179,8 +178,7 @@ impl Runtime {
         match &*self.command(Request::Validate(consignment))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Success => {
-                println!("Validate succeeded");
-
+                info!("Validation succeeded");
                 Ok(())
             }
             _ => Err(Error::UnexpectedResponse),
@@ -193,11 +191,7 @@ impl Runtime {
     ) -> Result<BTreeMap<OutPoint, Vec<AtomicValue>>, Error> {
         match &*self.command(Request::Allocations(contract_id))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Allocations(response) => {
-                println!("Asset allocations succeeded");
-
-                Ok(response.clone())
-            }
+            Reply::Allocations(response) => Ok(response.clone()),
             _ => Err(Error::UnexpectedResponse),
         }
     }
@@ -208,11 +202,7 @@ impl Runtime {
     ) -> Result<BTreeMap<ContractId, Vec<AtomicValue>>, Error> {
         match &*self.command(Request::Assets(outpoint))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Assets(response) => {
-                println!("Outpoint assets succeeded");
-
-                Ok(response.clone())
-            }
+            Reply::Assets(response) => Ok(response.clone()),
             _ => Err(Error::UnexpectedResponse),
         }
     }
@@ -223,11 +213,7 @@ impl Runtime {
     ) -> Result<Genesis, Error> {
         match &*self.command(Request::ExportAsset(asset_id))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Genesis(response) => {
-                println!("Export asset succeeded");
-
-                Ok(response.clone())
-            }
+            Reply::Genesis(response) => Ok(response.clone()),
             _ => Err(Error::UnexpectedResponse),
         }
     }
@@ -236,8 +222,7 @@ impl Runtime {
         match &*self.command(Request::ImportAsset(genesis))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Success => {
-                println!("Import asset succeeded");
-
+                info!("Asset import succeeded");
                 Ok(())
             }
             _ => Err(Error::UnexpectedResponse),
@@ -250,11 +235,7 @@ impl Runtime {
     ) -> Result<reply::SyncFormat, Error> {
         match &*self.command(Request::Sync(data_format))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Sync(response) => {
-                println!("List assets succeeded");
-
-                Ok(response.clone())
-            }
+            Reply::Sync(response) => Ok(response.clone()),
             _ => Err(Error::UnexpectedResponse),
         }
     }
