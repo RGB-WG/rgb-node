@@ -59,9 +59,7 @@ pub enum Request {
     Allocations(ContractId),
 }
 
-#[derive(
-    Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
-)]
+#[derive(Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -143,7 +141,7 @@ fn ticker_validator(name: &str) -> Result<(), String> {
     let re = Regex::new(r"^[A-Z]{3,8}$").expect("Regex parse failure");
     if !re.is_match(&name) {
         Err(
-            "Ticker name must be between 2 and 8 chars, contain no spaces and \
+            "Ticker name must be between 3 and 8 chars, contain no spaces and \
             consist only of capital letters\
             "
             .to_string(),
