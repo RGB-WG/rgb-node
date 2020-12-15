@@ -32,7 +32,7 @@ required-features = ["cli"]
 # LNP/BP crates
 amplify = "2.4"
 amplify_derive = "2.4.1"
-lnpbp = { version = "~0.2.0", features = ["lnp", "url", "websockets", "keygen"] }
+lnpbp = { version = "~0.2.1", features = ["lnp", "url", "websockets", "keygen"] }
 lnpbp_derive = "~0.2.0"
 lnpbp_services = "~0.2.0"
 # Rust language
@@ -44,15 +44,15 @@ hammersbald = "~2.4.0"
 # Bitcoin
 electrum-client = { version = "=0.3.0-beta.1", optional = true }
 # Serialization & parsing
-serde_crate = { package = "serde", version = "~1.0.106", features = ["derive"], optional = true }
-serde_with = { version = "~1.5.0", optional = true }
-serde_json = { version = "~1.0.55", optional = true }
-serde_yaml = { version = "~0.8.13", optional = true }
-toml = { version = "~0.5.6", optional = true }
-bech32 = { version = "~0.7.2", optional = true }
-base64 = { version = "~0.12.1", optional = true }
-regex = { version = "~1.3.9", optional = true }
-url = { version = "~2.1.1", optional = true }
+serde_crate = { package = "serde", version = "1.0", features = ["derive"], optional = true }
+serde_with = { version = "1.5", optional = true }
+serde_json = { version = "1.0", optional = true }
+serde_yaml = { version = "0.8.13", optional = true }
+toml = { version = "0.5.6", optional = true }
+bech32 = { version = "0.7.2", optional = true }
+base64 = { version = "0.12.1", optional = true }
+regex = { version = "1.3", optional = true }
+url = { version = "2.1", optional = true }
 # Congig & logging
 settings = { version = "~0.10.1", package = "config", optional = true }
 configure_me = { version = "0.3.4", optional = true }
