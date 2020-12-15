@@ -22,7 +22,7 @@ use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::strict_encode;
+use lnpbp::strict_encoding::{strict_decode, strict_encode};
 
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{AcceptApi, Issue, TransferApi};
@@ -178,13 +178,13 @@ impl Command {
                     DataFormat::Yaml => serde_yaml::from_slice(&data)?,
                     DataFormat::Json => serde_json::from_slice(&data)?,
                     DataFormat::Toml => toml::from_slice(&data)?,
-                    DataFormat::StrictEncode => unimplemented!(),
+                    DataFormat::StrictEncode => strict_decode(&data)?,
                 };
                 let short: Vec<HashMap<&str, String>> = assets
                     .iter()
                     .map(|a| {
                         map! {
-                            "id" => a.id().to_bech32_string(),
+                            "id" => a.id().to_string(),
                             "ticker" => a.ticker().clone(),
                             "name" => a.name().clone()
                         }
