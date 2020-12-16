@@ -34,10 +34,14 @@ pub struct Runtime {
 impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError> {
         // Start rgbd on a separate thread
-        if config.threaded {
+        if config.run_embedded {
             let rgbd_opts = rgbd::Opts {
-                bin_dir: String::new(),
+                bin_dir: s!(""), // We do not need binaries in multithread mode
                 data_dir: config.data_dir.clone(),
+                verbose: config.verbose,
+                electrum_server: config.electrum_server.clone(),
+                // TODO: Endpoint parameters are not needed in embedded mode;
+                //       remove them
                 contracts: config
                     .contract_endpoints
                     .iter()

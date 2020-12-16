@@ -21,38 +21,33 @@ use crate::rgbd::ContractName;
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 pub struct Config {
+    pub verbose: u8,
+    pub data_dir: String,
+    pub electrum_server: String,
     pub stash_rpc_endpoint: String,
     pub stash_pub_endpoint: String,
     pub fungible_pub_endpoint: String,
     pub contract_endpoints: HashMap<ContractName, String>,
     pub network: bp::Chain,
-    pub threaded: bool,
-    pub data_dir: String,
+    pub run_embedded: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            stash_rpc_endpoint: STASHD_RPC_ENDPOINT
-                .parse()
-                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            stash_pub_endpoint: STASHD_PUB_ENDPOINT
-                .parse()
-                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
-            fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT
-                .parse()
-                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
+            verbose: 0,
+            data_dir: RGB_DATA_DIR.to_owned(),
+            electrum_server: DEFAULT_ELECTRUM_ENDPOINT.to_owned(),
+            stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_owned(),
+            stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_owned(),
+            fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT.to_owned(),
             contract_endpoints: map! {
-                ContractName::Fungible
-                    => FUNGIBLED_RPC_ENDPOINT
-                        .parse()
-                        .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value")
+                ContractName::Fungible => FUNGIBLED_RPC_ENDPOINT.to_owned(),
             },
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),
-            threaded: true,
-            data_dir: RGB_DATA_DIR.to_string(),
+            run_embedded: true,
         }
     }
 }

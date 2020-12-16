@@ -83,8 +83,8 @@ impl Runtime {
                 self.config.stash_rpc_endpoint.to_string(),
                 s!("--stash-sub"),
                 self.config.stash_pub_endpoint.to_string(),
-                s!("--stash"),
-                self.config.stash.to_string(),
+                s!("--cache"),
+                self.config.cache.to_string(),
                 s!("--format"),
                 self.config.format.to_string(),
             ]
