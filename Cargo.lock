@@ -1017,9 +1017,9 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e05cfb147adf2a1261543550cef0dcdcb4f15f9934c3c59d50c741ed3455b230"
+checksum = "f111d739c902b3848ac078f1fc3197dfa2539220265c6ff008211a69c868fdff"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1648,7 +1648,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "rgb_node"
-version = "0.2.0-rc.5"
+version = "0.2.0"
 dependencies = [
  "amplify",
  "amplify_derive",

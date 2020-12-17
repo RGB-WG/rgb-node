@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.2.0-rc.5"
+version = "0.2.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -32,7 +32,7 @@ required-features = ["cli"]
 # LNP/BP crates
 amplify = "2.4"
 amplify_derive = "2.4.1"
-lnpbp = { version = "~0.2.1", features = ["lnp", "url", "websockets", "keygen"] }
+lnpbp = { version = "~0.2.2", features = ["lnp", "url", "websockets", "keygen"] }
 lnpbp_derive = "~0.2.0"
 lnpbp_services = "~0.2.0"
 # Rust language

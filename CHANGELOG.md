@@ -1,6 +1,28 @@
 Change Log
 ==========
 
+v0.2.0
+------
+
+### Core features
+- LNP Node and lightning network interoperability
+- RPC commands to get allocations for assets and outpoints
+- Asset `validate`, `accept`, `asset_allocations` and `outpoint_assets` methods
+  in integration mod
+- Sync operation supports multiple data formats
+- Strict encoding for asset data. Adding strict encode-based import/export.
+
+### Breaking changes
+- Changed order and types of arguments in integration module, cli & RPC
+
+### Changes since RC5
+- Fixed issue #102 with wrong PSBT decoding when deserializing from in-memory 
+  data
+- Fixed fungible command-line argument name (stash -> cache)
+- Fixing integration config parameters
+- Fixed issue #101: error message on fungible CLI API consistent with the code
+- Released some of the dependency version requirements in Cargo.toml
+
 v0.2.0-rc.5
 -----------
 - Fixed secondary issue rights processing in integration module and folding of
