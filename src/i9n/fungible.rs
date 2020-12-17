@@ -13,10 +13,11 @@
 
 use std::collections::BTreeMap;
 use std::fs::File;
+use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use lnpbp::bitcoin::consensus::encode::{deserialize, Encodable};
+use lnpbp::bitcoin::consensus::encode::{Decodable, Encodable};
 use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp;
@@ -98,7 +99,8 @@ impl Runtime {
         };
 
         let psbt_bytes = base64::decode(&prototype_psbt)?;
-        let mut psbt: PartiallySignedTransaction = deserialize(&psbt_bytes)?;
+        let cursor = io::Cursor::new(psbt_bytes);
+        let mut psbt = PartiallySignedTransaction::consensus_decode(cursor)?;
 
         for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
             if let Some(key) = output.hd_keypaths.keys().next() {
