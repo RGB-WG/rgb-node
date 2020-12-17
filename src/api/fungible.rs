@@ -59,7 +59,9 @@ pub enum Request {
     Allocations(ContractId),
 }
 
-#[derive(Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
+#[derive(
+    Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
+)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
