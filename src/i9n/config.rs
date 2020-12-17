@@ -42,7 +42,7 @@ impl Default for Config {
             stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_owned(),
             fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT.to_owned(),
             contract_endpoints: map! {
-                ContractName::Fungible => FUNGIBLED_RPC_ENDPOINT.to_owned(),
+                ContractName::Fungible => FUNGIBLED_RPC_ENDPOINT.to_owned()
             },
             network: RGB_NETWORK
                 .parse()

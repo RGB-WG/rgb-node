@@ -39,7 +39,7 @@ pub struct Opts {
 
     /// Connection string to stash (exact format depends on used storage
     /// engine)
-    #[clap(short = 's', long = "stash", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
+    #[clap(long = "cache", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
     pub cache: String,
 
     /// Data format for cache storage (valid only if file storage is used)
