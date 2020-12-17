@@ -94,7 +94,7 @@ then run the following commands:
     sudo apt update
     sudo apt install -y build-essential cmake libpq-dev libsqlite3-dev libssl-dev libzmq3-dev pkg-config
 
-#### macOS
+#### MacOS
 
     brew install cmake libpq sqlite pkg-config openssl zmq
 
