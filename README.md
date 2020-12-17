@@ -89,8 +89,17 @@ Minimum supported rust compiler version (MSRV): 1.45
 To compile the node, please install [cargo](https://doc.rust-lang.org/cargo/),
 then run the following commands:
 
+#### Linux
+
     sudo apt update
     sudo apt install -y build-essential cmake libpq-dev libsqlite3-dev libssl-dev libzmq3-dev pkg-config
+
+#### macOS
+
+    brew install cmake libpq sqlite pkg-config openssl zmq
+
+#### Both
+
     git clone https://github.com/LNP-BP/rgb-node.git
     cd rgb-node
     cargo build --release
