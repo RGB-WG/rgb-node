@@ -4,6 +4,7 @@ Change Log
 v0.2.1
 ------
 - Fix to PSBT tweaking key representation for `i9n` integration interface
+- README improvements
 
 v0.2.0
 ------
