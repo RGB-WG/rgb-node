@@ -43,9 +43,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_derive"
-version = "2.4.1"
+version = "2.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38179e18c74d95a28a2ec779618554a9f2ba898b0fcfaf717538c467a99d1c49"
+checksum = "3c419e9b8d377ce7930d1bc70812a234be311dd41bb70691db41166767240f5d"
 dependencies = [
  "quote 1.0.7",
  "syn 1.0.54",
@@ -1017,9 +1017,8 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lnpbp"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f111d739c902b3848ac078f1fc3197dfa2539220265c6ff008211a69c868fdff"
+version = "0.3.0-alpha.1"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#c52ff244dedd6f80d47590d677dde87f70cb0e6b"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1054,9 +1053,8 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_derive"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad9186dc830199ea7c6c73ac9be3bd640953c84e7295a96243351724af4aea53"
+version = "0.3.0-alpha.1"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#c52ff244dedd6f80d47590d677dde87f70cb0e6b"
 dependencies = [
  "amplify",
  "quote 1.0.7",
@@ -1065,9 +1063,8 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_services"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c59ef065aaa955202482670dd0a06db4116a7b24f8aaf2d12bb437f014a8167"
+version = "0.3.0-alpha.1"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#c52ff244dedd6f80d47590d677dde87f70cb0e6b"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1128,9 +1125,9 @@ dependencies = [
 
 [[package]]
 name = "miniscript"
-version = "3.0.0"
+version = "4.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4f8542804cd816cad1aaea64e3e2e326e401269ad6dc6661d2f8be7b3f76e46"
+checksum = "74ff4ece4ff5498718a232e92d53273903609c739052f5edf2a1a42c59586348"
 dependencies = [
  "bitcoin",
  "serde 1.0.118",
@@ -1648,7 +1645,7 @@ checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
 
 [[package]]
 name = "rgb_node"
-version = "0.2.1"
+version = "0.3.0-alpha.1"
 dependencies = [
  "amplify",
  "amplify_derive",

@@ -18,8 +18,8 @@ use std::path::PathBuf;
 
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
-use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmqsocket::ZmqType;
+use lnpbp::lnp::TypedEnum;
 use lnpbp::lnp::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
     Unmarshall, Unmarshaller,
@@ -165,7 +165,7 @@ impl Runtime {
         let raw = self.session_rpc.recv_raw_message()?;
         let reply = self.rpc_process(raw).await.unwrap_or_else(|err| err);
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
-        let data = reply.encode()?;
+        let data = reply.serialize();
         trace!(
             "Sending {} bytes back to the client over ZMQ RPC",
             data.len()
@@ -536,7 +536,7 @@ impl Runtime {
         &mut self,
         request: api::stash::Request,
     ) -> Result<Reply, ServiceErrorDomain> {
-        let data = request.encode()?;
+        let data = request.serialize();
         self.stash_rpc.send_raw_message(data.borrow())?;
         let raw = self.stash_rpc.recv_raw_message()?;
         let reply = &*self.reply_unmarshaller.unmarshall(&raw)?.clone();

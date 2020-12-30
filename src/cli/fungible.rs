@@ -22,7 +22,7 @@ use lnpbp::bp::blind::OutpointReveal;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::{strict_decode, strict_encode};
+use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
 
 use super::{Error, OutputFormat, Runtime};
 use crate::api::fungible::{AcceptApi, Issue, TransferApi};
@@ -178,7 +178,7 @@ impl Command {
                     DataFormat::Yaml => serde_yaml::from_slice(&data)?,
                     DataFormat::Json => serde_json::from_slice(&data)?,
                     DataFormat::Toml => toml::from_slice(&data)?,
-                    DataFormat::StrictEncode => strict_decode(&data)?,
+                    DataFormat::StrictEncode => strict_deserialize(&data)?,
                 };
                 let short: Vec<HashMap<&str, String>> = assets
                     .iter()
@@ -284,7 +284,7 @@ impl Command {
                     format!("{}", err),
                 )
             })?;
-        trace!("{:?}", strict_encode(&consignment));
+        trace!("{:?}", strict_serialize(&consignment));
 
         match &*runtime.validate(consignment)? {
             Reply::Failure(failure) => {
@@ -319,7 +319,7 @@ impl Command {
                     format!("{}", err),
                 )
             })?;
-        trace!("{:?}", strict_encode(&consignment));
+        trace!("{:?}", strict_serialize(&consignment));
 
         let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0)
         {
@@ -507,7 +507,7 @@ impl TransferCli {
                 eprintln!("Transfer failed: {}", failure);
             }
             Reply::Transfer(transfer) => {
-                trace!("{:?}", strict_encode(&transfer.consignment));
+                trace!("{:?}", strict_serialize(&transfer.consignment));
                 transfer.consignment.write_file(self.consignment.clone())?;
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");

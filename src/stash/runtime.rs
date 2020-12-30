@@ -14,11 +14,10 @@
 use std::path::PathBuf;
 
 use lnpbp::bitcoin::{Transaction, Txid};
-use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::zmqsocket::ZmqType;
 use lnpbp::lnp::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
-    Unmarshall, Unmarshaller,
+    TypedEnum, Unmarshall, Unmarshaller,
 };
 use lnpbp::rgb::{
     validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
@@ -149,7 +148,7 @@ impl Runtime {
         let raw = self.session_rpc.recv_raw_message()?;
         let reply = self.rpc_process(raw).await.unwrap_or_else(|err| err);
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
-        let data = reply.encode()?;
+        let data = reply.serialize();
         trace!(
             "Sending {} bytes back to the client over ZMQ RPC",
             data.len()

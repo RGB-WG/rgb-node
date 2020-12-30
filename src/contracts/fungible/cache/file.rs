@@ -25,7 +25,7 @@ use std::{fs, io};
 
 use lnpbp::bitcoin;
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::{strict_encode, StrictDecode, StrictEncode};
+use lnpbp::strict_encoding::{strict_serialize, StrictDecode, StrictEncode};
 
 use super::Cache;
 use crate::fungible::cache::CacheError;
@@ -181,7 +181,7 @@ impl FileCache {
             DataFormat::Json => serde_json::to_vec(&assets)?,
             #[cfg(feature = "toml")]
             DataFormat::Toml => toml::to_vec(&assets)?,
-            DataFormat::StrictEncode => strict_encode(&assets)?,
+            DataFormat::StrictEncode => strict_serialize(&assets)?,
         })
     }
 }

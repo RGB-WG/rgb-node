@@ -14,11 +14,10 @@
 use std::sync::Arc;
 
 use lnpbp::bitcoin::OutPoint;
-use lnpbp::lnp::presentation::Encode;
 use lnpbp::lnp::transport::zmqsocket::ZmqType;
 use lnpbp::lnp::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
-    Unmarshall, Unmarshaller,
+    TypedEnum, Unmarshall, Unmarshaller,
 };
 use lnpbp::rgb::{Consignment, ContractId, Genesis, SchemaId};
 
@@ -62,7 +61,7 @@ impl Runtime {
         &mut self,
         command: stash::Request,
     ) -> Result<Arc<Reply>, ServiceErrorDomain> {
-        let data = command.encode()?;
+        let data = command.serialize();
         self.stash_rpc.send_raw_message(&data)?;
         let raw = self.stash_rpc.recv_raw_message()?;
         let reply = self.unmarshaller.unmarshall(&raw)?;
@@ -73,7 +72,7 @@ impl Runtime {
         &mut self,
         command: fungible::Request,
     ) -> Result<Arc<Reply>, ServiceErrorDomain> {
-        let data = command.encode()?;
+        let data = command.serialize();
         self.fungible_rpc.send_raw_message(&data)?;
         let raw = self.fungible_rpc.recv_raw_message()?;
         let reply = self.unmarshaller.unmarshall(&raw)?;

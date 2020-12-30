@@ -15,7 +15,7 @@ use hammersbald::{persistent, HammersbaldAPI};
 use super::store::Store;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use lnpbp::rgb::prelude::*;
-use lnpbp::strict_encoding::{strict_encode, StrictDecode};
+use lnpbp::strict_encoding::{strict_serialize, StrictDecode};
 use std::fs;
 use std::io;
 use std::path::PathBuf;
@@ -175,7 +175,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn schema(&self, id: &SchemaId) -> Result<Schema, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self
             .schemata_db
             .get_keyed(&key[..])?
@@ -185,7 +185,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn has_schema(&self, id: &SchemaId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self.schemata_db.get_keyed(&key[..])?;
         match value {
             Some(_) => return Ok(true),
@@ -195,14 +195,14 @@ impl Store for HammersbaldStorage {
 
     fn add_schema(&mut self, schema: &Schema) -> Result<bool, Self::Error> {
         let schema_id = schema.schema_id();
-        let key = strict_encode(&schema_id)?;
-        let value = strict_encode(schema)?;
+        let key = strict_serialize(&schema_id)?;
+        let value = strict_serialize(schema)?;
         self.schemata_db.put_keyed(&key[..], &value[..])?;
         Ok(true)
     }
 
     fn remove_schema(&mut self, id: &SchemaId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         self.schemata_db.forget(&key[..])?;
         Ok(true)
     }
@@ -216,7 +216,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn genesis(&self, id: &ContractId) -> Result<Genesis, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self
             .geneses_db
             .get_keyed(&key[..])?
@@ -226,7 +226,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn has_genesis(&self, id: &ContractId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self.geneses_db.get_keyed(&key[..])?;
         match value {
             Some(_) => return Ok(true),
@@ -236,20 +236,20 @@ impl Store for HammersbaldStorage {
 
     fn add_genesis(&mut self, genesis: &Genesis) -> Result<bool, Self::Error> {
         let contract_id = genesis.contract_id();
-        let key = strict_encode(&contract_id)?;
-        let value = strict_encode(genesis)?;
+        let key = strict_serialize(&contract_id)?;
+        let value = strict_serialize(genesis)?;
         self.geneses_db.put_keyed(&key[..], &value[..])?;
         Ok(true)
     }
 
     fn remove_genesis(&mut self, id: &ContractId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         self.geneses_db.forget(&key[..])?;
         Ok(true)
     }
 
     fn anchor(&self, id: &AnchorId) -> Result<Anchor, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self
             .anchors_db
             .get_keyed(&key[..])?
@@ -259,7 +259,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn has_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self.anchors_db.get_keyed(&key[..])?;
         match value {
             Some(_) => Ok(true),
@@ -269,20 +269,20 @@ impl Store for HammersbaldStorage {
 
     fn add_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
         let anchor_id = anchor.anchor_id();
-        let key = strict_encode(&anchor_id)?;
-        let value = strict_encode(anchor)?;
+        let key = strict_serialize(&anchor_id)?;
+        let value = strict_serialize(anchor)?;
         self.anchors_db.put_keyed(&key[..], &value[..])?;
         Ok(true)
     }
 
     fn remove_anchor(&mut self, id: &AnchorId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         self.anchors_db.forget(&key[..])?;
         Ok(true)
     }
 
     fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self
             .transitions_db
             .get_keyed(&key[..])?
@@ -292,7 +292,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn has_transition(&self, id: &NodeId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self.transitions_db.get_keyed(&key[..])?;
         match value {
             Some(_) => Ok(true),
@@ -305,20 +305,20 @@ impl Store for HammersbaldStorage {
         transition: &Transition,
     ) -> Result<bool, Self::Error> {
         let node_id = transition.node_id();
-        let key = strict_encode(&node_id)?;
-        let value = strict_encode(transition)?;
+        let key = strict_serialize(&node_id)?;
+        let value = strict_serialize(transition)?;
         self.transitions_db.put_keyed(&key[..], &value[..])?;
         Ok(true)
     }
 
     fn remove_transition(&mut self, id: &NodeId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         self.transitions_db.forget(&key[..])?;
         Ok(true)
     }
 
     fn extension(&self, id: &NodeId) -> Result<Extension, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self
             .extensions_db
             .get_keyed(&key[..])?
@@ -328,7 +328,7 @@ impl Store for HammersbaldStorage {
     }
 
     fn has_extension(&self, id: &NodeId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         let value = self.extensions_db.get_keyed(&key[..])?;
         match value {
             Some(_) => Ok(true),
@@ -341,14 +341,14 @@ impl Store for HammersbaldStorage {
         extension: &Extension,
     ) -> Result<bool, Self::Error> {
         let node_id = extension.node_id();
-        let key = strict_encode(&node_id)?;
-        let value = strict_encode(extension)?;
+        let key = strict_serialize(&node_id)?;
+        let value = strict_serialize(extension)?;
         self.extensions_db.put_keyed(&key[..], &value[..])?;
         Ok(true)
     }
 
     fn remove_extension(&mut self, id: &NodeId) -> Result<bool, Self::Error> {
-        let key = strict_encode(id)?;
+        let key = strict_serialize(id)?;
         self.extensions_db.forget(&key[..])?;
         Ok(true)
     }

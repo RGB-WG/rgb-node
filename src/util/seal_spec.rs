@@ -59,20 +59,18 @@ impl SealSpec {
 }
 
 impl StrictEncode for SealSpec {
-    type Error = strict_encoding::Error;
-
     fn strict_encode<E: io::Write>(
         &self,
         mut e: E,
-    ) -> Result<usize, Self::Error> {
+    ) -> Result<usize, strict_encoding::Error> {
         Ok(strict_encode_list!(e; self.vout, self.txid))
     }
 }
 
 impl StrictDecode for SealSpec {
-    type Error = strict_encoding::Error;
-
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
+    fn strict_decode<D: io::Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
         Ok(Self {
             vout: u32::strict_decode(&mut d)?,
             txid: Option::<Txid>::strict_decode(&mut d)?,

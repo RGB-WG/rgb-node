@@ -21,8 +21,7 @@ use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
 use lnpbp::bitcoin::OutPoint;
 use lnpbp::bp;
 use lnpbp::bp::psbt::ProprietaryKeyMap;
-use lnpbp::lnp::presentation::Encode;
-use lnpbp::lnp::{Session, Unmarshall};
+use lnpbp::lnp::{Session, TypedEnum, Unmarshall};
 use lnpbp::rgb::{
     AtomicValue, Consignment, ContractId, Genesis, PSBT_OUT_PUBKEY,
 };
@@ -44,7 +43,7 @@ impl Runtime {
         &mut self,
         command: Request,
     ) -> Result<Arc<Reply>, ServiceErrorDomain> {
-        let data = command.encode()?;
+        let data = command.serialize();
         self.session_rpc.send_raw_message(&data)?;
         let raw = self.session_rpc.recv_raw_message()?;
         let reply = self.unmarshaller.unmarshall(&raw)?;
