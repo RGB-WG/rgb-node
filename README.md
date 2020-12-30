@@ -27,7 +27,7 @@ The node (as other nodes maitained by LNP/BP Standards Association and Pandora
 Core company subsidiaries) consists of multiple microservices, communicating
 with each other via LNP ZMQ RPC interface.
 
-![Node architecture](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/doc/node_arch.jpeg)
+[Node architecture](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/doc/node_arch.jpeg)
 
 The set of microservices representing node can run as either:
 1) single daemon process on desktop or a server;
