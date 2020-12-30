@@ -7,7 +7,7 @@ license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
 edition = "2018"
 readme = "README.md"
-exclude = [".github", "/data", "/doc", "/sample", "Dockerfile"]
+exclude = [".github", "/data", "/sample", "Dockerfile"]
 
 [lib]
 name = "rgb"
@@ -94,7 +94,7 @@ client = ["zmq", "lnpbp_services/client", "lnpbp/keygen", "async-trait",
           "url", "lnpbp/url", "log", "env_logger",
           # TODO: Femove the following after feature gates debugging:
           "clap"]
-# Embedded is an app that contains ndoe in itself and that talks to it through
+# Embedded is an app that contains node in itself and that talks to it through
 # integration layer
 embedded = ["client", "node", "lnpbp_services/embedded"]
 # Command-line application feature
