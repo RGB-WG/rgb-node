@@ -64,7 +64,7 @@ colored = { version = "~2.0.0", optional = true }
 shellexpand = { version = "~2.0.0", optional = true }
 # Processes & IPC
 async-trait = { version = "~0.1.35", optional = true }
-tokio = { version = "~0.3.5", features = ["rt-multi-thread", "macros"], optional = true }
+tokio = { version = "~0.3.5", features = ["rt-multi-thread", "macros", "process"], optional = true }
 zmq = { version = "~0.9.2", optional = true }
 # These should be removed with the next major update
 num-traits = "~0.2.12"

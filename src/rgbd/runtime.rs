@@ -15,8 +15,7 @@
 use clap::Clap;
 #[cfg(any(feature = "node"))]
 use futures::future::join_all;
-use std::process;
-use tokio::task;
+use tokio::{process, task};
 
 use super::Config;
 #[cfg(any(feature = "node"))]
@@ -176,7 +175,7 @@ impl From<BootstrapError> for DaemonError {
 impl DaemonHandle {
     async fn future(self) -> Result<(), DaemonError> {
         match self {
-            DaemonHandle::Process(_) => Ok(()),
+            DaemonHandle::Process(mut child) => Ok(child.wait().await.map(|_| ())?),
             DaemonHandle::Task(task) => Ok(task.await??),
         }
     }
