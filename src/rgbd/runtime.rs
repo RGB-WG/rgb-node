@@ -176,7 +176,7 @@ impl From<BootstrapError> for DaemonError {
 impl DaemonHandle {
     async fn future(self) -> Result<(), DaemonError> {
         match self {
-            DaemonHandle::Process(_) => Ok(()),
+            DaemonHandle::Process(mut proc) => Ok(proc.wait().map(|_| ())?),
             DaemonHandle::Task(task) => Ok(task.await??),
         }
     }
