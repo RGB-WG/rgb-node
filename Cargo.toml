@@ -85,7 +85,7 @@ zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cm
 # 4. Mobile app with embedded node: `embedded` (auto includes `client` + `node`)
 # 5. Simple cli utility app: `shell`
 [features]
-default = ["client", "fungibles", "collectibles", "identities"]
+default = ["client", "server", "fungibles", "collectibles", "identities"]
 # Server is a standalone application that runs daemon
 server = ["node", "shell", "nix", "lnpbp_services/server"]
 # Feature is required for any applications that talks to daemon processes
