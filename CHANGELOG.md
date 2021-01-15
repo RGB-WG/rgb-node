@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.2.2
+------
+- Fix default build settings to produce all necessary binaries
+- Fixing rgbd daemon process: make it wait for child prcesses to complete
+
 v0.2.1
 ------
 - Fix to PSBT tweaking key representation for `i9n` integration interface
