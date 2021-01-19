@@ -10,7 +10,7 @@ readme = "README.md"
 exclude = [".github", "/data", "/sample", "Dockerfile"]
 
 [lib]
-name = "rgb"
+name = "rgb_node"
 
 [[bin]]
 name = "rgbd"
