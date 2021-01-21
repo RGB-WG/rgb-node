@@ -32,8 +32,8 @@ use crate::rpc::{
     fungible::TransferApi, reply, Reply,
 };
 use crate::util::file::ReadWrite;
-use crate::DataFormat;
 use bitcoin::util::psbt::raw::ProprietaryKey;
+use microservices::FileFormat;
 
 impl Runtime {
     fn command(
@@ -230,7 +230,7 @@ impl Runtime {
 
     pub fn list_assets(
         &mut self,
-        data_format: DataFormat,
+        data_format: FileFormat,
     ) -> Result<reply::SyncFormat, Error> {
         match &*self.command(Request::Sync(data_format))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),

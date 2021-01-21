@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use regex::Regex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +20,7 @@ use lnpbp::seals::OutpointReveal;
 use rgb::{Consignment, ContractId};
 use rgb20::{ConsealCoins, OutpointCoins, SealCoins};
 
-use crate::DataFormat;
+use microservices::FileFormat;
 
 #[derive(Clone, Debug, Display, LnpApi)]
 #[encoding_crate(lnpbp::strict_encoding)]
@@ -51,7 +50,7 @@ pub enum Request {
     Forget(::bitcoin::OutPoint),
 
     #[lnp_api(type = 0xFF01)]
-    Sync(DataFormat),
+    Sync(FileFormat),
 
     #[lnp_api(type = 0xFF02)]
     Assets(OutPoint),
@@ -144,8 +143,10 @@ pub struct AcceptApi {
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {
-    let re = Regex::new(r"^[A-Z]{3,8}$").expect("Regex parse failure");
-    if !re.is_match(&name) {
+    if name.len() >= 3
+        && name.len() <= 8
+        && name.chars().all(|c| c >= 'A' && c <= 'Z')
+    {
         Err(
             "Ticker name must be between 3 and 8 chars, contain no spaces and \
             consist only of capital letters\

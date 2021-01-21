@@ -30,7 +30,7 @@ use rgb20::Asset;
 use super::Cache;
 use crate::fungibled::cache::CacheError;
 use crate::util::file::*;
-use crate::DataFormat;
+use microservices::FileFormat;
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
@@ -68,7 +68,7 @@ pub enum FileCacheError {
 #[display(Debug)]
 pub struct FileCacheConfig {
     pub data_dir: PathBuf,
-    pub data_format: DataFormat,
+    pub data_format: FileFormat,
 }
 
 impl FileCacheConfig {
@@ -134,16 +134,17 @@ impl FileCache {
         let mut f = file(filename, FileMode::Read)?;
         self.assets = match self.config.data_format {
             #[cfg(feature = "serde_yaml")]
-            DataFormat::Yaml => serde_yaml::from_reader(&f)?,
+            FileFormat::Yaml => serde_yaml::from_reader(&f)?,
             #[cfg(feature = "serde_json")]
-            DataFormat::Json => serde_json::from_reader(&f)?,
+            FileFormat::Json => serde_json::from_reader(&f)?,
             #[cfg(feature = "toml")]
-            DataFormat::Toml => {
+            FileFormat::Toml => {
                 let mut data = String::new();
                 f.read_to_string(&mut data)?;
                 toml::from_str(&data)?
             }
-            DataFormat::StrictEncode => StrictDecode::strict_decode(&mut f)?,
+            FileFormat::StrictEncode => StrictDecode::strict_decode(&mut f)?,
+            _ => unimplemented!(),
         };
         Ok(())
     }
@@ -155,32 +156,34 @@ impl FileCache {
         let mut f = file(filename, FileMode::Create)?;
         match self.config.data_format {
             #[cfg(feature = "serde_yaml")]
-            DataFormat::Yaml => serde_yaml::to_writer(&f, &self.assets)?,
+            FileFormat::Yaml => serde_yaml::to_writer(&f, &self.assets)?,
             #[cfg(feature = "serde_json")]
-            DataFormat::Json => serde_json::to_writer(&f, &self.assets)?,
+            FileFormat::Json => serde_json::to_writer(&f, &self.assets)?,
             #[cfg(feature = "toml")]
-            DataFormat::Toml => f.write_all(&toml::to_vec(&self.assets)?)?,
-            DataFormat::StrictEncode => {
+            FileFormat::Toml => f.write_all(&toml::to_vec(&self.assets)?)?,
+            FileFormat::StrictEncode => {
                 self.assets.strict_encode(&mut f)?;
             }
+            _ => unimplemented!(),
         }
         Ok(())
     }
 
     pub fn export(
         &self,
-        data_format: Option<DataFormat>,
+        data_format: Option<FileFormat>,
     ) -> Result<Vec<u8>, FileCacheError> {
         trace!("Exporting assets information ...");
         let assets = self.assets.values().cloned().collect::<Vec<Asset>>();
         Ok(match data_format.unwrap_or(self.config.data_format) {
             #[cfg(feature = "serde_yaml")]
-            DataFormat::Yaml => serde_yaml::to_vec(&assets)?,
+            FileFormat::Yaml => serde_yaml::to_vec(&assets)?,
             #[cfg(feature = "serde_json")]
-            DataFormat::Json => serde_json::to_vec(&assets)?,
+            FileFormat::Json => serde_json::to_vec(&assets)?,
             #[cfg(feature = "toml")]
-            DataFormat::Toml => toml::to_vec(&assets)?,
-            DataFormat::StrictEncode => strict_serialize(&assets)?,
+            FileFormat::Toml => toml::to_vec(&assets)?,
+            FileFormat::StrictEncode => strict_serialize(&assets)?,
+            _ => unimplemented!(),
         })
     }
 }
@@ -295,9 +298,9 @@ mod test {
         let filecache_config = FileCacheConfig {
             data_dir: filepath.clone(),
             #[cfg(feature = "serde_json")]
-            data_format: DataFormat::Json,
+            data_format: FileFormat::Json,
             #[cfg(not(feature = "serde_json"))]
-            data_format: DataFormat::StrictEncode,
+            data_format: FileFormat::StrictEncode,
         };
 
         // Init new FileCache

@@ -18,6 +18,7 @@ use std::io;
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum BootstrapError {
     TorNotYetSupported,
 
@@ -30,11 +31,13 @@ pub enum BootstrapError {
     #[from]
     MessageBusError(internet2::transport::Error),
 
+    #[cfg(feature = "electrum-client")]
     #[from]
     ElectrumError(electrum_client::Error),
 
     StorageError,
 
+    #[cfg(feature = "fungibles")]
     #[from(crate::fungibled::FileCacheError)]
     #[from(crate::fungibled::SqlCacheError)]
     CacheError,
@@ -50,37 +53,23 @@ impl From<&str> for BootstrapError {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum RuntimeError {
     #[from(std::io::Error)]
-    Io,
-    Zmq(ServiceSocketType, String, zmq::Error),
+    Io(amplify::IoError),
+
     #[from]
     Lnp(internet2::transport::Error),
+
     #[from(internet2::presentation::Error)]
     BrokenTransport,
+
     Internal(String),
-}
-
-impl RuntimeError {
-    pub fn zmq_request(socket: &str, err: zmq::Error) -> Self {
-        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
-    }
-
-    pub fn zmq_reply(socket: &str, err: zmq::Error) -> Self {
-        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
-    }
-
-    pub fn zmq_publish(socket: &str, err: zmq::Error) -> Self {
-        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
-    }
-
-    pub fn zmq_subscribe(socket: &str, err: zmq::Error) -> Self {
-        RuntimeError::Zmq(ServiceSocketType::Request, socket.to_string(), err)
-    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum RoutedError {
     Global(RuntimeError),
     RequestSpecific(ServiceError),
@@ -88,30 +77,50 @@ pub enum RoutedError {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum ServiceErrorDomain {
     #[from(::std::io::Error)]
-    Io,
+    Io(amplify::IoError),
+
     Stash,
+
     Storage(String),
+
     Index,
+
+    #[cfg(feature = "fungibles")]
     #[from(crate::fungibled::FileCacheError)]
     #[from(crate::fungibled::SqlCacheError)]
     Cache,
+
     Multithreading,
+
     P2pwire,
+
     #[from]
     LnpRpc(internet2::presentation::Error),
+
     #[from]
     LnpTransport(internet2::transport::Error),
+
     Api(ApiErrorType),
+
     Monitoring,
+
     Bifrost,
+
     BpNode,
+
     LnpNode,
+
     Bitcoin,
+
     Lightning,
+
     Schema(String),
+
     Anchor(String),
+
     #[from]
     #[cfg_attr(
         feature = "fungibles",
@@ -123,6 +132,7 @@ pub enum ServiceErrorDomain {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum ServiceErrorSource {
     Broker,
     Stash,
@@ -131,6 +141,7 @@ pub enum ServiceErrorSource {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum ServiceSocketType {
     Request,
     Reply,
@@ -140,6 +151,7 @@ pub enum ServiceSocketType {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
 #[display(Debug)]
+#[non_exhaustive]
 pub enum ApiErrorType {
     MalformedRequest { request: String },
     UnknownCommand { command: String },
@@ -152,6 +164,7 @@ pub enum ApiErrorType {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
 #[display(Debug)]
+#[non_exhaustive]
 pub struct ServiceError {
     pub domain: ServiceErrorDomain,
     pub service: ServiceErrorSource,
@@ -178,6 +191,7 @@ impl ServiceError {
 
 #[derive(Debug, Display, Error)]
 #[display(Debug)]
+#[non_exhaustive]
 pub struct ServiceErrorRepresentation {
     pub domain: String,
     pub service: String,

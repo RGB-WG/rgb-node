@@ -31,7 +31,7 @@ use super::{Error, OutputFormat, Runtime};
 use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
 use crate::rpc::{reply, Reply};
 use crate::util::file::ReadWrite;
-use crate::DataFormat;
+use microservices::FileFormat;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display(Debug)]
@@ -175,10 +175,11 @@ impl Command {
             }
             Reply::Sync(reply::SyncFormat(input_format, data)) => {
                 let assets: Vec<Asset> = match input_format {
-                    DataFormat::Yaml => serde_yaml::from_slice(&data)?,
-                    DataFormat::Json => serde_json::from_slice(&data)?,
-                    DataFormat::Toml => toml::from_slice(&data)?,
-                    DataFormat::StrictEncode => strict_deserialize(&data)?,
+                    FileFormat::Yaml => serde_yaml::from_slice(&data)?,
+                    FileFormat::Json => serde_json::from_slice(&data)?,
+                    FileFormat::Toml => toml::from_slice(&data)?,
+                    FileFormat::StrictEncode => strict_deserialize(&data)?,
+                    _ => unimplemented!(),
                 };
                 let short: Vec<HashMap<&str, String>> = assets
                     .iter()

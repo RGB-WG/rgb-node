@@ -216,9 +216,9 @@ checksum = "e0dcbc35f504eb6fc275a6d20e4ebcda18cf50d40ba6fabff8c711fa16cb3b16"
 
 [[package]]
 name = "cc"
-version = "1.0.41"
+version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dae9c4b8fedcae85592ba623c4fd08cfdab3e3b72d6df780c6ead964a69bfff"
+checksum = "4c0496836a84f8d0495758516b8621a622beb77c0fed418570e50764093ced48"
 
 [[package]]
 name = "cfg-if"
@@ -334,9 +334,9 @@ dependencies = [
 
 [[package]]
 name = "cmake"
-version = "0.1.43"
+version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49f97562167906afc51aa3fd7e6c83c10a5c96d33bd18f98a4c06a1413134caa"
+checksum = "eb6210b637171dfba4cda12e579ac6dc73f5165ad56133e5d72ef3131f320855"
 dependencies = [
  "cc",
 ]
@@ -655,6 +655,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
+name = "form_urlencoded"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ece68d15c92e84fa4f19d3780f1294e5ca82a78a6d515f1efaabcc144688be00"
+dependencies = [
+ "matches",
+ "percent-encoding",
+]
+
+[[package]]
 name = "fuchsia-cprng"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -847,30 +857,22 @@ dependencies = [
 
 [[package]]
 name = "internet2"
-version = "0.3.1"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8ed083549f2db162d0ef893365242ac2e5ad888df96e590563c9bc24b483923"
+checksum = "9fc530ec68dc044a71baafb31e8ba13766e39c8cd948860336dead81bcdef7a3"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
- "cc",
  "chacha20poly1305",
- "descriptor-wallet",
  "inet2_addr",
  "inet2_derive",
  "lazy_static",
- "lnpbp",
- "openssl",
- "regex",
  "serde 1.0.120",
  "serde_with",
  "serde_with_macros",
- "socket2",
  "strict_encoding",
- "torut",
  "url",
- "zeromq-src",
  "zmq",
 ]
 
@@ -894,16 +896,6 @@ name = "keccak"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
-
-[[package]]
-name = "kernel32-sys"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
-dependencies = [
- "winapi 0.2.8",
- "winapi-build",
-]
 
 [[package]]
 name = "lazy_static"
@@ -1020,15 +1012,14 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e241a79de71fbaf42bf1f3d3002350a572adf7e3cd2f4cca995aabf8065b1c1e"
+checksum = "110e38483c1d4b52daf20a4dc24ea1e04979d7a8be1c449ef5703a7a2321086e"
 dependencies = [
  "amplify",
  "amplify_derive",
  "clap",
  "config",
- "dotenv",
  "env_logger",
  "internet2",
  "log",
@@ -1133,6 +1124,12 @@ name = "odds"
 version = "0.2.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4eae0151b9dacf24fcc170d9995e511669a082856a91f958a2fe380bfab3fb22"
+
+[[package]]
+name = "once_cell"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13bd41f508810a131401606d54ac32a467c97172d74ba7662562ebba5ad07fa0"
 
 [[package]]
 name = "opaque-debug"
@@ -1621,7 +1618,6 @@ dependencies = [
  "log",
  "microservices",
  "nix",
- "regex",
  "rgb-core",
  "rgb20",
  "rgb21",
@@ -1633,19 +1629,17 @@ dependencies = [
  "serde_yaml",
  "shellexpand",
  "toml 0.5.8",
- "url",
- "zmq",
 ]
 
 [[package]]
 name = "ring"
-version = "0.16.12"
+version = "0.16.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ba5a8ec64ee89a76c98c549af81ff14813df09c3e6dc4766c3856da48597a0c"
+checksum = "024a1e66fea74c66c66624ee5622a7ff0e4b73a13b4f5c326ddb50c708944226"
 dependencies = [
  "cc",
- "lazy_static",
  "libc",
+ "once_cell",
  "spin",
  "untrusted",
  "web-sys",
@@ -1899,19 +1893,6 @@ name = "signature"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f0242b8e50dd9accdd56170e94ca1ebd223b098eb9c83539a6e367d0f36ae68"
-
-[[package]]
-name = "socket2"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36b4896961171cd3317c7e9603d88f379f8c6e45342212235d356496680c68fd"
-dependencies = [
- "cfg-if 0.1.10",
- "kernel32-sys",
- "libc",
- "winapi 0.2.8",
- "ws2_32-sys",
-]
 
 [[package]]
 name = "socks"
@@ -2222,10 +2203,11 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "url"
-version = "2.1.1"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "829d4a8476c35c9bf0bbce5a3b23f4106f79728039b726d292bb93bc106787cb"
+checksum = "5909f2b0817350449ed73e8bcd81c8c3c8d9a7a5d8acba4b27db277f1868976e"
 dependencies = [
+ "form_urlencoded",
  "idna",
  "matches",
  "percent-encoding",
@@ -2336,9 +2318,9 @@ dependencies = [
 
 [[package]]
 name = "webpki"
-version = "0.21.2"
+version = "0.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1f50e1972865d6b1adb54167d1c8ed48606004c2c9d0ea5f1eeb34d95e863ef"
+checksum = "b8e38c0608262c46d4a56202ebabdeb094cef7e560ca7a226c6bf055188aa4ea"
 dependencies = [
  "ring",
  "untrusted",
@@ -2460,7 +2442,8 @@ dependencies = [
 [[package]]
 name = "zeromq-src"
 version = "0.1.10+4.3.2"
-source = "git+https://github.com/LNP-BP/zeromq-src-rs?branch=fix/cmake#e95a4e68136a6897d61c936622933bf259ebdd7f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df9133d366817fcffe22e4356043ba187ae122ec5db63d7ce73d1e6a18efa2f1"
 dependencies = [
  "cmake",
 ]

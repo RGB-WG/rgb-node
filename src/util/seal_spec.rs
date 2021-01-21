@@ -11,20 +11,32 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+// TODO: Consider moving this to LNP/BP Core Library
+
 use core::str::FromStr;
-use regex::Regex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::io;
 
-use bitcoin::hashes::hex::FromHex;
-use bitcoin::Txid;
+use bitcoin::{OutPoint, Txid};
 use lnpbp::seals::OutpointReveal;
-use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
+use rgb::contract::seal::Revealed;
 use rgb::SealDefinition;
-use rgb20::outcoins::ParseError;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
+#[derive(Clone, Copy, Debug, Display, Error, From)]
+#[display(doc_comments)]
+#[from(std::num::ParseFloatError)]
+#[from(std::num::ParseIntError)]
+#[from(bitcoin::blockdata::transaction::ParseOutPointError)]
+#[from(bitcoin::hashes::hex::Error)]
+/// Error parsing seal specification; it must be either a integer (output
+/// number) or transaction outpoint in form of `txid:vout`, where `txid` must be
+/// a hexadecimal string.
+pub struct ParseError;
+
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, Display, StrictEncode, StrictDecode,
+)]
+#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize,),
@@ -34,6 +46,39 @@ use rgb20::outcoins::ParseError;
 pub struct SealSpec {
     pub vout: u32,
     pub txid: Option<Txid>,
+}
+
+impl SealSpec {
+    pub fn with_vout(vout: u32) -> Self {
+        Self { vout, txid: None }
+    }
+}
+
+impl From<OutPoint> for SealSpec {
+    fn from(outpoint: OutPoint) -> Self {
+        Self {
+            vout: outpoint.vout,
+            txid: Some(outpoint.txid),
+        }
+    }
+}
+
+impl From<OutpointReveal> for SealSpec {
+    fn from(revealed: OutpointReveal) -> Self {
+        Self {
+            vout: revealed.vout,
+            txid: Some(revealed.txid),
+        }
+    }
+}
+
+impl From<SealDefinition> for SealSpec {
+    fn from(seal: SealDefinition) -> Self {
+        match seal {
+            Revealed::TxOutpoint(revealed) => revealed.into(),
+            Revealed::WitnessVout { vout, .. } => SealSpec::with_vout(vout),
+        }
+    }
 }
 
 impl SealSpec {
@@ -55,51 +100,13 @@ impl SealSpec {
     }
 }
 
-impl StrictEncode for SealSpec {
-    fn strict_encode<E: io::Write>(
-        &self,
-        mut e: E,
-    ) -> Result<usize, strict_encoding::Error> {
-        Ok(strict_encode_list!(e; self.vout, self.txid))
-    }
-}
-
-impl StrictDecode for SealSpec {
-    fn strict_decode<D: io::Read>(
-        mut d: D,
-    ) -> Result<Self, strict_encoding::Error> {
-        Ok(Self {
-            vout: u32::strict_decode(&mut d)?,
-            txid: Option::<Txid>::strict_decode(&mut d)?,
-        })
-    }
-}
-
 impl FromStr for SealSpec {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let re = Regex::new(
-            r"(?x)
-                ((?P<txid>[a-f\d]{64}) # Txid
-                :)
-                (?P<vout>\d+)$ # Vout
-            ",
-        )
-        .expect("Regex parse failure");
-        if let Some(m) = re.captures(&s.to_ascii_lowercase()) {
-            match (m.name("txid"), m.name("vout")) {
-                (Some(txid), Some(vout)) => Ok(Self {
-                    vout: vout.as_str().parse()?,
-                    txid: Some(Txid::from_hex(txid.as_str())?),
-                }),
-                (None, Some(vout)) => Ok(Self {
-                    vout: vout.as_str().parse()?,
-                    txid: None,
-                }),
-                _ => Err(ParseError),
-            }
+        if let Ok(outpoint) = OutPoint::from_str(s) {
+            Ok(outpoint.into())
         } else {
-            Err(ParseError)
+            Ok(SealSpec::with_vout(s.parse()?))
         }
     }
 }

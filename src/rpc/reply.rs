@@ -17,7 +17,7 @@ use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
 use rgb::{AtomicValue, Consignment, ContractId};
 
-use crate::DataFormat;
+use microservices::FileFormat;
 
 #[cfg(feature = "node")]
 use crate::error::RuntimeError;
@@ -99,7 +99,7 @@ impl From<ServiceError> for Reply {
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display(Debug)]
-pub struct SyncFormat(pub DataFormat, pub Vec<u8>);
+pub struct SyncFormat(pub FileFormat, pub Vec<u8>);
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]

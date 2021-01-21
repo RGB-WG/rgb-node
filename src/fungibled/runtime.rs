@@ -25,6 +25,7 @@ use internet2::{
 };
 use lnpbp::client_side_validation::Conceal;
 use microservices::node::TryService;
+use microservices::FileFormat;
 use rgb::{Assignments, Consignment, ContractId, Genesis, Node};
 use rgb20::schema::OwnedRightsType;
 use rgb20::{schema, AccountingAmount, Asset, OutpointCoins};
@@ -43,7 +44,6 @@ use crate::rpc::{
     stash::MergeRequest,
     Reply,
 };
-use crate::DataFormat;
 
 pub struct Runtime {
     /// Original configuration object
@@ -311,7 +311,7 @@ impl Runtime {
 
     fn rpc_sync(
         &mut self,
-        data_format: DataFormat,
+        data_format: FileFormat,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got SYNC");
         let data = self.cacher.export(Some(data_format))?;

@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use serde::Deserialize;
 
 use crate::constants::*;
-use crate::DataFormat;
+use microservices::FileFormat;
 
 #[derive(Clap)]
 #[clap(
@@ -90,7 +90,7 @@ pub struct Opts {
     /// Data format for fungibled cache storage (valid only if file storage is
     /// used)
     #[clap(short, long, default_value = "yaml", env = "RGB_FUNGIBLED_FORMAT")]
-    pub format: DataFormat,
+    pub format: FileFormat,
 
     /// Connection string to stashd stash (exact format depends on used storage
     /// engine)
@@ -175,7 +175,7 @@ pub struct Config {
     pub stash_rpc_endpoint: String,
     pub stash_pub_endpoint: String,
     pub cache: String,
-    pub format: DataFormat,
+    pub format: FileFormat,
     pub stash: String,
     pub index: String,
     pub p2p_endpoint: String,
@@ -223,9 +223,9 @@ impl Default for Config {
             stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_string(),
             cache: FUNGIBLED_CACHE.to_string(),
             #[cfg(feature = "serde_yaml")]
-            format: DataFormat::Yaml,
+            format: FileFormat::Yaml,
             #[cfg(not(feature = "serde_yaml"))]
-            format: DataFormat::StrictEncode,
+            format: FileFormat::StrictEncode,
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
             p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),
@@ -258,9 +258,9 @@ impl Default for Opts {
             stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_string(),
             cache: FUNGIBLED_CACHE.to_string(),
             #[cfg(feature = "serde_yaml")]
-            format: DataFormat::Yaml,
+            format: FileFormat::Yaml,
             #[cfg(not(feature = "serde_yaml"))]
-            format: DataFormat::StrictEncode,
+            format: FileFormat::StrictEncode,
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
             p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),

@@ -19,7 +19,7 @@ use internet2::zmqsocket::ZmqSocketAddr;
 use lnpbp::Chain;
 
 use crate::constants::*;
-use crate::DataFormat;
+use microservices::FileFormat;
 
 #[derive(Clap)]
 #[clap(
@@ -44,7 +44,7 @@ pub struct Opts {
 
     /// Data format for cache storage (valid only if file storage is used)
     #[clap(short, long, default_value = "yaml", env = "RGB_FUNGIBLED_FORMAT")]
-    pub format: DataFormat,
+    pub format: FileFormat,
 
     /// ZMQ socket address string for REQ/REP API
     #[clap(
@@ -92,7 +92,7 @@ pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,
     pub cache: String,
-    pub format: DataFormat,
+    pub format: FileFormat,
     pub rpc_endpoint: ZmqSocketAddr,
     pub pub_endpoint: ZmqSocketAddr,
     pub stash_rpc: ZmqSocketAddr,
@@ -126,9 +126,9 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             cache: FUNGIBLED_CACHE.to_string(),
             #[cfg(feature = "serde_yaml")]
-            format: DataFormat::Yaml,
+            format: FileFormat::Yaml,
             #[cfg(not(feature = "serde"))]
-            format: DataFormat::StrictEncode,
+            format: FileFormat::StrictEncode,
             rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
                 .parse()
                 .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),
