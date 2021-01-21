@@ -10,3 +10,5 @@
 # Temporary directory for debug data storage
 /data
 # /sample
+
+test/data

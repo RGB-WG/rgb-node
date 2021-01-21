@@ -264,7 +264,7 @@ impl Cache for FileCache {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "sql"))]
 mod test {
     use super::super::sql::{SqlCache, SqlCacheConfig};
     use super::*;

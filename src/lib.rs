@@ -34,10 +34,9 @@ extern crate serde_crate as serde;
 #[macro_use]
 extern crate serde_with;
 
-#[cfg_attr(feature = "fungibles", macro_use)]
-pub extern crate diesel;
-
-extern crate hammersbald;
+#[cfg(all(feature = "fungibles", feature = "sql"))]
+#[macro_use]
+extern crate diesel;
 
 #[cfg(feature = "cli")]
 pub mod cli;

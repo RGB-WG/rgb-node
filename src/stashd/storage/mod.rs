@@ -12,9 +12,11 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod disk;
+#[cfg(feature = "hammersbald")]
 mod hammersbald;
 mod store;
 
+#[cfg(feature = "hammersbald")]
 pub use self::hammersbald::HammersbaldStorage;
 pub use disk::{DiskStorage, DiskStorageConfig, DiskStorageError};
 pub use store::Store;

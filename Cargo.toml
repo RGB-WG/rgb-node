@@ -47,8 +47,8 @@ electrum-client = { version = "0.5.0-beta.1", optional = true, git = "https://gi
 lazy_static = "1.4"
 nix = { version = "0.19", optional = true }
 chrono = "0.4"
-diesel = { version = "1.4", features = ["sqlite", "uuid", "numeric", "chrono"] }
-hammersbald = "2.4"
+diesel = { version = "1.4", optional = true, features = ["sqlite", "uuid", "numeric", "chrono"] }
+hammersbald = { version = "2.4", optional = true }
 # Serialization & parsing
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.5", optional = true }
@@ -75,6 +75,7 @@ shellexpand = { version = "2.0", optional = true }
 # 5. Simple cli utility app: `shell`
 [features]
 default = ["client", "fungibles"]
+all = ["server", "cli", "serde", "tor", "sql", "nosql", "vendored_openssl", "fungibles", "collectibles", "identities", "auditlogs"]
 
 # Server is a standalone application that runs daemon
 server = ["node", "shell", "nix", "microservices/server"]
@@ -110,6 +111,8 @@ serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",
          "amplify/serde", "lnpbp/serde", "internet2/serde", "microservices/serde",
          "chrono/serde", "bitcoin/serde", "rgb20/serde"]
 tor = ["microservices/tor", "internet2/tor"]
+sql = ["diesel"]
+nosql = ["hammersbald"]
 vendored_openssl = ["microservices/vendored_openssl", "internet2/vendored_openssl"]
 
 # Schema-specific components exposed as features:

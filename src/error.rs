@@ -39,7 +39,7 @@ pub enum BootstrapError {
 
     #[cfg(feature = "fungibles")]
     #[from(crate::fungibled::FileCacheError)]
-    #[from(crate::fungibled::SqlCacheError)]
+    #[cfg_attr(feature = "sql", from(crate::fungibled::SqlCacheError))]
     CacheError,
 
     Other,
@@ -90,7 +90,7 @@ pub enum ServiceErrorDomain {
 
     #[cfg(feature = "fungibles")]
     #[from(crate::fungibled::FileCacheError)]
-    #[from(crate::fungibled::SqlCacheError)]
+    #[cfg_attr(feature = "sql", from(crate::fungibled::SqlCacheError))]
     Cache,
 
     Multithreading,

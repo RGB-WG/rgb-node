@@ -13,8 +13,10 @@
 
 mod cache;
 mod file;
+#[cfg(feature = "sql")]
 mod sql;
 
 pub use cache::{Cache, CacheError};
 pub use file::{FileCache, FileCacheConfig, FileCacheError};
+#[cfg(feature = "sql")]
 pub use sql::{SqlCache, SqlCacheConfig, SqlCacheError};
