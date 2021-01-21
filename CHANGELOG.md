@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+v0.3.0-alpha.1
+--------------
+- Migration on RGB Core library and v0.3 of LNP/BP libraries
+- Using rust-bitcoin 0.26
+- Internal directory structure refactoring
+
 v0.2.2
 ------
 - Fix default build settings to produce all necessary binaries
