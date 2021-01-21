@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+v0.3.0-beta.1
+-------------
+- Removing all dublicated code present in upstream repos
+- Removing tokio, features & async-trait dependencies, switching to 
+  microservices engine
+- RGB-20, 21, 22, 23 data structures extracted to crates in RGB Core Lib
+- Refactored directory structure into a simplier one
+- Removed dependencies on regexp etc
+- Improved use of features to minimize upstream dependencies and version 
+  conflicts
+- SQL and NoSQL storage engines made optional
+
 v0.3.0-alpha.1
 --------------
 - Migration on RGB Core library and v0.3 of LNP/BP libraries
