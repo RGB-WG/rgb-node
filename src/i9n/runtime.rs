@@ -63,10 +63,7 @@ impl Runtime {
             };
 
             thread::spawn(move || {
-                let rt = tokio::runtime::Runtime::new().unwrap();
-                rt.block_on(async {
-                    rgbd::main_with_config(rgbd_opts.into()).await.unwrap();
-                });
+                rgbd::main_with_config(rgbd_opts.into()).unwrap();
             });
         }
 

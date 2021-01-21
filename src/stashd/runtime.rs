@@ -19,6 +19,7 @@ use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
     TypedEnum, Unmarshall, Unmarshaller,
 };
+use microservices::node::TryService;
 use rgb::{
     validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
     NodeId, Schema, SchemaId, Stash, Validity,
@@ -35,7 +36,6 @@ use crate::error::{
 };
 use crate::rpc::stash::{ConsignRequest, MergeRequest, Request};
 use crate::rpc::{reply, Reply};
-use crate::service::TryService;
 use crate::stashd::index::BTreeIndexConfig;
 
 pub struct Runtime {
@@ -125,13 +125,12 @@ impl Runtime {
     }
 }
 
-#[async_trait]
 impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
-    async fn try_run_loop(mut self) -> Result<(), Self::ErrorType> {
+    fn try_run_loop(mut self) -> Result<(), Self::ErrorType> {
         loop {
-            match self.run().await {
+            match self.run() {
                 Ok(_) => debug!("API request processing complete"),
                 Err(err) => {
                     error!("Error processing API request: {}", err);
@@ -143,10 +142,10 @@ impl TryService for Runtime {
 }
 
 impl Runtime {
-    async fn run(&mut self) -> Result<(), RuntimeError> {
+    fn run(&mut self) -> Result<(), RuntimeError> {
         trace!("Awaiting for ZMQ RPC requests...");
         let raw = self.session_rpc.recv_raw_message()?;
-        let reply = self.rpc_process(raw).await.unwrap_or_else(|err| err);
+        let reply = self.rpc_process(raw).unwrap_or_else(|err| err);
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.serialize();
         trace!(
@@ -157,29 +156,25 @@ impl Runtime {
         Ok(())
     }
 
-    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
+    fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
         trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
         let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
             ServiceError::from_rpc(ServiceErrorSource::Stash, err)
         })?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
-            Request::ListSchemata() => self.rpc_list_schemata().await,
-            Request::ListGeneses() => self.rpc_list_geneses().await,
-            Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis).await,
-            Request::AddSchema(schema) => self.rpc_add_schema(schema).await,
+            Request::ListSchemata() => self.rpc_list_schemata(),
+            Request::ListGeneses() => self.rpc_list_geneses(),
+            Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis),
+            Request::AddSchema(schema) => self.rpc_add_schema(schema),
             Request::ReadGenesis(contract_id) => {
-                self.rpc_read_genesis(contract_id).await
+                self.rpc_read_genesis(contract_id)
             }
-            Request::ReadSchema(schema_id) => {
-                self.rpc_read_schema(schema_id).await
-            }
-            Request::Consign(consign) => self.rpc_consign(consign).await,
-            Request::Validate(consign) => self.rpc_validate(consign).await,
-            Request::Merge(merge) => self.rpc_merge(merge).await,
-            Request::Forget(removal_list) => {
-                self.rpc_forget(removal_list).await
-            }
+            Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id),
+            Request::Consign(consign) => self.rpc_consign(consign),
+            Request::Validate(consign) => self.rpc_validate(consign),
+            Request::Merge(merge) => self.rpc_merge(merge),
+            Request::Forget(removal_list) => self.rpc_forget(removal_list),
             _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
@@ -188,19 +183,19 @@ impl Runtime {
         })?)
     }
 
-    async fn rpc_list_schemata(&mut self) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_list_schemata(&mut self) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got LIST_SCHEMATA");
         let ids = self.storage.schema_ids()?;
         Ok(Reply::SchemaIds(ids))
     }
 
-    async fn rpc_list_geneses(&mut self) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_list_geneses(&mut self) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got LIST_GENESES");
         let ids = self.storage.contract_ids()?;
         Ok(Reply::ContractIds(ids))
     }
 
-    async fn rpc_add_schema(
+    fn rpc_add_schema(
         &mut self,
         schema: &Schema,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -209,7 +204,7 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
-    async fn rpc_add_genesis(
+    fn rpc_add_genesis(
         &mut self,
         genesis: &Genesis,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -218,7 +213,7 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
-    async fn rpc_read_genesis(
+    fn rpc_read_genesis(
         &mut self,
         contract_id: &ContractId,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -227,7 +222,7 @@ impl Runtime {
         Ok(Reply::Genesis(genesis))
     }
 
-    async fn rpc_read_schema(
+    fn rpc_read_schema(
         &mut self,
         schema_id: &SchemaId,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -236,7 +231,7 @@ impl Runtime {
         Ok(Reply::Schema(schema))
     }
 
-    async fn rpc_consign(
+    fn rpc_consign(
         &mut self,
         request: &ConsignRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -268,7 +263,7 @@ impl Runtime {
         Ok(Reply::Transfer(reply::Transfer { consignment, psbt }))
     }
 
-    async fn rpc_validate(
+    fn rpc_validate(
         &mut self,
         consignment: &Consignment,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -302,7 +297,7 @@ impl Runtime {
         //Ok(Reply::ValidationStatus(validation_status))
     }
 
-    async fn rpc_merge(
+    fn rpc_merge(
         &mut self,
         merge: &MergeRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -361,7 +356,7 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
-    async fn rpc_forget(
+    fn rpc_forget(
         &mut self,
         _removal_list: &Vec<(NodeId, u16)>,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -387,9 +382,9 @@ impl validation::TxResolver for DummyTxResolver {
     }
 }
 
-pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
+pub fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let runtime = Runtime::init(config)?;
-    runtime.run_or_panic("Stashd runtime").await;
+    runtime.run_or_panic("Stashd runtime");
 
     unreachable!()
 }

@@ -24,9 +24,6 @@ extern crate amplify_derive;
 extern crate lnpbp;
 #[macro_use]
 extern crate internet2;
-#[cfg(feature = "async-trait")]
-#[macro_use]
-extern crate async_trait;
 #[macro_use]
 extern crate log;
 #[cfg(feature = "serde")]
@@ -54,8 +51,6 @@ pub mod util;
 pub mod fungibled;
 #[cfg(any(feature = "node", feature = "client"))]
 pub mod rgbd;
-#[cfg(any(feature = "node", feature = "client"))]
-pub mod service;
 #[cfg(feature = "node")]
 pub mod stashd;
 

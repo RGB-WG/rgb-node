@@ -15,7 +15,6 @@
 
 use std::collections::HashMap;
 use std::io;
-use tokio::task::JoinError;
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
@@ -27,14 +26,6 @@ pub enum BootstrapError {
 
     #[from]
     ArgParseError(String),
-
-    #[from]
-    ZmqSocketError(zmq::Error),
-
-    #[from]
-    MultithreadError(JoinError),
-
-    MonitorSocketError(Box<dyn std::error::Error + Send>),
 
     #[from]
     MessageBusError(internet2::transport::Error),

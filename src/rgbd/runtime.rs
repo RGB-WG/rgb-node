@@ -13,17 +13,15 @@
 
 #[cfg(any(feature = "node"))]
 use clap::Clap;
+use std::{process, thread};
+
 #[cfg(any(feature = "node"))]
-use futures::future::join_all;
-use std::process;
-use tokio::task;
+use microservices::node::TryService;
 
 use super::Config;
 use crate::error::{BootstrapError, RuntimeError};
 #[cfg(any(feature = "node"))]
 use crate::fungibled;
-#[cfg(any(feature = "node"))]
-use crate::service::TryService;
 #[cfg(feature = "node")]
 use crate::stashd;
 
@@ -32,7 +30,7 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub async fn init(config: Config) -> Result<Self, BootstrapError> {
+    pub fn init(config: Config) -> Result<Self, BootstrapError> {
         Ok(Self { config })
     }
 
@@ -40,18 +38,18 @@ impl Runtime {
     fn get_task_for(
         name: &str,
         args: &[String],
-    ) -> Result<task::JoinHandle<Result<(), DaemonError>>, DaemonError> {
+    ) -> Result<thread::JoinHandle<Result<(), DaemonError>>, DaemonError> {
         match name {
             "stashd" => {
                 let opts = stashd::Opts::parse_from(args.into_iter());
-                Ok(task::spawn(async move {
-                    Ok(stashd::main_with_config(opts.into()).await?)
+                Ok(thread::spawn(move || {
+                    Ok(stashd::main_with_config(opts.into())?)
                 }))
             }
             "fungibled" => {
                 let opts = fungibled::Opts::parse_from(args.into_iter());
-                Ok(task::spawn(async move {
-                    Ok(fungibled::main_with_config(opts.into()).await?)
+                Ok(thread::spawn(move || {
+                    Ok(fungibled::main_with_config(opts.into())?)
                 }))
             }
             _ => Err(DaemonError::UnknownDaemon(name.into())),
@@ -131,13 +129,13 @@ impl Runtime {
 #[derive(Debug)]
 enum DaemonHandle {
     Process(process::Child),
-    Task(task::JoinHandle<Result<(), DaemonError>>),
+    Task(thread::JoinHandle<Result<(), DaemonError>>),
 }
 
 #[derive(Debug, Error)]
 pub enum DaemonError {
     Process(RuntimeError),
-    Task(task::JoinError),
+    Thread,
     IO(std::io::Error),
     Bootstrap(BootstrapError),
     UnknownDaemon(String),
@@ -161,12 +159,6 @@ impl From<std::io::Error> for DaemonError {
     }
 }
 
-impl From<task::JoinError> for DaemonError {
-    fn from(other: task::JoinError) -> DaemonError {
-        DaemonError::Task(other)
-    }
-}
-
 impl From<BootstrapError> for DaemonError {
     fn from(other: BootstrapError) -> DaemonError {
         DaemonError::Bootstrap(other)
@@ -174,20 +166,21 @@ impl From<BootstrapError> for DaemonError {
 }
 
 impl DaemonHandle {
-    async fn future(self) -> Result<(), DaemonError> {
+    fn future(self) -> Result<(), DaemonError> {
         match self {
             DaemonHandle::Process(mut proc) => Ok(proc.wait().map(|_| ())?),
-            DaemonHandle::Task(task) => Ok(task.await??),
+            DaemonHandle::Task(thread) => {
+                Ok(thread.join().map_err(|_| DaemonError::Thread)??)
+            }
         }
     }
 }
 
 #[cfg(any(feature = "node"))]
-#[async_trait]
 impl TryService for Runtime {
     type ErrorType = DaemonError;
 
-    async fn try_run_loop(mut self) -> Result<(), DaemonError> {
+    fn try_run_loop(self) -> Result<(), DaemonError> {
         let mut handlers = vec![];
 
         handlers.push(self.daemon("stashd")?);
@@ -199,8 +192,9 @@ impl TryService for Runtime {
             },
         )?;
 
-        join_all(handlers.into_iter().map(|d| d.future()))
-            .await
+        handlers
+            .into_iter()
+            .map(|d| d.future())
             .into_iter()
             .try_for_each(|res| -> Result<(), DaemonError> {
                 res?;
@@ -212,9 +206,9 @@ impl TryService for Runtime {
 }
 
 #[cfg(any(feature = "node"))]
-pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
-    let runtime = Runtime::init(config).await?;
-    runtime.run_or_panic("RGBd runtime").await;
+pub fn main_with_config(config: Config) -> Result<(), BootstrapError> {
+    let runtime = Runtime::init(config)?;
+    runtime.run_or_panic("RGBd runtime");
 
     unreachable!()
 }

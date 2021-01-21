@@ -18,8 +18,7 @@ use std::env;
 use rgb_node::cli::{Config, Opts, Runtime};
 use rgb_node::error::BootstrapError;
 
-#[tokio::main]
-async fn main() -> Result<(), BootstrapError> {
+fn main() -> Result<(), BootstrapError> {
     // TODO: Parse config file as well
     let opts: Opts = Opts::parse();
     let config: Config = opts.clone().into();
@@ -40,7 +39,7 @@ async fn main() -> Result<(), BootstrapError> {
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);
 
-    let runtime = Runtime::init(config).await?;
+    let runtime = Runtime::init(config)?;
     opts.command
         .exec(runtime)
         .unwrap_or_else(|err| error!("{}", err));

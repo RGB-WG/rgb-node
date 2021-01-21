@@ -37,7 +37,7 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub async fn init(config: Config) -> Result<Self, BootstrapError> {
+    pub fn init(config: Config) -> Result<Self, BootstrapError> {
         let fungible_rpc = session::Raw::with_zmq_unencrypted(
             ZmqType::Req,
             &config.fungible_endpoint,

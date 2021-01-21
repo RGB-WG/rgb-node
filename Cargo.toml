@@ -69,11 +69,7 @@ env_logger = { version = "0.7", optional = true }
 colored = { version = "2.0", optional = true }
 shellexpand = { version = "2.0", optional = true }
 # Processes & IPC
-async-trait = { version = "0.1", optional = true }
-tokio = { version = "0.3", features = ["rt-multi-thread", "macros"], optional = true }
 zmq = { version = "0.9", optional = true }
-# These should be removed with the next major update
-futures = "0.3"
 
 [target.'cfg(target_os="android")'.dependencies]
 zmq = { version = "0.9", features = ["vendored"] }
@@ -93,8 +89,8 @@ default = ["client", "server", "fungibles", "collectibles", "identities", "audit
 # Server is a standalone application that runs daemon
 server = ["node", "shell", "nix", "microservices/server"]
 # Feature is required for any applications that talks to daemon processes
-client = ["zmq", "microservices/client", "bitcoin/rand", "async-trait",
-          "regex", "tokio", "electrum-client", "base64",
+client = ["zmq", "microservices/client", "bitcoin/rand",
+          "regex", "electrum-client", "base64",
           "url", "internet2/url", "log", "env_logger",
           # TODO: Femove the following after feature gates debugging:
           "clap"]
@@ -112,8 +108,8 @@ shell = [
 # Besides server node can be run as a part of mobile app
 # and other types of clients; thus `server` != `node`.
 # This feature results in building with features not required for CLI
-node = ["serde", "internet2/keygen", "bitcoin/rand", "tokio", "zmq", "microservices/node",
-        "url", "internet2/url", "async-trait", "regex", "electrum-client", "base64",
+node = ["serde", "internet2/keygen", "bitcoin/rand", "zmq", "microservices/node",
+        "url", "internet2/url", "regex", "electrum-client", "base64",
         # Required for storing config and cache
         "serde_yaml", "toml"]
 serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",

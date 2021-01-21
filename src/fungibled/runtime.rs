@@ -24,6 +24,7 @@ use internet2::{
     Unmarshall, Unmarshaller,
 };
 use lnpbp::client_side_validation::Conceal;
+use microservices::node::TryService;
 use rgb::{Assignments, Consignment, ContractId, Genesis, Node};
 use rgb20::schema::OwnedRightsType;
 use rgb20::{schema, AccountingAmount, Asset, OutpointCoins};
@@ -42,7 +43,6 @@ use crate::rpc::{
     stash::MergeRequest,
     Reply,
 };
-use crate::service::TryService;
 use crate::DataFormat;
 
 pub struct Runtime {
@@ -134,13 +134,12 @@ impl Runtime {
     }
 }
 
-#[async_trait]
 impl TryService for Runtime {
     type ErrorType = RuntimeError;
 
-    async fn try_run_loop(mut self) -> Result<(), RuntimeError> {
+    fn try_run_loop(mut self) -> Result<(), RuntimeError> {
         debug!("Registering RGB20 schema");
-        self.register_schema().await.map_err(|_| {
+        self.register_schema().map_err(|_| {
             error!("Unable to register RGB20 schema");
             RuntimeError::Internal(
                 "Unable to register RGB20 schema".to_string(),
@@ -148,7 +147,7 @@ impl TryService for Runtime {
         })?;
 
         loop {
-            match self.run().await {
+            match self.run() {
                 Ok(_) => debug!("API request processing complete"),
                 Err(err) => {
                     error!("Error processing API request: {}", err);
@@ -160,10 +159,10 @@ impl TryService for Runtime {
 }
 
 impl Runtime {
-    async fn run(&mut self) -> Result<(), RuntimeError> {
+    fn run(&mut self) -> Result<(), RuntimeError> {
         trace!("Awaiting for ZMQ RPC requests...");
         let raw = self.session_rpc.recv_raw_message()?;
-        let reply = self.rpc_process(raw).await.unwrap_or_else(|err| err);
+        let reply = self.rpc_process(raw).unwrap_or_else(|err| err);
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.serialize();
         trace!(
@@ -174,7 +173,7 @@ impl Runtime {
         Ok(())
     }
 
-    async fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
+    fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
         trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
         let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
             error!("Error unmarshalling the data: {}", err);
@@ -185,29 +184,23 @@ impl Runtime {
         })?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
-            Request::Issue(issue) => self.rpc_issue(issue).await,
-            Request::Transfer(transfer) => self.rpc_transfer(transfer).await,
-            Request::Validate(consignment) => {
-                self.rpc_validate(consignment).await
-            }
-            Request::Accept(accept) => self.rpc_accept(accept).await,
-            Request::Forget(outpoint) => self.rpc_forget(outpoint).await,
-            Request::ImportAsset(genesis) => {
-                self.rpc_import_asset(genesis).await
-            }
-            Request::ExportAsset(asset_id) => {
-                self.rpc_export_asset(asset_id).await
-            }
-            Request::Sync(data_format) => self.rpc_sync(*data_format).await,
-            Request::Assets(outpoint) => self.rpc_assets(*outpoint).await,
+            Request::Issue(issue) => self.rpc_issue(issue),
+            Request::Transfer(transfer) => self.rpc_transfer(transfer),
+            Request::Validate(consignment) => self.rpc_validate(consignment),
+            Request::Accept(accept) => self.rpc_accept(accept),
+            Request::Forget(outpoint) => self.rpc_forget(outpoint),
+            Request::ImportAsset(genesis) => self.rpc_import_asset(genesis),
+            Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id),
+            Request::Sync(data_format) => self.rpc_sync(*data_format),
+            Request::Assets(outpoint) => self.rpc_assets(*outpoint),
             Request::Allocations(contract_id) => {
-                self.rpc_allocations(*contract_id).await
+                self.rpc_allocations(*contract_id)
             }
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
     }
 
-    async fn rpc_issue(
+    fn rpc_issue(
         &mut self,
         issue: &Issue,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -244,14 +237,14 @@ impl Runtime {
             issue.epoch,
         )?;
 
-        self.import_asset(asset, genesis).await?;
+        self.import_asset(asset, genesis)?;
 
         // TODO: Send push request to client informing about cache update
 
         Ok(Reply::Success)
     }
 
-    async fn rpc_transfer(
+    fn rpc_transfer(
         &mut self,
         transfer: &TransferApi,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -274,51 +267,49 @@ impl Runtime {
         debug!("State transition: {}", transition);
 
         trace!("Requesting consignment from stash daemon");
-        let reply = self
-            .consign(ConsignRequest {
-                contract_id: transfer.contract_id,
-                inputs: transfer.inputs.clone(),
-                transition,
-                // TODO: Collect blank state transitions and pass it here
-                other_transition_ids: bmap![],
-                outpoints: transfer
-                    .theirs
-                    .iter()
-                    .map(|o| (o.seal_confidential))
-                    .collect(),
-                psbt: transfer.psbt.clone(),
-            })
-            .await?;
+        let reply = self.consign(ConsignRequest {
+            contract_id: transfer.contract_id,
+            inputs: transfer.inputs.clone(),
+            transition,
+            // TODO: Collect blank state transitions and pass it here
+            other_transition_ids: bmap![],
+            outpoints: transfer
+                .theirs
+                .iter()
+                .map(|o| (o.seal_confidential))
+                .collect(),
+            psbt: transfer.psbt.clone(),
+        })?;
 
         Ok(reply)
     }
 
-    async fn rpc_validate(
+    fn rpc_validate(
         &mut self,
         consignment: &Consignment,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got VALIDATE");
-        self.validate(consignment.clone()).await?;
+        self.validate(consignment.clone())?;
         Ok(Reply::Success)
     }
 
-    async fn rpc_accept(
+    fn rpc_accept(
         &mut self,
         accept: &AcceptApi,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
-        Ok(self.accept(accept.clone()).await?)
+        Ok(self.accept(accept.clone())?)
     }
 
-    async fn rpc_forget(
+    fn rpc_forget(
         &mut self,
         outpoint: &OutPoint,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got FORGET");
-        Ok(self.forget(outpoint.clone()).await?)
+        Ok(self.forget(outpoint.clone())?)
     }
 
-    async fn rpc_sync(
+    fn rpc_sync(
         &mut self,
         data_format: DataFormat,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -327,7 +318,7 @@ impl Runtime {
         Ok(Reply::Sync(reply::SyncFormat(data_format, data)))
     }
 
-    async fn rpc_assets(
+    fn rpc_assets(
         &mut self,
         outpoint: OutPoint,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -336,7 +327,7 @@ impl Runtime {
         Ok(Reply::Assets(data))
     }
 
-    async fn rpc_allocations(
+    fn rpc_allocations(
         &mut self,
         contract_id: ContractId,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -345,69 +336,60 @@ impl Runtime {
         Ok(Reply::Allocations(data))
     }
 
-    async fn rpc_import_asset(
+    fn rpc_import_asset(
         &mut self,
         genesis: &Genesis,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got IMPORT_ASSET");
-        self.import_asset(Asset::try_from(genesis.clone())?, genesis.clone())
-            .await?;
+        self.import_asset(Asset::try_from(genesis.clone())?, genesis.clone())?;
         Ok(Reply::Success)
     }
 
-    async fn rpc_export_asset(
+    fn rpc_export_asset(
         &mut self,
         asset_id: &ContractId,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got EXPORT_ASSET");
-        let genesis = self.export_asset(asset_id.clone()).await?;
+        let genesis = self.export_asset(asset_id.clone())?;
         Ok(Reply::Genesis(genesis))
     }
 
-    async fn register_schema(&mut self) -> Result<(), ServiceErrorDomain> {
+    fn register_schema(&mut self) -> Result<(), ServiceErrorDomain> {
         match self
-            .stash_req_rep(rpc::stash::Request::AddSchema(schema::schema()))
-            .await?
+            .stash_req_rep(rpc::stash::Request::AddSchema(schema::schema()))?
         {
             Reply::Success => Ok(()),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
-    async fn import_asset(
+    fn import_asset(
         &mut self,
         asset: Asset,
         genesis: Genesis,
     ) -> Result<bool, ServiceErrorDomain> {
-        match self
-            .stash_req_rep(rpc::stash::Request::AddGenesis(genesis))
-            .await?
-        {
+        match self.stash_req_rep(rpc::stash::Request::AddGenesis(genesis))? {
             Reply::Success => Ok(self.cacher.add_asset(asset)?),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
-    async fn export_asset(
+    fn export_asset(
         &mut self,
         asset_id: ContractId,
     ) -> Result<Genesis, ServiceErrorDomain> {
-        match self
-            .stash_req_rep(rpc::stash::Request::ReadGenesis(asset_id))
-            .await?
-        {
+        match self.stash_req_rep(rpc::stash::Request::ReadGenesis(asset_id))? {
             Reply::Genesis(genesis) => Ok(genesis.clone()),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
-    async fn consign(
+    fn consign(
         &mut self,
         consign_req: ConsignRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
-        let reply = self
-            .stash_req_rep(rpc::stash::Request::Consign(consign_req))
-            .await?;
+        let reply =
+            self.stash_req_rep(rpc::stash::Request::Consign(consign_req))?;
         if let Reply::Transfer(_) = reply {
             Ok(reply)
         } else {
@@ -415,13 +397,12 @@ impl Runtime {
         }
     }
 
-    async fn validate(
+    fn validate(
         &mut self,
         consignment: Consignment,
     ) -> Result<Reply, ServiceErrorDomain> {
-        let reply = self
-            .stash_req_rep(rpc::stash::Request::Validate(consignment))
-            .await?;
+        let reply =
+            self.stash_req_rep(rpc::stash::Request::Validate(consignment))?;
 
         match reply {
             Reply::Success | Reply::Failure(_) => Ok(reply),
@@ -429,16 +410,15 @@ impl Runtime {
         }
     }
 
-    async fn accept(
+    fn accept(
         &mut self,
         accept: AcceptApi,
     ) -> Result<Reply, ServiceErrorDomain> {
-        let reply = self
-            .stash_req_rep(rpc::stash::Request::Merge(MergeRequest {
+        let reply =
+            self.stash_req_rep(rpc::stash::Request::Merge(MergeRequest {
                 consignment: accept.consignment.clone(),
                 reveal_outpoints: accept.reveal_outpoints.clone(),
-            }))
-            .await?;
+            }))?;
         if let Reply::Success = reply {
             let asset_id = accept.consignment.genesis.contract_id();
             let mut asset = if self.cacher.has_asset(asset_id)? {
@@ -490,7 +470,7 @@ impl Runtime {
         }
     }
 
-    async fn forget(
+    fn forget(
         &mut self,
         outpoint: OutPoint,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -522,9 +502,8 @@ impl Runtime {
             return Ok(Reply::Nothing);
         }
 
-        let reply = self
-            .stash_req_rep(rpc::stash::Request::Forget(removal_list))
-            .await?;
+        let reply =
+            self.stash_req_rep(rpc::stash::Request::Forget(removal_list))?;
 
         match reply {
             Reply::Success | Reply::Failure(_) => Ok(reply),
@@ -532,7 +511,7 @@ impl Runtime {
         }
     }
 
-    async fn stash_req_rep(
+    fn stash_req_rep(
         &mut self,
         request: rpc::stash::Request,
     ) -> Result<Reply, ServiceErrorDomain> {
@@ -548,9 +527,9 @@ impl Runtime {
     }
 }
 
-pub async fn main_with_config(config: Config) -> Result<(), BootstrapError> {
+pub fn main_with_config(config: Config) -> Result<(), BootstrapError> {
     let runtime = Runtime::init(config)?;
-    runtime.run_or_panic("Fungible contract runtime").await;
+    runtime.run_or_panic("Fungible contract runtime");
 
     unreachable!()
 }
