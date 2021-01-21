@@ -30,49 +30,53 @@ required-features = ["cli"]
 
 [dependencies]
 # LNP/BP crates
-amplify = "2.4"
+amplify = "3"
 amplify_derive = "2.4.2"
-lnpbp = { version = "0.3.0-alpha.1", git = "https://github.com/LNP-BP/rust-lnpbp", features = ["lnp", "url", "websockets", "keygen"] }
-lnpbp_derive = { version = "0.3.0-alpha.1", git = "https://github.com/LNP-BP/rust-lnpbp" }
-lnpbp_services = { version = "0.3.0-alpha.1", git = "https://github.com/LNP-BP/rust-lnpbp" }
-# Rust language
-lazy_static = "~1.4.0"
-nix = { version = "~0.19.0", optional = true }
-chrono = "~0.4.19"
-diesel = { version = "~1.4.4", features = ["sqlite", "uuid", "numeric", "chrono"] }
-hammersbald = "~2.4.0"
+lnpbp = "0.3"
+rgb-core = "0.3.0-beta.3"
+rgb20 = { version = "0.3.0-rc.2", optional = true }
+rgb21 = { version = "0.3.0-beta.3", optional = true }
+rgb22 = { version = "0.3.0-beta.3", optional = true }
+rgb23 = { version = "0.3.0-beta.3", optional = true }
+internet2 = "0.3.1"
+microservices = "0.3"
 # Bitcoin
-electrum-client = { version = "=0.3.0-beta.1", optional = true }
+bitcoin = "0.26"
+electrum-client = { version = "0.5.0-beta.1", optional = true, git = "https://github.com/LNP-BP/rust-electrum-client", branch = "bitcoin-0.26" }
+# Rust language
+lazy_static = "1.4"
+nix = { version = "0.19", optional = true }
+chrono = "0.4"
+diesel = { version = "1.4", features = ["sqlite", "uuid", "numeric", "chrono"] }
+hammersbald = "2.4"
 # Serialization & parsing
-serde_crate = { package = "serde", version = "1.0", features = ["derive"], optional = true }
+serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.5", optional = true }
-serde_json = { version = "1.0", optional = true }
-serde_yaml = { version = "0.8.13", optional = true }
-toml = { version = "0.5.6", optional = true }
-bech32 = { version = "0.7.2", optional = true }
-base64 = { version = "0.12.1", optional = true }
+serde_json = { version = "1", optional = true }
+serde_yaml = { version = "0.8", optional = true }
+toml = { version = "0.5", optional = true }
+bech32 = { version = "0.7", optional = true }
+base64 = { version = "0.12", optional = true }
 regex = { version = "1.3", optional = true }
 url = { version = "2.1", optional = true }
 # Congig & logging
-settings = { version = "~0.10.1", package = "config", optional = true }
-configure_me = { version = "0.3.4", optional = true }
-dotenv = { version = "~0.15.0", optional = true }
-clap = { version = "=3.0.0-beta.2", optional = true }
-log = { version = "~0.4.8", optional = true, features = ["max_level_trace", "release_max_level_debug"] }
-env_logger = { version = "~0.7.1", optional = true }
-colored = { version = "~2.0.0", optional = true }
-shellexpand = { version = "~2.0.0", optional = true }
+settings = { version = "0.10", package = "config", optional = true }
+configure_me = { version = "0.3", optional = true }
+dotenv = { version = "0.15", optional = true }
+clap = { version = "3.0.0-beta.2", optional = true }
+log = { version = "0.4", optional = true, features = ["max_level_trace", "release_max_level_debug"] }
+env_logger = { version = "0.7", optional = true }
+colored = { version = "2.0", optional = true }
+shellexpand = { version = "2.0", optional = true }
 # Processes & IPC
-async-trait = { version = "~0.1.35", optional = true }
-tokio = { version = "~0.3.5", features = ["rt-multi-thread", "macros"], optional = true }
-zmq = { version = "~0.9.2", optional = true }
+async-trait = { version = "0.1", optional = true }
+tokio = { version = "0.3", features = ["rt-multi-thread", "macros"], optional = true }
+zmq = { version = "0.9", optional = true }
 # These should be removed with the next major update
-num-traits = "~0.2.12"
-num-derive = "~0.3.0"
-futures = "~0.3.5"
+futures = "0.3"
 
 [target.'cfg(target_os="android")'.dependencies]
-zmq = { version = "~0.9", features = ["vendored"] }
+zmq = { version = "0.9", features = ["vendored"] }
 
 [patch.crates-io]
 # Remove this once https://github.com/jean-airoldie/zeromq-src-rs/pull/15 got merged
@@ -85,36 +89,37 @@ zeromq-src = { git = "https://github.com/LNP-BP/zeromq-src-rs", branch = "fix/cm
 # 4. Mobile app with embedded node: `embedded` (auto includes `client` + `node`)
 # 5. Simple cli utility app: `shell`
 [features]
-default = ["client", "server", "fungibles", "collectibles", "identities"]
+default = ["client", "server", "fungibles", "collectibles", "identities", "auditlogs"]
 # Server is a standalone application that runs daemon
-server = ["node", "shell", "nix", "lnpbp_services/server"]
+server = ["node", "shell", "nix", "microservices/server"]
 # Feature is required for any applications that talks to daemon processes
-client = ["zmq", "lnpbp_services/client", "lnpbp/keygen", "async-trait",
+client = ["zmq", "microservices/client", "bitcoin/rand", "async-trait",
           "regex", "tokio", "electrum-client", "base64",
-          "url", "lnpbp/url", "log", "env_logger",
+          "url", "internet2/url", "log", "env_logger",
           # TODO: Femove the following after feature gates debugging:
           "clap"]
 # Embedded is an app that contains node in itself and that talks to it through
 # integration layer
-embedded = ["client", "node", "lnpbp_services/embedded"]
+embedded = ["client", "node", "microservices/embedded"]
 # Command-line application feature
-cli = ["shell", "client", "lnpbp_services/cli"]
+cli = ["shell", "client", "microservices/cli"]
 # Required for all apps that can be launched from command-line shell as binaries
 # (i.e. both servers and cli)
 shell = [
     "dotenv", "clap", "settings", "configure_me", "log", "env_logger", "serde",
-    "amplify/parse_arg", "lnpbp_services/shell", "shellexpand", "colored"
+    "amplify/parse_arg", "microservices/shell", "shellexpand", "colored"
 ]
 # Besides server node can be run as a part of mobile app
 # and other types of clients; thus `server` != `node`.
 # This feature results in building with features not required for CLI
-node = ["serde", "lnpbp/keygen", "tokio", "lnpbp/tokio", "zmq", "lnpbp_services/node",
-        "url", "lnpbp/url", "async-trait", "regex", "electrum-client", "base64",
+node = ["serde", "internet2/keygen", "bitcoin/rand", "tokio", "zmq", "microservices/node",
+        "url", "internet2/url", "async-trait", "regex", "electrum-client", "base64",
         # Required for storing config and cache
         "serde_yaml", "toml"]
 serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",
-         "amplify/serde", "lnpbp/serde", "lnpbp_services/serde", "chrono/serde"]
+         "amplify/serde", "lnpbp/serde", "internet2/serde", "chrono/serde", "bitcoin/serde", "rgb20/serde"]
 # Schema-specific components exposed as features:
-fungibles = []
-collectibles = []
-identities = []
+fungibles = ["rgb20"]
+collectibles = ["rgb21"]
+identities = ["rgb22"]
+auditlogs = ["rgb23"]

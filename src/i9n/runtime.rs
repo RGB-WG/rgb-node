@@ -14,15 +14,15 @@
 use std::str::FromStr;
 use std::thread;
 
-use lnpbp::lnp::transport::zmqsocket::ZmqType;
-use lnpbp::lnp::{
+use internet2::zmqsocket::ZmqType;
+use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Unmarshaller,
 };
 
 use super::Config;
-use crate::api::Reply;
 use crate::error::BootstrapError;
 use crate::rgbd::{self, ContractName};
+use crate::rpc::Reply;
 
 pub struct Runtime {
     pub(super) config: Config,

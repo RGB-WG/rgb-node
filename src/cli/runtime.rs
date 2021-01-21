@@ -13,20 +13,20 @@
 
 use std::sync::Arc;
 
-use lnpbp::bitcoin::OutPoint;
-use lnpbp::lnp::transport::zmqsocket::ZmqType;
-use lnpbp::lnp::{
+use bitcoin::OutPoint;
+use internet2::zmqsocket::ZmqType;
+use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
     TypedEnum, Unmarshall, Unmarshaller,
 };
-use lnpbp::rgb::{Consignment, ContractId, Genesis, SchemaId};
+use rgb::{Consignment, ContractId, Genesis, SchemaId};
 
 use super::{Config, Error};
-use crate::api::fungible::{self, AcceptApi, Issue, TransferApi};
-use crate::api::stash;
-use crate::api::Reply;
 use crate::cli::OutputFormat;
 use crate::error::{BootstrapError, ServiceErrorDomain};
+use crate::rpc::fungible::{self, AcceptApi, Issue, TransferApi};
+use crate::rpc::stash;
+use crate::rpc::Reply;
 use crate::DataFormat;
 
 pub struct Runtime {

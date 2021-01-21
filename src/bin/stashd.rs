@@ -15,8 +15,8 @@ use clap::Clap;
 use log::*;
 use std::env;
 
-use rgb::error::BootstrapError;
-use rgb::stash::{main_with_config, Config, Opts};
+use rgb_node::error::BootstrapError;
+use rgb_node::stashd::{main_with_config, Config, Opts};
 
 #[tokio::main]
 async fn main() -> Result<(), BootstrapError> {

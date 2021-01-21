@@ -17,13 +17,12 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::io;
 
-use lnpbp::bitcoin::Txid;
-use lnpbp::bp;
-use lnpbp::hex::FromHex;
-use lnpbp::rgb::SealDefinition;
+use bitcoin::hashes::hex::FromHex;
+use bitcoin::Txid;
+use lnpbp::seals::OutpointReveal;
 use lnpbp::strict_encoding::{self, StrictDecode, StrictEncode};
-
-use crate::error::ParseError;
+use rgb::SealDefinition;
+use rgb20::outcoins::ParseError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display)]
 #[cfg_attr(
@@ -39,17 +38,15 @@ pub struct SealSpec {
 
 impl SealSpec {
     pub fn seal_definition(&self) -> SealDefinition {
-        use lnpbp::bitcoin::secp256k1::rand::{self, RngCore};
+        use bitcoin::secp256k1::rand::{self, RngCore};
         let mut rng = rand::thread_rng();
         let entropy = rng.next_u64(); // Not an amount blinding factor but outpoint blinding
         match self.txid {
-            Some(txid) => {
-                SealDefinition::TxOutpoint(bp::blind::OutpointReveal {
-                    blinding: entropy,
-                    txid,
-                    vout: self.vout,
-                })
-            }
+            Some(txid) => SealDefinition::TxOutpoint(OutpointReveal {
+                blinding: entropy,
+                txid,
+                vout: self.vout,
+            }),
             None => SealDefinition::WitnessVout {
                 vout: self.vout,
                 blinding: entropy,

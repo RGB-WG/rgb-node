@@ -13,7 +13,7 @@
 
 use std::collections::HashMap;
 
-use lnpbp::bp;
+use lnpbp::Chain;
 
 use crate::constants::*;
 use crate::rgbd::ContractName;
@@ -28,7 +28,7 @@ pub struct Config {
     pub stash_pub_endpoint: String,
     pub fungible_pub_endpoint: String,
     pub contract_endpoints: HashMap<ContractName, String>,
-    pub network: bp::Chain,
+    pub network: Chain,
     pub run_embedded: bool,
 }
 

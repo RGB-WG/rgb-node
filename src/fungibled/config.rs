@@ -18,16 +18,15 @@ use std::path::PathBuf;
 use internet2::zmqsocket::ZmqSocketAddr;
 use lnpbp::Chain;
 
-use super::{fungible, stash, Error, Runtime};
 use crate::constants::*;
+use crate::DataFormat;
 
-#[derive(Clap, Clone, Debug, Display)]
-#[display(Debug)]
+#[derive(Clap)]
 #[clap(
-    name = "rgb-cli",
-    version = "0.1.0-beta.2",
+    name = "fungibled",
+    version = "0.1.0",
     author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
-    about = "RGB node command-line interface; part of Lightning network protocol suite"
+    about = "RGB fungible contract daemon; part of RGB suite"
 )]
 pub struct Opts {
     /// Sets verbosity level; can be used multiple times to increase verbosity
@@ -38,44 +37,50 @@ pub struct Opts {
     #[clap(short, long, default_value = RGB_DATA_DIR, env = "RGB_DATA_DIR")]
     pub data_dir: String,
 
-    /// RPC endpoint of contracts service
-    #[clap(short, long, default_value = FUNGIBLED_RPC_ENDPOINT)]
-    pub fungible_endpoint: String,
+    /// Connection string to stash (exact format depends on used storage
+    /// engine)
+    #[clap(long = "cache", default_value = FUNGIBLED_CACHE, env = "RGB_FUNGIBLED_CACHE")]
+    pub cache: String,
 
-    /// RPC endpoint of contracts service
-    #[clap(short, long, default_value = STASHD_RPC_ENDPOINT)]
-    pub stash_endpoint: String,
+    /// Data format for cache storage (valid only if file storage is used)
+    #[clap(short, long, default_value = "yaml", env = "RGB_FUNGIBLED_FORMAT")]
+    pub format: DataFormat,
 
-    /// Command to execute
-    #[clap(subcommand)]
-    pub command: Command,
+    /// ZMQ socket address string for REQ/REP API
+    #[clap(
+        long = "rpc",
+        default_value = FUNGIBLED_RPC_ENDPOINT,
+        env = "RGB_FUNGIBLED_RPC"
+    )]
+    pub rpc_endpoint: String,
+
+    /// ZMQ socket address string for PUB/SUB API
+    #[clap(
+        long = "pub",
+        default_value = FUNGIBLED_PUB_ENDPOINT,
+        env = "RGB_FUNGIBLED_PUB"
+    )]
+    pub pub_endpoint: String,
+
+    /// ZMQ socket address string for REQ/REP API
+    #[clap(
+        long,
+        default_value = STASHD_RPC_ENDPOINT,
+        env = "RGB_STASHD_RPC"
+    )]
+    pub stash_rpc: String,
+
+    /// ZMQ socket address string for PUB/SUb API
+    #[clap(
+        long,
+        default_value = STASHD_PUB_ENDPOINT,
+        env = "RGB_STASHD_PUB"
+    )]
+    pub stash_sub: String,
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
     pub network: Chain,
-}
-
-#[derive(Clap, Clone, Debug, Display)]
-#[display(Debug)]
-pub enum Command {
-    Schema {
-        /// Subcommand specifying particular operation
-        #[clap(subcommand)]
-        subcommand: stash::SchemaCommand,
-    },
-
-    Genesis {
-        /// Subcommand specifying particular operation
-        #[clap(subcommand)]
-        subcommand: stash::GenesisCommand,
-    },
-
-    /// Operations on fungible RGB assets (RGB-20 standard)
-    Fungible {
-        /// Subcommand specifying particular operation
-        #[clap(subcommand)]
-        subcommand: fungible::Command,
-    },
 }
 
 // We need config structure since not all of the parameters can be specified
@@ -86,8 +91,12 @@ pub enum Command {
 pub struct Config {
     pub verbose: u8,
     pub data_dir: PathBuf,
-    pub fungible_endpoint: ZmqSocketAddr,
-    pub stash_endpoint: ZmqSocketAddr,
+    pub cache: String,
+    pub format: DataFormat,
+    pub rpc_endpoint: ZmqSocketAddr,
+    pub pub_endpoint: ZmqSocketAddr,
+    pub stash_rpc: ZmqSocketAddr,
+    pub stash_sub: ZmqSocketAddr,
     pub network: Chain,
 }
 
@@ -99,8 +108,11 @@ impl From<Opts> for Config {
             ..Config::default()
         };
         me.data_dir = me.parse_param(opts.data_dir);
-        me.fungible_endpoint = me.parse_param(opts.fungible_endpoint);
-        me.stash_endpoint = me.parse_param(opts.stash_endpoint);
+        me.cache = me.parse_param(opts.cache);
+        me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
+        me.pub_endpoint = me.parse_param(opts.pub_endpoint);
+        me.stash_rpc = me.parse_param(opts.stash_rpc);
+        me.stash_sub = me.parse_param(opts.stash_sub);
         me
     }
 }
@@ -112,25 +124,26 @@ impl Default for Config {
             data_dir: RGB_DATA_DIR
                 .parse()
                 .expect("Error in RGB_DATA_DIR constant value"),
-            fungible_endpoint: FUNGIBLED_RPC_ENDPOINT
+            cache: FUNGIBLED_CACHE.to_string(),
+            #[cfg(feature = "serde_yaml")]
+            format: DataFormat::Yaml,
+            #[cfg(not(feature = "serde"))]
+            format: DataFormat::StrictEncode,
+            rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
                 .parse()
-                .expect("Broken FUNGIBLED_RPC_ENDPOINT value"),
-            stash_endpoint: STASHD_RPC_ENDPOINT
+                .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),
+            pub_endpoint: FUNGIBLED_PUB_ENDPOINT
                 .parse()
-                .expect("Broken STASHD_RPC_ENDPOINT value"),
+                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
+            stash_rpc: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_RPC_ENDPOINT constant value"),
+            stash_sub: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),
-        }
-    }
-}
-
-impl Command {
-    pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
-        match self {
-            Command::Fungible { subcommand } => subcommand.exec(runtime),
-            Command::Schema { subcommand } => subcommand.exec(runtime),
-            Command::Genesis { subcommand } => subcommand.exec(runtime),
         }
     }
 }
@@ -142,6 +155,7 @@ impl Config {
         T::Err: Display,
     {
         param
+            .replace("{id}", "default")
             .replace("{network}", &self.network.to_string())
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
             .parse()

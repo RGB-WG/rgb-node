@@ -37,7 +37,7 @@ pub enum Error {
     StrictEncoding(lnpbp::strict_encoding::Error),
 
     #[from]
-    ConsensusEncoding(lnpbp::bitcoin::consensus::encode::Error),
+    ConsensusEncoding(bitcoin::consensus::encode::Error),
 
     DataInconsistency,
 

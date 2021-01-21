@@ -20,13 +20,15 @@ extern crate clap;
 extern crate amplify;
 #[macro_use]
 extern crate amplify_derive;
+#[macro_use]
+extern crate lnpbp;
+#[macro_use]
+extern crate internet2;
 #[cfg(feature = "async-trait")]
 #[macro_use]
 extern crate async_trait;
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate num_derive;
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 #[cfg(feature = "serde")]
@@ -34,36 +36,28 @@ extern crate serde_crate as serde;
 extern crate serde_with;
 
 #[macro_use]
-pub extern crate lnpbp;
-#[macro_use]
-pub extern crate lnpbp_derive;
-
-#[macro_use]
 pub extern crate diesel;
 
 extern crate hammersbald;
 
-#[cfg(any(feature = "node", feature = "client"))]
-pub mod api;
 #[cfg(feature = "cli")]
 pub mod cli;
 pub mod constants;
 pub mod error;
 #[cfg(any(feature = "node"))]
 pub mod i9n;
+#[cfg(any(feature = "node", feature = "client"))]
+pub mod rpc;
 pub mod util;
 
-#[cfg(any(feature = "node", feature = "client"))]
-mod contracts;
+#[cfg(all(any(feature = "node", feature = "client"), feature = "fungibles"))]
+pub mod fungibled;
 #[cfg(any(feature = "node", feature = "client"))]
 pub mod rgbd;
 #[cfg(any(feature = "node", feature = "client"))]
 pub mod service;
 #[cfg(feature = "node")]
-pub mod stash;
-
-#[cfg(any(feature = "node", feature = "client"))]
-pub use contracts::*;
+pub mod stashd;
 
 use std::str::FromStr;
 
@@ -76,9 +70,10 @@ use std::str::FromStr;
     Hash,
     Debug,
     Display,
-    FromPrimitive,
-    ToPrimitive,
+    StrictEncode,
+    StrictDecode,
 )]
+#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[non_exhaustive]
 pub enum DataFormat {
     /// JSON
@@ -100,7 +95,6 @@ pub enum DataFormat {
     #[display("strict-encode")]
     StrictEncode,
 }
-impl_enum_strict_encoding!(DataFormat);
 
 impl DataFormat {
     pub fn extension(&self) -> &'static str {

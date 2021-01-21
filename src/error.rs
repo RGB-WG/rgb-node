@@ -17,9 +17,6 @@ use std::collections::HashMap;
 use std::io;
 use tokio::task::JoinError;
 
-use lnpbp::bitcoin::blockdata::transaction::ParseOutPointError;
-use lnpbp::lnp;
-
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
 pub enum BootstrapError {
@@ -40,15 +37,15 @@ pub enum BootstrapError {
     MonitorSocketError(Box<dyn std::error::Error + Send>),
 
     #[from]
-    MessageBusError(lnp::transport::Error),
+    MessageBusError(internet2::transport::Error),
 
     #[from]
     ElectrumError(electrum_client::Error),
 
     StorageError,
 
-    #[from(crate::contracts::fungible::FileCacheError)]
-    #[from(crate::contracts::fungible::SqlCacheError)]
+    #[from(crate::fungibled::FileCacheError)]
+    #[from(crate::fungibled::SqlCacheError)]
     CacheError,
 
     Other,
@@ -60,18 +57,6 @@ impl From<&str> for BootstrapError {
     }
 }
 
-use lnpbp::hex;
-use std::num::{ParseFloatError, ParseIntError};
-
-#[derive(Clone, Copy, Debug, Display, Error, From)]
-#[display(doc_comments)]
-#[from(ParseFloatError)]
-#[from(ParseIntError)]
-#[from(ParseOutPointError)]
-#[from(hex::Error)]
-/// Error parsing data
-pub struct ParseError;
-
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]
 pub enum RuntimeError {
@@ -79,8 +64,8 @@ pub enum RuntimeError {
     Io,
     Zmq(ServiceSocketType, String, zmq::Error),
     #[from]
-    Lnp(lnp::transport::Error),
-    #[from(lnp::presentation::Error)]
+    Lnp(internet2::transport::Error),
+    #[from(internet2::presentation::Error)]
     BrokenTransport,
     Internal(String),
 }
@@ -118,15 +103,15 @@ pub enum ServiceErrorDomain {
     Stash,
     Storage(String),
     Index,
-    #[from(crate::contracts::fungible::FileCacheError)]
-    #[from(crate::contracts::fungible::SqlCacheError)]
+    #[from(crate::fungibled::FileCacheError)]
+    #[from(crate::fungibled::SqlCacheError)]
     Cache,
     Multithreading,
     P2pwire,
     #[from]
-    LnpRpc(lnp::presentation::Error),
+    LnpRpc(internet2::presentation::Error),
     #[from]
-    LnpTransport(lnp::transport::Error),
+    LnpTransport(internet2::transport::Error),
     Api(ApiErrorType),
     Monitoring,
     Bifrost,
@@ -137,6 +122,11 @@ pub enum ServiceErrorDomain {
     Schema(String),
     Anchor(String),
     #[from]
+    #[cfg_attr(
+        feature = "fungibles",
+        from(rgb20::Error),
+        from(rgb20::TransferError)
+    )]
     Internal(String),
 }
 
@@ -186,7 +176,7 @@ impl ServiceError {
 
     pub fn from_rpc(
         service: ServiceErrorSource,
-        err: lnp::presentation::Error,
+        err: internet2::presentation::Error,
     ) -> Self {
         Self {
             domain: ServiceErrorDomain::from(err),

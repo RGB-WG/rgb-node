@@ -11,10 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use lnpbp::rgb::{ContractId, SchemaId, ToBech32};
+use rgb::{ContractId, SchemaId, ToBech32};
 
-use crate::api::Reply;
 use crate::cli::{Error, OutputFormat, Runtime};
+use crate::rpc::Reply;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display(Debug)]

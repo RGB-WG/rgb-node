@@ -96,7 +96,7 @@ v0.1.1
 ------
 
 ### Fixes
-- Exposed `contracts::fungible::data::invoice::Error` as `InvoiceError`
+- Exposed `contracts::fungibled::data::invoice::Error` as `InvoiceError`
   <https://github.com/LNP-BP/rgb-node/pull/93>
 
 

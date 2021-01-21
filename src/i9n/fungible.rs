@@ -16,27 +16,24 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use lnpbp::bitcoin::consensus::encode::{deserialize, Encodable};
-use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
-use lnpbp::bitcoin::OutPoint;
-use lnpbp::bp;
-use lnpbp::bp::psbt::ProprietaryKeyMap;
-use lnpbp::lnp::{Session, TypedEnum, Unmarshall};
-use lnpbp::rgb::{
-    AtomicValue, Consignment, ContractId, Genesis, PSBT_OUT_PUBKEY,
-};
+use bitcoin::consensus::encode::{deserialize, Encodable};
+use bitcoin::util::psbt::PartiallySignedTransaction;
+use bitcoin::OutPoint;
+use internet2::{Session, TypedEnum, Unmarshall};
+use lnpbp::seals::OutpointReveal;
+use lnpbp::Chain;
+use rgb::{AtomicValue, Consignment, ContractId, Genesis, PSBT_OUT_PUBKEY};
+use rgb20::{ConsealCoins, Invoice, Outpoint, OutpointCoins, SealCoins};
 
 use super::{Error, Runtime};
-use crate::api::{
+use crate::error::ServiceErrorDomain;
+use crate::rpc::{
     fungible::AcceptApi, fungible::Issue, fungible::Request,
     fungible::TransferApi, reply, Reply,
 };
-use crate::error::ServiceErrorDomain;
-use crate::fungible::{
-    ConsealCoins, Invoice, Outpoint, OutpointCoins, SealCoins,
-};
 use crate::util::file::ReadWrite;
 use crate::DataFormat;
+use bitcoin::util::psbt::raw::ProprietaryKey;
 
 impl Runtime {
     fn command(
@@ -52,7 +49,7 @@ impl Runtime {
 
     pub fn issue(
         &mut self,
-        chain: bp::Chain,
+        chain: Chain,
         ticker: String,
         name: String,
         description: Option<String>,
@@ -100,13 +97,15 @@ impl Runtime {
         let mut psbt: PartiallySignedTransaction = deserialize(&psbt_bytes)?;
 
         for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
-            if let Some(key) = output.hd_keypaths.keys().next() {
+            if let Some(key) = output.bip32_derivation.keys().next() {
                 let key = key.clone();
-                output.insert_proprietary_key(
-                    b"RGB".to_vec(),
-                    PSBT_OUT_PUBKEY,
-                    vec![],
-                    &key.key,
+                output.proprietary.insert(
+                    ProprietaryKey {
+                        prefix: b"RGB".to_vec(),
+                        subtype: PSBT_OUT_PUBKEY,
+                        key: vec![],
+                    },
+                    key.key.serialize().to_vec(),
                 );
                 debug!("Output #{} commitment key will be {}", index, key);
             } else {
@@ -140,7 +139,9 @@ impl Runtime {
                     .write_file(PathBuf::from(&consignment_file))?;
                 let out_file = File::create(&transaction_file)
                     .expect("can't create output transaction file");
-                transfer.psbt.consensus_encode(out_file)?;
+                transfer.psbt.consensus_encode(out_file).map_err(|err| {
+                    bitcoin::consensus::encode::Error::Io(err)
+                })?;
                 info!(
                     "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
                     consignment_file, transaction_file
@@ -155,7 +156,7 @@ impl Runtime {
     pub fn accept(
         &mut self,
         consignment: Consignment,
-        reveal_outpoints: Vec<bp::blind::OutpointReveal>,
+        reveal_outpoints: Vec<OutpointReveal>,
     ) -> Result<(), Error> {
         let api = AcceptApi {
             consignment,

@@ -15,21 +15,21 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-use lnpbp::bitcoin::consensus::{Decodable, Encodable};
-use lnpbp::bitcoin::util::psbt::PartiallySignedTransaction;
-use lnpbp::bitcoin::OutPoint;
-use lnpbp::bp::blind::OutpointReveal;
-use lnpbp::bp::psbt::ProprietaryKeyMap;
+use bitcoin::consensus::{Decodable, Encodable};
+use bitcoin::util::psbt::raw::ProprietaryKey;
+use bitcoin::util::psbt::PartiallySignedTransaction;
+use bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
-use lnpbp::rgb::prelude::*;
+use lnpbp::seals::OutpointReveal;
 use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
-
-use super::{Error, OutputFormat, Runtime};
-use crate::api::fungible::{AcceptApi, Issue, TransferApi};
-use crate::api::{reply, Reply};
-use crate::fungible::{
+use rgb::prelude::*;
+use rgb20::{
     AccountingValue, Asset, ConsealCoins, Invoice, Outpoint, SealCoins,
 };
+
+use super::{Error, OutputFormat, Runtime};
+use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
+use crate::rpc::{reply, Reply};
 use crate::util::file::ReadWrite;
 use crate::DataFormat;
 
@@ -468,13 +468,15 @@ impl TransferCli {
             })?;
 
         for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
-            if let Some(key) = output.hd_keypaths.keys().next() {
+            if let Some(key) = output.bip32_derivation.keys().next() {
                 let key = key.clone();
-                output.insert_proprietary_key(
-                    b"RGB".to_vec(),
-                    PSBT_OUT_PUBKEY,
-                    vec![],
-                    &key.key,
+                output.proprietary.insert(
+                    ProprietaryKey {
+                        prefix: b"RGB".to_vec(),
+                        subtype: PSBT_OUT_PUBKEY,
+                        key: vec![],
+                    },
+                    key.key.serialize().to_vec(),
                 );
                 debug!("Output #{} commitment key will be {}", index, key);
             } else {
@@ -511,7 +513,9 @@ impl TransferCli {
                 transfer.consignment.write_file(self.consignment.clone())?;
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
-                transfer.psbt.consensus_encode(out_file)?;
+                transfer.psbt.consensus_encode(out_file).map_err(|err| {
+                    bitcoin::consensus::encode::Error::Io(err)
+                })?;
                 println!(
                     "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
                     self.consignment, self.transaction

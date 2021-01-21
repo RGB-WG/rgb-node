@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::{ArgEnum, Clap};
-use lnpbp::bp;
+use lnpbp::Chain;
 use std::path::PathBuf;
 
 #[cfg(feature = "serde")]
@@ -125,7 +125,7 @@ pub struct Opts {
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
-    pub network: bp::Chain,
+    pub network: Chain,
 
     /// Electrum server to use to fecth Bitcoin transactions
     #[clap(
@@ -168,7 +168,7 @@ pub struct Config {
     pub bin_dir: PathBuf,
     pub threaded: bool,
     pub contracts: Vec<ContractName>,
-    pub network: bp::Chain,
+    pub network: Chain,
     pub verbose: u8,
     pub fungible_rpc_endpoint: String,
     pub fungible_pub_endpoint: String,

@@ -19,13 +19,13 @@ use std::process;
 use tokio::task;
 
 use super::Config;
-#[cfg(any(feature = "node"))]
-use crate::contracts::fungible;
 use crate::error::{BootstrapError, RuntimeError};
+#[cfg(any(feature = "node"))]
+use crate::fungibled;
 #[cfg(any(feature = "node"))]
 use crate::service::TryService;
 #[cfg(feature = "node")]
-use crate::stash;
+use crate::stashd;
 
 pub struct Runtime {
     config: Config,
@@ -43,15 +43,15 @@ impl Runtime {
     ) -> Result<task::JoinHandle<Result<(), DaemonError>>, DaemonError> {
         match name {
             "stashd" => {
-                let opts = stash::Opts::parse_from(args.into_iter());
+                let opts = stashd::Opts::parse_from(args.into_iter());
                 Ok(task::spawn(async move {
-                    Ok(stash::main_with_config(opts.into()).await?)
+                    Ok(stashd::main_with_config(opts.into()).await?)
                 }))
             }
             "fungibled" => {
-                let opts = fungible::Opts::parse_from(args.into_iter());
+                let opts = fungibled::Opts::parse_from(args.into_iter());
                 Ok(task::spawn(async move {
-                    Ok(fungible::main_with_config(opts.into()).await?)
+                    Ok(fungibled::main_with_config(opts.into()).await?)
                 }))
             }
             _ => Err(DaemonError::UnknownDaemon(name.into())),

@@ -97,8 +97,8 @@ To issue an asset, run:
 ```bash=
 rgb0-cli fungible issue USDT "USD Tether" 1000@5aa2d0a8098371ee12b4b59f43ffe6a2de637341258af65936a5baa01da49e9b:0
 # no output. rgb-node-0 logs, among other things:
-# [2020-11-19T08:52:46Z DEBUG rgb::contracts::fungible::runtime] Got ISSUE Issue { ticker: "USDT", title: "USD Tether", description: None, supply: None, inflatable: None, precision: 0, allocate: [Outcoins { coins: 1000.0, vout: 0, txid: Some(5aa2d0a8098371ee12b4b59f43ffe6a2de637341258af65936a5baa01da49e9b) }] }
-# [2020-11-19T08:52:46Z DEBUG rgb::contracts::fungible::runtime] API request processing complete
+# [2020-11-19T08:52:46Z DEBUG rgb::contracts::fungibled::runtime] Got ISSUE Issue { ticker: "USDT", title: "USD Tether", description: None, supply: None, inflatable: None, precision: 0, allocate: [Outcoins { coins: 1000.0, vout: 0, txid: Some(5aa2d0a8098371ee12b4b59f43ffe6a2de637341258af65936a5baa01da49e9b) }] }
+# [2020-11-19T08:52:46Z DEBUG rgb::contracts::fungibled::runtime] API request processing complete
 ```
 This will create a new genesis that includes asset metadata and the allocation of the initial amount to the `<issuance_utxo>`. You can look into it by running:
 ```bash=

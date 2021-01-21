@@ -11,8 +11,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::api::reply;
 use crate::error::ServiceErrorDomain;
+use crate::rpc::reply;
 
 #[derive(Debug, Display, Error, From)]
 #[display(inner)]
@@ -32,7 +32,7 @@ pub enum Error {
 
     /// Error decoding the provided data from bitcoin consensus encoding
     #[from]
-    Bitcoin(lnpbp::bitcoin::consensus::encode::Error),
+    Bitcoin(bitcoin::consensus::encode::Error),
 
     /// Error decoding the provided data from LNP/BP strict encoding
     #[from]
