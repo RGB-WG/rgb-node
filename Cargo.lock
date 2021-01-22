@@ -595,8 +595,9 @@ dependencies = [
 
 [[package]]
 name = "electrum-client"
-version = "0.5.0-beta.1"
-source = "git+https://github.com/LNP-BP/rust-electrum-client?branch=bitcoin-0.26#3ac7f6ec6b25c4cd64640a1885cf5163bb7ada64"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21453800c95bb1aaa57490458c42d60c6277cb8a3e386030ec2381d5c2d4fa77"
 dependencies = [
  "bitcoin",
  "log",
@@ -836,9 +837,9 @@ dependencies = [
 
 [[package]]
 name = "inet2_derive"
-version = "0.3.2"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f26ec35956b6895f4ee884b35034ae6d06521df6df7109530c87092c480e78d"
+checksum = "e01618235c454ff0b54814f6c0c0a91a4247fcf03d424e3c32e9c628400a59ef"
 dependencies = [
  "amplify",
  "proc-macro2 1.0.24",
@@ -1617,7 +1618,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.3.0-rc.1"
+version = "0.3.0"
 dependencies = [
  "amplify",
  "amplify_derive",

@@ -13,9 +13,11 @@
 
 #[macro_use]
 mod macros;
+mod bech32data;
 pub mod file;
 mod magic_numbers;
 mod seal_spec;
 
+pub use bech32data::{FromBech32Data, ToBech32Data};
 pub use magic_numbers::MagicNumber;
 pub use seal_spec::SealSpec;

@@ -44,6 +44,7 @@ use crate::rpc::{
     stash::MergeRequest,
     Reply,
 };
+use crate::util::ToBech32Data;
 
 pub struct Runtime {
     /// Original configuration object
@@ -174,7 +175,11 @@ impl Runtime {
     }
 
     fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
-        trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
+        trace!(
+            "Got {} bytes over ZMQ RPC: {:?}",
+            raw.len(),
+            raw.to_bech32data()
+        );
         let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
             error!("Error unmarshalling the data: {}", err);
             ServiceError::from_rpc(
@@ -516,6 +521,11 @@ impl Runtime {
         request: rpc::stash::Request,
     ) -> Result<Reply, ServiceErrorDomain> {
         let data = request.serialize();
+        trace!(
+            "Sending {} bytes to stashd: {}",
+            data.len(),
+            data.to_bech32data()
+        );
         self.stash_rpc.send_raw_message(data.borrow())?;
         let raw = self.stash_rpc.recv_raw_message()?;
         let reply = &*self.reply_unmarshaller.unmarshall(&raw)?.clone();

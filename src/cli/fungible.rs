@@ -285,7 +285,7 @@ impl Command {
                     format!("{}", err),
                 )
             })?;
-        trace!("{:?}", strict_serialize(&consignment));
+        trace!("{:#?}", consignment);
 
         match &*runtime.validate(consignment)? {
             Reply::Failure(failure) => {
@@ -320,7 +320,7 @@ impl Command {
                     format!("{}", err),
                 )
             })?;
-        trace!("{:?}", strict_serialize(&consignment));
+        trace!("{:#?}", consignment);
 
         let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0)
         {

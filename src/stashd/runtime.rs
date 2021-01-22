@@ -37,6 +37,7 @@ use crate::error::{
 use crate::rpc::stash::{ConsignRequest, MergeRequest, Request};
 use crate::rpc::{reply, Reply};
 use crate::stashd::index::BTreeIndexConfig;
+use crate::util::ToBech32Data;
 
 pub struct Runtime {
     /// Original configuration object
@@ -149,15 +150,20 @@ impl Runtime {
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.serialize();
         trace!(
-            "Sending {} bytes back to the client over ZMQ RPC",
-            data.len()
+            "Sending {} bytes back to the client over ZMQ RPC: {}",
+            data.len(),
+            data.to_bech32data()
         );
         self.session_rpc.send_raw_message(&data)?;
         Ok(())
     }
 
     fn rpc_process(&mut self, raw: Vec<u8>) -> Result<Reply, Reply> {
-        trace!("Got {} bytes over ZMQ RPC: {:?}", raw.len(), raw);
+        trace!(
+            "Got {} bytes over ZMQ RPC: {:?}",
+            raw.len(),
+            raw.to_bech32data()
+        );
         let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
             ServiceError::from_rpc(ServiceErrorSource::Stash, err)
         })?;
