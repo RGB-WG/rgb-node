@@ -298,9 +298,7 @@ impl Runtime {
                 info: format!("{:?}", validation_status.failures),
             })),
         }
-        // TODO: Return this type of reply when StrictEncoding will be
-        //       implemented for validation::Status
-        //Ok(Reply::ValidationStatus(validation_status))
+        Ok(Reply::ValidationStatus(validation_status))
     }
 
     fn rpc_merge(

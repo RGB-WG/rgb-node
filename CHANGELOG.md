@@ -1,9 +1,9 @@
 Change Log
 ==========
 
-v0.3.0-beta.1
--------------
-- Removing all dublicated code present in upstream repos
+v0.3.0
+------
+- Removing all duplicated code present in upstream repos
 - Removing tokio, features & async-trait dependencies, switching to 
   microservices engine
 - RGB-20, 21, 22, 23 data structures extracted to crates in RGB Core Lib
@@ -12,12 +12,10 @@ v0.3.0-beta.1
 - Improved use of features to minimize upstream dependencies and version 
   conflicts
 - SQL and NoSQL storage engines made optional
-
-v0.3.0-alpha.1
---------------
 - Migration on RGB Core library and v0.3 of LNP/BP libraries
 - Using rust-bitcoin 0.26
 - Internal directory structure refactoring
+- Improved debugging output information with Bech32 data representation
 
 v0.2.2
 ------

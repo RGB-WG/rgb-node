@@ -291,8 +291,8 @@ impl Command {
             Reply::Failure(failure) => {
                 eprintln!("Server returned error: {}", failure);
             }
-            Reply::Success => {
-                eprintln!("Asset transfer successfully validated.");
+            Reply::ValidationStatus(status) => {
+                eprintln!("Asset transfer validation report:\n{:#?}", status);
             }
             _ => {
                 eprintln!(

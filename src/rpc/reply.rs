@@ -66,8 +66,9 @@ pub enum Reply {
 
     #[lnp_api(type = 0xFF0C)]
     Transfer(crate::rpc::reply::Transfer),
-    /* #[lnp_api(type = 0xFF0B)]
-    ValidationStatus(::rgb::validation::Status), */
+
+    #[lnp_api(type = 0xFF0B)]
+    ValidationStatus(::rgb::validation::Status),
 }
 
 impl From<internet2::presentation::Error> for Reply {
