@@ -22,7 +22,7 @@ use internet2::{
 use microservices::node::TryService;
 use rgb::{
     validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
-    NodeId, Schema, SchemaId, Stash, Validity,
+    NodeId, Schema, SchemaId, Stash,
 };
 
 use super::electrum::ElectrumTxResolver;
@@ -285,19 +285,6 @@ impl Runtime {
 
         self.storage.add_genesis(&consignment.genesis)?;
 
-        match validation_status.validity() {
-            Validity::Valid => Ok(Reply::Success),
-            Validity::UnresolvedTransactions => {
-                Ok(Reply::Failure(reply::Failure {
-                    code: 1,
-                    info: format!("{:?}", validation_status.unresolved_txids),
-                }))
-            }
-            Validity::Invalid => Ok(Reply::Failure(reply::Failure {
-                code: 2,
-                info: format!("{:?}", validation_status.failures),
-            })),
-        }
         Ok(Reply::ValidationStatus(validation_status))
     }
 
