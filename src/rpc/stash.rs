@@ -18,49 +18,57 @@ use bitcoin::OutPoint;
 use lnpbp::seals::{OutpointHash, OutpointReveal};
 use rgb::{Consignment, ContractId, NodeId, Transition};
 
-#[derive(Clone, Debug, Display, LnpApi)]
-#[encoding_crate(lnpbp::strict_encoding)]
-#[lnp_api(encoding = "strict")]
-#[display(Debug)]
+#[derive(Clone, Debug, Display, Api)]
+#[api(encoding = "strict")]
+#[strict_encoding_crate(lnpbp::strict_encoding)]
+#[display(inner)]
 #[non_exhaustive]
 pub enum Request {
-    #[lnp_api(type = 0x0101)]
+    #[api(type = 0x0101)]
+    #[display("add_schema({0})")]
     AddSchema(::rgb::Schema),
 
-    #[lnp_api(type = 0x0103)]
+    #[api(type = 0x0103)]
+    #[display("list_schemata()")]
     ListSchemata(),
 
-    #[lnp_api(type = 0x0105)]
+    #[api(type = 0x0105)]
+    #[display("read_schema({0})")]
     ReadSchema(::rgb::SchemaId),
 
-    #[lnp_api(type = 0x0201)]
+    #[api(type = 0x0201)]
+    #[display("add_genesis({0})")]
     AddGenesis(::rgb::Genesis),
 
-    #[lnp_api(type = 0x0203)]
+    #[api(type = 0x0203)]
+    #[display("list_geneses()")]
     ListGeneses(),
 
-    #[lnp_api(type = 0x0205)]
+    #[api(type = 0x0205)]
+    #[display("read_genesis({0})")]
     ReadGenesis(::rgb::ContractId),
 
-    #[lnp_api(type = 0x0301)]
+    #[api(type = 0x0301)]
+    #[display("read_transitions(...)")]
     ReadTransitions(Vec<::rgb::NodeId>),
 
-    #[lnp_api(type = 0x0401)]
+    #[api(type = 0x0401)]
     Consign(crate::rpc::stash::ConsignRequest),
 
-    #[lnp_api(type = 0x0403)]
+    #[api(type = 0x0403)]
     Validate(::rgb::Consignment),
 
-    #[lnp_api(type = 0x0405)]
+    #[api(type = 0x0405)]
     Merge(crate::rpc::stash::MergeRequest),
 
-    #[lnp_api(type = 0x0407)]
+    #[api(type = 0x0407)]
+    #[display("forget(...)")]
     Forget(Vec<(::rgb::NodeId, u16)>),
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("consign({contract_id}, ...)")]
 pub struct ConsignRequest {
     pub contract_id: ContractId,
     pub inputs: Vec<OutPoint>,
@@ -72,7 +80,7 @@ pub struct ConsignRequest {
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("merge(...)")]
 pub struct MergeRequest {
     pub consignment: Consignment,
     pub reveal_outpoints: Vec<OutpointReveal>,

@@ -24,50 +24,60 @@ use crate::error::RuntimeError;
 #[cfg(any(feature = "node", feature = "client"))]
 use crate::error::ServiceError;
 
-#[derive(Clone, Debug, Display, LnpApi)]
-#[encoding_crate(lnpbp::strict_encoding)]
-#[lnp_api(encoding = "strict")]
-#[display(Debug)]
+#[derive(Clone, Debug, Display, Api)]
+#[api(encoding = "strict")]
+#[strict_encoding_crate(lnpbp::strict_encoding)]
+#[display(inner)]
 #[non_exhaustive]
 pub enum Reply {
-    #[lnp_api(type = 0x0003)]
+    #[api(type = 0x0003)]
+    #[display("success()")]
     Success,
 
-    #[lnp_api(type = 0x0001)]
+    #[api(type = 0x0001)]
     Failure(crate::rpc::reply::Failure),
 
     /// There was nothing to do
-    #[lnp_api(type = 0x0005)]
+    #[api(type = 0x0005)]
+    #[display("noop()")]
     Nothing,
 
-    #[lnp_api(type = 0xFF01)]
+    #[api(type = 0xFF01)]
     Sync(crate::rpc::reply::SyncFormat),
 
-    #[lnp_api(type = 0xFF02)]
+    #[api(type = 0xFF02)]
+    #[display("assets(...)")]
     Assets(BTreeMap<ContractId, Vec<AtomicValue>>),
 
-    #[lnp_api(type = 0xFF03)]
+    #[api(type = 0xFF03)]
+    #[display("allocations(...)")]
     Allocations(BTreeMap<OutPoint, Vec<AtomicValue>>),
 
-    #[lnp_api(type = 0xFF04)]
+    #[api(type = 0xFF04)]
+    #[display("schema_ids(...)")]
     SchemaIds(Vec<::rgb::SchemaId>),
 
-    #[lnp_api(type = 0xFF05)]
+    #[api(type = 0xFF05)]
+    #[display("contract_ids(...)")]
     ContractIds(Vec<::rgb::ContractId>),
 
-    #[lnp_api(type = 0xFF07)]
+    #[api(type = 0xFF07)]
+    #[display("genesis({0})")]
     Genesis(::rgb::Genesis),
 
-    #[lnp_api(type = 0xFF09)]
+    #[api(type = 0xFF09)]
+    #[display("schema({0})")]
     Schema(::rgb::Schema),
 
-    #[lnp_api(type = 0xFF0A)]
+    #[api(type = 0xFF0A)]
+    #[display("transitions(...)")]
     Transitions(Vec<::rgb::Transition>),
 
-    #[lnp_api(type = 0xFF0C)]
+    #[api(type = 0xFF0C)]
     Transfer(crate::rpc::reply::Transfer),
 
-    #[lnp_api(type = 0xFF0B)]
+    #[api(type = 0xFF0B)]
+    #[display("validation_status({0})")]
     ValidationStatus(::rgb::validation::Status),
 }
 
@@ -99,12 +109,12 @@ impl From<ServiceError> for Reply {
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("sync(using: {0}, ...)")]
 pub struct SyncFormat(pub FileFormat, pub Vec<u8>);
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("transfer(...)")]
 pub struct Transfer {
     pub consignment: Consignment,
     pub psbt: Psbt,
@@ -112,7 +122,7 @@ pub struct Transfer {
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("failure({code}, {info})")]
 #[non_exhaustive]
 pub struct Failure {
     pub code: u16,

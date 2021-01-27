@@ -22,40 +22,47 @@ use rgb20::{ConsealCoins, OutpointCoins, SealCoins};
 
 use microservices::FileFormat;
 
-#[derive(Clone, Debug, Display, LnpApi)]
-#[encoding_crate(lnpbp::strict_encoding)]
-#[lnp_api(encoding = "strict")]
-#[display(Debug)]
+#[derive(Clone, Debug, Display, Api)]
+#[api(encoding = "strict")]
+#[strict_encoding_crate(lnpbp::strict_encoding)]
+#[display(inner)]
 #[non_exhaustive]
 pub enum Request {
-    #[lnp_api(type = 0x0101)]
+    #[api(type = 0x0101)]
     Issue(crate::rpc::fungible::Issue),
 
-    #[lnp_api(type = 0x0103)]
+    #[api(type = 0x0103)]
     Transfer(crate::rpc::fungible::TransferApi),
 
-    #[lnp_api(type = 0x0105)]
+    #[api(type = 0x0105)]
+    #[display("validate(...)")]
     Validate(::rgb::Consignment),
 
-    #[lnp_api(type = 0x0107)]
+    #[api(type = 0x0107)]
     Accept(crate::rpc::fungible::AcceptApi),
 
-    #[lnp_api(type = 0x0109)]
+    #[api(type = 0x0109)]
+    #[display("import_asset({0})")]
     ImportAsset(::rgb::Genesis),
 
-    #[lnp_api(type = 0x010b)]
+    #[api(type = 0x010b)]
+    #[display("export_asset({0})")]
     ExportAsset(::rgb::ContractId),
 
-    #[lnp_api(type = 0x010d)]
+    #[api(type = 0x010d)]
+    #[display("forget({0})")]
     Forget(::bitcoin::OutPoint),
 
-    #[lnp_api(type = 0xFF01)]
+    #[api(type = 0xFF01)]
+    #[display("sync(using: {0})")]
     Sync(FileFormat),
 
-    #[lnp_api(type = 0xFF02)]
+    #[api(type = 0xFF02)]
+    #[display("assets(on: {0})")]
     Assets(OutPoint),
 
-    #[lnp_api(type = 0xFF03)]
+    #[api(type = 0xFF03)]
+    #[display("allocations({0})")]
     Allocations(ContractId),
 }
 
@@ -63,7 +70,7 @@ pub enum Request {
     Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
 )]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("issue({ticker}, {name}, precision: {precision}, ...)")]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize,),
@@ -107,7 +114,7 @@ pub struct Issue {
 
 #[derive(Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("transfer({contract_id}, ...)")]
 pub struct TransferApi {
     /// Asset contract id
     pub contract_id: ContractId,
@@ -133,7 +140,7 @@ pub struct TransferApi {
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display(Debug)]
+#[display("accept(...)")]
 pub struct AcceptApi {
     /// Raw consignment data
     pub consignment: Consignment,

@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.3.0"
+version = "0.4.0-alpha"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -32,14 +32,14 @@ required-features = ["cli"]
 # LNP/BP crates
 amplify = "3"
 amplify_derive = "2.4.2"
-lnpbp = "0.3"
-rgb-core = "0.3"
-rgb20 = { version = "0.3", optional = true }
-rgb21 = { version = "0.3.0-beta.3", optional = true }
-rgb22 = { version = "0.3.0-beta.3", optional = true }
-rgb23 = { version = "0.3.0-beta.3", optional = true }
-internet2 = { version = "0.3.7", default-features = false, features = ["derive"] }
-microservices = { version = "0.3.7", default-features = false }
+lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp" }
+rgb-core = { git = "https://github.com/rgb-org/rgb-core" }
+rgb20 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
+microservices = { git = "https://github.com/internet2-org/rust-internet2", default-features = false }
 # Bitcoin
 bitcoin = "0.26"
 electrum-client = { version = "0.6", optional = true }
