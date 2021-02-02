@@ -930,9 +930,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.84"
+version = "0.2.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cca32fa0182e8c0989459524dc356b8f2b5c10f1b9eb521b7d182c03cf8c5ff"
+checksum = "7ccac4b00700875e6a07c6cde370d44d32fa01c5a65cdd2fca6858c479d28bb3"
 
 [[package]]
 name = "libsqlite3-sys"
@@ -1005,7 +1005,7 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#296c3fb5ad3951f79d34cc91e6682fa954645869"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#7b2582a967734307f45edb26823fd44047855e25"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1565,7 +1565,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#7718acaa4e11127cddf2928bcfea125c9fdacbaf"
+source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1594,7 +1594,7 @@ dependencies = [
 [[package]]
 name = "rgb20"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#7718acaa4e11127cddf2928bcfea125c9fdacbaf"
+source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1611,7 +1611,7 @@ dependencies = [
 [[package]]
 name = "rgb21"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#7718acaa4e11127cddf2928bcfea125c9fdacbaf"
+source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1624,7 +1624,7 @@ dependencies = [
 [[package]]
 name = "rgb22"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#7718acaa4e11127cddf2928bcfea125c9fdacbaf"
+source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1637,7 +1637,7 @@ dependencies = [
 [[package]]
 name = "rgb23"
 version = "0.4.0-alpha.1+1"
-source = "git+https://github.com/rgb-org/rgb-core#7718acaa4e11127cddf2928bcfea125c9fdacbaf"
+source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1879,9 +1879,9 @@ dependencies = [
 
 [[package]]
 name = "serde_yaml"
-version = "0.8.15"
+version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "971be8f6e4d4a47163b405a3df70d14359186f9ab0f3a3ec37df144ca1ce089f"
+checksum = "bdd2af560da3c1fdc02cb80965289254fc35dff869810061e2d8290ee48848ae"
 dependencies = [
  "dtoa",
  "linked-hash-map 0.5.4",
@@ -1986,9 +1986,9 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "strict_encoding"
-version = "1.0.7"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cfe176b9f4027623e26028c4ed336e41b479a07bc4a64b553fee14fcafc5168"
+checksum = "040e89a9add0494e5a5eef5763ba18f0293ae4eed22bab439998fc893afd2a26"
 dependencies = [
  "amplify",
  "amplify_derive",

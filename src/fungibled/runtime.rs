@@ -493,7 +493,7 @@ impl Runtime {
                     outpoint,
                     *allocation.node_id(),
                     *allocation.index(),
-                    allocation.value().clone(),
+                    allocation.confidential_amount().clone(),
                 );
                 removal_list.push((*allocation.node_id(), *allocation.index()));
             }

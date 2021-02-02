@@ -294,23 +294,19 @@ impl Cache for SqlCache {
         Ok(existed)
     }
 
+    // TODO: Move this method to RGB20
     fn asset_allocations(
         &self,
         contract_id: ContractId,
     ) -> Result<BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
         // Process known_allocation map to produce the intended map
-        let result: BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
-            .asset(contract_id)?
-            .known_allocations()
-            .into_iter()
-            .map(|(outpoint, allocations)| {
-                (
-                    *outpoint,
-                    allocations.into_iter().map(|a| a.value().value).collect(),
-                )
-            })
-            .collect();
-
+        let mut result = BTreeMap::<bitcoin::OutPoint, Vec<AtomicValue>>::new();
+        for allocation in self.asset(contract_id)?.known_allocations() {
+            result
+                .entry(*allocation.outpoint())
+                .or_insert(default!())
+                .push(allocation.confidential_amount().value);
+        }
         Ok(result)
     }
 
@@ -410,6 +406,7 @@ mod test {
             match i {
                 0 => {
                     let asset = SqlAsset {
+                        genesis: "".to_string(),
                         id: i,
                         contract_id:
                             "5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc"
@@ -433,6 +430,7 @@ mod test {
 
                 1 => {
                     let asset = SqlAsset {
+                        genesis: "".to_string(),
                         id: i,
                         contract_id:
                             "7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9"

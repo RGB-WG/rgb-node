@@ -230,7 +230,7 @@ impl Cache for FileCache {
             result
                 .entry(*allocation.outpoint())
                 .or_insert(default!())
-                .push(allocation.value().value);
+                .push(allocation.confidential_amount().value);
         }
         Ok(result)
     }
@@ -247,7 +247,7 @@ impl Cache for FileCache {
                 asset
                     .allocations(&outpoint)
                     .into_iter()
-                    .map(|a| a.value().value)
+                    .map(|a| a.confidential_amount().value)
                     .collect(),
             );
         }

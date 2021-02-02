@@ -20,6 +20,7 @@ table! {
 
 table! {
     sql_assets (id) {
+        genesis -> Text,
         id -> Integer,
         contract_id -> Text,
         ticker -> Text,

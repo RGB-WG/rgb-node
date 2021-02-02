@@ -5,11 +5,8 @@ use std::str::FromStr;
 use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::{OutPoint, Txid};
 use lnpbp::{Chain, TaggedHash};
-use rgb::secp256k1zkp::{key::SecretKey, Secp256k1};
 use rgb::{value, AtomicValue, ContractId, NodeId};
-use rgb20::{
-    AccountingAmount, AccountingValue, Allocation, Asset, Issue, Supply,
-};
+use rgb20::{Allocation, Asset, Issue, Supply};
 
 use crate::fungibled::sql::schema as cache_schema;
 use crate::fungibled::SqlCacheError;
@@ -19,6 +16,7 @@ use cache_schema::sql_assets::dsl::sql_assets as sql_asset_table;
 use cache_schema::sql_inflation::dsl::sql_inflation as sql_inflation_table;
 use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
 use cache_schema::*;
+use rgb::contract::value::BlindingFactor;
 
 /// All the sqlite table structures are defined here.
 /// There are 5 tables namely Asset, Issue, Inflation, AllocationUtxo
@@ -28,6 +26,7 @@ use cache_schema::*;
 #[derive(Queryable, Insertable, Identifiable, Clone, Debug)]
 #[table_name = "sql_assets"]
 pub struct SqlAsset {
+    pub genesis: String,
     pub id: i32,
     pub contract_id: String,
     pub ticker: String,
@@ -58,6 +57,7 @@ impl SqlAsset {
             .cloned();
 
         Ok(Self {
+            genesis: asset.genesis().clone(),
             id: match last_asset {
                 Some(asset) => asset.id + 1,
                 None => 0,
@@ -66,13 +66,10 @@ impl SqlAsset {
             ticker: asset.ticker().clone(),
             asset_name: asset.name().clone(),
             asset_description: asset.description().clone(),
-            known_circulating_supply: asset
-                .supply()
-                .known_circulating()
-                .accounting_value()
+            known_circulating_supply: *asset.supply().known_circulating()
                 as i64,
             is_issued_known: asset.supply().is_issued_known().clone(),
-            max_cap: asset.supply().max_cap().accounting_value() as i64,
+            max_cap: *asset.supply().issue_limit() as i64,
             chain: asset.chain().to_string(),
             fractional_bits: vec![asset.fractional_bits().clone()],
             asset_date: asset.date().clone(),
@@ -96,10 +93,11 @@ impl SqlAsset {
         let mut known_issues = vec![];
 
         for issue in known_table_issues {
-            known_issues.push(issue.to_issue(self.fractional_bits[0])?)
+            known_issues.push(issue.to_issue()?)
         }
 
         Ok(Asset::with(
+            self.genesis.clone(),
             ContractId::from_str(&self.contract_id[..])?,
             self.ticker.clone(),
             self.asset_name.clone(),
@@ -121,15 +119,9 @@ impl SqlAsset {
     /// supply structure.
     pub fn to_supply(&self) -> Supply {
         Supply::with(
-            AccountingAmount::from_fractioned_accounting_value(
-                self.fractional_bits[0],
-                self.known_circulating_supply as AccountingValue,
-            ),
+            self.known_circulating_supply as AtomicValue,
             self.is_issued_known,
-            AccountingAmount::from_fractioned_accounting_value(
-                self.fractional_bits[0],
-                self.max_cap as AccountingValue,
-            ),
+            self.max_cap as AtomicValue,
         )
     }
 }
@@ -174,7 +166,7 @@ impl SqlInflation {
                 sql_asset_id: table_asset.id,
                 outpoint_txid: Some(item.0.txid.to_hex()),
                 outpoint_vout: Some(item.0.vout as i32),
-                accounting_amount: item.1.accounting_value() as i64,
+                accounting_amount: *item.1 as i64,
             };
 
             result.push(sql_inflation);
@@ -197,8 +189,7 @@ impl SqlInflation {
             sql_asset_id: table_asset.id,
             outpoint_txid: None,
             outpoint_vout: None,
-            accounting_amount: asset.unknown_inflation().accounting_value()
-                as i64,
+            accounting_amount: *asset.unknown_inflation() as i64,
         });
 
         Ok(result)
@@ -213,16 +204,13 @@ impl SqlInflation {
 pub fn read_inflation(
     asset: &SqlAsset,
     connection: &SqliteConnection,
-) -> Result<
-    (BTreeMap<OutPoint, AccountingAmount>, AccountingAmount),
-    SqlCacheError,
-> {
+) -> Result<(BTreeMap<OutPoint, AtomicValue>, AtomicValue), SqlCacheError> {
     let inflations =
         SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
 
     let mut known_inflation_map = BTreeMap::new();
 
-    let mut unknown = AccountingAmount::default();
+    let mut unknown = 0;
 
     for known_inflation in inflations {
         match (known_inflation.outpoint_txid, known_inflation.outpoint_vout) {
@@ -233,18 +221,12 @@ pub fn read_inflation(
                         txid: Txid::from_hex(&txid[..])?,
                         vout: vout as u32,
                     },
-                    AccountingAmount::from_fractioned_accounting_value(
-                        asset.fractional_bits[0],
-                        known_inflation.accounting_amount as AccountingValue,
-                    ),
+                    known_inflation.accounting_amount as AtomicValue,
                 );
             }
             // For everything else, add them to unknown inflation
             _ => {
-                unknown = AccountingAmount::from_fractioned_accounting_value(
-                    asset.fractional_bits[0],
-                    known_inflation.accounting_amount as AccountingValue,
-                );
+                unknown = known_inflation.accounting_amount as AtomicValue;
             }
         }
     }
@@ -290,8 +272,8 @@ impl SqlIssue {
                 },
                 sql_asset_id: table_asset.id,
                 node_id: issue.id().to_hex(),
-                contract_id: issue.asset_id().to_hex(),
-                amount: issue.amount().accounting_value() as i64,
+                contract_id: table_asset.contract_id.clone(),
+                amount: *issue.amount() as i64,
                 origin_txid: match issue.origin() {
                     Some(outpoint) => Some(outpoint.txid.to_hex()),
                     None => None,
@@ -307,14 +289,10 @@ impl SqlIssue {
 
     /// Create an Issue structure from reading the corresponding
     /// Issue table entry in the database.
-    pub fn to_issue(&self, fraction_bits: u8) -> Result<Issue, SqlCacheError> {
+    pub fn to_issue(&self) -> Result<Issue, SqlCacheError> {
         Ok(Issue::with(
             NodeId::from_hex(&self.node_id[..])?,
-            ContractId::from_hex(&self.contract_id[..])?,
-            AccountingAmount::from_fractioned_accounting_value(
-                fraction_bits,
-                self.amount as AccountingValue,
-            ),
+            self.amount as AtomicValue,
             match (&self.origin_txid, self.origin_vout) {
                 (Some(txid), Some(vout)) => Some(OutPoint {
                     txid: Txid::from_hex(&txid[..])?,
@@ -380,10 +358,7 @@ impl SqlAllocation {
             },
             value::Revealed {
                 value: self.amount as AtomicValue,
-                blinding: SecretKey::from_slice(
-                    &Secp256k1::new(),
-                    &Vec::<u8>::from_hex(&self.blinding[..])?[..],
-                )?,
+                blinding: BlindingFactor::from_hex(&self.blinding)?,
             },
         ))
     }
@@ -402,49 +377,39 @@ pub fn create_allocation_from_asset(
 ) -> Result<(Vec<SqlAllocationUtxo>, Vec<SqlAllocation>), SqlCacheError> {
     // get the last allocationutxo and allocation id
     // increase id from there
-    let last_alloc_utxo = sql_allocation_utxo_table
+    let last_allocation_utxo = sql_allocation_utxo_table
         .load::<SqlAllocationUtxo>(connection)?
         .last()
         .cloned();
-    let last_alloc = sql_allocation_table
+    let last_allocation = sql_allocation_table
         .load::<SqlAllocation>(connection)?
         .last()
         .cloned();
+    let utxo_offset = last_allocation_utxo.map(|la| la.id).unwrap_or(0);
+    let allocation_offset = last_allocation.map(|la| la.id).unwrap_or(0);
 
     let allocations = asset.known_allocations();
 
     let mut utxos = vec![];
     let mut allocation_vec = vec![];
 
-    let mut added_allocations = 0;
-
-    for (index, item) in allocations.into_iter().enumerate() {
-        let this_utxo_id = match last_alloc_utxo.clone() {
-            Some(alloc_utxo) => alloc_utxo.id + index as i32 + 1,
-            None => 0 + index as i32,
-        };
+    for (index, allocation) in allocations.into_iter().enumerate() {
+        let utxo_id = utxo_offset + index as i32 + 1;
+        let allocation_id = allocation_offset + index as i32 + 1;
         utxos.push(SqlAllocationUtxo {
-            id: this_utxo_id,
+            id: utxo_id,
             sql_asset_id: table_asset.id,
-            txid: item.0.txid.to_hex(),
-            vout: item.0.vout as i32,
+            txid: allocation.outpoint().txid.to_hex(),
+            vout: allocation.outpoint().vout as i32,
         });
-        for (index, alloc) in item.1.into_iter().enumerate() {
-            allocation_vec.push(SqlAllocation {
-                id: match last_alloc.clone() {
-                    Some(alloc) => {
-                        alloc.id + added_allocations + index as i32 + 1
-                    }
-                    None => 0 + added_allocations + index as i32,
-                },
-                sql_allocation_utxo_id: this_utxo_id,
-                node_id: alloc.node_id().to_hex(),
-                assignment_index: alloc.index().clone() as i32,
-                amount: alloc.value().value as i64,
-                blinding: alloc.value().blinding.0.to_vec().to_hex(),
-            });
-        }
-        added_allocations += item.1.len() as i32;
+        allocation_vec.push(SqlAllocation {
+            id: allocation_id,
+            sql_allocation_utxo_id: utxo_id,
+            node_id: allocation.node_id().to_hex(),
+            assignment_index: allocation.index().clone() as i32,
+            amount: allocation.confidential_amount().value as i64,
+            blinding: allocation.confidential_amount().blinding.to_hex(),
+        });
     }
 
     Ok((utxos, allocation_vec))
@@ -453,47 +418,33 @@ pub fn create_allocation_from_asset(
 /// Read the associated AllocationUtxo and Allocation entries
 /// with the given Asset entry executed over the given database
 /// connection.
-/// This will return a BtreeMap which can be directly used as the
+/// This will return a `Vec` which can be directly used as the
 /// `known_allocations` field in the Asset Data structure.
 pub fn read_allocations(
     asset: &SqlAsset,
     connection: &SqliteConnection,
-) -> Result<BTreeMap<OutPoint, Vec<Allocation>>, SqlCacheError> {
+) -> Result<Vec<Allocation>, SqlCacheError> {
     // Get the associated utxo with asset entry
     let utxo_list = SqlAllocationUtxo::belonging_to(asset)
         .load::<SqlAllocationUtxo>(connection)?;
 
     // Get the associated allocations with the above utxos
-    let allocations = SqlAllocation::belonging_to(&utxo_list)
-        .load::<SqlAllocation>(connection)?
-        .grouped_by(&utxo_list);
+    let allocation_list = SqlAllocation::belonging_to(&utxo_list)
+        .load::<SqlAllocation>(connection)?;
 
-    // Group them accordingly and zip the two vectors by correct groupings
-    let grouped_allocation =
-        utxo_list.into_iter().zip(&allocations).collect::<Vec<_>>();
+    let utxo_list = utxo_list
+        .into_iter()
+        .map(|utxo| (utxo.id, utxo))
+        .collect::<BTreeMap<_, _>>();
 
-    let mut allocation_map = BTreeMap::new();
-
-    grouped_allocation.into_iter().for_each(|item| {
-        allocation_map.insert(item.0, item.1);
-    });
-
-    // Read the zipped data into a BtreeMap
-    let mut known_allocation = BTreeMap::new();
-
-    for item in allocation_map.into_iter() {
-        let mut allocations = vec![];
-        for allocation in item.1 {
-            allocations.push(allocation.to_allocation(&item.0)?);
+    let mut allocations = Vec::new();
+    for allocation in allocation_list {
+        if let Some(utxo) = utxo_list.get(&allocation.sql_allocation_utxo_id) {
+            allocations.push(allocation.to_allocation(utxo)?)
+        } else {
+            return Err(SqlCacheError::NotFound);
         }
-        known_allocation.insert(
-            OutPoint {
-                txid: Txid::from_hex(&item.0.txid[..])?,
-                vout: item.0.vout as u32,
-            },
-            allocations,
-        );
     }
 
-    Ok(known_allocation)
+    Ok(allocations)
 }
