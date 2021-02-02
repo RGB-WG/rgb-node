@@ -22,7 +22,7 @@ use internet2::{
 use microservices::node::TryService;
 use rgb::{
     validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
-    NodeId, Schema, SchemaId, Stash,
+    NodeId, Schema, SchemaId, Stash, AutoConceal,
 };
 
 use super::electrum::ElectrumTxResolver;
@@ -243,8 +243,12 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got CONSIGN {}", request);
 
+        // Conceal non-endpoint (e.g. asset change) transition assignments
+        let mut transition = request.transition.clone();
+        transition.conceal_except(&request.outpoints);
+
         let mut transitions = request.other_transition_ids.clone();
-        transitions.insert(request.contract_id, request.transition.node_id());
+        transitions.insert(request.contract_id, transition.node_id());
 
         // Construct anchor
         let mut psbt = request.psbt.clone();
@@ -260,7 +264,7 @@ impl Runtime {
         let consignment = self
             .consign(
                 request.contract_id,
-                &request.transition,
+                &transition,
                 Some(&anchor),
                 &request.outpoints.clone(),
             )

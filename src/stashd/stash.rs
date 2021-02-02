@@ -120,15 +120,11 @@ impl Stash for Runtime {
         if let Some(transition) =
             node.as_any().downcast_ref::<Transition>().clone()
         {
-            let mut transition = transition.clone();
-            transition.conceal_except(&expose);
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));
         } else if let Some(extension) =
             node.as_any().downcast_ref::<Extension>().clone()
         {
-            let mut extension = extension.clone();
-            extension.conceal_except(&expose);
             state_extensions.push(extension.clone());
         } else {
             Err(Error::GenesisNode)?;
