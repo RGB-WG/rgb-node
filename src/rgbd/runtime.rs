@@ -75,12 +75,8 @@ impl Runtime {
             vec![
                 s!("--rpc"),
                 self.config.fungible_rpc_endpoint.to_string(),
-                s!("--pub"),
-                self.config.fungible_pub_endpoint.to_string(),
                 s!("--stash-rpc"),
                 self.config.stash_rpc_endpoint.to_string(),
-                s!("--stash-sub"),
-                self.config.stash_pub_endpoint.to_string(),
                 s!("--cache"),
                 self.config.cache.to_string(),
                 s!("--format"),
@@ -92,14 +88,10 @@ impl Runtime {
         stashd_args.extend(vec![
             s!("--rpc"),
             self.config.stash_rpc_endpoint.to_string(),
-            s!("--pub"),
-            self.config.stash_pub_endpoint.to_string(),
             s!("--stash"),
             self.config.stash.to_string(),
             s!("--index"),
             self.config.index.to_string(),
-            s!("--bind"),
-            self.config.p2p_endpoint.to_string(),
             s!("--electrum"),
             self.config.electrum_server.to_string(),
         ]);

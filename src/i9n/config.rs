@@ -25,8 +25,6 @@ pub struct Config {
     pub data_dir: String,
     pub electrum_server: String,
     pub stash_rpc_endpoint: String,
-    pub stash_pub_endpoint: String,
-    pub fungible_pub_endpoint: String,
     pub contract_endpoints: HashMap<ContractName, String>,
     pub network: Chain,
     pub run_embedded: bool,
@@ -39,8 +37,6 @@ impl Default for Config {
             data_dir: RGB_DATA_DIR.to_owned(),
             electrum_server: DEFAULT_ELECTRUM_ENDPOINT.to_owned(),
             stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_owned(),
-            stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_owned(),
-            fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT.to_owned(),
             contract_endpoints: map! {
                 ContractName::Fungible => FUNGIBLED_RPC_ENDPOINT.to_owned()
             },

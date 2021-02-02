@@ -46,10 +46,6 @@ pub struct Opts {
     #[clap(short, long, default_value = STASHD_INDEX, env = "RGB_STASHD_INDEX")]
     pub index: String,
 
-    /// LNP socket address string for P2P API
-    #[clap(long = "bind", default_value = STASHD_P2P_ENDPOINT, env = "RGB_STASHD_BIND")]
-    pub p2p_endpoint: String,
-
     /// ZMQ socket address string for REQ/REP API
     #[clap(
         long = "rpc",
@@ -57,14 +53,6 @@ pub struct Opts {
         env = "RGB_STASHD_RPC"
     )]
     pub rpc_endpoint: String,
-
-    /// ZMQ socket address string for PUB/SUB API
-    #[clap(
-        long = "pub",
-        default_value = STASHD_PUB_ENDPOINT,
-        env = "RGB_STASHD_PUB",
-    )]
-    pub pub_endpoint: String,
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
@@ -90,9 +78,7 @@ pub struct Config {
     pub data_dir: PathBuf,
     pub stash: String,
     pub index: String,
-    pub p2p_endpoint: String,
     pub rpc_endpoint: ZmqSocketAddr,
-    pub pub_endpoint: ZmqSocketAddr,
     pub network: Chain,
     pub electrum_server: String,
 }
@@ -108,8 +94,6 @@ impl From<Opts> for Config {
         me.stash = me.parse_param(opts.stash);
         me.index = me.parse_param(opts.index);
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
-        me.pub_endpoint = me.parse_param(opts.pub_endpoint);
-        me.p2p_endpoint = me.parse_param(opts.p2p_endpoint);
         me.electrum_server = me.parse_param(opts.electrum_server);
         me
     }
@@ -125,13 +109,9 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),
             rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            pub_endpoint: STASHD_PUB_ENDPOINT
-                .parse()
-                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),

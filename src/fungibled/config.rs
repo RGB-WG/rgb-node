@@ -17,9 +17,9 @@ use std::path::PathBuf;
 
 use internet2::zmqsocket::ZmqSocketAddr;
 use lnpbp::Chain;
+use microservices::FileFormat;
 
 use crate::constants::*;
-use microservices::FileFormat;
 
 #[derive(Clap)]
 #[clap(
@@ -54,14 +54,6 @@ pub struct Opts {
     )]
     pub rpc_endpoint: String,
 
-    /// ZMQ socket address string for PUB/SUB API
-    #[clap(
-        long = "pub",
-        default_value = FUNGIBLED_PUB_ENDPOINT,
-        env = "RGB_FUNGIBLED_PUB"
-    )]
-    pub pub_endpoint: String,
-
     /// ZMQ socket address string for REQ/REP API
     #[clap(
         long,
@@ -69,14 +61,6 @@ pub struct Opts {
         env = "RGB_STASHD_RPC"
     )]
     pub stash_rpc: String,
-
-    /// ZMQ socket address string for PUB/SUb API
-    #[clap(
-        long,
-        default_value = STASHD_PUB_ENDPOINT,
-        env = "RGB_STASHD_PUB"
-    )]
-    pub stash_sub: String,
 
     /// Bitcoin network to use
     #[clap(short, long, default_value = RGB_NETWORK, env = "RGB_NETWORK")]
@@ -94,9 +78,7 @@ pub struct Config {
     pub cache: String,
     pub format: FileFormat,
     pub rpc_endpoint: ZmqSocketAddr,
-    pub pub_endpoint: ZmqSocketAddr,
     pub stash_rpc: ZmqSocketAddr,
-    pub stash_sub: ZmqSocketAddr,
     pub network: Chain,
 }
 
@@ -110,9 +92,7 @@ impl From<Opts> for Config {
         me.data_dir = me.parse_param(opts.data_dir);
         me.cache = me.parse_param(opts.cache);
         me.rpc_endpoint = me.parse_param(opts.rpc_endpoint);
-        me.pub_endpoint = me.parse_param(opts.pub_endpoint);
         me.stash_rpc = me.parse_param(opts.stash_rpc);
-        me.stash_sub = me.parse_param(opts.stash_sub);
         me
     }
 }
@@ -132,15 +112,9 @@ impl Default for Config {
             rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
                 .parse()
                 .expect("Error in FUNGIBLED_RPC_ENDPOINT constant value"),
-            pub_endpoint: FUNGIBLED_PUB_ENDPOINT
-                .parse()
-                .expect("Error in FUNGIBLED_PUB_ENDPOINT constant value"),
             stash_rpc: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),
-            stash_sub: STASHD_RPC_ENDPOINT
-                .parse()
-                .expect("Error in STASHD_PUB_ENDPOINT constant value"),
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),

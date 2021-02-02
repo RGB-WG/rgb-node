@@ -42,11 +42,7 @@ impl Runtime {
                 electrum_server: config.electrum_server.clone(),
                 // TODO: Endpoint parameters are not needed in embedded mode;
                 //       remove them
-                contracts: config
-                    .contract_endpoints
-                    .iter()
-                    .map(|(k, _)| k.clone())
-                    .collect(),
+                contracts: config.contract_endpoints.keys().cloned().collect(),
                 fungible_rpc_endpoint: config
                     .contract_endpoints
                     .get(&ContractName::Fungible)
@@ -55,8 +51,6 @@ impl Runtime {
                     )))?
                     .clone(),
                 stash_rpc_endpoint: config.stash_rpc_endpoint.clone(),
-                stash_pub_endpoint: config.stash_pub_endpoint.clone(),
-                fungible_pub_endpoint: config.fungible_pub_endpoint.clone(),
                 network: config.network.clone(),
                 threaded: true,
                 ..rgbd::Opts::default()

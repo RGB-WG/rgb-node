@@ -44,12 +44,7 @@ pub struct Runtime {
     config: Config,
 
     /// Request-response API socket
-    session_rpc:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
-
-    /// Publish-subscribe API socket
-    session_pub:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    rpc_server: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// RGB Index: fast, mostly in-memory key-value indexing service.
     /// Must be exclusive for the current service
@@ -105,19 +100,11 @@ impl Runtime {
             None,
         )?;
 
-        let session_pub = session::Raw::with_zmq_unencrypted(
-            ZmqType::Pub,
-            &config.pub_endpoint,
-            None,
-            None,
-        )?;
-
         let electrum = ElectrumTxResolver::new(&config.electrum_server)?;
 
         Ok(Self {
             config,
-            session_rpc,
-            session_pub,
+            rpc_server: session_rpc,
             indexer,
             storage,
             unmarshaller: Request::create_unmarshaller(),
@@ -145,7 +132,7 @@ impl TryService for Runtime {
 impl Runtime {
     fn run(&mut self) -> Result<(), RuntimeError> {
         trace!("Awaiting for ZMQ RPC requests...");
-        let raw = self.session_rpc.recv_raw_message()?;
+        let raw = self.rpc_server.recv_raw_message()?;
         let reply = self.rpc_process(raw).unwrap_or_else(|err| err);
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.serialize();
@@ -154,7 +141,7 @@ impl Runtime {
             data.len(),
             data.to_bech32data()
         );
-        self.session_rpc.send_raw_message(&data)?;
+        self.rpc_server.send_raw_message(&data)?;
         Ok(())
     }
 

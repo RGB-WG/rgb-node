@@ -18,21 +18,16 @@ pub const RGB20_BECH32_HRP_INVOICE: &'static str = "rgb20:";
 pub const RGB_DATA_DIR: &'static str = "/var/lib/rgb";
 pub const RGB_BIN_DIR: &'static str = "/usr/local/bin";
 pub const RGB_CONTRACTS: &'static str = "fungible";
-pub const RGB_NETWORK: &'static str = "testnet";
+pub const RGB_NETWORK: &'static str = "signet";
 
 pub const STASHD_STASH: &'static str = "{data_dir}/{network}/stash/{id}/";
 pub const STASHD_INDEX: &'static str =
     "{data_dir}/{network}/stash/{id}/index.dat";
-pub const STASHD_P2P_ENDPOINT: &'static str = "lnp://{node_id}@0.0.0.0:13000";
 pub const STASHD_RPC_ENDPOINT: &'static str =
     "lnpz:{data_dir}/{network}/stashd.rpc";
-pub const STASHD_PUB_ENDPOINT: &'static str =
-    "lnpz:{data_dir}/{network}/stashd.pub";
 
 pub const FUNGIBLED_CACHE: &'static str = "{data_dir}/{network}/cache/fungible";
 pub const FUNGIBLED_RPC_ENDPOINT: &'static str =
     "lnpz:{data_dir}/{network}/fungibled.rpc";
-pub const FUNGIBLED_PUB_ENDPOINT: &'static str =
-    "lnpz:{data_dir}/{network}/fungibled.pub";
 
-pub const DEFAULT_ELECTRUM_ENDPOINT: &'static str = "pandora.network:60001";
+pub const DEFAULT_ELECTRUM_ENDPOINT: &'static str = "pandora.network:60601";

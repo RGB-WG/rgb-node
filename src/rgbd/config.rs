@@ -54,14 +54,6 @@ pub struct Opts {
     )]
     pub fungible_rpc_endpoint: String,
 
-    /// ZMQ socket address string for PUB/SUB API of fungibled
-    #[clap(
-        long = "fungible-pub",
-        default_value = FUNGIBLED_PUB_ENDPOINT,
-        env = "RGB_FUNGIBLED_PUB"
-    )]
-    pub fungible_pub_endpoint: String,
-
     /// ZMQ socket address string for REQ/REP API of stashd
     #[clap(
         long = "stash-rpc",
@@ -69,14 +61,6 @@ pub struct Opts {
         env = "RGB_STASHD_RPC"
     )]
     pub stash_rpc_endpoint: String,
-
-    /// ZMQ socket address string for PUB/SUB API of stashd
-    #[clap(
-        long = "stash-pub",
-        default_value = STASHD_PUB_ENDPOINT,
-        env = "RGB_STASHD_PUB"
-    )]
-    pub stash_pub_endpoint: String,
 
     /// Connection string to fungibled cache (exact format depends on used
     /// storage engine)
@@ -112,14 +96,6 @@ pub struct Opts {
     )]
     pub index: String,
 
-    /// LNP socket address string for P2P API of stashd
-    #[clap(
-        long = "bind",
-        default_value = STASHD_P2P_ENDPOINT,
-        env = "RGB_STASHD_BIND"
-    )]
-    pub p2p_endpoint: String,
-
     /// Run services as threads instead of daemons
     #[clap(short, long)]
     pub threaded: bool,
@@ -137,7 +113,9 @@ pub struct Opts {
     pub electrum_server: String,
 }
 
-#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
+#[derive(
+    Clap, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display,
+)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -172,14 +150,11 @@ pub struct Config {
     pub network: Chain,
     pub verbose: u8,
     pub fungible_rpc_endpoint: String,
-    pub fungible_pub_endpoint: String,
     pub stash_rpc_endpoint: String,
-    pub stash_pub_endpoint: String,
     pub cache: String,
     pub format: FileFormat,
     pub stash: String,
     pub index: String,
-    pub p2p_endpoint: String,
     pub electrum_server: String,
 }
 
@@ -192,14 +167,11 @@ impl From<Opts> for Config {
             network: opts.network,
             contracts: opts.contracts,
             fungible_rpc_endpoint: opts.fungible_rpc_endpoint,
-            fungible_pub_endpoint: opts.fungible_pub_endpoint,
             stash_rpc_endpoint: opts.stash_rpc_endpoint,
-            stash_pub_endpoint: opts.stash_pub_endpoint,
             cache: opts.cache,
             format: opts.format,
             stash: opts.stash,
             index: opts.index,
-            p2p_endpoint: opts.p2p_endpoint,
             verbose: opts.verbose,
             electrum_server: opts.electrum_server,
         }
@@ -219,9 +191,7 @@ impl Default for Config {
             contracts: vec![ContractName::from_str(RGB_CONTRACTS, false)
                 .expect("Error in RGB_CONTRACTS constant value")],
             fungible_rpc_endpoint: FUNGIBLED_RPC_ENDPOINT.to_string(),
-            fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT.to_string(),
             stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_string(),
-            stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_string(),
             cache: FUNGIBLED_CACHE.to_string(),
             #[cfg(feature = "serde_yaml")]
             format: FileFormat::Yaml,
@@ -229,7 +199,6 @@ impl Default for Config {
             format: FileFormat::StrictEncode,
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),
@@ -254,9 +223,7 @@ impl Default for Opts {
             contracts: vec![ContractName::from_str(RGB_CONTRACTS, false)
                 .expect("Error in RGB_CONTRACTS constant value")],
             fungible_rpc_endpoint: FUNGIBLED_RPC_ENDPOINT.to_string(),
-            fungible_pub_endpoint: FUNGIBLED_PUB_ENDPOINT.to_string(),
             stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_string(),
-            stash_pub_endpoint: STASHD_PUB_ENDPOINT.to_string(),
             cache: FUNGIBLED_CACHE.to_string(),
             #[cfg(feature = "serde_yaml")]
             format: FileFormat::Yaml,
@@ -264,7 +231,6 @@ impl Default for Opts {
             format: FileFormat::StrictEncode,
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            p2p_endpoint: STASHD_P2P_ENDPOINT.to_string(),
             network: RGB_NETWORK
                 .parse()
                 .expect("Error in RGB_NETWORK constant value"),

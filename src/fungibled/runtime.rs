@@ -51,18 +51,12 @@ pub struct Runtime {
     config: Config,
 
     /// Request-response API session
-    session_rpc:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
-
-    /// Publish-subscribe API session
-    session_pub:
+    fungible_rpc_server:
         session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// Stash RPC client session
-    stash_rpc: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
-
-    /// Publish-subscribe API socket
-    stash_sub: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    stash_rpc_client:
+        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// RGB fungible assets data cache: relational database sharing the client-
     /// friendly asset information with clients
@@ -101,13 +95,6 @@ impl Runtime {
             None,
         )?;
 
-        let session_pub = session::Raw::with_zmq_unencrypted(
-            ZmqType::Pub,
-            &config.pub_endpoint,
-            None,
-            None,
-        )?;
-
         let stash_rpc = session::Raw::with_zmq_unencrypted(
             ZmqType::Req,
             &config.stash_rpc,
@@ -115,19 +102,10 @@ impl Runtime {
             None,
         )?;
 
-        let stash_sub = session::Raw::with_zmq_unencrypted(
-            ZmqType::Sub,
-            &config.stash_sub,
-            None,
-            None,
-        )?;
-
         Ok(Self {
             config,
-            session_rpc,
-            session_pub,
-            stash_rpc,
-            stash_sub,
+            fungible_rpc_server: session_rpc,
+            stash_rpc_client: stash_rpc,
             cacher,
             unmarshaller: Request::create_unmarshaller(),
             reply_unmarshaller: Reply::create_unmarshaller(),
@@ -162,7 +140,7 @@ impl TryService for Runtime {
 impl Runtime {
     fn run(&mut self) -> Result<(), RuntimeError> {
         trace!("Awaiting for ZMQ RPC requests...");
-        let raw = self.session_rpc.recv_raw_message()?;
+        let raw = self.fungible_rpc_server.recv_raw_message()?;
         let reply = self.rpc_process(raw).unwrap_or_else(|err| err);
         trace!("Preparing ZMQ RPC reply: {:?}", reply);
         let data = reply.serialize();
@@ -170,7 +148,7 @@ impl Runtime {
             "Sending {} bytes back to the client over ZMQ RPC",
             data.len()
         );
-        self.session_rpc.send_raw_message(&data)?;
+        self.fungible_rpc_server.send_raw_message(&data)?;
         Ok(())
     }
 
@@ -522,8 +500,8 @@ impl Runtime {
             data.len(),
             data.to_bech32data()
         );
-        self.stash_rpc.send_raw_message(data.borrow())?;
-        let raw = self.stash_rpc.recv_raw_message()?;
+        self.stash_rpc_client.send_raw_message(data.borrow())?;
+        let raw = self.stash_rpc_client.recv_raw_message()?;
         let reply = &*self.reply_unmarshaller.unmarshall(&raw)?.clone();
         if let Reply::Failure(ref failmsg) = reply {
             error!("Stash daemon has returned failure code: {}", failmsg);
