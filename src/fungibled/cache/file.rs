@@ -225,18 +225,13 @@ impl Cache for FileCache {
         contract_id: ContractId,
     ) -> Result<BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>>, CacheError> {
         // Process known_allocation map to produce the intended map
-        let result: BTreeMap<bitcoin::OutPoint, Vec<AtomicValue>> = self
-            .asset(contract_id)?
-            .known_allocations()
-            .into_iter()
-            .map(|(outpoint, allocations)| {
-                (
-                    *outpoint,
-                    allocations.into_iter().map(|a| a.value().value).collect(),
-                )
-            })
-            .collect();
-
+        let mut result = BTreeMap::<bitcoin::OutPoint, Vec<AtomicValue>>::new();
+        for allocation in self.asset(contract_id)?.known_allocations() {
+            result
+                .entry(*allocation.outpoint())
+                .or_insert(default!())
+                .push(allocation.value().value);
+        }
         Ok(result)
     }
 
@@ -246,18 +241,15 @@ impl Cache for FileCache {
     ) -> Result<BTreeMap<ContractId, Vec<AtomicValue>>, CacheError> {
         let mut result = BTreeMap::new();
 
-        for asset in self.assets()?.into_iter().cloned().collect::<Vec<Asset>>()
-        {
-            let allocations: Vec<AtomicValue> =
-                match asset.known_allocations().get(&outpoint) {
-                    Some(allocations) => allocations
-                        .into_iter()
-                        .map(|alloc| alloc.value().value)
-                        .collect(),
-                    None => continue,
-                };
-
-            result.insert(*asset.id(), allocations);
+        for asset in self.assets()? {
+            result.insert(
+                *asset.id(),
+                asset
+                    .allocations(&outpoint)
+                    .into_iter()
+                    .map(|a| a.value().value)
+                    .collect(),
+            );
         }
 
         Ok(result)

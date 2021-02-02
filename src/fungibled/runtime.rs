@@ -488,11 +488,7 @@ impl Runtime {
             .collect::<Vec<_>>();
         for asset in assets {
             let mut asset = asset.clone();
-            for allocation in asset
-                .clone()
-                .allocations(&outpoint)
-                .ok_or(ServiceErrorDomain::Cache)?
-            {
+            for allocation in asset.clone().allocations(&outpoint) {
                 asset.remove_allocation(
                     outpoint,
                     *allocation.node_id(),

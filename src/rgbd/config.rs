@@ -11,22 +11,23 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::{ArgEnum, Clap};
+use clap::{AppSettings, ArgEnum, Clap};
 use lnpbp::Chain;
 use std::path::PathBuf;
 
+use microservices::FileFormat;
 #[cfg(feature = "serde")]
 use serde::Deserialize;
 
 use crate::constants::*;
-use microservices::FileFormat;
 
 #[derive(Clap)]
 #[clap(
     name = "rgbd",
-    version = "0.1.0",
-    author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
-    about = "RGB main daemon; part of RGB suite"
+    bin_name = "rgbd",
+    author,
+    version,
+    setting = AppSettings::ColoredHelp
 )]
 pub struct Opts {
     /// Sets verbosity level; can be used multiple times to increase verbosity
