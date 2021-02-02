@@ -22,6 +22,7 @@ use bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
 use lnpbp::seals::OutpointReveal;
 use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
+use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::{
     AccountingValue, Asset, ConsealCoins, Invoice, Outpoint, SealCoins,
@@ -31,7 +32,6 @@ use super::{Error, OutputFormat, Runtime};
 use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
 use crate::rpc::{reply, Reply};
 use crate::util::file::ReadWrite;
-use microservices::FileFormat;
 
 #[derive(Clap, Clone, Debug, Display)]
 #[display(Debug)]
@@ -393,17 +393,29 @@ impl Issue {
 
         let reply = runtime.issue(self)?;
         info!("Reply: {}", reply);
-        // TODO: Wait for the information from push notification
 
-        /*let (asset, genesis) = match reply {
-
+        let asset = match &*reply {
+            Reply::Failure(failure) => {
+                eprintln!("Issue failed: {}", failure);
+                return Ok(());
+            }
+            Reply::Asset(asset) => asset,
+            _ => {
+                eprintln!("Unrecognized RGB node reply");
+                Err(Error::DataInconsistency)?
+            }
         };
 
-        debug!("Asset information:\n {:?}\n", asset);
-        trace!("Genesis contract:\n {:?}\n", genesis);
-
-        eprintln!("Asset successfully issued. Use this information for sharing:");
-        println!("{}", genesis);*/
+        eprintln!(
+            "Asset successfully issued. Use this information for sharing:"
+        );
+        #[cfg(feature = "serde")]
+        eprintln!(
+            "Asset information:\n {}\n",
+            serde_yaml::to_string(asset)
+                .expect("broken asset YAML serialization")
+        );
+        println!("{}", asset.genesis());
 
         Ok(())
     }

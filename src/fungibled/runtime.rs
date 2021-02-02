@@ -197,9 +197,9 @@ impl Runtime {
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis),
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id),
             Request::Sync(data_format) => self.rpc_sync(*data_format),
-            Request::Assets(outpoint) => self.rpc_assets(*outpoint),
+            Request::Assets(outpoint) => self.rpc_outpoint_assets(*outpoint),
             Request::Allocations(contract_id) => {
-                self.rpc_allocations(*contract_id)
+                self.rpc_asset_allocations(*contract_id)
             }
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
@@ -242,11 +242,11 @@ impl Runtime {
             issue.epoch,
         )?;
 
-        self.import_asset(asset, genesis)?;
+        self.import_asset(asset.clone(), genesis)?;
 
         // TODO: Send push request to client informing about cache update
 
-        Ok(Reply::Success)
+        Ok(Reply::Asset(asset))
     }
 
     fn rpc_transfer(
@@ -323,22 +323,22 @@ impl Runtime {
         Ok(Reply::Sync(reply::SyncFormat(data_format, data)))
     }
 
-    fn rpc_assets(
+    fn rpc_outpoint_assets(
         &mut self,
         outpoint: OutPoint,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ASSETS");
         let data = self.cacher.outpoint_assets(outpoint)?;
-        Ok(Reply::Assets(data))
+        Ok(Reply::OutpointAssets(data))
     }
 
-    fn rpc_allocations(
+    fn rpc_asset_allocations(
         &mut self,
         contract_id: ContractId,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ALLOCATIONS");
         let data = self.cacher.asset_allocations(contract_id)?;
-        Ok(Reply::Allocations(data))
+        Ok(Reply::AssetAllocations(data))
     }
 
     fn rpc_import_asset(

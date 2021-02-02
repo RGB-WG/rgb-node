@@ -15,9 +15,9 @@ use std::collections::BTreeMap;
 
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
-use rgb::{AtomicValue, Consignment, ContractId};
-
 use microservices::FileFormat;
+use rgb::{AtomicValue, Consignment, ContractId};
+use rgb20::Asset;
 
 #[cfg(feature = "node")]
 use crate::error::RuntimeError;
@@ -42,16 +42,20 @@ pub enum Reply {
     #[display("noop()")]
     Nothing,
 
-    #[api(type = 0xFF01)]
+    #[api(type = 0xFF00)]
     Sync(crate::rpc::reply::SyncFormat),
 
+    #[api(type = 0xFF01)]
+    #[display("asset({0})")]
+    Asset(Asset),
+
     #[api(type = 0xFF02)]
-    #[display("assets(...)")]
-    Assets(BTreeMap<ContractId, Vec<AtomicValue>>),
+    #[display("outpoint_assets(...)")]
+    OutpointAssets(BTreeMap<ContractId, Vec<AtomicValue>>),
 
     #[api(type = 0xFF03)]
-    #[display("allocations(...)")]
-    Allocations(BTreeMap<OutPoint, Vec<AtomicValue>>),
+    #[display("asset_allocations(...)")]
+    AssetAllocations(BTreeMap<OutPoint, Vec<AtomicValue>>),
 
     #[api(type = 0xFF04)]
     #[display("schema_ids(...)")]

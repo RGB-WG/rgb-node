@@ -23,7 +23,7 @@ use internet2::{Session, TypedEnum, Unmarshall};
 use lnpbp::seals::OutpointReveal;
 use lnpbp::Chain;
 use rgb::{AtomicValue, Consignment, ContractId, Genesis, PSBT_OUT_PUBKEY};
-use rgb20::{ConsealCoins, Invoice, Outpoint, OutpointCoins, SealCoins};
+use rgb20::{Asset, ConsealCoins, Invoice, Outpoint, OutpointCoins, SealCoins};
 
 use super::{Error, Runtime};
 use crate::error::ServiceErrorDomain;
@@ -58,7 +58,7 @@ impl Runtime {
         inflation: Vec<OutpointCoins>,
         renomination: Option<OutPoint>,
         epoch: Option<OutPoint>,
-    ) -> Result<(), Error> {
+    ) -> Result<Asset, Error> {
         if self.config.network != chain {
             Err(Error::WrongNetwork)?;
         }
@@ -73,7 +73,7 @@ impl Runtime {
             epoch,
         });
         match &*self.command(command)? {
-            Reply::Success => Ok(()),
+            Reply::Asset(asset) => Ok(asset.clone()),
             Reply::Failure(failmsg) => Err(Error::Reply(failmsg.clone())),
             _ => Err(Error::UnexpectedResponse),
         }
@@ -190,7 +190,7 @@ impl Runtime {
     ) -> Result<BTreeMap<OutPoint, Vec<AtomicValue>>, Error> {
         match &*self.command(Request::Allocations(contract_id))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Allocations(response) => Ok(response.clone()),
+            Reply::AssetAllocations(response) => Ok(response.clone()),
             _ => Err(Error::UnexpectedResponse),
         }
     }
@@ -201,7 +201,7 @@ impl Runtime {
     ) -> Result<BTreeMap<ContractId, Vec<AtomicValue>>, Error> {
         match &*self.command(Request::Assets(outpoint))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Assets(response) => Ok(response.clone()),
+            Reply::OutpointAssets(response) => Ok(response.clone()),
             _ => Err(Error::UnexpectedResponse),
         }
     }
@@ -217,12 +217,12 @@ impl Runtime {
         }
     }
 
-    pub fn import_asset(&mut self, genesis: Genesis) -> Result<(), Error> {
+    pub fn import_asset(&mut self, genesis: Genesis) -> Result<Asset, Error> {
         match &*self.command(Request::ImportAsset(genesis))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Success => {
+            Reply::Asset(asset) => {
                 info!("Asset import succeeded");
-                Ok(())
+                Ok(asset.clone())
             }
             _ => Err(Error::UnexpectedResponse),
         }
