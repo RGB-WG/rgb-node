@@ -324,8 +324,9 @@ impl Runtime {
         genesis: &Genesis,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got IMPORT_ASSET");
-        self.import_asset(Asset::try_from(genesis.clone())?, genesis.clone())?;
-        Ok(Reply::Success)
+        let asset = Asset::try_from(genesis.clone())?;
+        self.import_asset(asset.clone(), genesis.clone())?;
+        Ok(Reply::Asset(asset))
     }
 
     fn rpc_export_asset(

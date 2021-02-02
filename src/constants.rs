@@ -20,9 +20,8 @@ pub const RGB_BIN_DIR: &'static str = "/usr/local/bin";
 pub const RGB_CONTRACTS: &'static str = "fungible";
 pub const RGB_NETWORK: &'static str = "signet";
 
-pub const STASHD_STASH: &'static str = "{data_dir}/{network}/stash/{id}/";
-pub const STASHD_INDEX: &'static str =
-    "{data_dir}/{network}/stash/{id}/index.dat";
+pub const STASHD_STASH: &'static str = "{data_dir}/{network}/stash/";
+pub const STASHD_INDEX: &'static str = "{data_dir}/{network}/stash/index.dat";
 pub const STASHD_RPC_ENDPOINT: &'static str =
     "lnpz:{data_dir}/{network}/stashd.rpc";
 
