@@ -11,10 +11,9 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::str::FromStr;
 use std::thread;
 
-use internet2::zmqsocket::ZmqType;
+use internet2::ZmqType;
 use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Unmarshaller,
 };
@@ -49,8 +48,8 @@ impl Runtime {
                     .ok_or(BootstrapError::ArgParseError(s!(
                         "Fungible endpoint is unconfigured"
                     )))?
-                    .clone(),
-                stash_rpc_endpoint: config.stash_rpc_endpoint.clone(),
+                    .to_string(),
+                stash_rpc_endpoint: config.stash_rpc_endpoint.to_string(),
                 network: config.network.clone(),
                 threaded: true,
                 ..rgbd::Opts::default()
@@ -66,7 +65,6 @@ impl Runtime {
             config
                 .contract_endpoints
                 .get(&ContractName::Fungible)
-                .map(|s| transport::ZmqSocketAddr::from_str(&s).unwrap())
                 .as_ref()
                 .expect(
                     "Fungible engine is not connected in the configuration",

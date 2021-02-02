@@ -12,12 +12,15 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::{AppSettings, ArgEnum, Clap};
-use lnpbp::Chain;
-use std::path::PathBuf;
-
-use microservices::FileFormat;
 #[cfg(feature = "serde")]
 use serde::Deserialize;
+use std::fmt::Display;
+use std::path::PathBuf;
+use std::str::FromStr;
+
+use internet2::ZmqSocketAddr;
+use lnpbp::Chain;
+use microservices::FileFormat;
 
 use crate::constants::*;
 
@@ -149,8 +152,8 @@ pub struct Config {
     pub contracts: Vec<ContractName>,
     pub network: Chain,
     pub verbose: u8,
-    pub fungible_rpc_endpoint: String,
-    pub stash_rpc_endpoint: String,
+    pub fungible_rpc_endpoint: ZmqSocketAddr,
+    pub stash_rpc_endpoint: ZmqSocketAddr,
     pub cache: String,
     pub format: FileFormat,
     pub stash: String,
@@ -160,21 +163,23 @@ pub struct Config {
 
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
-        Self {
-            data_dir: opts.data_dir.into(),
-            bin_dir: opts.bin_dir.into(),
+        let mut me = Self {
             threaded: opts.threaded,
             network: opts.network,
             contracts: opts.contracts,
-            fungible_rpc_endpoint: opts.fungible_rpc_endpoint,
-            stash_rpc_endpoint: opts.stash_rpc_endpoint,
-            cache: opts.cache,
             format: opts.format,
-            stash: opts.stash,
-            index: opts.index,
             verbose: opts.verbose,
             electrum_server: opts.electrum_server,
-        }
+            ..Default::default()
+        };
+        me.bin_dir = me.parse_param(opts.bin_dir);
+        me.data_dir = me.parse_param(opts.data_dir);
+        me.cache = me.parse_param(opts.cache);
+        me.stash = me.parse_param(opts.stash);
+        me.index = me.parse_param(opts.index);
+        me.fungible_rpc_endpoint = me.parse_param(opts.fungible_rpc_endpoint);
+        me.stash_rpc_endpoint = me.parse_param(opts.stash_rpc_endpoint);
+        me
     }
 }
 
@@ -190,8 +195,12 @@ impl Default for Config {
             threaded: false,
             contracts: vec![ContractName::from_str(RGB_CONTRACTS, false)
                 .expect("Error in RGB_CONTRACTS constant value")],
-            fungible_rpc_endpoint: FUNGIBLED_RPC_ENDPOINT.to_string(),
-            stash_rpc_endpoint: STASHD_RPC_ENDPOINT.to_string(),
+            fungible_rpc_endpoint: FUNGIBLED_RPC_ENDPOINT
+                .parse()
+                .expect("Error in FUNGIBLED_RPC_ENDPOINT value"),
+            stash_rpc_endpoint: STASHD_RPC_ENDPOINT
+                .parse()
+                .expect("Error in STASHD_RPC_ENDPOINT value"),
             cache: FUNGIBLED_CACHE.to_string(),
             #[cfg(feature = "serde_yaml")]
             format: FileFormat::Yaml,
@@ -239,5 +248,22 @@ impl Default for Opts {
                 .parse()
                 .expect("Error in DEFAULT_ELECTRUM_ENDPOINT constant value"),
         }
+    }
+}
+
+impl Config {
+    pub fn parse_param<T>(&self, param: String) -> T
+    where
+        T: FromStr,
+        T::Err: Display,
+    {
+        param
+            .replace("{id}", "default")
+            .replace("{network}", &self.network.to_string())
+            .replace("{data_dir}", self.data_dir.to_str().unwrap())
+            .parse()
+            .unwrap_or_else(|err| {
+                panic!("Error parsing parameter `{}`: {}", param, err)
+            })
     }
 }
