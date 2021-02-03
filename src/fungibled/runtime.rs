@@ -272,8 +272,7 @@ impl Runtime {
         consignment: &Consignment,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got VALIDATE");
-        self.validate(consignment.clone())?;
-        Ok(Reply::Success)
+        self.validate(consignment.clone())
     }
 
     fn rpc_accept(
@@ -389,7 +388,7 @@ impl Runtime {
             self.stash_req_rep(rpc::stash::Request::Validate(consignment))?;
 
         match reply {
-            Reply::Success | Reply::Failure(_) => Ok(reply),
+            Reply::ValidationStatus(_) => Ok(reply),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
