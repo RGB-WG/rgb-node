@@ -201,7 +201,10 @@ impl Runtime {
                 .allocation
                 .into_iter()
                 .map(|OutpointCoins { coins, outpoint }| {
-                    (outpoint, AccountingAmount::transmutate(precision, coins))
+                    (
+                        outpoint,
+                        AccountingAmount::transmutate_from(precision, coins),
+                    )
                 })
                 .collect(),
             issue.inflation.into_iter().fold(
@@ -209,7 +212,8 @@ impl Runtime {
                 |mut map, OutpointCoins { coins, outpoint }| {
                     // We may have only a single secondary issuance right per
                     // outpoint, so folding all outpoints
-                    let coins = AccountingAmount::transmutate(precision, coins);
+                    let coins =
+                        AccountingAmount::transmutate_from(precision, coins);
                     map.entry(outpoint)
                         .and_modify(|amount| *amount += coins)
                         .or_insert(coins);

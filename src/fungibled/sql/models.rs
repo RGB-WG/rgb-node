@@ -84,8 +84,7 @@ impl SqlAsset {
         &self,
         connection: &SqliteConnection,
     ) -> Result<Asset, SqlCacheError> {
-        let (known_inflation, unknown_inflation) =
-            read_inflation(self, connection)?;
+        let known_inflation = read_inflation(self, connection)?;
 
         let known_table_issues =
             SqlIssue::belonging_to(self).load::<SqlIssue>(connection)?;
@@ -108,7 +107,6 @@ impl SqlAsset {
             self.asset_date,
             known_issues,
             known_inflation,
-            unknown_inflation,
             read_allocations(&self, connection)?,
         ))
     }
@@ -172,6 +170,7 @@ impl SqlInflation {
             result.push(sql_inflation);
         }
 
+        /* Unknown inflation is not used anymore
         // We need to keep track on the last added item id
         // in the above inflation entry as we need to add
         // unknown inflation entry next.
@@ -191,6 +190,7 @@ impl SqlInflation {
             outpoint_vout: None,
             accounting_amount: *asset.unknown_inflation() as i64,
         });
+         */
 
         Ok(result)
     }
@@ -204,16 +204,14 @@ impl SqlInflation {
 pub fn read_inflation(
     asset: &SqlAsset,
     connection: &SqliteConnection,
-) -> Result<(BTreeMap<OutPoint, AtomicValue>, AtomicValue), SqlCacheError> {
+) -> Result<BTreeMap<OutPoint, AtomicValue>, SqlCacheError> {
     let inflations =
         SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
 
     let mut known_inflation_map = BTreeMap::new();
 
-    let mut unknown = 0;
-
-    for known_inflation in inflations {
-        match (known_inflation.outpoint_txid, known_inflation.outpoint_vout) {
+    for inflation in inflations {
+        match (inflation.outpoint_txid, inflation.outpoint_vout) {
             // If both txid and vout are present add them to known_inflation_map
             (Some(txid), Some(vout)) => {
                 known_inflation_map.insert(
@@ -221,17 +219,14 @@ pub fn read_inflation(
                         txid: Txid::from_hex(&txid[..])?,
                         vout: vout as u32,
                     },
-                    known_inflation.accounting_amount as AtomicValue,
+                    inflation.accounting_amount as AtomicValue,
                 );
             }
-            // For everything else, add them to unknown inflation
-            _ => {
-                unknown = known_inflation.accounting_amount as AtomicValue;
-            }
+            _ => return Err(SqlCacheError::NotFound),
         }
     }
 
-    Ok((known_inflation_map, unknown))
+    Ok(known_inflation_map)
 }
 
 #[derive(Queryable, Insertable, Identifiable, Associations, Clone, Debug)]

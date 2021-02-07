@@ -487,7 +487,7 @@ dependencies = [
 [[package]]
 name = "descriptor-wallet"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/descriptor-wallet#2ccae940f3ca1d96f281b42d0b78bf4105c3c269"
+source = "git+https://github.com/LNP-BP/descriptor-wallet#3f8af7624109a697a9100fe26c94aec016953e29"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -808,9 +808,9 @@ checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "idna"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02e2673c30ee86b5b96a9cb52ad15718aa1f966f5ab9ad54a8b95d5ca33120a9"
+checksum = "de910d521f7cc3135c4de8db1cb910e0b5ed1dc6f57c381cd07e8e661ce10094"
 dependencies = [
  "matches",
  "unicode-bidi",
@@ -870,7 +870,7 @@ dependencies = [
 [[package]]
 name = "internet2"
 version = "0.4.0-alpha.2"
-source = "git+https://github.com/internet2-org/rust-internet2#ea2c7cad91da47eb92557a0e578607411eef6428"
+source = "git+https://github.com/internet2-org/rust-internet2#e4c741cd0579d5f03f81f3f6a0ca57ee0a9bb56e"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1069,8 +1069,8 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.4.0-alpha.1"
-source = "git+https://github.com/internet2-org/rust-internet2#ea2c7cad91da47eb92557a0e578607411eef6428"
+version = "0.4.0-beta"
+source = "git+https://github.com/internet2-org/rust-internet2#e4c741cd0579d5f03f81f3f6a0ca57ee0a9bb56e"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1565,7 +1565,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
+source = "git+https://github.com/rgb-org/rgb-core#39dfc511d167039d346408fab61ccff0d46e78b9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1594,7 +1594,7 @@ dependencies = [
 [[package]]
 name = "rgb20"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
+source = "git+https://github.com/rgb-org/rgb-core#39dfc511d167039d346408fab61ccff0d46e78b9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1611,7 +1611,7 @@ dependencies = [
 [[package]]
 name = "rgb21"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
+source = "git+https://github.com/rgb-org/rgb-core#39dfc511d167039d346408fab61ccff0d46e78b9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1624,7 +1624,7 @@ dependencies = [
 [[package]]
 name = "rgb22"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
+source = "git+https://github.com/rgb-org/rgb-core#39dfc511d167039d346408fab61ccff0d46e78b9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1637,7 +1637,7 @@ dependencies = [
 [[package]]
 name = "rgb23"
 version = "0.4.0-alpha.1+1"
-source = "git+https://github.com/rgb-org/rgb-core#46d92fc46ec079e10eeb5d3973186f79bce58c0c"
+source = "git+https://github.com/rgb-org/rgb-core#39dfc511d167039d346408fab61ccff0d46e78b9"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1826,9 +1826,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.61"
+version = "1.0.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fceb2595057b6891a4ee808f70054bd2d12f0e97f1cbb78689b59f676df325a"
+checksum = "ea1c6153794552ea7cf7cf63b1231a25de00ec90db326ba6264440fa08e31486"
 dependencies = [
  "itoa",
  "ryu",
@@ -2112,9 +2112,9 @@ dependencies = [
 
 [[package]]
 name = "thread_local"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8208a331e1cb318dd5bd76951d2b8fc48ca38a69f5f4e4af1b6a9f8c6236915"
+checksum = "8018d24e04c95ac8790716a5987d0fec4f8b27249ffa0f7d33f1369bdfb88cbd"
 dependencies = [
  "once_cell",
 ]
