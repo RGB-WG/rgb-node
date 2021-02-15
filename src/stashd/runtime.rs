@@ -21,8 +21,8 @@ use internet2::{
 };
 use microservices::node::TryService;
 use rgb::{
-    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node,
-    NodeId, Schema, SchemaId, Stash,
+    validation, Anchor, Consignment, ContractId, Genesis, Node, NodeId, Schema,
+    SchemaId, Stash,
 };
 
 use super::electrum::ElectrumTxResolver;
@@ -67,7 +67,7 @@ pub struct Runtime {
     unmarshaller: Unmarshaller<Request>,
 
     /// Electrum client handle to fetch transactions
-    electrum: ElectrumTxResolver,
+    pub(super) electrum: ElectrumTxResolver,
 }
 
 impl Runtime {
@@ -79,7 +79,7 @@ impl Runtime {
         &self.indexer
     }
 
-    fn storage(&self) -> &impl Store {
+    pub fn storage(&self) -> &impl Store {
         &self.storage
     }
 
@@ -285,54 +285,10 @@ impl Runtime {
         debug!("Got MERGE CONSIGNMENT");
 
         let known_seals = &merge.reveal_outpoints;
+        let consignment = &merge.consignment;
 
-        // [PRIVACY]:
-        // Update transition data with the revealed state information that we
-        // kept since we did an invoice (and the sender did not know).
-        let reveal_known_seals =
-            |(_, assignments): (&usize, &mut Assignments)| match assignments {
-                Assignments::Declarative(_) => {}
-                Assignments::DiscreteFiniteField(set) => {
-                    *set = set
-                        .iter()
-                        .map(|a| {
-                            let mut a = a.clone();
-                            a.reveal_seals(known_seals.iter());
-                            a
-                        })
-                        .collect();
-                }
-                Assignments::CustomData(set) => {
-                    *set = set
-                        .iter()
-                        .map(|a| {
-                            let mut a = a.clone();
-                            a.reveal_seals(known_seals.iter());
-                            a
-                        })
-                        .collect();
-                }
-            };
-
-        for (anchor, transition) in &merge.consignment.state_transitions {
-            let mut transition = transition.clone();
-            transition
-                .owned_rights_mut()
-                .into_iter()
-                .for_each(reveal_known_seals);
-            // Store the transition and the anchor data in the stash
-            self.storage.add_anchor(&anchor)?;
-            self.storage.add_transition(&transition)?;
-        }
-
-        for extension in &merge.consignment.state_extensions {
-            let mut extension = extension.clone();
-            extension
-                .owned_rights_mut()
-                .into_iter()
-                .for_each(reveal_known_seals);
-            self.storage.add_extension(&extension)?;
-        }
+        self.merge(consignment, known_seals)
+            .map_err(|_| ServiceErrorDomain::Stash)?;
 
         Ok(Reply::Success)
     }
