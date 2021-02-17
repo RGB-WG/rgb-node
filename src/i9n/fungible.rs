@@ -150,12 +150,15 @@ impl Runtime {
         }
     }
 
-    pub fn validate(&mut self, consignment: Consignment) -> Result<(), Error> {
+    pub fn validate(
+        &mut self,
+        consignment: Consignment,
+    ) -> Result<rgb::validation::Status, Error> {
         match &*self.command(Request::Validate(consignment))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
-            Reply::Success => {
+            Reply::ValidationStatus(status) => {
                 info!("Validation succeeded");
-                Ok(())
+                Ok(status.clone())
             }
             _ => Err(Error::UnexpectedResponse),
         }
