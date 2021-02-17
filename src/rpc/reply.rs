@@ -121,7 +121,7 @@ pub struct SyncFormat(pub FileFormat, pub Vec<u8>);
 #[display("transfer(...)")]
 pub struct Transfer {
     pub consignment: Consignment,
-    pub psbt: Psbt,
+    pub witness: Psbt,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]

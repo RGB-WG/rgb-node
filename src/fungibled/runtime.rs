@@ -28,7 +28,7 @@ use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{Assignments, Consignment, ContractId, Genesis, Node};
 use rgb20::schema::OwnedRightsType;
-use rgb20::{schema, AccountingAmount, Asset, OutpointCoins};
+use rgb20::{schema, Asset, OutpointCoins};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::Config;
@@ -190,7 +190,6 @@ impl Runtime {
         debug!("Got ISSUE {}", issue);
 
         let issue = issue.clone();
-        let precision = issue.precision;
         let (asset, genesis) = rgb20::issue(
             self.config.network.clone(),
             issue.ticker,
@@ -200,20 +199,13 @@ impl Runtime {
             issue
                 .allocation
                 .into_iter()
-                .map(|OutpointCoins { coins, outpoint }| {
-                    (
-                        outpoint,
-                        AccountingAmount::transmutate_from(precision, coins),
-                    )
-                })
+                .map(|OutpointCoins { coins, outpoint }| (outpoint, coins))
                 .collect(),
             issue.inflation.into_iter().fold(
                 BTreeMap::new(),
                 |mut map, OutpointCoins { coins, outpoint }| {
                     // We may have only a single secondary issuance right per
                     // outpoint, so folding all outpoints
-                    let coins =
-                        AccountingAmount::transmutate_from(precision, coins);
                     map.entry(outpoint)
                         .and_modify(|amount| *amount += coins)
                         .or_insert(coins);
@@ -248,8 +240,8 @@ impl Runtime {
         let transition = rgb20::transfer(
             &mut asset,
             transfer.inputs.clone(),
-            transfer.ours.clone(),
-            transfer.theirs.clone(),
+            transfer.payment.clone(),
+            transfer.change.clone(),
         )?;
         debug!("State transition: {}", transition);
 
@@ -260,12 +252,8 @@ impl Runtime {
             transition,
             // TODO: Collect blank state transitions and pass it here
             other_transition_ids: bmap![],
-            outpoints: transfer
-                .theirs
-                .iter()
-                .map(|o| (o.seal_confidential))
-                .collect(),
-            psbt: transfer.psbt.clone(),
+            outpoints: transfer.payment.keys().copied().collect(),
+            psbt: transfer.witness.clone(),
         })?;
 
         Ok(reply)
@@ -470,12 +458,12 @@ impl Runtime {
             .collect::<Vec<_>>();
         for asset in assets {
             let mut asset = asset.clone();
-            for allocation in asset.clone().allocations(&outpoint) {
+            for allocation in asset.clone().allocations(outpoint) {
                 asset.remove_allocation(
                     outpoint,
                     *allocation.node_id(),
                     *allocation.index(),
-                    allocation.confidential_amount().clone(),
+                    allocation.revealed_amount().clone(),
                 );
                 removal_list.push((*allocation.node_id(), *allocation.index()));
             }

@@ -13,12 +13,13 @@
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use lnpbp::seals::OutpointReveal;
-use rgb::{Consignment, ContractId};
-use rgb20::{ConsealCoins, OutpointCoins, SealCoins};
+use lnpbp::seals::{OutpointHash, OutpointReveal};
+use rgb::{AtomicValue, Consignment, ContractId, SealDefinition};
+use rgb20::OutpointCoins;
 
 use microservices::FileFormat;
 
@@ -120,22 +121,22 @@ pub struct TransferApi {
     pub contract_id: ContractId,
 
     /// Base layer transaction structure to use
-    pub psbt: PartiallySignedTransaction,
+    pub witness: PartiallySignedTransaction,
 
     /// Asset input: unspent transaction outputs
-    pub inputs: Vec<OutPoint>,
-
-    /// Asset change allocations
-    ///
-    /// Here we always know an explicit outpoint that will contain the assets
-    pub ours: Vec<SealCoins>,
+    pub inputs: BTreeSet<OutPoint>,
 
     /// Receiver's allocations.
     ///
     /// They are kept separate from change allocations since here we do not
     /// know the actual seals and only know hashes derived from seal data and
     /// blinding entropy.
-    pub theirs: Vec<ConsealCoins>,
+    pub payment: BTreeMap<OutpointHash, AtomicValue>,
+
+    /// Asset change allocations
+    ///
+    /// Here we always know an explicit outpoint that will contain the assets
+    pub change: BTreeMap<SealDefinition, AtomicValue>,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]

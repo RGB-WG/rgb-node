@@ -20,13 +20,11 @@ use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use lnpbp::client_side_validation::Conceal;
-use lnpbp::seals::OutpointReveal;
+use lnpbp::seals::{OutpointHash, OutpointReveal};
 use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
 use microservices::FileFormat;
 use rgb::prelude::*;
-use rgb20::{
-    AccountingValue, Asset, ConsealCoins, Invoice, Outpoint, SealCoins,
-};
+use rgb20::{AccountingValue, Asset, Invoice, Outpoint, SealCoins};
 
 use super::{Error, OutputFormat, Runtime};
 use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
@@ -120,8 +118,14 @@ pub struct TransferCli {
     #[clap(short, long)]
     pub allocate: Vec<SealCoins>,
 
-    /// Invoice to pay
-    pub invoice: Invoice,
+    /// Whom to pay
+    pub receiver: OutpointHash,
+
+    /// Amount to pay, in atomic (non-float) units
+    pub amount: AtomicValue,
+
+    /// Which asset to use for the payment
+    pub asset: ContractId,
 
     /// Read partially-signed transaction prototype
     pub prototype: PathBuf,
@@ -448,23 +452,6 @@ impl TransferCli {
         info!("Transferring asset ...");
         debug!("{}", self.clone());
 
-        let seal_confidential = match self.invoice.outpoint {
-            Outpoint::BlindedUtxo(outpoint_hash) => outpoint_hash,
-            Outpoint::Address(_address) => {
-                // To do a pay-to-address, we need to spend some bitcoins,
-                // which we have to take from somewhere. While payee can
-                // provide us with additional input, it's not part of the
-                // invoicing protocol + does not make a lot of sense, since
-                // the same input can be simply used by Utxo scheme
-                unimplemented!();
-                SealDefinition::WitnessVout {
-                    vout: 0,
-                    blinding: 0,
-                }
-                .conceal()
-            }
-        };
-
         debug!(
             "Reading partially-signed transaction from file {:?}",
             self.prototype
@@ -505,14 +492,17 @@ impl TransferCli {
         trace!("{:?}", psbt);
 
         let api = TransferApi {
-            psbt,
-            contract_id: self.invoice.contract_id,
-            inputs: self.inputs,
-            ours: self.allocate,
-            theirs: vec![ConsealCoins {
-                coins: self.invoice.amount,
-                seal_confidential,
-            }],
+            witness: psbt,
+            contract_id: self.asset,
+            inputs: self.inputs.into_iter().collect(),
+            change: self
+                .allocate
+                .into_iter()
+                .map(|seal_coins| {
+                    (seal_coins.seal_definition(), seal_coins.coins)
+                })
+                .collect(),
+            payment: bmap! { self.receiver => self.amount },
         };
 
         let reply = runtime.transfer(api)?;
@@ -526,7 +516,7 @@ impl TransferCli {
                 transfer.consignment.write_file(self.consignment.clone())?;
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
-                transfer.psbt.consensus_encode(out_file).map_err(|err| {
+                transfer.witness.consensus_encode(out_file).map_err(|err| {
                     bitcoin::consensus::encode::Error::Io(err)
                 })?;
                 println!(

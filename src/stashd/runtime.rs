@@ -249,11 +249,14 @@ impl Runtime {
                 request.contract_id,
                 &request.transition,
                 Some(&anchor),
-                &request.outpoints.clone(),
+                &request.outpoints,
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
-        Ok(Reply::Transfer(reply::Transfer { consignment, psbt }))
+        Ok(Reply::Transfer(reply::Transfer {
+            consignment,
+            witness: psbt,
+        }))
     }
 
     fn rpc_validate(

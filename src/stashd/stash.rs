@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::VecDeque;
+use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
 use lnpbp::seals::OutpointHash;
@@ -111,9 +111,10 @@ impl Stash for Runtime {
         contract_id: ContractId,
         node: &impl Node,
         anchor: Option<&Anchor>,
-        expose: &Vec<OutpointHash>,
+        expose: &BTreeSet<OutpointHash>,
     ) -> Result<Consignment, Error> {
         let genesis = self.storage.genesis(&contract_id)?;
+        let expose = expose.iter().copied().collect();
 
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];

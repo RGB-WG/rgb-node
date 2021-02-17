@@ -305,7 +305,7 @@ impl Cache for SqlCache {
             result
                 .entry(*allocation.outpoint())
                 .or_insert(default!())
-                .push(allocation.confidential_amount().value);
+                .push(allocation.revealed_amount().value);
         }
         Ok(result)
     }

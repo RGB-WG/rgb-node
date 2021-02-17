@@ -11,29 +11,29 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::BTreeMap;
-use std::fs::File;
-use std::path::PathBuf;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use bitcoin::consensus::encode::{deserialize, Encodable};
+use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use internet2::{Session, TypedEnum, Unmarshall};
-use lnpbp::seals::OutpointReveal;
+use lnpbp::seals::{OutpointHash, OutpointReveal};
 use lnpbp::Chain;
-use rgb::{AtomicValue, Consignment, ContractId, Genesis, PSBT_OUT_PUBKEY};
-use rgb20::{Asset, ConsealCoins, Invoice, Outpoint, OutpointCoins, SealCoins};
+use microservices::FileFormat;
+use rgb::{
+    AtomicValue, Consignment, ContractId, Genesis, SealDefinition,
+    PSBT_OUT_PUBKEY,
+};
+use rgb20::{Asset, OutpointCoins};
 
 use super::{Error, Runtime};
 use crate::error::ServiceErrorDomain;
+use crate::rpc::reply::Transfer;
 use crate::rpc::{
     fungible::AcceptApi, fungible::Issue, fungible::Request,
     fungible::TransferApi, reply, Reply,
 };
-use crate::util::file::ReadWrite;
-use bitcoin::util::psbt::raw::ProprietaryKey;
-use microservices::FileFormat;
 
 impl Runtime {
     fn command(
@@ -81,22 +81,13 @@ impl Runtime {
 
     pub fn transfer(
         &mut self,
-        inputs: Vec<OutPoint>,
-        allocate: Vec<SealCoins>,
-        invoice: Invoice,
-        prototype_psbt: String,
-        consignment_file: String,
-        transaction_file: String,
-    ) -> Result<(), Error> {
-        let seal_confidential = match invoice.outpoint {
-            Outpoint::BlindedUtxo(outpoint_hash) => outpoint_hash,
-            Outpoint::Address(_address) => unimplemented!(),
-        };
-
-        let psbt_bytes = base64::decode(&prototype_psbt)?;
-        let mut psbt: PartiallySignedTransaction = deserialize(&psbt_bytes)?;
-
-        for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
+        contract_id: ContractId,
+        inputs: BTreeSet<OutPoint>,
+        payment: BTreeMap<OutpointHash, AtomicValue>,
+        change: BTreeMap<SealDefinition, AtomicValue>,
+        mut witness: PartiallySignedTransaction,
+    ) -> Result<Transfer, Error> {
+        for (index, output) in &mut witness.outputs.iter_mut().enumerate() {
             if let Some(key) = output.bip32_derivation.keys().next() {
                 let key = key.clone();
                 output.proprietary.insert(
@@ -118,36 +109,22 @@ impl Runtime {
                 );
             }
         }
-        trace!("{:?}", psbt);
+        trace!("{:?}", witness);
 
         let api = TransferApi {
-            psbt,
-            contract_id: invoice.contract_id,
+            witness,
+            contract_id,
             inputs,
-            ours: allocate,
-            theirs: vec![ConsealCoins {
-                coins: invoice.amount,
-                seal_confidential,
-            }],
+            payment,
+            change,
         };
 
         match &*self.command(Request::Transfer(api))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Transfer(transfer) => {
-                transfer
-                    .consignment
-                    .write_file(PathBuf::from(&consignment_file))?;
-                let out_file = File::create(&transaction_file)
-                    .expect("can't create output transaction file");
-                transfer.psbt.consensus_encode(out_file).map_err(|err| {
-                    bitcoin::consensus::encode::Error::Io(err)
-                })?;
-                info!(
-                    "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
-                    consignment_file, transaction_file
-                );
+                info!("Transfer succeeded");
 
-                Ok(())
+                Ok(transfer.clone())
             }
             _ => Err(Error::UnexpectedResponse),
         }

@@ -402,8 +402,8 @@ pub fn create_allocation_from_asset(
             sql_allocation_utxo_id: utxo_id,
             node_id: allocation.node_id().to_hex(),
             assignment_index: allocation.index().clone() as i32,
-            amount: allocation.confidential_amount().value as i64,
-            blinding: allocation.confidential_amount().blinding.to_hex(),
+            amount: allocation.revealed_amount().value as i64,
+            blinding: allocation.revealed_amount().blinding.to_hex(),
         });
     }
 
