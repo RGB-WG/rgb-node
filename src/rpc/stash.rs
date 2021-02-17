@@ -15,8 +15,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
-use lnpbp::seals::{OutpointHash, OutpointReveal};
-use rgb::{Consignment, ContractId, NodeId, Transition};
+use lnpbp::seals::OutpointReveal;
+use rgb::{Consignment, ContractId, NodeId, SealEndpoint, Transition};
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
@@ -74,7 +74,7 @@ pub struct ConsignRequest {
     pub inputs: BTreeSet<OutPoint>,
     pub transition: Transition,
     pub other_transition_ids: BTreeMap<ContractId, NodeId>,
-    pub outpoints: BTreeSet<OutpointHash>,
+    pub outpoints: BTreeSet<SealEndpoint>,
     pub psbt: Psbt,
 }
 

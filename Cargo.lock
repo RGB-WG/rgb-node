@@ -1568,7 +1568,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#6046136a423d34c46fc64074b49c58f43d469308"
+source = "git+https://github.com/rgb-org/rgb-core#5984c301c583161643cbecd3ae20405399f43ab4"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1597,7 +1597,7 @@ dependencies = [
 [[package]]
 name = "rgb20"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#6046136a423d34c46fc64074b49c58f43d469308"
+source = "git+https://github.com/rgb-org/rgb-core#5984c301c583161643cbecd3ae20405399f43ab4"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1614,7 +1614,7 @@ dependencies = [
 [[package]]
 name = "rgb21"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#6046136a423d34c46fc64074b49c58f43d469308"
+source = "git+https://github.com/rgb-org/rgb-core#5984c301c583161643cbecd3ae20405399f43ab4"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1627,7 +1627,7 @@ dependencies = [
 [[package]]
 name = "rgb22"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#6046136a423d34c46fc64074b49c58f43d469308"
+source = "git+https://github.com/rgb-org/rgb-core#5984c301c583161643cbecd3ae20405399f43ab4"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1640,7 +1640,7 @@ dependencies = [
 [[package]]
 name = "rgb23"
 version = "0.4.0-alpha.1+1"
-source = "git+https://github.com/rgb-org/rgb-core#6046136a423d34c46fc64074b49c58f43d469308"
+source = "git+https://github.com/rgb-org/rgb-core#5984c301c583161643cbecd3ae20405399f43ab4"
 dependencies = [
  "amplify",
  "amplify_derive",

@@ -18,12 +18,12 @@ use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use internet2::{Session, TypedEnum, Unmarshall};
-use lnpbp::seals::{OutpointHash, OutpointReveal};
+use lnpbp::seals::OutpointReveal;
 use lnpbp::Chain;
 use microservices::FileFormat;
 use rgb::{
     AtomicValue, Consignment, ContractId, Genesis, SealDefinition,
-    PSBT_OUT_PUBKEY,
+    SealEndpoint, PSBT_OUT_PUBKEY,
 };
 use rgb20::{Asset, OutpointCoins};
 
@@ -83,7 +83,7 @@ impl Runtime {
         &mut self,
         contract_id: ContractId,
         inputs: BTreeSet<OutPoint>,
-        payment: BTreeMap<OutpointHash, AtomicValue>,
+        payment: BTreeMap<SealEndpoint, AtomicValue>,
         change: BTreeMap<SealDefinition, AtomicValue>,
         mut witness: PartiallySignedTransaction,
     ) -> Result<Transfer, Error> {

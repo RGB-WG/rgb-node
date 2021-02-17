@@ -17,8 +17,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use lnpbp::seals::{OutpointHash, OutpointReveal};
-use rgb::{AtomicValue, Consignment, ContractId, SealDefinition};
+use lnpbp::seals::OutpointReveal;
+use rgb::{AtomicValue, Consignment, ContractId, SealDefinition, SealEndpoint};
 use rgb20::OutpointCoins;
 
 use microservices::FileFormat;
@@ -131,7 +131,7 @@ pub struct TransferApi {
     /// They are kept separate from change allocations since here we do not
     /// know the actual seals and only know hashes derived from seal data and
     /// blinding entropy.
-    pub payment: BTreeMap<OutpointHash, AtomicValue>,
+    pub payment: BTreeMap<SealEndpoint, AtomicValue>,
 
     /// Asset change allocations
     ///

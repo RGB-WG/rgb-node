@@ -326,14 +326,14 @@ impl Command {
             })?;
         trace!("{:#?}", consignment);
 
-        let api = if let Some((_, outpoint_hash)) = consignment.endpoints.get(0)
+        let api = if let Some((_, seal_endpoint)) = consignment.endpoints.get(0)
         {
             let outpoint_reveal = OutpointReveal {
                 blinding: blinding_factor,
                 txid: outpoint.txid,
                 vout: outpoint.vout as u32,
             };
-            if outpoint_reveal.conceal() != *outpoint_hash {
+            if outpoint_reveal.conceal() != seal_endpoint.conceal() {
                 eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
                 Err(Error::DataInconsistency)?
             }
@@ -502,7 +502,7 @@ impl TransferCli {
                     (seal_coins.seal_definition(), seal_coins.coins)
                 })
                 .collect(),
-            payment: bmap! { self.receiver => self.amount },
+            payment: bmap! { SealEndpoint::TxOutpoint(self.receiver) => self.amount },
         };
 
         let reply = runtime.transfer(api)?;

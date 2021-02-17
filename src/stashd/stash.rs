@@ -14,10 +14,10 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
-use lnpbp::seals::OutpointHash;
+use lnpbp::client_side_validation::Conceal;
 use rgb::{
     Anchor, AutoConceal, Consignment, ContractId, Disclosure, Extension,
-    Genesis, Node, NodeId, SchemaId, Stash, Transition,
+    Genesis, Node, NodeId, SchemaId, SealEndpoint, Stash, Transition,
 };
 
 use super::index::Index;
@@ -111,10 +111,11 @@ impl Stash for Runtime {
         contract_id: ContractId,
         node: &impl Node,
         anchor: Option<&Anchor>,
-        expose: &BTreeSet<OutpointHash>,
+        expose: &BTreeSet<SealEndpoint>,
     ) -> Result<Consignment, Error> {
         let genesis = self.storage.genesis(&contract_id)?;
-        let expose = expose.iter().copied().collect();
+        let concealed_endpoints =
+            expose.iter().map(SealEndpoint::conceal).collect();
 
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];
@@ -122,14 +123,14 @@ impl Stash for Runtime {
             node.as_any().downcast_ref::<Transition>().clone()
         {
             let mut transition = transition.clone();
-            transition.conceal_except(&expose);
+            transition.conceal_except(&concealed_endpoints);
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));
         } else if let Some(extension) =
             node.as_any().downcast_ref::<Extension>().clone()
         {
             let mut extension = extension.clone();
-            extension.conceal_except(&expose);
+            extension.conceal_except(&concealed_endpoints);
             state_extensions.push(extension.clone());
         } else {
             Err(Error::GenesisNode)?;
@@ -188,11 +189,10 @@ impl Stash for Runtime {
         }
 
         let node_id = node.node_id();
-        let extended_endpoints =
-            expose.iter().map(|op| (node_id, *op)).collect();
+        let endpoints = expose.iter().map(|op| (node_id, *op)).collect();
         Ok(Consignment::with(
             genesis,
-            extended_endpoints,
+            endpoints,
             state_transitions,
             state_extensions,
         ))
