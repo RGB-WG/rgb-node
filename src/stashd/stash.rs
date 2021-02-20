@@ -14,9 +14,9 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
-use lnpbp::client_side_validation::Conceal;
+use lnpbp::client_side_validation::CommitConceal;
 use rgb::{
-    Anchor, AutoConceal, Consignment, ContractId, Disclosure, Extension,
+    Anchor, ConcealState, Consignment, ContractId, Disclosure, Extension,
     Genesis, Node, NodeId, SchemaId, SealEndpoint, Stash, Transition,
 };
 
@@ -115,7 +115,7 @@ impl Stash for Runtime {
     ) -> Result<Consignment, Error> {
         let genesis = self.storage.genesis(&contract_id)?;
         let concealed_endpoints =
-            expose.iter().map(SealEndpoint::conceal).collect();
+            expose.iter().map(SealEndpoint::commit_conceal).collect();
 
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];
@@ -123,14 +123,14 @@ impl Stash for Runtime {
             node.as_any().downcast_ref::<Transition>().clone()
         {
             let mut transition = transition.clone();
-            transition.conceal_except(&concealed_endpoints);
+            transition.conceal_state_except(&concealed_endpoints);
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));
         } else if let Some(extension) =
             node.as_any().downcast_ref::<Extension>().clone()
         {
             let mut extension = extension.clone();
-            extension.conceal_except(&concealed_endpoints);
+            extension.conceal_state_except(&concealed_endpoints);
             state_extensions.push(extension.clone());
         } else {
             Err(Error::GenesisNode)?;
@@ -153,7 +153,7 @@ impl Stash for Runtime {
                 self.storage.extension(&node_id),
             ) {
                 (Ok(mut transition), Err(_)) => {
-                    transition.conceal_all();
+                    transition.conceal_state();
                     state_transitions.push((anchor, transition.clone()));
                     sources.extend(
                         transition
@@ -169,7 +169,7 @@ impl Stash for Runtime {
                     );
                 }
                 (Err(_), Ok(mut extension)) => {
-                    extension.conceal_all();
+                    extension.conceal_state();
                     state_extensions.push(extension.clone());
                     sources.extend(
                         extension
