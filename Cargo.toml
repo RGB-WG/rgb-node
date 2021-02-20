@@ -34,6 +34,7 @@ amplify = "3"
 amplify_derive = "2.4.2"
 lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp" }
 rgb-core = { git = "https://github.com/rgb-org/rgb-core" }
+descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet", features = ["electrum"] }
 rgb20 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }

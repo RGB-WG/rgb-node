@@ -1667,6 +1667,7 @@ dependencies = [
  "colored",
  "config",
  "configure_me",
+ "descriptor-wallet",
  "diesel",
  "dotenv",
  "electrum-client",
