@@ -23,6 +23,8 @@ use rgb::{
     Anchor, Assignments, Consignment, ContractId, Genesis, Node, NodeId,
     Schema, SchemaId, Stash,
 };
+use bitcoin::Txid;
+use std::str::FromStr;
 use wallet::resolvers::ElectrumTxResolver;
 
 use super::index::{BTreeIndex, Index};
@@ -283,7 +285,25 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got MERGE CONSIGNMENT");
 
-        let known_seals = &merge.reveal_outpoints;
+        let mut known_seals = merge.reveal_outpoints.clone();
+
+        // find previously stored trasitions
+        let mut prev_transitions = vec![];
+        for (_, transition) in &merge.consignment.state_transitions {
+            prev_transitions
+                .push(self.storage.transition(&transition.node_id())?);
+        }
+
+        // find previously known seals in previously known transitions
+        let mut prev_known_seals = vec![];
+        for transition in prev_transitions {
+            let known_seals_for_each = transition.known_seal_definitions();
+            known_seals_for_each.iter().for_each(|seal| prev_known_seals.push(seal.outpoint_reveal(Txid::from_str("c2fc5e8f915e01fbac4f81a76f4bfa288280e8d0509fc48e923bc26a6474a2d2").unwrap())));
+        }
+
+        for seal in prev_known_seals {
+            known_seals.push(seal);
+        }
 
         // [PRIVACY]:
         // Update transition data with the revealed state information that we
