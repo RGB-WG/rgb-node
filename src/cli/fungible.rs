@@ -24,7 +24,7 @@ use lnpbp::seals::{OutpointHash, OutpointReveal};
 use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
 use microservices::FileFormat;
 use rgb::prelude::*;
-use rgb20::{AccountingValue, Asset, Invoice, Outpoint, SealCoins};
+use rgb20::{Asset, SealCoins};
 
 use super::{Error, OutputFormat, Runtime};
 use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
@@ -60,8 +60,11 @@ pub enum Command {
     /// Creates a new asset
     Issue(Issue),
 
-    /// Create an invoice
-    Invoice(InvoiceCli),
+    /// Creates a blinded version of a given bitcoin transaction outpoint
+    Blind {
+        /// Original outpoint in `txid:vout` format
+        outpoint: OutPoint,
+    },
 
     /// Do a transfer of some requested asset to another party
     Transfer(TransferCli),
@@ -90,20 +93,6 @@ pub enum Command {
         /// has to be forgotten
         outpoint: OutPoint,
     },
-}
-
-#[derive(Clap, Clone, PartialEq, Debug, Display)]
-#[display(Debug)]
-pub struct InvoiceCli {
-    /// Assets
-    #[clap(parse(try_from_str = ContractId::from_bech32_str))]
-    pub asset: ContractId,
-
-    /// Amount
-    pub amount: AccountingValue,
-
-    /// Receive assets to a given bitcoin address or UTXO
-    pub outpoint: OutPoint,
 }
 
 #[derive(Clap, Clone, PartialEq, Debug, Display)]
@@ -147,7 +136,15 @@ impl Command {
                 self.exec_import(runtime, asset.clone())
             }
             Command::Export { asset } => self.exec_export(runtime, asset),
-            Command::Invoice(invoice) => invoice.exec(runtime),
+            Command::Blind { outpoint } => {
+                info!("Blinding outpoint ...");
+                let outpoint_reveal = OutpointReveal::from(outpoint);
+                eprint!("Blinded outpoint: ");
+                println!("{}", outpoint_reveal.commit_conceal());
+                eprint!("Outpoint blinding secret: ");
+                println!("{}", outpoint_reveal.blinding);
+                Ok(())
+            }
             Command::Issue(issue) => issue.exec(runtime),
             Command::Transfer(transfer) => transfer.exec(runtime),
             Command::Validate { ref consignment } => {
@@ -422,27 +419,6 @@ impl Issue {
                 .expect("broken asset YAML serialization")
         );
         println!("{}", asset.genesis());
-
-        Ok(())
-    }
-}
-
-impl InvoiceCli {
-    pub fn exec(self, _: Runtime) -> Result<(), Error> {
-        info!("Generating invoice ...");
-        debug!("{}", self.clone());
-
-        let outpoint_reveal = OutpointReveal::from(self.outpoint);
-        let invoice = Invoice {
-            contract_id: self.asset,
-            outpoint: Outpoint::BlindedUtxo(outpoint_reveal.commit_conceal()),
-            amount: self.amount,
-        };
-
-        eprint!("Invoice: ");
-        println!("{}", invoice);
-        eprint!("Outpoint blinding factor: ");
-        println!("{}", outpoint_reveal.blinding);
 
         Ok(())
     }
