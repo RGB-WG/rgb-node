@@ -14,7 +14,6 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
-use lnpbp::client_side_validation::CommitConceal;
 use lnpbp::seals::OutpointReveal;
 use rgb::{
     Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
@@ -113,26 +112,20 @@ impl Stash for Runtime {
         contract_id: ContractId,
         node: &impl Node,
         anchor: Option<&Anchor>,
-        expose: &BTreeSet<SealEndpoint>,
+        endpoints: &BTreeSet<SealEndpoint>,
     ) -> Result<Consignment, Error> {
         let genesis = self.storage.genesis(&contract_id)?;
-        let concealed_endpoints =
-            expose.iter().map(SealEndpoint::commit_conceal).collect();
 
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];
         if let Some(transition) =
             node.as_any().downcast_ref::<Transition>().clone()
         {
-            let mut transition = transition.clone();
-            transition.conceal_state_except(&concealed_endpoints);
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));
         } else if let Some(extension) =
             node.as_any().downcast_ref::<Extension>().clone()
         {
-            let mut extension = extension.clone();
-            extension.conceal_state_except(&concealed_endpoints);
             state_extensions.push(extension.clone());
         } else {
             Err(Error::GenesisNode)?;
@@ -191,7 +184,7 @@ impl Stash for Runtime {
         }
 
         let node_id = node.node_id();
-        let endpoints = expose.iter().map(|op| (node_id, *op)).collect();
+        let endpoints = endpoints.iter().map(|op| (node_id, *op)).collect();
         Ok(Consignment::with(
             genesis,
             endpoints,
