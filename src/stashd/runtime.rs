@@ -13,7 +13,6 @@
 
 use std::path::PathBuf;
 
-use bitcoin::{Transaction, Txid};
 use internet2::zmqsocket::ZmqType;
 use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
@@ -21,11 +20,11 @@ use internet2::{
 };
 use microservices::node::TryService;
 use rgb::{
-    validation, Anchor, Consignment, ContractId, Genesis, Node, NodeId, Schema,
-    SchemaId, Stash,
+    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, 
+    NodeId, Schema, SchemaId, Stash,
 };
+use wallet::resolvers::ElectrumTxResolver;
 
-use super::electrum::ElectrumTxResolver;
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
@@ -305,17 +304,6 @@ impl Runtime {
         //       over their direct ancestor in the same manner
 
         Ok(Reply::Success)
-    }
-}
-
-struct DummyTxResolver;
-
-impl validation::TxResolver for DummyTxResolver {
-    fn resolve(
-        &self,
-        _txid: &Txid,
-    ) -> Result<Option<(Transaction, u64)>, validation::TxResolverError> {
-        Err(validation::TxResolverError)
     }
 }
 

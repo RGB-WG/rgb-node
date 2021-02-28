@@ -19,7 +19,7 @@ use bitcoin::consensus::{Decodable, Encodable};
 use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use lnpbp::client_side_validation::Conceal;
+use lnpbp::client_side_validation::CommitConceal;
 use lnpbp::seals::{OutpointHash, OutpointReveal};
 use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
 use microservices::FileFormat;
@@ -333,7 +333,9 @@ impl Command {
                 txid: outpoint.txid,
                 vout: outpoint.vout as u32,
             };
-            if outpoint_reveal.conceal() != seal_endpoint.conceal() {
+            if outpoint_reveal.commit_conceal()
+                != seal_endpoint.commit_conceal()
+            {
                 eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
                 Err(Error::DataInconsistency)?
             }
@@ -433,7 +435,7 @@ impl InvoiceCli {
         let outpoint_reveal = OutpointReveal::from(self.outpoint);
         let invoice = Invoice {
             contract_id: self.asset,
-            outpoint: Outpoint::BlindedUtxo(outpoint_reveal.conceal()),
+            outpoint: Outpoint::BlindedUtxo(outpoint_reveal.commit_conceal()),
             amount: self.amount,
         };
 

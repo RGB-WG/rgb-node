@@ -23,7 +23,7 @@ use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
     Unmarshall, Unmarshaller,
 };
-use lnpbp::client_side_validation::Conceal;
+use lnpbp::client_side_validation::CommitConceal;
 use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{Assignments, Consignment, ContractId, Genesis, Node};
@@ -410,7 +410,7 @@ impl Runtime {
                         for (index, assignment) in set.into_iter().enumerate() {
                             if let Some(seal) =
                                 accept.reveal_outpoints.iter().find(|op| {
-                                    op.conceal()
+                                    op.commit_conceal()
                                         == assignment
                                             .seal_definition_confidential()
                                 })
