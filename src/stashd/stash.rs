@@ -15,10 +15,11 @@ use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
 use lnpbp::client_side_validation::CommitConceal;
-use lnpbp::seals::{OutpointHash, OutpointReveal};
+use lnpbp::seals::OutpointReveal;
 use rgb::{
-    Anchor, ConcealState, Consignment, ContractId, Disclosure, Extension,
-    Genesis, Node, NodeId, SchemaId, SealEndpoint, Stash, Transition,
+    Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
+    Extension, Genesis, Node, NodeId, SchemaId, SealEndpoint, Stash,
+    Transition,
 };
 
 use super::index::Index;

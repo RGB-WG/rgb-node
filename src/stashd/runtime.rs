@@ -20,8 +20,8 @@ use internet2::{
 };
 use microservices::node::TryService;
 use rgb::{
-    validation, Anchor, Assignments, Consignment, ContractId, Genesis, Node, 
-    NodeId, Schema, SchemaId, Stash,
+    Anchor, Consignment, ContractId, Genesis, Node, NodeId, Schema, SchemaId,
+    Stash,
 };
 use wallet::resolvers::ElectrumTxResolver;
 
