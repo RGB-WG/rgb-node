@@ -26,7 +26,7 @@ use internet2::{
 use lnpbp::client_side_validation::CommitConceal;
 use microservices::node::TryService;
 use microservices::FileFormat;
-use rgb::{Assignments, Consignment, ContractId, Genesis, Node};
+use rgb::{Assignments, Consignment, ContractId, Genesis, Node, SealEndpoint};
 use rgb20::schema::OwnedRightsType;
 use rgb20::{schema, Asset, OutpointCoins};
 
@@ -246,13 +246,20 @@ impl Runtime {
         debug!("State transition: {}", transition);
 
         trace!("Requesting consignment from stash daemon");
+        let endpoints = transfer
+            .change
+            .keys()
+            .copied()
+            .map(SealEndpoint::from)
+            .chain(transfer.payment.keys().copied())
+            .collect();
         let reply = self.consign(ConsignRequest {
             contract_id: transfer.contract_id,
             inputs: transfer.inputs.clone(),
             transition,
             // TODO: Collect blank state transitions and pass it here
             other_transition_ids: bmap![],
-            outpoints: transfer.payment.keys().copied().collect(),
+            endpoints,
             psbt: transfer.witness.clone(),
         })?;
 

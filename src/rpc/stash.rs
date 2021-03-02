@@ -74,7 +74,7 @@ pub struct ConsignRequest {
     pub inputs: BTreeSet<OutPoint>,
     pub transition: Transition,
     pub other_transition_ids: BTreeMap<ContractId, NodeId>,
-    pub outpoints: BTreeSet<SealEndpoint>,
+    pub endpoints: BTreeSet<SealEndpoint>,
     pub psbt: Psbt,
 }
 

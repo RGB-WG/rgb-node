@@ -248,7 +248,7 @@ impl Runtime {
                 request.contract_id,
                 &request.transition,
                 Some(&anchor),
-                &request.outpoints,
+                &request.endpoints,
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 

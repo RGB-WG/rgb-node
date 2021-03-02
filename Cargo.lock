@@ -181,7 +181,7 @@ dependencies = [
  "block-padding",
  "byte-tools",
  "byteorder",
- "generic-array 0.12.3",
+ "generic-array 0.12.4",
 ]
 
 [[package]]
@@ -325,7 +325,7 @@ dependencies = [
 [[package]]
 name = "client_side_validation"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#9edd93a0ce145fbb65640c33889b11bfae040c6a"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#b80e290c7c73f2770c8add58f7913aa96ee9d537"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -409,7 +409,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4434400df11d95d556bac068ddfedd482915eb18fe8bea89bc80b6e4b1c179e5"
 dependencies = [
- "generic-array 0.12.3",
+ "generic-array 0.12.4",
  "subtle 1.0.0",
 ]
 
@@ -488,7 +488,7 @@ dependencies = [
 [[package]]
 name = "descriptor-wallet"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/descriptor-wallet#a59de0b534bdab5bc27ed9d6844a1a0dbe5c10ff"
+source = "git+https://github.com/LNP-BP/descriptor-wallet#6d5fca58fd983d9d079260b2b881be8def36d839"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -539,7 +539,7 @@ version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3d0c8c8752312f9713efd397ff63acb9f85585afbf179282e720e7704954dd5"
 dependencies = [
- "generic-array 0.12.3",
+ "generic-array 0.12.4",
 ]
 
 [[package]]
@@ -687,9 +687,9 @@ checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
 
 [[package]]
 name = "generic-array"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c68f0274ae0e023facc3c97b2e00f076be70e254bc851d972503b328db79b2ec"
+checksum = "ffdf9f34f1447443d37393cc6c2b8313aebddcd96906caf34e54c68d8e57d7bd"
 dependencies = [
  "typenum",
 ]
@@ -933,9 +933,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.86"
+version = "0.2.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7282d924be3275cec7f6756ff4121987bc6481325397dde6ba3e7802b1a8b1c"
+checksum = "265d751d31d6780a3f956bb5b8022feba2d94eeee5a84ba64f4212eedca42213"
 
 [[package]]
 name = "libsqlite3-sys"
@@ -1008,7 +1008,7 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#9edd93a0ce145fbb65640c33889b11bfae040c6a"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#b80e290c7c73f2770c8add58f7913aa96ee9d537"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1188,9 +1188,9 @@ checksum = "4eae0151b9dacf24fcc170d9995e511669a082856a91f958a2fe380bfab3fb22"
 
 [[package]]
 name = "once_cell"
-version = "1.7.0"
+version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10acf907b94fc1b1a152d08ef97e7759650268cf986bf127f387e602b02c7e5a"
+checksum = "af8b08b04175473088b46763e51ee54da5f9a164bc162f615b91bc179dbf15a3"
 
 [[package]]
 name = "opaque-debug"
@@ -1267,9 +1267,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "439697af366c49a6d0a010c56a0d97685bc140ce0d377b13a2ea2aa42d64a827"
+checksum = "0cf491442e4b033ed1c722cb9f0df5fcfcf4de682466c46469c36bc47dc5548a"
 
 [[package]]
 name = "pkg-config"
@@ -1568,7 +1568,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#2789e6ce624a5d9283f44ce1562f611e10c67606"
+source = "git+https://github.com/rgb-org/rgb-core#e5b6c0a0a8149e96009f07a61ec00db420dc8852"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1599,8 +1599,8 @@ dependencies = [
 
 [[package]]
 name = "rgb20"
-version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#2789e6ce624a5d9283f44ce1562f611e10c67606"
+version = "0.4.0-beta"
+source = "git+https://github.com/rgb-org/rgb-core#e5b6c0a0a8149e96009f07a61ec00db420dc8852"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1616,8 +1616,8 @@ dependencies = [
 
 [[package]]
 name = "rgb21"
-version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#2789e6ce624a5d9283f44ce1562f611e10c67606"
+version = "0.4.0-beta"
+source = "git+https://github.com/rgb-org/rgb-core#e5b6c0a0a8149e96009f07a61ec00db420dc8852"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1629,8 +1629,8 @@ dependencies = [
 
 [[package]]
 name = "rgb22"
-version = "0.4.0-alpha.1"
-source = "git+https://github.com/rgb-org/rgb-core#2789e6ce624a5d9283f44ce1562f611e10c67606"
+version = "0.4.0-beta"
+source = "git+https://github.com/rgb-org/rgb-core#e5b6c0a0a8149e96009f07a61ec00db420dc8852"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1642,8 +1642,8 @@ dependencies = [
 
 [[package]]
 name = "rgb23"
-version = "0.4.0-alpha.1+1"
-source = "git+https://github.com/rgb-org/rgb-core#2789e6ce624a5d9283f44ce1562f611e10c67606"
+version = "0.4.0-beta"
+source = "git+https://github.com/rgb-org/rgb-core#e5b6c0a0a8149e96009f07a61ec00db420dc8852"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1655,7 +1655,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.4.0-alpha"
+version = "0.4.0-beta"
 dependencies = [
  "amplify",
  "amplify_derive",
