@@ -1,6 +1,6 @@
 use core::convert::TryFrom;
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
@@ -17,7 +17,10 @@ pub enum FileMode {
 }
 
 #[inline]
-pub fn file(filename: PathBuf, mode: FileMode) -> Result<fs::File, io::Error> {
+pub fn file(
+    filename: impl AsRef<Path>,
+    mode: FileMode,
+) -> Result<fs::File, io::Error> {
     match mode {
         FileMode::Read => fs::File::open(filename),
         FileMode::Write => fs::OpenOptions::new().write(true).open(filename),
@@ -65,12 +68,12 @@ pub trait ReadWrite
 where
     Self: Sized,
 {
-    fn read_file(filename: PathBuf) -> Result<Self, Error>;
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error>;
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error>;
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error>;
 }
 
 impl ReadWrite for Schema {
-    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];
         file.read_exact(&mut magic_buf)?;
@@ -90,7 +93,7 @@ impl ReadWrite for Schema {
         Schema::strict_decode(file)
     }
 
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
         let mut file = file(filename, FileMode::Create)?;
         file.write(&MagicNumber::Schema.to_u32().to_be_bytes())?;
         self.strict_encode(file)
@@ -98,7 +101,7 @@ impl ReadWrite for Schema {
 }
 
 impl ReadWrite for Genesis {
-    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];
         file.read_exact(&mut magic_buf)?;
@@ -118,7 +121,7 @@ impl ReadWrite for Genesis {
         Genesis::strict_decode(file)
     }
 
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
         let mut file = file(filename, FileMode::Create)?;
         file.write(&MagicNumber::Genesis.to_u32().to_be_bytes())?;
         self.strict_encode(file)
@@ -126,7 +129,7 @@ impl ReadWrite for Genesis {
 }
 
 impl ReadWrite for Anchor {
-    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];
         file.read_exact(&mut magic_buf)?;
@@ -146,7 +149,7 @@ impl ReadWrite for Anchor {
         Anchor::strict_decode(file)
     }
 
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
         let mut file = file(filename, FileMode::Create)?;
         file.write(&MagicNumber::Anchor.to_u32().to_be_bytes())?;
         self.strict_encode(file)
@@ -154,7 +157,7 @@ impl ReadWrite for Anchor {
 }
 
 impl ReadWrite for Transition {
-    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];
         file.read_exact(&mut magic_buf)?;
@@ -174,7 +177,7 @@ impl ReadWrite for Transition {
         Transition::strict_decode(file)
     }
 
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
         let mut file = file(filename, FileMode::Create)?;
         file.write(&MagicNumber::Transition.to_u32().to_be_bytes())?;
         self.strict_encode(file)
@@ -182,7 +185,7 @@ impl ReadWrite for Transition {
 }
 
 impl ReadWrite for Extension {
-    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];
         file.read_exact(&mut magic_buf)?;
@@ -202,7 +205,7 @@ impl ReadWrite for Extension {
         Extension::strict_decode(file)
     }
 
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
         let mut file = file(filename, FileMode::Create)?;
         file.write(&MagicNumber::Extension.to_u32().to_be_bytes())?;
         self.strict_encode(file)
@@ -210,7 +213,7 @@ impl ReadWrite for Extension {
 }
 
 impl ReadWrite for Consignment {
-    fn read_file(filename: PathBuf) -> Result<Self, Error> {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];
         file.read_exact(&mut magic_buf)?;
@@ -230,7 +233,7 @@ impl ReadWrite for Consignment {
         Consignment::strict_decode(file)
     }
 
-    fn write_file(&self, filename: PathBuf) -> Result<usize, Error> {
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
         let mut file = file(filename, FileMode::Create)?;
         file.write(&MagicNumber::Consignment.to_u32().to_be_bytes())?;
         self.strict_encode(file)

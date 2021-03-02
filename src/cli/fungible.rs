@@ -21,7 +21,7 @@ use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use lnpbp::client_side_validation::CommitConceal;
 use lnpbp::seals::{OutpointHash, OutpointReveal};
-use lnpbp::strict_encoding::{strict_deserialize, strict_serialize};
+use lnpbp::strict_encoding::strict_deserialize;
 use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::{Asset, SealCoins};
@@ -119,7 +119,10 @@ pub struct TransferCli {
     /// Read partially-signed transaction prototype
     pub prototype: PathBuf,
 
-    /// File to save consignment to
+    /// File to save consignment to. It will produce two files:
+    /// - one with concealed data to share with the receiver, having extension
+    ///   `.concealed.rgb`, and
+    /// - one with plain complete data, having extension `.revealed.rgb`
     pub consignment: PathBuf,
 
     /// File to save updated partially-signed bitcoin transaction to
@@ -490,17 +493,40 @@ impl TransferCli {
                 eprintln!("Transfer failed: {}", failure);
             }
             Reply::Transfer(transfer) => {
-                trace!("{:?}", strict_serialize(&transfer.consignment));
-                transfer.consignment.write_file(self.consignment.clone())?;
+                let mut consignment = transfer.consignment.clone();
+                let mut theirs = self.consignment.clone();
+                theirs.set_extension(".concealed.rgb");
+                let mut ours = self.consignment;
+                ours.set_extension(".revealed.rgb");
+                consignment.write_file(&ours)?;
+
+                let receiver = self.receiver;
+                let expose = consignment
+                    .endpoints
+                    .iter()
+                    .filter_map(|(_, endpoint)| match endpoint {
+                        SealEndpoint::TxOutpoint(h) if *h == receiver => {
+                            Some(*endpoint)
+                        }
+                        _ => None,
+                    })
+                    .collect();
+                consignment.finalize(&expose, self.asset);
+                consignment.write_file(&theirs)?;
+
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
                 transfer.witness.consensus_encode(out_file).map_err(|err| {
                     bitcoin::consensus::encode::Error::Io(err)
                 })?;
-                println!(
-                    "Transfer succeeded, consignment data are written to {:?}, partially signed witness transaction to {:?}",
-                    self.consignment, self.transaction
+
+                eprintln!(
+                    "Transfer succeeded, consignments are written to {:?} and {:?}, \
+                     partially signed witness transaction to {:?}",
+                    theirs, ours, self.transaction
                 );
+                eprint!("Consignment data to share:");
+                println!("{}", consignment);
             }
             _ => (),
         }
