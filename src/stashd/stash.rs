@@ -234,7 +234,8 @@ impl Stash for Runtime {
                 .for_each(reveal_known_seals);
             // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
-            self.indexer.index_anchor(&anchor)?;
+            // TODO: Uncomment once indexing will be implemented
+            // self.indexer.index_anchor(&anchor)?;
             self.storage.add_transition(&transition)?;
         }
 
