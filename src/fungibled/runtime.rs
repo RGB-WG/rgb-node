@@ -26,7 +26,9 @@ use internet2::{
 use lnpbp::client_side_validation::CommitConceal;
 use microservices::node::TryService;
 use microservices::FileFormat;
-use rgb::{Assignments, Consignment, ContractId, Genesis, Node, SealEndpoint};
+use rgb::{
+    Consignment, ContractId, Genesis, Node, SealDefinition, SealEndpoint,
+};
 use rgb20::schema::OwnedRightsType;
 use rgb20::{schema, Asset, OutpointCoins};
 
@@ -408,37 +410,60 @@ impl Runtime {
             } else {
                 Asset::try_from(accept.consignment.genesis)?
             };
+            let reveal_outpoints = accept.reveal_outpoints.clone();
 
-            for (_, transition) in &accept.consignment.state_transitions {
-                let set =
-                    transition.owned_rights_by_type(*OwnedRightsType::Assets);
-                for variant in set {
-                    if let Assignments::DiscreteFiniteField(set) = variant {
-                        for (index, assignment) in set.into_iter().enumerate() {
-                            if let Some(seal) =
-                                accept.reveal_outpoints.iter().find(|op| {
-                                    op.commit_conceal()
-                                        == assignment
-                                            .seal_definition_confidential()
+            for (anchor, transition) in &accept.consignment.state_transitions {
+                let endpoint = if let Some(endpoint) = accept
+                    .consignment
+                    .endpoints
+                    .iter()
+                    .find(|(node_id, _)| *node_id == transition.node_id())
+                    .cloned()
+                {
+                    endpoint
+                } else {
+                    continue;
+                };
+
+                let assignments = if let Some(assignments) =
+                    transition.owned_rights_by_type(*OwnedRightsType::Assets)
+                {
+                    assignments
+                } else {
+                    continue;
+                };
+
+                for (index, state) in
+                    assignments.to_discrete_state().into_iter().enumerate()
+                {
+                    let seal_confidential =
+                        state.seal_definition_confidential();
+                    if seal_confidential != endpoint.1.commit_conceal() {
+                        continue;
+                    }
+
+                    let seal_revealed = if let Some(seal_revealed) =
+                        state.seal_definition().or_else(|| {
+                            reveal_outpoints
+                                .iter()
+                                .find(|reveal| {
+                                    reveal.commit_conceal() == seal_confidential
                                 })
-                            {
-                                if let Some(assigned_state) =
-                                    assignment.assigned_state()
-                                {
-                                    asset.add_allocation(
-                                        seal.clone().into(),
-                                        transition.node_id(),
-                                        index as u16,
-                                        assigned_state.clone(),
-                                    );
-                                } else {
-                                    Err(ServiceErrorDomain::Internal(
-                                        "Consignment structure is broken"
-                                            .to_string(),
-                                    ))?
-                                }
-                            }
-                        }
+                                .copied()
+                                .map(SealDefinition::from)
+                        }) {
+                        seal_revealed
+                    } else {
+                        continue;
+                    };
+
+                    if let Some(state_data) = state.assigned_state() {
+                        asset.add_allocation(
+                            seal_revealed.outpoint_reveal(anchor.txid).into(),
+                            endpoint.0,
+                            index as u16,
+                            *state_data,
+                        );
                     }
                 }
             }
