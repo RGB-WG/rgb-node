@@ -495,9 +495,9 @@ impl TransferCli {
             Reply::Transfer(transfer) => {
                 let mut consignment = transfer.consignment.clone();
                 let mut theirs = self.consignment.clone();
-                theirs.set_extension(".concealed.rgb");
+                theirs.set_extension("concealed.rgb");
                 let mut ours = self.consignment;
-                ours.set_extension(".revealed.rgb");
+                ours.set_extension("revealed.rgb");
                 consignment.write_file(&ours)?;
 
                 let receiver = self.receiver;
