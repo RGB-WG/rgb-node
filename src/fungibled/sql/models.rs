@@ -71,7 +71,7 @@ impl SqlAsset {
             is_issued_known: asset.supply().is_issued_known().clone(),
             max_cap: *asset.supply().issue_limit() as i64,
             chain: asset.chain().to_string(),
-            fractional_bits: vec![asset.fractional_bits().clone()],
+            fractional_bits: vec![asset.decimal_precision().clone()],
             asset_date: asset.date().clone(),
         })
     }
