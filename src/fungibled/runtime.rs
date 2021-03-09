@@ -13,7 +13,7 @@
 
 use core::borrow::Borrow;
 use core::convert::TryFrom;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use bitcoin::OutPoint;
@@ -27,7 +27,8 @@ use lnpbp::client_side_validation::CommitConceal;
 use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{
-    Consignment, ContractId, Genesis, Node, SealDefinition, SealEndpoint,
+    AtomicValue, Consignment, ContractId, Genesis, Node, SealDefinition,
+    SealEndpoint,
 };
 use rgb20::schema::OwnedRightsType;
 use rgb20::{schema, Asset, OutpointCoins};
@@ -235,17 +236,60 @@ impl Runtime {
         //       of asset for the transfer operation
 
         trace!("Looking for asset information");
-        let mut asset = self.cacher.asset(transfer.contract_id)?.clone();
-        debug!("Transferring asset {}", asset);
+        debug!("Transferring asset {}", transfer.contract_id);
 
         trace!("Preparing state transition");
         let transition = rgb20::transfer(
-            &mut asset,
+            self.cacher.asset(transfer.contract_id)?,
             transfer.inputs.clone(),
             transfer.payment.clone(),
             transfer.change.clone(),
         )?;
         debug!("State transition: {}", transition);
+
+        trace!("Collecting other assets on the spent outpoints and preparing blank state transitions");
+        let mut other_outpoint_assets: BTreeMap<
+            ContractId,
+            BTreeSet<(OutPoint, AtomicValue)>,
+        > = bmap! {};
+        for outpoint in &transfer.inputs {
+            for (other_contract, amounts) in
+                self.cacher.outpoint_assets(*outpoint)?
+            {
+                other_outpoint_assets
+                    .entry(other_contract)
+                    .or_insert(empty!())
+                    .insert((*outpoint, amounts.into_iter().sum()));
+            }
+        }
+        debug!(
+            "Total {} other assets are found on the spent outpoints",
+            other_outpoint_assets.len()
+        );
+        trace!("{:?}", other_outpoint_assets);
+        let change_seal = if other_outpoint_assets.len() > 0 {
+            transfer.change.keys().find(|_| true).ok_or(
+                ServiceErrorDomain::Internal(s!(
+                    "Other assets are present on the provided inputs, but no change address given"
+                ))
+            )?.clone()
+        } else {
+            SealDefinition::WitnessVout {
+                vout: 0,
+                blinding: 0,
+            } // Not used
+        };
+        for (other_contract, outpoints) in other_outpoint_assets {
+            rgb20::transfer(
+                self.cacher.asset(other_contract)?,
+                outpoints.iter().map(|(outpoint, _)| *outpoint).collect(),
+                empty!(),
+                outpoints
+                    .iter()
+                    .map(|(_, amount)| (change_seal, *amount))
+                    .collect(),
+            )?;
+        }
 
         trace!("Requesting consignment from stash daemon");
         let endpoints = transfer
