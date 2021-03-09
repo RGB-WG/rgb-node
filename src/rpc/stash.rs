@@ -16,7 +16,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
 use lnpbp::seals::OutpointReveal;
-use rgb::{Consignment, ContractId, NodeId, SealEndpoint, Transition};
+use rgb::{Consignment, ContractId, SealEndpoint, Transition};
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
@@ -53,7 +53,7 @@ pub enum Request {
     ReadTransitions(Vec<::rgb::NodeId>),
 
     #[api(type = 0x0401)]
-    Consign(crate::rpc::stash::ConsignRequest),
+    Consign(crate::rpc::stash::TransferRequest),
 
     #[api(type = 0x0403)]
     Validate(::rgb::Consignment),
@@ -69,11 +69,11 @@ pub enum Request {
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("consign({contract_id}, ...)")]
-pub struct ConsignRequest {
+pub struct TransferRequest {
     pub contract_id: ContractId,
     pub inputs: BTreeSet<OutPoint>,
     pub transition: Transition,
-    pub other_transition_ids: BTreeMap<ContractId, NodeId>,
+    pub other_transitions: BTreeMap<ContractId, Transition>,
     pub endpoints: BTreeSet<SealEndpoint>,
     pub psbt: Psbt,
 }

@@ -43,8 +43,8 @@ use crate::rpc::{
     self,
     fungible::{AcceptApi, Issue, Request, TransferApi},
     reply,
-    stash::ConsignRequest,
     stash::MergeRequest,
+    stash::TransferRequest,
     Reply,
 };
 use crate::util::ToBech32Data;
@@ -279,16 +279,20 @@ impl Runtime {
                 blinding: 0,
             } // Not used
         };
+        let mut other_transitions = bmap! {};
         for (other_contract, outpoints) in other_outpoint_assets {
-            rgb20::transfer(
-                self.cacher.asset(other_contract)?,
-                outpoints.iter().map(|(outpoint, _)| *outpoint).collect(),
-                empty!(),
-                outpoints
-                    .iter()
-                    .map(|(_, amount)| (change_seal, *amount))
-                    .collect(),
-            )?;
+            other_transitions.insert(
+                other_contract,
+                rgb20::transfer(
+                    self.cacher.asset(other_contract)?,
+                    outpoints.iter().map(|(outpoint, _)| *outpoint).collect(),
+                    empty!(),
+                    outpoints
+                        .iter()
+                        .map(|(_, amount)| (change_seal, *amount))
+                        .collect(),
+                )?,
+            );
         }
 
         trace!("Requesting consignment from stash daemon");
@@ -299,12 +303,11 @@ impl Runtime {
             .map(SealEndpoint::from)
             .chain(transfer.payment.keys().copied())
             .collect();
-        let reply = self.consign(ConsignRequest {
+        let reply = self.consign(TransferRequest {
             contract_id: transfer.contract_id,
             inputs: transfer.inputs.clone(),
             transition,
-            // TODO: Collect blank state transitions and pass it here
-            other_transition_ids: bmap![],
+            other_transitions,
             endpoints,
             psbt: transfer.witness.clone(),
         })?;
@@ -414,7 +417,7 @@ impl Runtime {
 
     fn consign(
         &mut self,
-        consign_req: ConsignRequest,
+        consign_req: TransferRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
         let reply =
             self.stash_req_rep(rpc::stash::Request::Consign(consign_req))?;

@@ -20,8 +20,8 @@ use internet2::{
 };
 use microservices::node::TryService;
 use rgb::{
-    Anchor, Consignment, ContractId, Genesis, Node, NodeId, Schema, SchemaId,
-    Stash,
+    Anchor, Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema,
+    SchemaId, Stash,
 };
 use wallet::resolvers::ElectrumTxResolver;
 
@@ -33,7 +33,7 @@ use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
     ServiceErrorSource,
 };
-use crate::rpc::stash::{ConsignRequest, MergeRequest, Request};
+use crate::rpc::stash::{MergeRequest, Request, TransferRequest};
 use crate::rpc::{reply, Reply};
 use crate::stashd::index::BTreeIndexConfig;
 use crate::util::ToBech32Data;
@@ -163,7 +163,7 @@ impl Runtime {
                 self.rpc_read_genesis(contract_id)
             }
             Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id),
-            Request::Consign(consign) => self.rpc_consign(consign),
+            Request::Consign(consign) => self.rpc_transfer(consign),
             Request::Validate(consign) => self.rpc_validate(consign),
             Request::Merge(merge) => self.rpc_merge(merge),
             Request::Forget(removal_list) => self.rpc_forget(removal_list),
@@ -223,19 +223,27 @@ impl Runtime {
         Ok(Reply::Schema(schema))
     }
 
-    fn rpc_consign(
+    // TODO: Rename into `transfer` (since it will produce both Consignment and
+    //       Disclosure)
+    fn rpc_transfer(
         &mut self,
-        request: &ConsignRequest,
+        request: &TransferRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got CONSIGN {}", request);
 
-        let mut transitions = request.other_transition_ids.clone();
-        transitions.insert(request.contract_id, request.transition.node_id());
+        let mut transitions = request.other_transitions.clone();
+        transitions.insert(request.contract_id, request.transition.clone());
 
         // Construct anchor
         let mut psbt = request.psbt.clone();
-        let (anchors, map) = Anchor::commit(transitions, &mut psbt)
-            .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
+        let (anchors, map) = Anchor::commit(
+            transitions
+                .iter()
+                .map(|(contract_id, ts)| (*contract_id, ts.node_id()))
+                .collect(),
+            &mut psbt,
+        )
+        .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
         let anchor = anchors[*map
             .get(&request.contract_id)
             .expect("Core LNP/BP anchor commitment procedure is broken")]
@@ -252,8 +260,11 @@ impl Runtime {
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
+        // TODO: Prepare disclosure
+
         Ok(Reply::Transfer(reply::Transfer {
             consignment,
+            disclosure: Disclosure {},
             witness: psbt,
         }))
     }
