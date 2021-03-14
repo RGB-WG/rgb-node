@@ -33,9 +33,9 @@ required-features = ["cli"]
 amplify = "3"
 amplify_derive = "2.4.2"
 lnpbp = "0.4"
-rgb-core = { git = "https://github.com/rgb-org/rgb-core" }
+rgb-core = "0.4"
 descriptor-wallet = { version = "0.4", features = ["electrum"] }
-rgb20 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+rgb20 = { version = "0.4", optional = true }
 rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }

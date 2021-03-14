@@ -264,7 +264,7 @@ impl Runtime {
 
         Ok(Reply::Transfer(reply::Transfer {
             consignment,
-            disclosure: Disclosure {},
+            disclosure: Disclosure::default(),
             witness: psbt,
         }))
     }
@@ -297,7 +297,7 @@ impl Runtime {
         let known_seals = &merge.reveal_outpoints;
         let consignment = &merge.consignment;
 
-        self.merge(consignment, known_seals)
+        self.accept(consignment, known_seals)
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
         Ok(Reply::Success)

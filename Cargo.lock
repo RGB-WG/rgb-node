@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "amplify"
-version = "3.1.1"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f92856ad516a7ada2b2e5ce047c3dc5ea0c69f9a053823e3feb1c67289ac5ee3"
+checksum = "6cd7d8887f771c295502e7d5c5c7ee130b794f65af92f3176f22a762587b03d3"
 dependencies = [
  "amplify_derive",
  "parse_arg",
@@ -43,13 +43,13 @@ dependencies = [
 
 [[package]]
 name = "amplify_derive"
-version = "2.4.4"
+version = "2.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9cc50fd13f783af1129d1c7bdaa9a54a56cf9bd7697ee3609497bf7968daff3"
+checksum = "f24ae6c0675ea6f01a58c57eb05967d91f22740170ff9951fa7fc45a6c6e9b76"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -59,7 +59,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9076b2ac55f9451a0b7f36921d1c7d3a4c8822c3cbf6ecb5eece6fab90c7fc22"
 dependencies = [
  "proc-macro2 1.0.24",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -216,9 +216,9 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 
 [[package]]
 name = "byteorder"
-version = "1.4.2"
+version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae44d1a3d5a19df61dd0c8beb138458ac2a53a7ac09eba97d55592540004306b"
+checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "bytes"
@@ -319,7 +319,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -448,7 +448,7 @@ dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
  "strsim 0.9.3",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -459,7 +459,7 @@ checksum = "d9b5a2f4ac4969822c62224815d069952656cadc7084fdca9751e6d959189b72"
 dependencies = [
  "darling_core",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -531,7 +531,7 @@ checksum = "45f5098f628d02a7a0f68ddba586fb61e80edec3bdc1be3b921f4ceec60858d3"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -859,7 +859,7 @@ dependencies = [
  "amplify",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -972,7 +972,7 @@ dependencies = [
  "amplify_derive_helpers",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -1154,7 +1154,7 @@ checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -1211,15 +1211,15 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "openssl"
-version = "0.10.32"
+version = "0.10.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "038d43985d1ddca7a9900630d8cd031b56e4794eecc2e9ea39dd17aa04399a70"
+checksum = "a61075b62a23fef5a29815de7536d940aa35ce96d18ce0cc5076272db678a577"
 dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
  "foreign-types",
- "lazy_static",
  "libc",
+ "once_cell",
  "openssl-sys",
 ]
 
@@ -1234,9 +1234,9 @@ dependencies = [
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.60"
+version = "0.9.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "921fc71883267538946025deffb622905ecad223c28efbfdef9bb59a0175f3e6"
+checksum = "313752393519e876837e09e1fa183ddef0be7735868dced3196f4472d536277f"
 dependencies = [
  "autocfg 1.0.1",
  "cc",
@@ -1260,9 +1260,9 @@ checksum = "14248cc8eced350e20122a291613de29e4fa129ba2731818c4cdbb44fccd3e55"
 
 [[package]]
 name = "paste"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5d65c4d95931acda4498f675e332fcbdc9a06705cd07086c510e9b6009cd1c1"
+checksum = "acbf547ad0c65e31259204bd90935776d1c693cec2f4ff7abb7a1bbbd40dfe58"
 
 [[package]]
 name = "percent-encoding"
@@ -1307,7 +1307,7 @@ dependencies = [
  "proc-macro-error-attr",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
  "version_check",
 ]
 
@@ -1554,26 +1554,58 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.4.3"
+version = "1.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9251239e129e16308e70d853559389de218ac275b515068abc96829d05b948a"
+checksum = "957056ecddbeba1b26965114e191d2e8589ce74db242b6ea25fc4062427a5c19"
 dependencies = [
  "aho-corasick",
  "memchr",
  "regex-syntax",
- "thread_local",
 ]
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.22"
+version = "0.6.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
+checksum = "24d5f089152e60f62d28b835fbff2cd2e8dc0baf1ac13343bef92ab7eed84548"
 
 [[package]]
 name = "rgb-core"
-version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#7efffd7fd42d85a1062f45799c3ca28a58438ec4"
+version = "0.4.0"
+source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bech32",
+ "bitcoin",
+ "bitcoin_hashes 0.9.4",
+ "chrono",
+ "clap",
+ "deflate",
+ "descriptor-wallet",
+ "ed25519-dalek",
+ "grin_secp256k1zkp",
+ "inflate",
+ "lazy_static",
+ "lightning_encoding",
+ "lnpbp",
+ "miniscript",
+ "num-derive",
+ "num-traits 0.2.14",
+ "regex",
+ "serde 1.0.124",
+ "serde_json",
+ "serde_with",
+ "serde_with_macros",
+ "serde_yaml",
+ "strict_encoding",
+]
+
+[[package]]
+name = "rgb-core"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd9bd2df39de07815c1693da099f99058b3cae0fe7a5df31559ac9d5c1b97439"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1604,8 +1636,9 @@ dependencies = [
 
 [[package]]
 name = "rgb20"
-version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#7efffd7fd42d85a1062f45799c3ca28a58438ec4"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "554fe61daf0a7a1763c51111f33bbb100b6abdf482d543a20927f139a031eda0"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1613,7 +1646,7 @@ dependencies = [
  "chrono",
  "lnpbp",
  "regex",
- "rgb-core",
+ "rgb-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.124",
  "serde_with",
  "url",
@@ -1622,40 +1655,40 @@ dependencies = [
 [[package]]
 name = "rgb21"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#7efffd7fd42d85a1062f45799c3ca28a58438ec4"
+source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "chrono",
  "lnpbp",
- "rgb-core",
+ "rgb-core 0.4.0 (git+https://github.com/rgb-org/rgb-core)",
 ]
 
 [[package]]
 name = "rgb22"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#7efffd7fd42d85a1062f45799c3ca28a58438ec4"
+source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "chrono",
  "lnpbp",
- "rgb-core",
+ "rgb-core 0.4.0 (git+https://github.com/rgb-org/rgb-core)",
 ]
 
 [[package]]
 name = "rgb23"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#7efffd7fd42d85a1062f45799c3ca28a58438ec4"
+source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "chrono",
  "lnpbp",
- "rgb-core",
+ "rgb-core 0.4.0 (git+https://github.com/rgb-org/rgb-core)",
 ]
 
 [[package]]
@@ -1684,7 +1717,7 @@ dependencies = [
  "log",
  "microservices",
  "nix",
- "rgb-core",
+ "rgb-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rgb20",
  "rgb21",
  "rgb22",
@@ -1833,7 +1866,7 @@ checksum = "1800f7693e94e186f5e25a28291ae1570da908aff7d97a095dec1e56ff99069b"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -1886,7 +1919,7 @@ dependencies = [
  "darling",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -2020,7 +2053,7 @@ dependencies = [
  "amplify",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
 ]
 
 [[package]]
@@ -2070,9 +2103,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.62"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123a78a3596b24fee53a6464ce52d8ecbf62241e6294c7e7fe12086cd161f512"
+checksum = "3fd9d1e9976102a03c542daa2eff1b43f9d72306342f3f8b3ed5fb8908195d6f"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
@@ -2099,7 +2132,7 @@ checksum = "b834f2d66f734cb897113e34aaff2f1ab4719ca946f9a7358dba8f8064148701"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
  "unicode-xid 0.2.1",
 ]
 
@@ -2119,15 +2152,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "203008d98caf094106cfaba70acfed15e18ed3ddb7d94e49baec153a2b462789"
 dependencies = [
  "unicode-width",
-]
-
-[[package]]
-name = "thread_local"
-version = "1.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8018d24e04c95ac8790716a5987d0fec4f8b27249ffa0f7d33f1369bdfb88cbd"
-dependencies = [
- "once_cell",
 ]
 
 [[package]]
@@ -2216,9 +2240,9 @@ dependencies = [
 
 [[package]]
 name = "typenum"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "373c8a200f9e67a0c95e62a4f52fbf80c23b4381c05a17845531982fa99e6b33"
+checksum = "879f6906492a7cd215bfa4cf595b600146ccfac0c79bcbd1f3000162af5e8b06"
 
 [[package]]
 name = "unicode-bidi"
@@ -2350,7 +2374,7 @@ dependencies = [
  "log",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
  "wasm-bindgen-shared",
 ]
 
@@ -2372,7 +2396,7 @@ checksum = "cc053ec74d454df287b9374ee8abb36ffd5acb95ba87da3ba5b7d3fe20eb401e"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -2512,7 +2536,7 @@ checksum = "c3f369ddb18862aba61aa49bf31e74d29f0f162dec753063200e1dc084345d16"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "syn 1.0.62",
+ "syn 1.0.64",
  "synstructure 0.12.4",
 ]
 
