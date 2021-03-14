@@ -193,7 +193,7 @@ impl Stash for Runtime {
         ))
     }
 
-    fn merge(
+    fn accept(
         &mut self,
         consignment: &Consignment,
         known_seals: &Vec<OutpointReveal>,
@@ -251,6 +251,13 @@ impl Stash for Runtime {
         Ok(())
     }
 
+    fn know_about(
+        &mut self,
+        disclosure: Disclosure,
+    ) -> Result<(), Self::Error> {
+        unimplemented!()
+    }
+
     fn forget(
         &mut self,
         _consignment: Consignment,
@@ -259,10 +266,6 @@ impl Stash for Runtime {
     }
 
     fn prune(&mut self) -> Result<usize, Self::Error> {
-        unimplemented!()
-    }
-
-    fn disclose(&self) -> Result<Disclosure, Self::Error> {
         unimplemented!()
     }
 }
