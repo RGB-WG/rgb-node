@@ -208,6 +208,8 @@ impl Stash for Runtime {
         consignment: &Consignment,
         known_seals: &Vec<OutpointReveal>,
     ) -> Result<(), Error> {
+        let consignment = consignment.clone();
+
         // [PRIVACY]:
         // Update transition data with the revealed state information that we
         // kept since we did an invoice (and the sender did not know).
@@ -236,13 +238,28 @@ impl Stash for Runtime {
                 }
             };
 
-        for (anchor, transition) in consignment.state_transitions.iter() {
-            let mut transition = transition.clone();
+        // [PRIVACY] [SECURITY]:
+        // Update all data with the previously known revealed information in the
+        // stash
+        for (mut anchor, mut transition) in
+            consignment.state_transitions.into_iter()
+        {
             transition
                 .owned_rights_mut()
                 .into_iter()
                 .for_each(reveal_known_seals);
-            let anchor = anchor.clone();
+            if let Ok(other_transition) =
+                self.storage.transition(&transition.node_id())
+            {
+                transition = transition.into_revealed(other_transition).expect(
+                    "Transition id or merge-revealed procedure is broken",
+                );
+            }
+            if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
+                anchor = anchor
+                    .into_revealed(other_anchor)
+                    .expect("Anchor id or merge-revealed procedure is broken");
+            }
             // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
             // TODO: Uncomment once indexing will be implemented
@@ -250,12 +267,18 @@ impl Stash for Runtime {
             self.storage.add_transition(&transition)?;
         }
 
-        for extension in consignment.state_extensions.iter() {
-            let mut extension = extension.clone();
+        for mut extension in consignment.state_extensions.into_iter() {
             extension
                 .owned_rights_mut()
                 .into_iter()
                 .for_each(reveal_known_seals);
+            if let Ok(other_extension) =
+                self.storage.extension(&extension.node_id())
+            {
+                extension = extension.into_revealed(other_extension).expect(
+                    "Extension id or merge-revealed procedure is broken",
+                );
+            }
             self.storage.add_extension(&extension)?;
         }
 
