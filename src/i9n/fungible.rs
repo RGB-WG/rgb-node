@@ -22,7 +22,7 @@ use lnpbp::seals::OutpointReveal;
 use lnpbp::Chain;
 use microservices::FileFormat;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Genesis, SealDefinition,
+    AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,
     SealEndpoint, PSBT_OUT_PUBKEY,
 };
 use rgb20::{Asset, OutpointCoins};
@@ -31,8 +31,8 @@ use super::{Error, Runtime};
 use crate::error::ServiceErrorDomain;
 use crate::rpc::reply::Transfer;
 use crate::rpc::{
-    fungible::AcceptApi, fungible::Issue, fungible::Request,
-    fungible::TransferApi, reply, Reply,
+    fungible::AcceptReq, fungible::IssueReq, fungible::Request,
+    fungible::TransferReq, reply, Reply,
 };
 
 impl Runtime {
@@ -62,7 +62,7 @@ impl Runtime {
         if self.config.network != chain {
             Err(Error::WrongNetwork)?;
         }
-        let command = Request::Issue(Issue {
+        let command = Request::Issue(IssueReq {
             ticker,
             name,
             description,
@@ -111,7 +111,7 @@ impl Runtime {
         }
         trace!("{:?}", witness);
 
-        let api = TransferApi {
+        let api = TransferReq {
             witness,
             contract_id,
             inputs,
@@ -135,7 +135,7 @@ impl Runtime {
         consignment: Consignment,
         reveal_outpoints: Vec<OutpointReveal>,
     ) -> Result<(), Error> {
-        let api = AcceptApi {
+        let api = AcceptReq {
             consignment,
             reveal_outpoints,
         };
@@ -159,6 +159,17 @@ impl Runtime {
             Reply::ValidationStatus(status) => {
                 info!("Validation succeeded");
                 Ok(status.clone())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn enclose(&mut self, disclosure: Disclosure) -> Result<(), Error> {
+        match &*self.command(Request::Enclose(disclosure))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                info!("Enclose command succeeded");
+                Ok(())
             }
             _ => Err(Error::UnexpectedResponse),
         }

@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
 use microservices::FileFormat;
-use rgb::{AtomicValue, Consignment, ContractId};
+use rgb::{AtomicValue, Consignment, ContractId, Disclosure};
 use rgb20::Asset;
 
 #[cfg(feature = "node")]
@@ -121,6 +121,7 @@ pub struct SyncFormat(pub FileFormat, pub Vec<u8>);
 #[display("transfer(...)")]
 pub struct Transfer {
     pub consignment: Consignment,
+    pub disclosure: Disclosure,
     pub witness: Psbt,
 }
 

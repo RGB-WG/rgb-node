@@ -18,7 +18,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use lnpbp::seals::OutpointReveal;
-use rgb::{AtomicValue, Consignment, ContractId, SealDefinition, SealEndpoint};
+use rgb::{
+    AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,
+    SealEndpoint,
+};
 use rgb20::OutpointCoins;
 
 use microservices::FileFormat;
@@ -30,29 +33,33 @@ use microservices::FileFormat;
 #[non_exhaustive]
 pub enum Request {
     #[api(type = 0x0101)]
-    Issue(crate::rpc::fungible::Issue),
+    Issue(IssueReq),
 
     #[api(type = 0x0103)]
-    Transfer(crate::rpc::fungible::TransferApi),
+    Transfer(TransferReq),
 
     #[api(type = 0x0105)]
     #[display("validate(...)")]
-    Validate(::rgb::Consignment),
+    Validate(Consignment),
 
     #[api(type = 0x0107)]
-    Accept(crate::rpc::fungible::AcceptApi),
+    Accept(AcceptReq),
+
+    #[api(type = 0x0108)]
+    #[display("enclose({0})")]
+    Enclose(Disclosure),
 
     #[api(type = 0x0109)]
     #[display("import_asset({0})")]
-    ImportAsset(::rgb::Genesis),
+    ImportAsset(Genesis),
 
     #[api(type = 0x010b)]
     #[display("export_asset({0})")]
-    ExportAsset(::rgb::ContractId),
+    ExportAsset(ContractId),
 
     #[api(type = 0x010d)]
     #[display("forget({0})")]
-    Forget(::bitcoin::OutPoint),
+    Forget(OutPoint),
 
     #[api(type = 0xFF01)]
     #[display("sync(using: {0})")]
@@ -77,7 +84,7 @@ pub enum Request {
     derive(Serialize, Deserialize,),
     serde(crate = "serde_crate")
 )]
-pub struct Issue {
+pub struct IssueReq {
     /// Asset ticker (up to 8 characters, always converted to uppercase)
     #[clap(validator=ticker_validator)]
     pub ticker: String,
@@ -116,7 +123,7 @@ pub struct Issue {
 #[derive(Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("transfer({contract_id}, ...)")]
-pub struct TransferApi {
+pub struct TransferReq {
     /// Asset contract id
     pub contract_id: ContractId,
 
@@ -142,7 +149,7 @@ pub struct TransferApi {
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("accept(...)")]
-pub struct AcceptApi {
+pub struct AcceptReq {
     /// Raw consignment data
     pub consignment: Consignment,
 

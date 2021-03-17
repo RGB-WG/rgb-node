@@ -16,7 +16,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
 use lnpbp::seals::OutpointReveal;
-use rgb::{Consignment, ContractId, NodeId, SealEndpoint, Transition};
+use rgb::{
+    Consignment, ContractId, Disclosure, Genesis, NodeId, Schema, SchemaId,
+    SealEndpoint, Transition,
+};
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
@@ -26,7 +29,7 @@ use rgb::{Consignment, ContractId, NodeId, SealEndpoint, Transition};
 pub enum Request {
     #[api(type = 0x0101)]
     #[display("add_schema({0})")]
-    AddSchema(::rgb::Schema),
+    AddSchema(Schema),
 
     #[api(type = 0x0103)]
     #[display("list_schemata()")]
@@ -34,11 +37,11 @@ pub enum Request {
 
     #[api(type = 0x0105)]
     #[display("read_schema({0})")]
-    ReadSchema(::rgb::SchemaId),
+    ReadSchema(SchemaId),
 
     #[api(type = 0x0201)]
     #[display("add_genesis({0})")]
-    AddGenesis(::rgb::Genesis),
+    AddGenesis(Genesis),
 
     #[api(type = 0x0203)]
     #[display("list_geneses()")]
@@ -46,42 +49,47 @@ pub enum Request {
 
     #[api(type = 0x0205)]
     #[display("read_genesis({0})")]
-    ReadGenesis(::rgb::ContractId),
+    ReadGenesis(ContractId),
 
     #[api(type = 0x0301)]
     #[display("read_transitions(...)")]
-    ReadTransitions(Vec<::rgb::NodeId>),
+    ReadTransitions(Vec<NodeId>),
 
     #[api(type = 0x0401)]
-    Consign(crate::rpc::stash::ConsignRequest),
+    Transfer(TransferRequest),
 
     #[api(type = 0x0403)]
-    Validate(::rgb::Consignment),
+    #[display("validate({0})")]
+    Validate(Consignment),
 
     #[api(type = 0x0405)]
-    Merge(crate::rpc::stash::MergeRequest),
+    Accept(AcceptRequest),
+
+    #[api(type = 0x0406)]
+    #[display("enclose({0})")]
+    Enclose(Disclosure),
 
     #[api(type = 0x0407)]
     #[display("forget(...)")]
-    Forget(Vec<(::rgb::NodeId, u16)>),
+    Forget(Vec<(NodeId, u16)>),
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("consign({contract_id}, ...)")]
-pub struct ConsignRequest {
+pub struct TransferRequest {
     pub contract_id: ContractId,
     pub inputs: BTreeSet<OutPoint>,
     pub transition: Transition,
-    pub other_transition_ids: BTreeMap<ContractId, NodeId>,
+    pub other_transitions: BTreeMap<ContractId, Transition>,
     pub endpoints: BTreeSet<SealEndpoint>,
     pub psbt: Psbt,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
-#[display("merge(...)")]
-pub struct MergeRequest {
+#[display("accept(...)")]
+pub struct AcceptRequest {
     pub consignment: Consignment,
     pub reveal_outpoints: Vec<OutpointReveal>,
 }
