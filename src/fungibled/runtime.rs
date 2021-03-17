@@ -43,7 +43,7 @@ use crate::rpc::{
     self,
     fungible::{AcceptApi, Issue, Request, TransferApi},
     reply,
-    stash::MergeRequest,
+    stash::AcceptRequest,
     stash::TransferRequest,
     Reply,
 };
@@ -446,7 +446,7 @@ impl Runtime {
         accept: AcceptApi,
     ) -> Result<Reply, ServiceErrorDomain> {
         let reply =
-            self.stash_req_rep(rpc::stash::Request::Merge(MergeRequest {
+            self.stash_req_rep(rpc::stash::Request::Accept(AcceptRequest {
                 consignment: accept.consignment.clone(),
                 reveal_outpoints: accept.reveal_outpoints.clone(),
             }))?;

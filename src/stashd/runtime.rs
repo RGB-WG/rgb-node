@@ -34,7 +34,7 @@ use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
     ServiceErrorSource,
 };
-use crate::rpc::stash::{MergeRequest, Request, TransferRequest};
+use crate::rpc::stash::{AcceptRequest, Request, TransferRequest};
 use crate::rpc::{reply, Reply};
 use crate::stashd::index::BTreeIndexConfig;
 use crate::util::ToBech32Data;
@@ -164,11 +164,12 @@ impl Runtime {
                 self.rpc_read_genesis(contract_id)
             }
             Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id),
+            Request::ReadTransitions(_) => unimplemented!(),
             Request::Transfer(consign) => self.rpc_transfer(consign),
             Request::Validate(consign) => self.rpc_validate(consign),
-            Request::Merge(merge) => self.rpc_merge(merge),
+            Request::Accept(merge) => self.rpc_accept(merge),
+            Request::Enclose(disclosure) => self.rpc_enclose(disclosure),
             Request::Forget(removal_list) => self.rpc_forget(removal_list),
-            _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
             domain: err,
@@ -307,16 +308,28 @@ impl Runtime {
         Ok(Reply::ValidationStatus(validation_status))
     }
 
-    fn rpc_merge(
+    fn rpc_accept(
         &mut self,
-        merge: &MergeRequest,
+        accept_req: &AcceptRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got MERGE CONSIGNMENT");
+        debug!("Got ACCEPT CONSIGNMENT");
 
-        let known_seals = &merge.reveal_outpoints;
-        let consignment = &merge.consignment;
+        let known_seals = &accept_req.reveal_outpoints;
+        let consignment = &accept_req.consignment;
 
         self.accept(consignment, known_seals)
+            .map_err(|_| ServiceErrorDomain::Stash)?;
+
+        Ok(Reply::Success)
+    }
+
+    fn rpc_enclose(
+        &mut self,
+        disclosure: &Disclosure,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ENCLOSE DISCLOSURE");
+
+        self.know_about(disclosure.clone())
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
         Ok(Reply::Success)
