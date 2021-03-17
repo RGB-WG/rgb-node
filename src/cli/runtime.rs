@@ -19,7 +19,7 @@ use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
     TypedEnum, Unmarshall, Unmarshaller,
 };
-use rgb::{Consignment, ContractId, Genesis, SchemaId};
+use rgb::{Consignment, ContractId, Disclosure, Genesis, SchemaId};
 
 use super::{Config, Error};
 use crate::cli::OutputFormat;
@@ -154,6 +154,14 @@ impl Runtime {
     #[inline]
     pub fn accept(&mut self, accept: AcceptReq) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Accept(accept))?)
+    }
+
+    #[inline]
+    pub fn enclose(
+        &mut self,
+        disclosure: Disclosure,
+    ) -> Result<Arc<Reply>, Error> {
+        Ok(self.fungible_command(fungible::Request::Enclose(disclosure))?)
     }
 
     #[inline]

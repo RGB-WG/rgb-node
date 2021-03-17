@@ -88,6 +88,12 @@ pub enum Command {
         blinding_factor: u64,
     },
 
+    /// Adds data from some disclosure to the stash & asset information cache
+    Enclose {
+        /// Path to disclosure file
+        disclosure: PathBuf,
+    },
+
     Forget {
         /// Bitcoin transaction output that was spent and which data
         /// has to be forgotten
@@ -119,11 +125,16 @@ pub struct TransferCli {
     /// Read partially-signed transaction prototype
     pub prototype: PathBuf,
 
-    /// File to save consignment to. It will produce two files:
-    /// - one with concealed data to share with the receiver, having extension
-    ///   `.concealed.rgb`, and
-    /// - one with plain complete data, having extension `.revealed.rgb`
+    /// File to save consignment to
     pub consignment: PathBuf,
+
+    /// File to save disclosure to.
+    ///
+    /// Disclosures are used to allocate the change and other assets which were
+    /// on the same output but were not transferred. To see the change and
+    /// those assets you will have to accept disclosure lately with special
+    /// `enclose` command.
+    pub disclosure: PathBuf,
 
     /// File to save updated partially-signed bitcoin transaction to
     pub transaction: PathBuf,
@@ -163,6 +174,9 @@ impl Command {
                 outpoint,
                 blinding_factor,
             ),
+            Command::Enclose { ref disclosure } => {
+                self.exec_enclose(runtime, disclosure.clone())
+            }
             Command::Forget { outpoint } => self.exec_forget(runtime, outpoint),
         }
     }
@@ -336,7 +350,10 @@ impl Command {
             if outpoint_reveal.commit_conceal()
                 != seal_endpoint.commit_conceal()
             {
-                eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
+                eprintln!(
+                    "The provided outpoint and blinding factors does not match \
+                    outpoint from the consignment"
+                );
                 Err(Error::DataInconsistency)?
             }
             AcceptReq {
@@ -344,7 +361,11 @@ impl Command {
                 reveal_outpoints: vec![outpoint_reveal],
             }
         } else {
-            eprintln!("Currently, this command-line tool is unable to accept consignments containing more than a single locally-controlled output point");
+            eprintln!(
+                "Currently, this command-line tool is unable to accept \
+                consignments containing more than a single locally-controlled \
+                output point"
+            );
             Err(Error::UnsupportedFunctionality)?
         };
 
@@ -358,6 +379,41 @@ impl Command {
             _ => {
                 eprintln!(
                     "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+
+        Ok(())
+    }
+
+    fn exec_enclose(
+        &self,
+        mut runtime: Runtime,
+        filename: PathBuf,
+    ) -> Result<(), Error> {
+        info!("Enclosing disclosure...");
+
+        debug!("Reading disclosure from file {:?}", &filename);
+        let disclosure =
+            Disclosure::read_file(filename.clone()).map_err(|err| {
+                Error::InputFileFormatError(
+                    format!("{:?}", filename),
+                    format!("{}", err),
+                )
+            })?;
+        trace!("{:#?}", disclosure);
+
+        match &*runtime.enclose(disclosure)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Success => {
+                eprintln!("Disclosure data successfully enclosed.");
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with \
+                    outdated client version"
                 );
             }
         }

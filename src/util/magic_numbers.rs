@@ -24,6 +24,7 @@ use core::convert::TryFrom;
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 #[repr(u32)]
+#[non_exhaustive]
 pub enum MagicNumber {
     /// Equals to first 4 bytes of SHA256("rgb:schema")
     /// = 18429ce35af7f898f765417b28471ab454b89ceff6fc33de77ff5fd98e066bc3
@@ -50,6 +51,10 @@ pub enum MagicNumber {
     /// = 4c82bf5385ab9027f15f1ce17a8007956fe8f38cbad2ee312cf2c55b72a69420
     Consignment = 0x4c82bf53,
 
+    /// Equals to first 4 bytes of SHA256("rgb:disclosure")
+    /// = e2fde682700fcef51e2dd3ef8e1c76340881e3ddfd81e9c45c54cf92b5b9483f
+    Disclosure = 0xe2fde682,
+
     /// Equals to first 4 bytes of SHA256("rgb:stash")
     /// = cd22a2cb85720d51f1616752cb85059a02f3d35f7dda30a4ca981b59b0924354
     Stash = 0xcd22a2cb,
@@ -75,6 +80,7 @@ impl TryFrom<u32> for MagicNumber {
             n if n == Self::Transition.to_u32() => Self::Transition,
             n if n == Self::Anchor.to_u32() => Self::Anchor,
             n if n == Self::Consignment.to_u32() => Self::Consignment,
+            n if n == Self::Disclosure.to_u32() => Self::Disclosure,
             n if n == Self::Stash.to_u32() => Self::Stash,
             invalid => Err(invalid)?,
         })
