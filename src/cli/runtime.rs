@@ -24,7 +24,7 @@ use rgb::{Consignment, ContractId, Genesis, SchemaId};
 use super::{Config, Error};
 use crate::cli::OutputFormat;
 use crate::error::{BootstrapError, ServiceErrorDomain};
-use crate::rpc::fungible::{self, AcceptApi, Issue, TransferApi};
+use crate::rpc::fungible::{self, AcceptReq, IssueReq, TransferReq};
 use crate::rpc::stash;
 use crate::rpc::Reply;
 use microservices::FileFormat;
@@ -131,14 +131,14 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn issue(&mut self, issue: Issue) -> Result<Arc<Reply>, Error> {
+    pub fn issue(&mut self, issue: IssueReq) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Issue(issue))?)
     }
 
     #[inline]
     pub fn transfer(
         &mut self,
-        transfer: TransferApi,
+        transfer: TransferReq,
     ) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Transfer(transfer))?)
     }
@@ -152,7 +152,7 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn accept(&mut self, accept: AcceptApi) -> Result<Arc<Reply>, Error> {
+    pub fn accept(&mut self, accept: AcceptReq) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Accept(accept))?)
     }
 

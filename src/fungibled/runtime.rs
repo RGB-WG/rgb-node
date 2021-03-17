@@ -16,7 +16,7 @@ use core::convert::TryFrom;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
-use bitcoin::OutPoint;
+use bitcoin::{OutPoint, Txid};
 use internet2::zmqsocket::ZmqType;
 use internet2::TypedEnum;
 use internet2::{
@@ -24,11 +24,12 @@ use internet2::{
     Unmarshall, Unmarshaller,
 };
 use lnpbp::client_side_validation::CommitConceal;
+use lnpbp::seals::OutpointReveal;
 use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Genesis, Node, SealDefinition,
-    SealEndpoint,
+    AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node,
+    SealDefinition, SealEndpoint, Transition,
 };
 use rgb20::schema::OwnedRightsType;
 use rgb20::{schema, Asset, OutpointCoins};
@@ -41,7 +42,7 @@ use crate::error::{
 };
 use crate::rpc::{
     self,
-    fungible::{AcceptApi, Issue, Request, TransferApi},
+    fungible::{AcceptReq, IssueReq, Request, TransferReq},
     reply,
     stash::AcceptRequest,
     stash::TransferRequest,
@@ -174,6 +175,7 @@ impl Runtime {
             Request::Transfer(transfer) => self.rpc_transfer(transfer),
             Request::Validate(consignment) => self.rpc_validate(consignment),
             Request::Accept(accept) => self.rpc_accept(accept),
+            Request::Enclose(disclosure) => self.rpc_enclose(disclosure),
             Request::Forget(outpoint) => self.rpc_forget(outpoint),
             Request::ImportAsset(genesis) => self.rpc_import_asset(genesis),
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id),
@@ -188,7 +190,7 @@ impl Runtime {
 
     fn rpc_issue(
         &mut self,
-        issue: &Issue,
+        issue: &IssueReq,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
@@ -228,7 +230,7 @@ impl Runtime {
 
     fn rpc_transfer(
         &mut self,
-        transfer: &TransferApi,
+        transfer: &TransferReq,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", transfer);
 
@@ -325,10 +327,18 @@ impl Runtime {
 
     fn rpc_accept(
         &mut self,
-        accept: &AcceptApi,
+        accept: &AcceptReq,
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
         Ok(self.accept(accept.clone())?)
+    }
+
+    fn rpc_enclose(
+        &mut self,
+        disclosure: &Disclosure,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ENCLOSE");
+        Ok(self.enclose(disclosure.clone())?)
     }
 
     fn rpc_forget(
@@ -443,7 +453,7 @@ impl Runtime {
 
     fn accept(
         &mut self,
-        accept: AcceptApi,
+        accept: AcceptReq,
     ) -> Result<Reply, ServiceErrorDomain> {
         let reply =
             self.stash_req_rep(rpc::stash::Request::Accept(AcceptRequest {
@@ -452,70 +462,59 @@ impl Runtime {
             }))?;
         if let Reply::Success = reply {
             let asset_id = accept.consignment.genesis.contract_id();
-            let mut asset = if self.cacher.has_asset(asset_id)? {
+            let asset = if self.cacher.has_asset(asset_id)? {
                 self.cacher.asset(asset_id)?.clone()
             } else {
                 Asset::try_from(accept.consignment.genesis)?
             };
-            let reveal_outpoints = accept.reveal_outpoints.clone();
-
-            for (anchor, transition) in &accept.consignment.state_transitions {
-                let endpoint = if let Some(endpoint) = accept
+            // NB: Previously we were adding endpoint-only data; but I think
+            // this filtering is not necessary
+            self.update_asset(
+                asset,
+                accept
                     .consignment
-                    .endpoints
+                    .state_transitions
                     .iter()
-                    .find(|(node_id, _)| *node_id == transition.node_id())
-                    .cloned()
-                {
-                    endpoint
-                } else {
-                    continue;
-                };
+                    .map(|(anchor, transition)| (transition, anchor.txid)),
+                &accept.reveal_outpoints,
+            )?;
+            Ok(reply)
+        } else if let Reply::Failure(_) = &reply {
+            Ok(reply)
+        } else {
+            Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply))
+        }
+    }
 
-                let assignments = if let Some(assignments) =
-                    transition.owned_rights_by_type(*OwnedRightsType::Assets)
-                {
-                    assignments
-                } else {
-                    continue;
-                };
-
-                for (index, state) in
-                    assignments.to_discrete_state().into_iter().enumerate()
-                {
-                    let seal_confidential =
-                        state.seal_definition_confidential();
-                    if seal_confidential != endpoint.1.commit_conceal() {
-                        continue;
-                    }
-
-                    let seal_revealed = if let Some(seal_revealed) =
-                        state.seal_definition().or_else(|| {
-                            reveal_outpoints
-                                .iter()
-                                .find(|reveal| {
-                                    reveal.commit_conceal() == seal_confidential
-                                })
-                                .copied()
-                                .map(SealDefinition::from)
-                        }) {
-                        seal_revealed
-                    } else {
-                        continue;
-                    };
-
-                    if let Some(state_data) = state.assigned_state() {
-                        asset.add_allocation(
-                            seal_revealed.outpoint_reveal(anchor.txid).into(),
-                            endpoint.0,
-                            index as u16,
-                            *state_data,
-                        );
-                    }
-                }
+    fn enclose(
+        &mut self,
+        disclosure: Disclosure,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self
+            .stash_req_rep(rpc::stash::Request::Enclose(disclosure.clone()))?;
+        if let Reply::Success = reply {
+            // TODO: Improve RGB Core disclosure API providing methods for
+            // indexing underlying       data in different ways. Do
+            // the same for Consignment
+            for contract_id in disclosure
+                .transitions()
+                .values()
+                .map(|(_, map)| map.keys())
+                .flatten()
+            {
+                let asset = self.cacher.asset(*contract_id)?.clone();
+                let data = disclosure
+                    .transitions()
+                    .values()
+                    .map(|(anchor, map)| {
+                        let txid: Txid = anchor.txid;
+                        map.iter()
+                            .filter(|(id, _)| *id == contract_id)
+                            .map(move |(_, transition)| (transition, txid))
+                    })
+                    .flatten();
+                self.update_asset(asset, data, &vec![])?;
             }
-
-            self.cacher.add_asset(asset)?;
             Ok(reply)
         } else if let Reply::Failure(_) = &reply {
             Ok(reply)
@@ -559,6 +558,56 @@ impl Runtime {
             Reply::Success | Reply::Failure(_) => Ok(reply),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
+    }
+
+    fn update_asset<'a>(
+        &mut self,
+        mut asset: Asset,
+        data: impl IntoIterator<Item = (&'a Transition, Txid)>,
+        reveal_outpoints: &'a Vec<OutpointReveal>,
+    ) -> Result<(), ServiceErrorDomain> {
+        for (transition, txid) in data.into_iter() {
+            let assignments = if let Some(assignments) =
+                transition.owned_rights_by_type(*OwnedRightsType::Assets)
+            {
+                assignments
+            } else {
+                continue;
+            };
+
+            for (index, state) in
+                assignments.to_discrete_state().into_iter().enumerate()
+            {
+                let seal_confidential = state.seal_definition_confidential();
+                let seal_revealed = if let Some(seal_revealed) =
+                    state.seal_definition().or_else(|| {
+                        reveal_outpoints
+                            .iter()
+                            .find(|reveal| {
+                                reveal.commit_conceal() == seal_confidential
+                            })
+                            .copied()
+                            .map(SealDefinition::from)
+                    }) {
+                    seal_revealed
+                } else {
+                    continue;
+                };
+
+                if let Some(state_data) = state.assigned_state() {
+                    asset.add_allocation(
+                        seal_revealed.outpoint_reveal(txid).into(),
+                        transition.node_id(),
+                        index as u16,
+                        *state_data,
+                    );
+                }
+            }
+        }
+
+        self.cacher.add_asset(asset)?;
+
+        Ok(())
     }
 
     fn stash_req_rep(

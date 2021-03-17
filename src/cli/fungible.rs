@@ -27,7 +27,7 @@ use rgb::prelude::*;
 use rgb20::{Asset, SealCoins};
 
 use super::{Error, OutputFormat, Runtime};
-use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
+use crate::rpc::fungible::{AcceptReq, IssueReq, TransferReq};
 use crate::rpc::{reply, Reply};
 use crate::util::file::ReadWrite;
 
@@ -58,7 +58,7 @@ pub enum Command {
     },
 
     /// Creates a new asset
-    Issue(Issue),
+    Issue(IssueReq),
 
     /// Creates a blinded version of a given bitcoin transaction outpoint
     Blind {
@@ -339,7 +339,7 @@ impl Command {
                 eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
                 Err(Error::DataInconsistency)?
             }
-            AcceptApi {
+            AcceptReq {
                 consignment,
                 reveal_outpoints: vec![outpoint_reveal],
             }
@@ -392,7 +392,7 @@ impl Command {
     }
 }
 
-impl Issue {
+impl IssueReq {
     pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
         info!("Issuing asset ...");
         debug!("{}", self.clone());
@@ -472,7 +472,7 @@ impl TransferCli {
         }
         trace!("{:?}", psbt);
 
-        let api = TransferApi {
+        let api = TransferReq {
             witness: psbt,
             contract_id: self.asset,
             inputs: self.inputs.into_iter().collect(),
