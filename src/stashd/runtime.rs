@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use internet2::zmqsocket::ZmqType;
@@ -258,11 +259,31 @@ impl Runtime {
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
-        // TODO: Prepare disclosure
+        // Prepare disclosure
+        let mut disclosure = Disclosure::default();
+        for (index, anchor) in anchors.into_iter().enumerate() {
+            let contract_ids =
+                map.iter()
+                    .filter_map(|(contract_id, i)| {
+                        if *i == index {
+                            Some(contract_id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<BTreeSet<_>>();
+            let anchored_transitions = transitions
+                .clone()
+                .into_iter()
+                .filter(|(contract_id, _)| contract_ids.contains(contract_id))
+                .collect();
+            disclosure
+                .insert_anchored_transitions(anchor, anchored_transitions);
+        }
 
         Ok(Reply::Transfer(reply::Transfer {
             consignment,
-            disclosure: Disclosure::default(),
+            disclosure,
             witness: psbt,
         }))
     }
