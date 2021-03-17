@@ -550,11 +550,7 @@ impl TransferCli {
             }
             Reply::Transfer(transfer) => {
                 let mut consignment = transfer.consignment.clone();
-                let mut theirs = self.consignment.clone();
-                theirs.set_extension("concealed.rgb");
-                let mut ours = self.consignment;
-                ours.set_extension("revealed.rgb");
-                consignment.write_file(&ours)?;
+                transfer.disclosure.write_file(&self.disclosure)?;
 
                 let receiver = self.receiver;
                 let expose = consignment
@@ -568,7 +564,7 @@ impl TransferCli {
                     })
                     .collect();
                 consignment.finalize(&expose, self.asset);
-                consignment.write_file(&theirs)?;
+                consignment.write_file(&self.consignment)?;
 
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
@@ -577,9 +573,9 @@ impl TransferCli {
                 })?;
 
                 eprintln!(
-                    "Transfer succeeded, consignments are written to {:?} and {:?}, \
-                     partially signed witness transaction to {:?}",
-                    theirs, ours, self.transaction
+                    "Transfer succeeded, consignments and disclosure are written \
+                     to {:?} and {:?}, partially signed witness transaction to {:?}",
+                    self.consignment, self.disclosure, self.transaction
                 );
                 eprint!("Consignment data to share:");
                 println!("{}", consignment);
