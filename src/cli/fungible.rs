@@ -85,7 +85,7 @@ pub enum Command {
         outpoint: OutPoint,
 
         /// Outpoint blinding factor (generated when the invoice was created)
-        blinding_factor: u64,
+        blinding_factor: Option<u64>,
     },
 
     Forget {
@@ -312,7 +312,7 @@ impl Command {
         mut runtime: Runtime,
         filename: PathBuf,
         outpoint: OutPoint,
-        blinding_factor: u64,
+        blinding_factor: Option<u64>,
     ) -> Result<(), Error> {
         info!("Accepting asset transfer...");
 
@@ -328,20 +328,24 @@ impl Command {
 
         let api = if let Some((_, seal_endpoint)) = consignment.endpoints.get(0)
         {
-            let outpoint_reveal = OutpointReveal {
-                blinding: blinding_factor,
-                txid: outpoint.txid,
-                vout: outpoint.vout as u32,
-            };
-            if outpoint_reveal.commit_conceal()
-                != seal_endpoint.commit_conceal()
-            {
-                eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
-                Err(Error::DataInconsistency)?
+            let mut reveal_outpoints = vec![];
+            if let Some(blinding_factor) = blinding_factor {
+                let outpoint_reveal = OutpointReveal {
+                    blinding: blinding_factor,
+                    txid: outpoint.txid,
+                    vout: outpoint.vout as u32,
+                };
+                if outpoint_reveal.commit_conceal()
+                    != seal_endpoint.commit_conceal()
+                {
+                    eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
+                    Err(Error::DataInconsistency)?
+                }
+                reveal_outpoints.push(outpoint_reveal);
             }
             AcceptApi {
                 consignment,
-                reveal_outpoints: vec![outpoint_reveal],
+                reveal_outpoints,
             }
         } else {
             eprintln!("Currently, this command-line tool is unable to accept consignments containing more than a single locally-controlled output point");
