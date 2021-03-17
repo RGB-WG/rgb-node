@@ -17,8 +17,8 @@ use bitcoin::hashes::Hash;
 use lnpbp::seals::OutpointReveal;
 use rgb::{
     Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
-    Extension, Genesis, Node, NodeId, SchemaId, SealEndpoint, Stash,
-    Transition,
+    Extension, Genesis, IntoRevealed, Node, NodeId, SchemaId, SealEndpoint,
+    Stash, Transition,
 };
 
 use super::index::Index;
@@ -26,17 +26,27 @@ use super::storage::Store;
 use super::Runtime;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, From, Error)]
-#[display(Debug)]
+#[display(doc_comments)]
 pub enum Error {
+    /// Storage error
     #[from(super::storage::DiskStorageError)]
     StorageError,
 
+    /// Index error
     #[from(super::index::BTreeIndexError)]
     IndexError,
 
+    /// To create consignment for a state transition (state extension)
+    /// operation you have to provide anchor data
     AnchorParameterIsRequired,
 
+    /// You can't create consignments for pure genesis data; just share plain
+    /// genesis instead
     GenesisNode,
+
+    /// Trying to import data related to an unknown contract {0}. Please import
+    /// genesis for that contract first.
+    UnknownContract(ContractId),
 }
 
 pub struct DumbIter<T>(std::marker::PhantomData<T>);
@@ -232,6 +242,7 @@ impl Stash for Runtime {
                 .owned_rights_mut()
                 .into_iter()
                 .for_each(reveal_known_seals);
+            let anchor = anchor.clone();
             // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
             // TODO: Uncomment once indexing will be implemented
@@ -251,11 +262,69 @@ impl Stash for Runtime {
         Ok(())
     }
 
+    // TODO: Rename into `enclose`
     fn know_about(
         &mut self,
         disclosure: Disclosure,
     ) -> Result<(), Self::Error> {
-        unimplemented!()
+        // Do a disclosure verification: check that we know contract_ids
+        let contract_ids = disclosure
+            .transitions()
+            .values()
+            .map(|(_, map)| map.keys())
+            .flatten()
+            .chain(disclosure.extensions().keys())
+            .copied()
+            .collect::<BTreeSet<_>>();
+        for contract_id in contract_ids {
+            let _ = self
+                .storage
+                .genesis(&contract_id)
+                .map_err(|_| Error::UnknownContract(contract_id))?;
+        }
+
+        for anchor in
+            disclosure.transitions().values().map(|(anchor, _)| anchor)
+        {
+            let mut anchor: Anchor = anchor.clone();
+            if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
+                anchor = anchor
+                    .into_revealed(other_anchor)
+                    .expect("RGB commitment procedure is broken");
+            }
+            self.storage.add_anchor(&anchor)?;
+        }
+
+        for transition in disclosure
+            .transitions()
+            .values()
+            .map(|(_, map)| map.values())
+            .flatten()
+        {
+            let mut transition: Transition = transition.clone();
+            if let Ok(other_transition) =
+                self.storage.transition(&transition.node_id())
+            {
+                transition = transition
+                    .into_revealed(other_transition)
+                    .expect("RGB commitment procedure is broken");
+            }
+            self.storage.add_transition(&transition)?;
+        }
+
+        for extension in disclosure.extensions().values().flatten() {
+            let mut extension: Extension = extension.clone();
+            if let Ok(other_extension) =
+                self.storage.extension(&extension.node_id())
+            {
+                extension = extension
+                    .into_revealed(other_extension)
+                    .expect("RGB commitment procedure is broken");
+            }
+            self.storage.add_extension(&extension)?;
+        }
+
+        Ok(())
     }
 
     fn forget(

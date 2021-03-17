@@ -27,7 +27,7 @@ use rgb::prelude::*;
 use rgb20::{Asset, SealCoins};
 
 use super::{Error, OutputFormat, Runtime};
-use crate::rpc::fungible::{AcceptApi, Issue, TransferApi};
+use crate::rpc::fungible::{AcceptReq, IssueReq, TransferReq};
 use crate::rpc::{reply, Reply};
 use crate::util::file::ReadWrite;
 
@@ -58,7 +58,7 @@ pub enum Command {
     },
 
     /// Creates a new asset
-    Issue(Issue),
+    Issue(IssueReq),
 
     /// Creates a blinded version of a given bitcoin transaction outpoint
     Blind {
@@ -86,6 +86,12 @@ pub enum Command {
 
         /// Outpoint blinding factor (generated when the invoice was created)
         blinding_factor: u64,
+    },
+
+    /// Adds data from some disclosure to the stash & asset information cache
+    Enclose {
+        /// Path to disclosure file
+        disclosure: PathBuf,
     },
 
     Forget {
@@ -119,11 +125,16 @@ pub struct TransferCli {
     /// Read partially-signed transaction prototype
     pub prototype: PathBuf,
 
-    /// File to save consignment to. It will produce two files:
-    /// - one with concealed data to share with the receiver, having extension
-    ///   `.concealed.rgb`, and
-    /// - one with plain complete data, having extension `.revealed.rgb`
+    /// File to save consignment to
     pub consignment: PathBuf,
+
+    /// File to save disclosure to.
+    ///
+    /// Disclosures are used to allocate the change and other assets which were
+    /// on the same output but were not transferred. To see the change and
+    /// those assets you will have to accept disclosure lately with special
+    /// `enclose` command.
+    pub disclosure: PathBuf,
 
     /// File to save updated partially-signed bitcoin transaction to
     pub transaction: PathBuf,
@@ -163,6 +174,9 @@ impl Command {
                 outpoint,
                 blinding_factor,
             ),
+            Command::Enclose { ref disclosure } => {
+                self.exec_enclose(runtime, disclosure.clone())
+            }
             Command::Forget { outpoint } => self.exec_forget(runtime, outpoint),
         }
     }
@@ -336,15 +350,22 @@ impl Command {
             if outpoint_reveal.commit_conceal()
                 != seal_endpoint.commit_conceal()
             {
-                eprintln!("The provided outpoint and blinding factors does not match outpoint from the consignment");
+                eprintln!(
+                    "The provided outpoint and blinding factors does not match \
+                    outpoint from the consignment"
+                );
                 Err(Error::DataInconsistency)?
             }
-            AcceptApi {
+            AcceptReq {
                 consignment,
                 reveal_outpoints: vec![outpoint_reveal],
             }
         } else {
-            eprintln!("Currently, this command-line tool is unable to accept consignments containing more than a single locally-controlled output point");
+            eprintln!(
+                "Currently, this command-line tool is unable to accept \
+                consignments containing more than a single locally-controlled \
+                output point"
+            );
             Err(Error::UnsupportedFunctionality)?
         };
 
@@ -358,6 +379,41 @@ impl Command {
             _ => {
                 eprintln!(
                     "Unexpected server error; probably you connecting with outdated client version"
+                );
+            }
+        }
+
+        Ok(())
+    }
+
+    fn exec_enclose(
+        &self,
+        mut runtime: Runtime,
+        filename: PathBuf,
+    ) -> Result<(), Error> {
+        info!("Enclosing disclosure...");
+
+        debug!("Reading disclosure from file {:?}", &filename);
+        let disclosure =
+            Disclosure::read_file(filename.clone()).map_err(|err| {
+                Error::InputFileFormatError(
+                    format!("{:?}", filename),
+                    format!("{}", err),
+                )
+            })?;
+        trace!("{:#?}", disclosure);
+
+        match &*runtime.enclose(disclosure)? {
+            Reply::Failure(failure) => {
+                eprintln!("Server returned error: {}", failure);
+            }
+            Reply::Success => {
+                eprintln!("Disclosure data successfully enclosed.");
+            }
+            _ => {
+                eprintln!(
+                    "Unexpected server error; probably you connecting with \
+                    outdated client version"
                 );
             }
         }
@@ -392,7 +448,7 @@ impl Command {
     }
 }
 
-impl Issue {
+impl IssueReq {
     pub fn exec(self, mut runtime: Runtime) -> Result<(), Error> {
         info!("Issuing asset ...");
         debug!("{}", self.clone());
@@ -472,7 +528,7 @@ impl TransferCli {
         }
         trace!("{:?}", psbt);
 
-        let api = TransferApi {
+        let api = TransferReq {
             witness: psbt,
             contract_id: self.asset,
             inputs: self.inputs.into_iter().collect(),
@@ -493,26 +549,8 @@ impl TransferCli {
                 eprintln!("Transfer failed: {}", failure);
             }
             Reply::Transfer(transfer) => {
-                let mut consignment = transfer.consignment.clone();
-                let mut theirs = self.consignment.clone();
-                theirs.set_extension("concealed.rgb");
-                let mut ours = self.consignment;
-                ours.set_extension("revealed.rgb");
-                consignment.write_file(&ours)?;
-
-                let receiver = self.receiver;
-                let expose = consignment
-                    .endpoints
-                    .iter()
-                    .filter_map(|(_, endpoint)| match endpoint {
-                        SealEndpoint::TxOutpoint(h) if *h == receiver => {
-                            Some(*endpoint)
-                        }
-                        _ => None,
-                    })
-                    .collect();
-                consignment.finalize(&expose, self.asset);
-                consignment.write_file(&theirs)?;
+                transfer.disclosure.write_file(&self.disclosure)?;
+                transfer.consignment.write_file(&self.consignment)?;
 
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
@@ -521,12 +559,12 @@ impl TransferCli {
                 })?;
 
                 eprintln!(
-                    "Transfer succeeded, consignments are written to {:?} and {:?}, \
-                     partially signed witness transaction to {:?}",
-                    theirs, ours, self.transaction
+                    "Transfer succeeded, consignments and disclosure are written \
+                     to {:?} and {:?}, partially signed witness transaction to {:?}",
+                    self.consignment, self.disclosure, self.transaction
                 );
                 eprint!("Consignment data to share:");
-                println!("{}", consignment);
+                println!("{}", transfer.consignment);
             }
             _ => (),
         }

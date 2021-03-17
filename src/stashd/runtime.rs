@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use internet2::zmqsocket::ZmqType;
@@ -20,8 +21,8 @@ use internet2::{
 };
 use microservices::node::TryService;
 use rgb::{
-    Anchor, Consignment, ContractId, Genesis, Node, NodeId, Schema, SchemaId,
-    Stash,
+    Anchor, Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema,
+    SchemaId, Stash,
 };
 use wallet::resolvers::ElectrumTxResolver;
 
@@ -33,7 +34,7 @@ use crate::error::{
     BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
     ServiceErrorSource,
 };
-use crate::rpc::stash::{ConsignRequest, MergeRequest, Request};
+use crate::rpc::stash::{AcceptRequest, Request, TransferRequest};
 use crate::rpc::{reply, Reply};
 use crate::stashd::index::BTreeIndexConfig;
 use crate::util::ToBech32Data;
@@ -163,11 +164,12 @@ impl Runtime {
                 self.rpc_read_genesis(contract_id)
             }
             Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id),
-            Request::Consign(consign) => self.rpc_consign(consign),
+            Request::ReadTransitions(_) => unimplemented!(),
+            Request::Transfer(consign) => self.rpc_transfer(consign),
             Request::Validate(consign) => self.rpc_validate(consign),
-            Request::Merge(merge) => self.rpc_merge(merge),
+            Request::Accept(merge) => self.rpc_accept(merge),
+            Request::Enclose(disclosure) => self.rpc_enclose(disclosure),
             Request::Forget(removal_list) => self.rpc_forget(removal_list),
-            _ => unimplemented!(),
         }
         .map_err(|err| ServiceError {
             domain: err,
@@ -223,19 +225,25 @@ impl Runtime {
         Ok(Reply::Schema(schema))
     }
 
-    fn rpc_consign(
+    fn rpc_transfer(
         &mut self,
-        request: &ConsignRequest,
+        request: &TransferRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got CONSIGN {}", request);
+        debug!("Got TRANSFER {}", request);
 
-        let mut transitions = request.other_transition_ids.clone();
-        transitions.insert(request.contract_id, request.transition.node_id());
+        let mut transitions = request.other_transitions.clone();
+        transitions.insert(request.contract_id, request.transition.clone());
 
         // Construct anchor
         let mut psbt = request.psbt.clone();
-        let (anchors, map) = Anchor::commit(transitions, &mut psbt)
-            .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
+        let (anchors, map) = Anchor::commit(
+            transitions
+                .iter()
+                .map(|(contract_id, ts)| (*contract_id, ts.node_id()))
+                .collect(),
+            &mut psbt,
+        )
+        .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
         let anchor = anchors[*map
             .get(&request.contract_id)
             .expect("Core LNP/BP anchor commitment procedure is broken")]
@@ -252,8 +260,31 @@ impl Runtime {
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
+        // Prepare disclosure
+        let mut disclosure = Disclosure::default();
+        for (index, anchor) in anchors.into_iter().enumerate() {
+            let contract_ids =
+                map.iter()
+                    .filter_map(|(contract_id, i)| {
+                        if *i == index {
+                            Some(contract_id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<BTreeSet<_>>();
+            let anchored_transitions = transitions
+                .clone()
+                .into_iter()
+                .filter(|(contract_id, _)| contract_ids.contains(contract_id))
+                .collect();
+            disclosure
+                .insert_anchored_transitions(anchor, anchored_transitions);
+        }
+
         Ok(Reply::Transfer(reply::Transfer {
             consignment,
+            disclosure,
             witness: psbt,
         }))
     }
@@ -277,16 +308,28 @@ impl Runtime {
         Ok(Reply::ValidationStatus(validation_status))
     }
 
-    fn rpc_merge(
+    fn rpc_accept(
         &mut self,
-        merge: &MergeRequest,
+        accept_req: &AcceptRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got MERGE CONSIGNMENT");
+        debug!("Got ACCEPT CONSIGNMENT");
 
-        let known_seals = &merge.reveal_outpoints;
-        let consignment = &merge.consignment;
+        let known_seals = &accept_req.reveal_outpoints;
+        let consignment = &accept_req.consignment;
 
         self.accept(consignment, known_seals)
+            .map_err(|_| ServiceErrorDomain::Stash)?;
+
+        Ok(Reply::Success)
+    }
+
+    fn rpc_enclose(
+        &mut self,
+        disclosure: &Disclosure,
+    ) -> Result<Reply, ServiceErrorDomain> {
+        debug!("Got ENCLOSE DISCLOSURE");
+
+        self.know_about(disclosure.clone())
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
         Ok(Reply::Success)
