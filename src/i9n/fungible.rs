@@ -22,7 +22,7 @@ use lnpbp::seals::OutpointReveal;
 use lnpbp::Chain;
 use microservices::FileFormat;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Genesis, SealDefinition,
+    AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,
     SealEndpoint, PSBT_OUT_PUBKEY,
 };
 use rgb20::{Asset, OutpointCoins};
@@ -159,6 +159,17 @@ impl Runtime {
             Reply::ValidationStatus(status) => {
                 info!("Validation succeeded");
                 Ok(status.clone())
+            }
+            _ => Err(Error::UnexpectedResponse),
+        }
+    }
+
+    pub fn enclose(&mut self, disclosure: Disclosure) -> Result<(), Error> {
+        match &*self.command(Request::Enclose(disclosure))? {
+            Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
+            Reply::Success => {
+                info!("Enclose command succeeded");
+                Ok(())
             }
             _ => Err(Error::UnexpectedResponse),
         }

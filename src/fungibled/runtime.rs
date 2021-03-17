@@ -305,7 +305,7 @@ impl Runtime {
             .map(SealEndpoint::from)
             .chain(transfer.payment.keys().copied())
             .collect();
-        let reply = self.consign(TransferRequest {
+        let mut reply = self.consign(TransferRequest {
             contract_id: transfer.contract_id,
             inputs: transfer.inputs.clone(),
             transition,
@@ -313,6 +313,27 @@ impl Runtime {
             endpoints,
             psbt: transfer.witness.clone(),
         })?;
+
+        // Concealing internal data
+        if let Reply::Transfer(reply::Transfer {
+            ref mut consignment,
+            ..
+        }) = reply
+        {
+            let receivers = transfer.payment.keys().collect::<BTreeSet<_>>();
+            let expose = consignment
+                .endpoints
+                .iter()
+                .filter_map(|(_, endpoint)| {
+                    if receivers.contains(endpoint) {
+                        Some(*endpoint)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            consignment.finalize(&expose, transfer.contract_id);
+        }
 
         Ok(reply)
     }
@@ -427,10 +448,10 @@ impl Runtime {
 
     fn consign(
         &mut self,
-        consign_req: TransferRequest,
+        transfer_req: TransferRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
         let reply =
-            self.stash_req_rep(rpc::stash::Request::Transfer(consign_req))?;
+            self.stash_req_rep(rpc::stash::Request::Transfer(transfer_req))?;
         if let Reply::Transfer(_) = reply {
             Ok(reply)
         } else {

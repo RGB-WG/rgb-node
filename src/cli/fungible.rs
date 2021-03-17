@@ -549,22 +549,8 @@ impl TransferCli {
                 eprintln!("Transfer failed: {}", failure);
             }
             Reply::Transfer(transfer) => {
-                let mut consignment = transfer.consignment.clone();
                 transfer.disclosure.write_file(&self.disclosure)?;
-
-                let receiver = self.receiver;
-                let expose = consignment
-                    .endpoints
-                    .iter()
-                    .filter_map(|(_, endpoint)| match endpoint {
-                        SealEndpoint::TxOutpoint(h) if *h == receiver => {
-                            Some(*endpoint)
-                        }
-                        _ => None,
-                    })
-                    .collect();
-                consignment.finalize(&expose, self.asset);
-                consignment.write_file(&self.consignment)?;
+                transfer.consignment.write_file(&self.consignment)?;
 
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
@@ -578,7 +564,7 @@ impl TransferCli {
                     self.consignment, self.disclosure, self.transaction
                 );
                 eprint!("Consignment data to share:");
-                println!("{}", consignment);
+                println!("{}", transfer.consignment);
             }
             _ => (),
         }
