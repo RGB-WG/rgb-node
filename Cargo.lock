@@ -43,9 +43,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_derive"
-version = "2.5.1"
+version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f24ae6c0675ea6f01a58c57eb05967d91f22740170ff9951fa7fc45a6c6e9b76"
+checksum = "8f9edf4e78ede9a2e3ac65cc3a984135878d897cbd7055d6f36e4f2942cf7417"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
@@ -934,9 +934,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.88"
+version = "0.2.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b07a082330a35e43f63177cc01689da34fbffa0105e1246cf0311472cac73a"
+checksum = "538c092e5586f4cdd7dd8078c4a79220e3e168880218124dcbce860f0ea938c6"
 
 [[package]]
 name = "libsqlite3-sys"
@@ -994,7 +994,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 [[package]]
 name = "lnp-core"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/lnp-core#42734c166b37ed9b6ad5b5e902ccf69f8f78a564"
+source = "git+https://github.com/LNP-BP/lnp-core#d526707a97d6b5782c646d423bb45d80eab1fe38"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1571,41 +1571,9 @@ checksum = "24d5f089152e60f62d28b835fbff2cd2e8dc0baf1ac13343bef92ab7eed84548"
 
 [[package]]
 name = "rgb-core"
-version = "0.4.0"
-source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bech32",
- "bitcoin",
- "bitcoin_hashes 0.9.4",
- "chrono",
- "clap",
- "deflate",
- "descriptor-wallet",
- "ed25519-dalek",
- "grin_secp256k1zkp",
- "inflate",
- "lazy_static",
- "lightning_encoding",
- "lnpbp",
- "miniscript",
- "num-derive",
- "num-traits 0.2.14",
- "regex",
- "serde 1.0.124",
- "serde_json",
- "serde_with",
- "serde_with_macros",
- "serde_yaml",
- "strict_encoding",
-]
-
-[[package]]
-name = "rgb-core"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd9bd2df39de07815c1693da099f99058b3cae0fe7a5df31559ac9d5c1b97439"
+checksum = "4abf30a6bd99279a794f8e9b2a71db895195726150071f35cdcaa9ae7e7503d2"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1613,7 +1581,6 @@ dependencies = [
  "bitcoin",
  "bitcoin_hashes 0.9.4",
  "chrono",
- "clap",
  "deflate",
  "descriptor-wallet",
  "ed25519-dalek",
@@ -1627,10 +1594,8 @@ dependencies = [
  "num-traits 0.2.14",
  "regex",
  "serde 1.0.124",
- "serde_json",
  "serde_with",
  "serde_with_macros",
- "serde_yaml",
  "strict_encoding",
 ]
 
@@ -1646,7 +1611,7 @@ dependencies = [
  "chrono",
  "lnpbp",
  "regex",
- "rgb-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rgb-core",
  "serde 1.0.124",
  "serde_with",
  "url",
@@ -1655,40 +1620,40 @@ dependencies = [
 [[package]]
 name = "rgb21"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
+source = "git+https://github.com/rgb-org/rgb-core#48b31aaeaee41500bd205b0359f53095e45de8d5"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "chrono",
  "lnpbp",
- "rgb-core 0.4.0 (git+https://github.com/rgb-org/rgb-core)",
+ "rgb-core",
 ]
 
 [[package]]
 name = "rgb22"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
+source = "git+https://github.com/rgb-org/rgb-core#48b31aaeaee41500bd205b0359f53095e45de8d5"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "chrono",
  "lnpbp",
- "rgb-core 0.4.0 (git+https://github.com/rgb-org/rgb-core)",
+ "rgb-core",
 ]
 
 [[package]]
 name = "rgb23"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#41f23e3625bc6671bc804ed6ad085f7304e6ed17"
+source = "git+https://github.com/rgb-org/rgb-core#48b31aaeaee41500bd205b0359f53095e45de8d5"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "chrono",
  "lnpbp",
- "rgb-core 0.4.0 (git+https://github.com/rgb-org/rgb-core)",
+ "rgb-core",
 ]
 
 [[package]]
@@ -1717,7 +1682,7 @@ dependencies = [
  "log",
  "microservices",
  "nix",
- "rgb-core 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rgb-core",
  "rgb20",
  "rgb21",
  "rgb22",
@@ -2337,9 +2302,9 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "version_check"
-version = "0.9.2"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5a972e5669d67ba988ce3dc826706fb0a8b01471c088cb0b6110b805cc36aed"
+checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
 name = "wasi"
