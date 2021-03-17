@@ -420,7 +420,7 @@ impl Runtime {
         consign_req: TransferRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
         let reply =
-            self.stash_req_rep(rpc::stash::Request::Consign(consign_req))?;
+            self.stash_req_rep(rpc::stash::Request::Transfer(consign_req))?;
         if let Reply::Transfer(_) = reply {
             Ok(reply)
         } else {

@@ -163,7 +163,7 @@ impl Runtime {
                 self.rpc_read_genesis(contract_id)
             }
             Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id),
-            Request::Consign(consign) => self.rpc_transfer(consign),
+            Request::Transfer(consign) => self.rpc_transfer(consign),
             Request::Validate(consign) => self.rpc_validate(consign),
             Request::Merge(merge) => self.rpc_merge(merge),
             Request::Forget(removal_list) => self.rpc_forget(removal_list),
@@ -223,13 +223,11 @@ impl Runtime {
         Ok(Reply::Schema(schema))
     }
 
-    // TODO: Rename into `transfer` (since it will produce both Consignment and
-    //       Disclosure)
     fn rpc_transfer(
         &mut self,
         request: &TransferRequest,
     ) -> Result<Reply, ServiceErrorDomain> {
-        debug!("Got CONSIGN {}", request);
+        debug!("Got TRANSFER {}", request);
 
         let mut transitions = request.other_transitions.clone();
         transitions.insert(request.contract_id, request.transition.clone());

@@ -53,7 +53,7 @@ pub enum Request {
     ReadTransitions(Vec<::rgb::NodeId>),
 
     #[api(type = 0x0401)]
-    Consign(crate::rpc::stash::TransferRequest),
+    Transfer(crate::rpc::stash::TransferRequest),
 
     #[api(type = 0x0403)]
     Validate(::rgb::Consignment),
