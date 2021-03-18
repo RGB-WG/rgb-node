@@ -16,9 +16,8 @@ use std::fs;
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
-use amplify::IoError;
+use amplify::{IoError, Wrapper};
 use bitcoin::hashes::Hash;
-use lnpbp::lnpbp4::ProtocolId;
 use lnpbp::strict_encoding::{StrictDecode, StrictEncode};
 use microservices::FileFormat;
 use rgb::{Anchor, AnchorId, NodeId};
@@ -49,7 +48,7 @@ struct BTreeIndexData {
     /// TODO: Replace with DisplayFromStr once RGB node will fix node display
     // #[cfg_attr(feature = "serde", serde(with =
     // "As::<BTreeMap<DisplayFromStr, DisplayFromStr>>"))]
-    node_anchors: BTreeMap<ProtocolId, AnchorId>,
+    node_anchors: BTreeMap<NodeId, AnchorId>,
 }
 
 #[derive(Debug, Display, Error, From)]
@@ -205,19 +204,24 @@ impl Index for BTreeIndex {
     ) -> Result<AnchorId, Self::Error> {
         self.index
             .node_anchors
-            .get(&ProtocolId::from((*node_id).into_inner()))
+            .get(&node_id)
             .copied()
             .ok_or(BTreeIndexError::AnchorNotFound)
     }
 
     fn index_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
-        for protocol in anchor
+        for commitment in anchor
             .commitment
             .commitments
             .iter()
-            .filter_map(|commitment| commitment.protocol)
+            .map(|commitment| commitment.commitment)
         {
-            self.index.node_anchors.insert(protocol, anchor.anchor_id());
+            self.index.node_anchors.insert(
+                NodeId::from_inner(<NodeId as Wrapper>::Inner::from_inner(
+                    commitment.into_inner(),
+                )),
+                anchor.anchor_id(),
+            );
         }
         self.store()?;
         Ok(true)
