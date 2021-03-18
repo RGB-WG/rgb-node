@@ -80,13 +80,13 @@ pub enum BTreeIndexError {
     /// Encoding error: {0}
     SerdeToml,
 
-    /// Anchor is not found
+    /// Anchor is not found, index is probably broken
     AnchorNotFound,
 }
 
 impl From<BTreeIndexError> for ServiceErrorDomain {
     fn from(err: BTreeIndexError) -> Self {
-        ServiceErrorDomain::Storage(err.to_string())
+        ServiceErrorDomain::Index(err.to_string())
     }
 }
 
@@ -144,6 +144,7 @@ impl BTreeIndex {
 
         if me.config.index_filename().exists() {
             me.load()?;
+            debug!("Index data read");
         } else {
             debug!(
                 "Initializing index file {:?} ...",

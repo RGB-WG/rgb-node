@@ -86,7 +86,7 @@ pub enum ServiceErrorDomain {
 
     Storage(String),
 
-    Index,
+    Index(String),
 
     #[cfg(feature = "fungibles")]
     #[from(crate::fungibled::FileCacheError)]

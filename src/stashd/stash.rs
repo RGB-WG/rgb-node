@@ -14,6 +14,7 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
+use lnpbp::lnpbp4::ProtocolId;
 use lnpbp::seals::OutpointReveal;
 use rgb::{
     Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
@@ -161,7 +162,10 @@ impl Stash for Runtime {
             if node_id.into_inner() == genesis.contract_id().into_inner() {
                 continue;
             }
-            trace!("Getting anchor id for node id {} from the index", node_id);
+            trace!(
+                "Getting anchor id for node/protocol id {} from the index",
+                &ProtocolId::from((*node_id).into_inner())
+            );
             let anchor_id = self.indexer.anchor_id_by_transition_id(node_id)?;
             trace!("Retrieving anchor with id {}", anchor_id);
             let anchor = self.storage.anchor(&anchor_id)?;
