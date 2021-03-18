@@ -335,6 +335,7 @@ impl Stash for Runtime {
                     .expect("RGB commitment procedure is broken");
             }
             self.storage.add_anchor(&anchor)?;
+            self.indexer.index_anchor(&anchor)?;
         }
 
         for transition in disclosure
