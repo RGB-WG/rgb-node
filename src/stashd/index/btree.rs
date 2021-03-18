@@ -214,6 +214,7 @@ impl Index for BTreeIndex {
             .commitment
             .commitments
             .iter()
+            .filter(|commitment| commitment.protocol.is_some())
             .map(|commitment| commitment.commitment)
         {
             self.index.node_anchors.insert(
