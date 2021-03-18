@@ -24,13 +24,13 @@ use std::path::PathBuf;
 use std::{fs, io};
 
 use lnpbp::strict_encoding::{strict_serialize, StrictDecode, StrictEncode};
+use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::Asset;
 
 use super::Cache;
 use crate::fungibled::cache::CacheError;
 use crate::util::file::*;
-use microservices::FileFormat;
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]

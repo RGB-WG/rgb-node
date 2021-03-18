@@ -89,8 +89,9 @@ impl Runtime {
             data_dir: PathBuf::from(config.stash.clone()),
         })?;
 
-        let indexer = BTreeIndex::load(BTreeIndexConfig {
+        let indexer = BTreeIndex::new(BTreeIndexConfig {
             index_file: PathBuf::from(config.index.clone()),
+            data_format: config.format,
         })?;
 
         let session_rpc = session::Raw::with_zmq_unencrypted(
