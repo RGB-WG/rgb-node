@@ -124,8 +124,17 @@ impl Stash for Runtime {
         anchor: Option<&Anchor>,
         endpoints: &BTreeSet<SealEndpoint>,
     ) -> Result<Consignment, Error> {
+        debug!(
+            "Preparing consignment for contract {} node {} with anchor {} for endpoints {:?}", 
+            contract_id, node.node_id(),
+            anchor.map(|a| a.anchor_id().to_string()).unwrap_or(s!("unspecified")),
+            endpoints
+        );
+
+        trace!("Looking up for genesis");
         let genesis = self.storage.genesis(&contract_id)?;
 
+        trace!("Getting node matching node id");
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];
         if let Some(transition) =
@@ -141,17 +150,24 @@ impl Stash for Runtime {
             Err(Error::GenesisNode)?;
         }
 
+        trace!("Collecting other involved nodes");
         let mut sources = VecDeque::<NodeId>::new();
         sources
             .extend(node.parent_owned_rights().into_iter().map(|(id, _)| id));
         sources
             .extend(node.parent_public_rights().into_iter().map(|(id, _)| id));
+        trace!("Node list for consignment: {:#?}", sources);
         while let Some(node_id) = sources.pop_front() {
             if node_id.into_inner() == genesis.contract_id().into_inner() {
                 continue;
             }
+            trace!("Getting anchor id for node id {} from the index", node_id);
             let anchor_id = self.indexer.anchor_id_by_transition_id(node_id)?;
+            trace!("Retrieving anchor with id {}", anchor_id);
             let anchor = self.storage.anchor(&anchor_id)?;
+            trace!("Anchor data: {:#?}", anchor);
+
+            trace!("Extending source data with the ancestors");
             // TODO: (new) Improve this logic
             match (
                 self.storage.transition(&node_id),
