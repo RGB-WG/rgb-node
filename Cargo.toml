@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.4.0-beta"
+version = "0.4.0-rc"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -36,11 +36,11 @@ lnpbp = "0.4"
 rgb-core = "0.4.2"
 descriptor-wallet = { version = "0.4", features = ["electrum"] }
 rgb20 = { version = "0.4", optional = true }
-rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
-rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
-rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
-internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
-microservices = { git = "https://github.com/internet2-org/rust-internet2", default-features = false }
+# rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+# rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+# rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+internet2 = "0.3.10"
+microservices = { version = "0.3.10", default-features = false }
 # Bitcoin
 bitcoin = "0.26"
 electrum-client = { version = "0.6", optional = true }
@@ -76,7 +76,10 @@ shellexpand = { version = "2", optional = true }
 # 5. Simple cli utility app: `shell`
 [features]
 default = ["client", "fungibles"]
-all = ["server", "cli", "serde", "tor", "sql", "nosql", "vendored_openssl", "fungibles", "collectibles", "identities", "auditlogs"]
+all = [
+    "server", "cli", "serde", "tor", "sql", "nosql", "vendored_openssl",
+    "fungibles", # "collectibles", "identities", "auditlogs"
+]
 
 # Server is a standalone application that runs daemon
 server = ["node", "shell", "nix", "microservices/server"]
@@ -118,6 +121,6 @@ vendored_openssl = ["microservices/vendored_openssl", "internet2/vendored_openss
 
 # Schema-specific components exposed as features:
 fungibles = ["rgb20"]
-collectibles = ["rgb21"]
-identities = ["rgb22"]
-auditlogs = ["rgb23"]
+# collectibles = ["rgb21"]
+# identities = ["rgb22"]
+# auditlogs = ["rgb23"]

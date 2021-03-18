@@ -873,8 +873,9 @@ dependencies = [
 
 [[package]]
 name = "internet2"
-version = "0.4.0-alpha.2"
-source = "git+https://github.com/internet2-org/rust-internet2#cdc483c6bb838aba6eb3ac2ab0b006addfc1093a"
+version = "0.3.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2a07ae295e404b850980559ea28bd42e3bd43cdfd59ea704ad12e056bf510f7"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -993,8 +994,9 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lnp-core"
-version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/lnp-core#d526707a97d6b5782c646d423bb45d80eab1fe38"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c0d979dd4b7da78d2711d80f20fa8d68563109dbacb356f0d774153dad080c"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1077,8 +1079,9 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.4.0-beta"
-source = "git+https://github.com/internet2-org/rust-internet2#cdc483c6bb838aba6eb3ac2ab0b006addfc1093a"
+version = "0.3.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c19aadc1668716aaa566197321f18fca5cd14b685de0a7e0dd20cf6298297c70"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1618,47 +1621,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "rgb21"
-version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#48b31aaeaee41500bd205b0359f53095e45de8d5"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin",
- "chrono",
- "lnpbp",
- "rgb-core",
-]
-
-[[package]]
-name = "rgb22"
-version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#48b31aaeaee41500bd205b0359f53095e45de8d5"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin",
- "chrono",
- "lnpbp",
- "rgb-core",
-]
-
-[[package]]
-name = "rgb23"
-version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#48b31aaeaee41500bd205b0359f53095e45de8d5"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin",
- "chrono",
- "lnpbp",
- "rgb-core",
-]
-
-[[package]]
 name = "rgb_node"
-version = "0.4.0-beta"
+version = "0.4.0-rc"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1684,9 +1648,6 @@ dependencies = [
  "nix",
  "rgb-core",
  "rgb20",
- "rgb21",
- "rgb22",
- "rgb23",
  "serde 1.0.124",
  "serde_json",
  "serde_with",
