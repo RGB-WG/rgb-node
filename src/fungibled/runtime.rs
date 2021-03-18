@@ -255,13 +255,18 @@ impl Runtime {
             BTreeSet<(OutPoint, AtomicValue)>,
         > = bmap! {};
         for outpoint in &transfer.inputs {
-            for (other_contract, amounts) in
+            for (other_contract_id, amounts) in
                 self.cacher.outpoint_assets(*outpoint)?
             {
+                let sum = amounts.into_iter().sum();
+                // Ignoring native asset, current contract and zero balances
+                if other_contract_id == transfer.contract_id || sum == 0 {
+                    continue;
+                }
                 other_outpoint_assets
-                    .entry(other_contract)
+                    .entry(other_contract_id)
                     .or_insert(empty!())
-                    .insert((*outpoint, amounts.into_iter().sum()));
+                    .insert((*outpoint, sum));
             }
         }
         debug!(
