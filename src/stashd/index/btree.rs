@@ -16,6 +16,8 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use amplify::Wrapper;
+use bitcoin::hashes::Hash;
 use lnpbp::strict_encoding::{StrictDecode, StrictEncode};
 use rgb::{Anchor, AnchorId, NodeId};
 
@@ -32,6 +34,9 @@ pub enum BTreeIndexError {
 
     #[from]
     Encoding(lnpbp::strict_encoding::Error),
+
+    /// Abchor is not found
+    AnchorNotFound,
 }
 
 impl From<BTreeIndexError> for ServiceErrorDomain {
@@ -94,12 +99,27 @@ impl Index for BTreeIndex {
 
     fn anchor_id_by_transition_id(
         &self,
-        _tsid: NodeId,
+        node_id: NodeId,
     ) -> Result<AnchorId, Self::Error> {
-        unimplemented!()
+        self.index
+            .get(&node_id.to_vec())
+            .and_then(|vec| {
+                Some(AnchorId::from_inner(
+                    <AnchorId as Wrapper>::Inner::from_slice(&vec[..]).ok()?,
+                ))
+            })
+            .ok_or(BTreeIndexError::AnchorNotFound)
     }
 
-    fn index_anchor(&mut self, _anchor: &Anchor) -> Result<bool, Self::Error> {
-        unimplemented!()
+    fn index_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
+        for protocol in anchor
+            .commitment
+            .commitments
+            .iter()
+            .filter_map(|commitment| commitment.protocol)
+        {
+            self.index.insert(protocol.to_vec(), anchor.txid.to_vec());
+        }
+        Ok(true)
     }
 }

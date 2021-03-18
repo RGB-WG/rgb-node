@@ -262,8 +262,7 @@ impl Stash for Runtime {
             }
             // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
-            // TODO: Uncomment once indexing will be implemented
-            // self.indexer.index_anchor(&anchor)?;
+            self.indexer.index_anchor(&anchor)?;
             self.storage.add_transition(&transition)?;
         }
 
