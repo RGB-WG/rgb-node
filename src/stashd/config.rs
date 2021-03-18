@@ -111,10 +111,7 @@ impl Default for Config {
                 .expect("Error in RGB_DATA_DIR constant value"),
             stash: STASHD_STASH.to_string(),
             index: STASHD_INDEX.to_string(),
-            #[cfg(feature = "serde_yaml")]
             format: FileFormat::Yaml,
-            #[cfg(not(feature = "serde"))]
-            format: FileFormat::StrictEncode,
             rpc_endpoint: STASHD_RPC_ENDPOINT
                 .parse()
                 .expect("Error in STASHD_RPC_ENDPOINT constant value"),

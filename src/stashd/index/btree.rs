@@ -16,8 +16,9 @@ use std::fs;
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
-use amplify::{IoError, Wrapper};
+use amplify::IoError;
 use bitcoin::hashes::Hash;
+use lnpbp::lnpbp4::ProtocolId;
 use lnpbp::strict_encoding::{StrictDecode, StrictEncode};
 use microservices::FileFormat;
 use rgb::{Anchor, AnchorId, NodeId};
@@ -26,7 +27,30 @@ use super::Index;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::file::{file, FileMode};
 
-type BTreeIndexData = BTreeMap<Vec<u8>, Vec<u8>>;
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
+#[derive(
+    Clone,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Hash,
+    Debug,
+    Default,
+    StrictEncode,
+    StrictDecode,
+)]
+#[strict_encoding_crate(lnpbp::strict_encoding)]
+struct BTreeIndexData {
+    /// TODO: Replace with DisplayFromStr once RGB node will fix node display
+    // #[cfg_attr(feature = "serde", serde(with =
+    // "As::<BTreeMap<DisplayFromStr, DisplayFromStr>>"))]
+    node_anchors: BTreeMap<ProtocolId, AnchorId>,
+}
 
 #[derive(Debug, Display, Error, From)]
 #[display(doc_comments)]
@@ -75,8 +99,22 @@ impl From<BTreeIndexError> for BootstrapError {
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
 pub struct BTreeIndexConfig {
-    pub index_file: PathBuf,
+    pub index_dir: PathBuf,
     pub data_format: FileFormat,
+}
+
+impl BTreeIndexConfig {
+    #[inline]
+    pub fn index_dir(&self) -> PathBuf {
+        self.index_dir.clone()
+    }
+
+    #[inline]
+    pub fn index_filename(&self) -> PathBuf {
+        self.index_dir()
+            .join("index")
+            .with_extension(self.data_format.extension())
+    }
 }
 
 #[derive(Display, Debug)]
@@ -90,15 +128,27 @@ impl BTreeIndex {
     pub fn new(config: BTreeIndexConfig) -> Result<Self, BTreeIndexError> {
         debug!("Instantiating RGB index (file storage) ...");
 
+        let index_dir = config.index_dir();
+        if !index_dir.exists() {
+            debug!(
+                "RGB index directory '{:?}' is not found; creating one",
+                index_dir
+            );
+            fs::create_dir_all(index_dir)?;
+        }
+
         let mut me = Self {
             config,
-            index: bmap! {},
+            index: empty!(),
         };
 
-        if me.config.index_file.exists() {
+        if me.config.index_filename().exists() {
             me.load()?;
         } else {
-            debug!("Initializing assets file {:?} ...", me.config.index_file);
+            debug!(
+                "Initializing index file {:?} ...",
+                me.config.index_filename()
+            );
             me.store()?;
         }
 
@@ -106,8 +156,8 @@ impl BTreeIndex {
     }
 
     fn load(&mut self) -> Result<(), BTreeIndexError> {
-        debug!("Reading assets information ...");
-        let mut f = file(&self.config.index_file, FileMode::Read)?;
+        debug!("Reading index information ...");
+        let mut f = file(&self.config.index_filename(), FileMode::Read)?;
         self.index = match self.config.data_format {
             #[cfg(feature = "serde_yaml")]
             FileFormat::Yaml => serde_yaml::from_reader(&f)?,
@@ -126,9 +176,9 @@ impl BTreeIndex {
     }
 
     pub fn store(&self) -> Result<(), BTreeIndexError> {
-        trace!("Saving assets information ...");
-        let _ = fs::remove_file(&self.config.index_file);
-        let mut f = file(&self.config.index_file, FileMode::Create)?;
+        trace!("Saving index information ...");
+        let _ = fs::remove_file(&self.config.index_filename());
+        let mut f = file(&self.config.index_filename(), FileMode::Create)?;
         match self.config.data_format {
             #[cfg(feature = "serde_yaml")]
             FileFormat::Yaml => serde_yaml::to_writer(&f, &self.index)?,
@@ -153,12 +203,9 @@ impl Index for BTreeIndex {
         node_id: NodeId,
     ) -> Result<AnchorId, Self::Error> {
         self.index
-            .get(&node_id.to_vec())
-            .and_then(|vec| {
-                Some(AnchorId::from_inner(
-                    <AnchorId as Wrapper>::Inner::from_slice(&vec[..]).ok()?,
-                ))
-            })
+            .node_anchors
+            .get(&ProtocolId::from((*node_id).into_inner()))
+            .copied()
             .ok_or(BTreeIndexError::AnchorNotFound)
     }
 
@@ -169,7 +216,7 @@ impl Index for BTreeIndex {
             .iter()
             .filter_map(|commitment| commitment.protocol)
         {
-            self.index.insert(protocol.to_vec(), anchor.txid.to_vec());
+            self.index.node_anchors.insert(protocol, anchor.anchor_id());
         }
         self.store()?;
         Ok(true)

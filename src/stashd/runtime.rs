@@ -90,7 +90,7 @@ impl Runtime {
         })?;
 
         let indexer = BTreeIndex::new(BTreeIndexConfig {
-            index_file: PathBuf::from(config.index.clone()),
+            index_dir: PathBuf::from(config.index.clone()),
             data_format: config.format,
         })?;
 
