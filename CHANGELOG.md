@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+v0.4.0
+------
+- Stash index, indexing anchors to transitions
+- Support for transfers from multi-contract UTXOs
+- Allocation change using disclosure procedure
+- Accepting own disclosures (encosure procedure)
+- Improved conceals for consignments
+- Refactored RGB20 asset cache data
+- Refactored RGB20 accept procedure
+- Improved work with witness PSBTs
+- Merge-revel procedure for accepting consignments and disclosures
+- Fix to transition mutability problem
+- Improved RGB20 RPC API
+- Improved and fixed validation status reporting
+
 v0.3.0
 ------
 - Removing all duplicated code present in upstream repos
