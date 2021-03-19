@@ -25,7 +25,7 @@ We can proceed with the installation:
 ```bash=
 git clone https://github.com/LNP-BP/rgb-node.git
 cd rgb-node/doc/demo-0.1
-cargo install --locked --root . rgb_node --version 0.1.1
+cargo install --locked --root . rgb_node --version 0.4.0 --features all
 ```
 And then run a couple of nodes into separate terminals (use *ctrl+C* or `kill $(pgrep rgbd)` to stop them):
 ```bash=
@@ -102,7 +102,7 @@ rgb0-cli fungible issue USDT "USD Tether" 1000@5aa2d0a8098371ee12b4b59f43ffe6a2d
 ```
 This will create a new genesis that includes asset metadata and the allocation of the initial amount to the `<issuance_utxo>`. You can look into it by running:
 ```bash=
-# retrieve <contract-it> with:
+# retrieve <contract-id> with:
 rgb0-cli genesis list
 # export the genesis contract (use -f to select output format)
 rgb0-cli genesis export <contract-id>
@@ -116,37 +116,42 @@ rgb0-cli fungible list
 #   ticker: USDT
 #   id: rgb1yprwyam35r0varfhtswcawkhwdhm025mzd5qcejeun0kqj0dtqyqpjn5w0
 ```
-which also outputs its `asset-id`, which is needed to create invoices.
+which also outputs its `asset-id`, which is needed to make the transfer.
 
-### Generate invoice
-In order to receive the new USDT, `rgb-node-1` needs to generate an invoice for it:
+### Generate blinded UTXO
+In order to receive the new USDT, `rgb-node-1` needs to generate a blinded UTXO corresponding to `receive_utxo` to hold the asset
 ```bash=
-rgb1-cli fungible invoice <asset-id> 100 79d0191dab03ffbccc27500a740f20a75cb175e77346244a567011d3c86d2b0b:0
+rgb1-cli fungible blind 79d0191dab03ffbccc27500a740f20a75cb175e77346244a567011d3c86d2b0b:0
 # example output:
 # [...]
-# Invoice: rgb20:utxob10gz0mmkpn2jykqkdwpjeltfwptkfke00zsgmz8lvu7ffsschq0sqxwjnq4?asset=rgb1yprwyam35r0varfhtswcawkhwdhm025mzd5qcejeun0kqj0dtqyqpjn5w0&amount=100
-# Outpoint blinding factor: 6754896042118498142
+# Blinded outpoint: utxob1hwhhuna49cnzgd5xtcra3dpkskj9s8y9jmk6puef8dlad6s7nl4quullyy
+# Outpoint blinding factor: 13293451752976984280
 ```
-To be able to accept transfers related to this invoice, we will need the original `receive_utxo` and the `blinding_factor` that was used to include it in the invoice.
+To be able to accept transfers related to this UTXO, we will need the original `receive_utxo` and the `blinding_factor`.
 
 ### Transfer
-To transfer some amounts of the asset to `rgb-node-1` to pay the new invoice, `rgb-node-0` needs to create a consignment and commit to it into a bitcoin transaction. So we will need the invoice and a partially signed bitcoin transaction that we will modify to include the commitment. Furthermore, `-i` and `-a` options allow to provide an input utxo from which to take the asset and an allocation for the change in the form `<amount>@<utxo>`.
+To transfer some amounts of the asset to `rgb-node-1` to pay to the blinded UTXO, `rgb-node-0` needs to create a consignment and disclosure, and commit to it into a bitcoin transaction. So we will need a partially signed bitcoin transaction that we will modify to include the commitment. Furthermore, `-i` and `-a` options allow to provide an input utxo from which to take the asset and an allocation for the change in the form `<amount>@<utxo>`.
+
+To check the required input parameters to make the transfer, run
 
 ```bash=
-# NB: pass the invoice between quotes to avoid misinterpretation of the & character it contains
-rgb0-cli fungible transfer '<invoice>' samples/source_tx.psbt samples/consignment.rgb samples/witness.psbt -i 5aa2d0a8098371ee12b4b59f43ffe6a2de637341258af65936a5baa01da49e9b:0 -a 900@0c05cea88d0fca7d16ed6a26d622e7ea477f2e2ff25b9c023b8f06de08e4941a:1
+rgb0-cli fungible transfer --help
+```
+
+```bash=
+rgb0-cli fungible transfer <blinded_utxo> 100 sample/source_tx.psbt sample/consignment.rgb sample/disclosure.rgb samples/witness.psbt -i 5aa2d0a8098371ee12b4b59f43ffe6a2de637341258af65936a5baa01da49e9b:0 -a 900@0c05cea88d0fca7d16ed6a26d622e7ea477f2e2ff25b9c023b8f06de08e4941a:1
 # example output:
 # [...]
-# Transfer succeeded, consignment data are written to "samples/consignment.rgb", partially signed witness transaction to "samples/witness.psbt"
+# Transfer succeeded, consignments and disclosure are written to "sample/consignment.rgb" and "sample/disclosure.rgb", partially signed witness transaction to "sample/witness.psbt"
 ```
-This will write the consignment file and the psbt including the tweak (which is called *witness transaction*) at the provided paths.
+This will write the consignment file, disclosure and the psbt including the tweak (which is called *witness transaction*) at the provided paths.
 
 At this point the witness transaction should be signed and broadcasted, while the consignment is sent offchain to the peer. For the purpose of the demo, both nodes have access to the consignment file at the same path (in docker this is obtained through a [volume](https://docs.docker.com/storage/volumes/))
 
 ### Accept
-To accept an incoming transfer you need to provide `rgb-node-1` with the consignment file received from `rgb-node-0`, the `receive_utxo` and the corresponding `blinding_factor` that were defined at invoice creation.
+To accept an incoming transfer you need to provide `rgb-node-1` with the consignment file received from `rgb-node-0`, the `receive_utxo` and the corresponding `blinding_factor` generated during blinding utxo generation.
 ```bash=
-rgb1-cli fungible accept samples/consignment.rgb 79d0191dab03ffbccc27500a740f20a75cb175e77346244a567011d3c86d2b0b:0 <blinding_factor>
+rgb1-cli fungible accept sample/consignment.rgb 79d0191dab03ffbccc27500a740f20a75cb175e77346244a567011d3c86d2b0b:0 <blinding_factor>
 # example output:
 # Asset transfer successfully accepted.
 ```
@@ -154,8 +159,19 @@ Now you are able to see (in the `known_allocations` field) the new allocation of
 ```bash=
 rgb1-cli fungible list -l
 ```
-*Note:* since the `receive_utxo` was blinded inside the invoice, the payer has no information on where the asset was allocated after the transfer, so the new allocation does not appear in:
+*Note:* since the `receive_utxo` was blinded during the transfer, the payer has no information on where the asset was allocated after the transfer, so the new allocation does not appear in:
 ```bash=
 rgb0-cli fungible list -l
 ```
-
+But this will still not display the change allocation provided during `transfer` using the `-a` flag yet.
+To register the change allocation the disclosure needs to be accepted by `rgb-node-0`. Ideally this should be done after mining with sufficient
+confirmation of the `witness transaction` (provided in `witness.psbt`)
+```bash=
+rgb0-cli fungible enclose sample/disclosure.rgb
+# example output:
+# Disclosure data successfully enclosed.
+```
+After enclosing of `disclosure` the change allocation 900 asset units will be visible to `rgb-node-0`
+```bash=
+rgb0-cli fungible list -l
+```
