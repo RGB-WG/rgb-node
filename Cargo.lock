@@ -1574,9 +1574,9 @@ checksum = "24d5f089152e60f62d28b835fbff2cd2e8dc0baf1ac13343bef92ab7eed84548"
 
 [[package]]
 name = "rgb-core"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4abf30a6bd99279a794f8e9b2a71db895195726150071f35cdcaa9ae7e7503d2"
+checksum = "51fcee78b8a27e46ecc0238a170e1a353542bf501cac9082bd41678d48b7db5d"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1584,6 +1584,7 @@ dependencies = [
  "bitcoin",
  "bitcoin_hashes 0.9.4",
  "chrono",
+ "clap",
  "deflate",
  "descriptor-wallet",
  "ed25519-dalek",
@@ -1597,8 +1598,10 @@ dependencies = [
  "num-traits 0.2.14",
  "regex",
  "serde 1.0.124",
+ "serde_json",
  "serde_with",
  "serde_with_macros",
+ "serde_yaml",
  "strict_encoding",
 ]
 
@@ -1622,7 +1625,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "amplify",
  "amplify_derive",

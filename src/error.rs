@@ -117,6 +117,8 @@ pub enum ServiceErrorDomain {
 
     Lightning,
 
+    Electrum,
+
     Schema(String),
 
     Anchor(String),

@@ -65,9 +65,6 @@ pub struct Runtime {
 
     /// Unmarshaller instance used for parsing RPC request
     unmarshaller: Unmarshaller<Request>,
-
-    /// Electrum client handle to fetch transactions
-    pub(super) electrum: ElectrumTxResolver,
 }
 
 impl Runtime {
@@ -101,15 +98,12 @@ impl Runtime {
             None,
         )?;
 
-        let electrum = ElectrumTxResolver::new(&config.electrum_server)?;
-
         Ok(Self {
             config,
             rpc_server: session_rpc,
             indexer,
             storage,
             unmarshaller: Request::create_unmarshaller(),
-            electrum,
         })
     }
 }
@@ -302,7 +296,9 @@ impl Runtime {
             .map_err(|err| ServiceErrorDomain::Storage(err.to_string()))?;
 
         // [VALIDATION]: Validate genesis node against the scheme
-        let validation_status = consignment.validate(&schema, &self.electrum);
+        let electrum = ElectrumTxResolver::new(&self.config.electrum_server)
+            .map_err(|_| ServiceErrorDomain::Electrum)?;
+        let validation_status = consignment.validate(&schema, &electrum);
 
         self.storage.add_genesis(&consignment.genesis)?;
 
