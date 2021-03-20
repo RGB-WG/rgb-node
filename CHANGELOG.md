@@ -5,6 +5,8 @@ v0.4.x patches
 --------------
 - v0.4.1: Fixing broken electrum client connectivity on mobile devices where
           OS kills TCP connections once app gets into background
+- v0.4.2: Fixing RGB20 transfers when there are non-asset inputs (like required
+          for paying the fee)
 
 v0.4.0
 ------

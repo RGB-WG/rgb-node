@@ -241,9 +241,18 @@ impl Runtime {
         debug!("Transferring asset {}", transfer.contract_id);
 
         trace!("Preparing state transition");
+        // Filtering inputs which do not have this assets: we will need them
+        // later, but not for constructing the main RGB20 transfer transition
+        let asset = self.cacher.asset(transfer.contract_id)?;
+        let inputs = transfer
+            .inputs
+            .iter()
+            .filter(|outpoint| !asset.allocations(**outpoint).is_empty())
+            .cloned()
+            .collect();
         let transition = rgb20::transfer(
-            self.cacher.asset(transfer.contract_id)?,
-            transfer.inputs.clone(),
+            asset,
+            inputs,
             transfer.payment.clone(),
             transfer.change.clone(),
         )?;
