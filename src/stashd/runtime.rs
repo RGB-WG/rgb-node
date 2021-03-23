@@ -342,6 +342,7 @@ impl Runtime {
         //       revealed outpoints from the removal_list, and if they do
         //       not have any other _known_ outpoints, remove them — and iterate
         //       over their direct ancestor in the same manner
+        // Issue #161
 
         Ok(Reply::Success)
     }

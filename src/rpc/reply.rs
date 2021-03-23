@@ -138,6 +138,7 @@ impl From<internet2::presentation::Error> for Failure {
     fn from(err: internet2::presentation::Error) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after
         //       implementation of `ToValue` trait and derive macro for enums
+        // Issue #160
         Failure {
             code: 0,
             info: format!("{}", err),
@@ -149,6 +150,7 @@ impl From<internet2::transport::Error> for Failure {
     fn from(err: internet2::transport::Error) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after
         //       implementation of `ToValue` trait and derive macro for enums
+        // Issue #160
         Failure {
             code: 1,
             info: format!("{}", err),
@@ -161,6 +163,7 @@ impl From<RuntimeError> for Failure {
     fn from(err: RuntimeError) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after
         //       implementation of `ToValue` trait and derive macro for enums
+        // Issue #160
         Failure {
             code: 2,
             info: format!("{}", err),
@@ -173,6 +176,7 @@ impl From<ServiceError> for Failure {
     fn from(err: ServiceError) -> Self {
         // TODO: Save error code taken from `Error::to_value()` after
         //       implementation of `ToValue` trait and derive macro for enums
+        // Issue #160
         Failure {
             code: 3,
             info: format!("{}", err),

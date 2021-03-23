@@ -6,6 +6,7 @@ coverage:
   round: nearest
   range: "0...95"
   # TODO: Update codecov default requirements after v0.1 release
+  # Issue #151
   status:
     project:
       default:

@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 // TODO: Consider moving this to LNP/BP Core Library
+// Issue #166
 
 use core::str::FromStr;
 #[cfg(feature = "serde")]

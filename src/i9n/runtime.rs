@@ -41,6 +41,7 @@ impl Runtime {
                 electrum_server: config.electrum_server.clone(),
                 // TODO: Endpoint parameters are not needed in embedded mode;
                 //       remove them
+                // Issue #159
                 contracts: config.contract_endpoints.keys().cloned().collect(),
                 fungible_rpc_endpoint: config
                     .contract_endpoints

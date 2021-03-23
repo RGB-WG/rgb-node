@@ -224,6 +224,7 @@ impl Runtime {
         self.import_asset(asset.clone(), genesis)?;
 
         // TODO: Send push request to client informing about cache update
+        // Issue #154
 
         Ok(Reply::Asset(asset))
     }
@@ -236,6 +237,7 @@ impl Runtime {
 
         // TODO: Check inputs that they really exist and have sufficient amount
         //       of asset for the transfer operation
+        // Issue #155
 
         trace!("Looking for asset information");
         debug!("Transferring asset {}", transfer.contract_id);
@@ -531,6 +533,7 @@ impl Runtime {
             // TODO: Improve RGB Core disclosure API providing methods for
             // indexing underlying       data in different ways. Do
             // the same for Consignment
+            // Issue #156
             for contract_id in disclosure
                 .transitions()
                 .values()

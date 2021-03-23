@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 // TODO: Consider moving parts of this file to common daemon modules (LNP/BP)
+// Issue #152
 
 use std::collections::HashMap;
 use std::io;

@@ -173,6 +173,7 @@ impl Stash for Runtime {
 
             trace!("Extending source data with the ancestors");
             // TODO: (new) Improve this logic
+            // Issue #162
             match (
                 self.storage.transition(&node_id),
                 self.storage.extension(&node_id),
@@ -305,6 +306,7 @@ impl Stash for Runtime {
     }
 
     // TODO: Rename into `enclose`
+    // Issue #163
     fn know_about(
         &mut self,
         disclosure: Disclosure,

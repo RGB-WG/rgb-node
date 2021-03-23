@@ -20,6 +20,7 @@ use rgb_node::error::BootstrapError;
 
 fn main() -> Result<(), BootstrapError> {
     // TODO: Parse config file as well
+    // Issue #153
     let opts: Opts = Opts::parse();
     let config: Config = opts.clone().into();
 

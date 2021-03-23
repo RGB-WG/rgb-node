@@ -295,6 +295,7 @@ impl Cache for SqlCache {
     }
 
     // TODO: Move this method to RGB20
+    // Issue #157
     fn asset_allocations(
         &self,
         contract_id: ContractId,
@@ -383,6 +384,7 @@ mod test {
 
     // The following tests are ignored by default, because they will break
     // Travis CI unless the build setup is updated (TODO). To run these tests,
+    // Issue #158
     // 1. set an environment variable DATABASE_URL=~/.rgb.
     // 2. manually remove the ignore flag and run the rgb-node/test/test_db.sh.
 
