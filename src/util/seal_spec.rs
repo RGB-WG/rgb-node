@@ -11,8 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-// TODO: Consider moving this to LNP/BP Core Library
-// Issue #166
+// TODO #166: Consider moving this to LNP/BP Core Library
 
 use core::str::FromStr;
 #[cfg(feature = "serde")]

@@ -136,9 +136,8 @@ pub struct Failure {
 
 impl From<internet2::presentation::Error> for Failure {
     fn from(err: internet2::presentation::Error) -> Self {
-        // TODO: Save error code taken from `Error::to_value()` after
-        //       implementation of `ToValue` trait and derive macro for enums
-        // Issue #160
+        // TODO #61: Save error code taken from `Error::to_value()` after
+        // implementation of `ToValue` trait and derive macro for enums
         Failure {
             code: 0,
             info: format!("{}", err),
@@ -148,9 +147,8 @@ impl From<internet2::presentation::Error> for Failure {
 
 impl From<internet2::transport::Error> for Failure {
     fn from(err: internet2::transport::Error) -> Self {
-        // TODO: Save error code taken from `Error::to_value()` after
-        //       implementation of `ToValue` trait and derive macro for enums
-        // Issue #160
+        // TODO #61: Save error code taken from `Error::to_value()` after
+        // implementation of `ToValue` trait and derive macro for enums
         Failure {
             code: 1,
             info: format!("{}", err),
@@ -161,9 +159,8 @@ impl From<internet2::transport::Error> for Failure {
 #[cfg(feature = "node")]
 impl From<RuntimeError> for Failure {
     fn from(err: RuntimeError) -> Self {
-        // TODO: Save error code taken from `Error::to_value()` after
-        //       implementation of `ToValue` trait and derive macro for enums
-        // Issue #160
+        // TODO #61: Save error code taken from `Error::to_value()` after
+        // implementation of `ToValue` trait and derive macro for enums
         Failure {
             code: 2,
             info: format!("{}", err),
@@ -174,9 +171,8 @@ impl From<RuntimeError> for Failure {
 #[cfg(any(feature = "node", feature = "client"))]
 impl From<ServiceError> for Failure {
     fn from(err: ServiceError) -> Self {
-        // TODO: Save error code taken from `Error::to_value()` after
-        //       implementation of `ToValue` trait and derive macro for enums
-        // Issue #160
+        // TODO #61: Save error code taken from `Error::to_value()` after
+        // implementation of `ToValue` trait and derive macro for enums
         Failure {
             code: 3,
             info: format!("{}", err),

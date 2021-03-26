@@ -45,10 +45,10 @@ use crate::util::file::{file, FileMode};
 )]
 #[strict_encoding_crate(lnpbp::strict_encoding)]
 struct BTreeIndexData {
-    /// TODO: Replace with DisplayFromStr once RGB node will fix node display
+    /// TODO #164: Replace with DisplayFromStr once RGB node will fix node
+    /// display
     // #[cfg_attr(feature = "serde", serde(with =
     // "As::<BTreeMap<DisplayFromStr, DisplayFromStr>>"))]
-    // Issue #164
     node_anchors: BTreeMap<NodeId, AnchorId>,
 }
 

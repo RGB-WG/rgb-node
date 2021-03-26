@@ -338,11 +338,10 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got FORGET");
 
-        // TODO: Implement stash prunning: filter all transitions containing
-        //       revealed outpoints from the removal_list, and if they do
-        //       not have any other _known_ outpoints, remove them — and iterate
-        //       over their direct ancestor in the same manner
-        // Issue #161
+        // TODO #63: Implement stash prunning: filter all transitions containing
+        // revealed outpoints from the removal_list, and if they do
+        // not have any other _known_ outpoints, remove them — and iterate
+        // over their direct ancestor in the same manner
 
         Ok(Reply::Success)
     }

@@ -506,8 +506,7 @@ mod test {
         }
     }
 
-    // TODO: Add testing for Anchors when easy anchor sample
-    // Issue #165
+    // TODO #165: Add testing for Anchors when easy anchor sample
     // are availble
     // To run the test set an env variable `export
     // DATABASE_URL='~/.rgb/hammersbald-tests/'
