@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 // TODO #152: Consider moving parts of this file to common daemon modules
-// (LNP/BP)
+//       (Internet2)
 
 use std::collections::HashMap;
 use std::io;

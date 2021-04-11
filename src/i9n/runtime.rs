@@ -40,7 +40,7 @@ impl Runtime {
                 verbose: config.verbose,
                 electrum_server: config.electrum_server.clone(),
                 // TODO #159: Endpoint parameters are not needed in embedded
-                // mode; remove them
+                //       mode; remove them
                 contracts: config.contract_endpoints.keys().cloned().collect(),
                 fungible_rpc_endpoint: config
                     .contract_endpoints
