@@ -19,7 +19,7 @@ use rgb_node::error::BootstrapError;
 use rgb_node::fungibled::{main_with_config, Config, Opts};
 
 fn main() -> Result<(), BootstrapError> {
-    // TODO: Parse config file as well
+    // TODO #60: Parse config file as well
     let opts: Opts = Opts::parse();
     let config: Config = opts.into();
 

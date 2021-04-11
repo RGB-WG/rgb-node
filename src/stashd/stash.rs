@@ -172,7 +172,7 @@ impl Stash for Runtime {
             trace!("Anchor data: {:#?}", anchor);
 
             trace!("Extending source data with the ancestors");
-            // TODO: (new) Improve this logic
+            // TODO #162: (new) Improve this logic
             match (
                 self.storage.transition(&node_id),
                 self.storage.extension(&node_id),
@@ -304,7 +304,7 @@ impl Stash for Runtime {
         Ok(())
     }
 
-    // TODO: Rename into `enclose`
+    // TODO #163: Rename into `enclose`
     fn know_about(
         &mut self,
         disclosure: Disclosure,

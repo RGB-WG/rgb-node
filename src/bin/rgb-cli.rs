@@ -19,7 +19,7 @@ use rgb_node::cli::{Config, Opts, Runtime};
 use rgb_node::error::BootstrapError;
 
 fn main() -> Result<(), BootstrapError> {
-    // TODO: Parse config file as well
+    // TODO #60: Parse config file as well
     let opts: Opts = Opts::parse();
     let config: Config = opts.clone().into();
 

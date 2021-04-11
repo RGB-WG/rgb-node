@@ -223,7 +223,7 @@ impl Runtime {
 
         self.import_asset(asset.clone(), genesis)?;
 
-        // TODO: Send push request to client informing about cache update
+        // TODO #154: Send push request to client informing about cache update
 
         Ok(Reply::Asset(asset))
     }
@@ -234,8 +234,8 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", transfer);
 
-        // TODO: Check inputs that they really exist and have sufficient amount
-        //       of asset for the transfer operation
+        // TODO #66: Check inputs that they really exist and have sufficient
+        //       amount of asset for the transfer operation
 
         trace!("Looking for asset information");
         debug!("Transferring asset {}", transfer.contract_id);
@@ -528,9 +528,9 @@ impl Runtime {
         let reply = self
             .stash_req_rep(rpc::stash::Request::Enclose(disclosure.clone()))?;
         if let Reply::Success = reply {
-            // TODO: Improve RGB Core disclosure API providing methods for
-            // indexing underlying       data in different ways. Do
-            // the same for Consignment
+            // TODO #156: Improve RGB Core disclosure API providing methods for
+            //       indexing underlying data in different ways. Do the same for
+            //       Consignment
             for contract_id in disclosure
                 .transitions()
                 .values()
