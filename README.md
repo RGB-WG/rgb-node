@@ -109,11 +109,11 @@ then run the following commands:
 
     git clone https://github.com/LNP-BP/rgb-node.git
     cd rgb-node
-    cargo build --release --bins
+    cargo install --locked --root . rgb_node --features all
 
 Now, to run the node you can execute
 
-    target/release/rgbd --data-dir ~/.rgb --bin-dir target/release -vvvv --contract fungible
+    ./bin/rgbd -vvvv -b ./bin -d ./data
 
 ### In docker
 
