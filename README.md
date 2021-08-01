@@ -54,24 +54,24 @@ for instance:
 
 ## Project organization & architecture
 
-* [`src/api/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/api/) – 
+* [`src/api/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/api/) –
   LNP messages for all daemons used for message bus
-* [`src/bin/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/bin/) – 
+* [`src/bin/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/bin/) –
   binaries for daemons & CLI launching main process
-* [`src/cli/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/cli/) – 
+* [`src/cli/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/cli/) –
   CLAP-based command line API talking to message bus
-* [`src/i8n/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/i8n/) – 
+* [`src/i8n/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/i8n/) –
   functions exposed to FFI talking to message bus
 * `src/<name>/` – service/daemon-specific code:
-  - [`src/stash/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/stash) – 
+  - [`src/stash/`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/stash) –
     daemon managing RGB stash data and its storage;
     you may  configure it (with either config file, environment vars or
     command-line arguments) to use different forms of storage drivers;
-  - [`src/contracts`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/contracts) – 
+  - [`src/contracts`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/contracts) –
     daemons supporting high-level APIs for
     working with different forms of RGB Schema: RGB-20 (fungible assets),
     RGB-21 (collectionables/NFTs) etc;
-  - [`src/rgbd`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/rgbd) – 
+  - [`src/rgbd`](https://github.com/LNP-BP/rgb-node/tree/v0.2.0/src/rgbd) –
     daemon orchestrating bootstrapping of stash and
     contracts daemons
 
