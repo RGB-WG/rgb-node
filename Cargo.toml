@@ -37,7 +37,7 @@ lnpbp = "0.5.0-beta.3"
 descriptor-wallet = { version = "0.5.0-alpha.3", features = ["electrum"] }
 bp-core = "0.5.0-beta.5"
 rgb-core = "0.5.0-alpha.1"
-rgb20 = { version = "0.5.0-alpha.2", optional = true }
+rgb20 = { version = "0.5.0-alpha.3", optional = true }
 # rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
@@ -79,7 +79,7 @@ shellexpand = { version = "2", optional = true }
 [features]
 default = ["client", "fungibles"]
 all = [
-    "server", "cli", "serde", "tor", "nosql", # "sql", 
+    "server", "cli", "serde", "tor", "nosql", # "sql",
     "fungibles", # "collectibles", "identities", "auditlogs"
 ]
 

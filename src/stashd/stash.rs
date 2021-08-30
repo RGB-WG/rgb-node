@@ -156,10 +156,8 @@ impl Stash for Runtime {
 
         trace!("Collecting other involved nodes");
         let mut sources = VecDeque::<NodeId>::new();
-        sources
-            .extend(node.parent_owned_rights().into_iter().map(|(id, _)| id));
-        sources
-            .extend(node.parent_public_rights().into_iter().map(|(id, _)| id));
+        sources.extend(node.parent_owned_rights().iter().map(|(id, _)| id));
+        sources.extend(node.parent_public_rights().iter().map(|(id, _)| id));
         trace!("Node list for consignment: {:#?}", sources);
         while let Some(node_id) = sources.pop_front() {
             if node_id.into_inner() == genesis.contract_id().into_inner() {
@@ -183,34 +181,14 @@ impl Stash for Runtime {
                 (Ok(mut transition), Err(_)) => {
                     transition.conceal_state();
                     state_transitions.push((anchor, transition.clone()));
-                    sources.extend(
-                        transition
-                            .parent_owned_rights()
-                            .into_iter()
-                            .map(|(id, _)| id),
-                    );
-                    sources.extend(
-                        transition
-                            .parent_public_rights()
-                            .into_iter()
-                            .map(|(id, _)| id),
-                    );
+                    sources.extend(transition.parent_owned_rights().keys());
+                    sources.extend(transition.parent_public_rights().keys());
                 }
                 (Err(_), Ok(mut extension)) => {
                     extension.conceal_state();
                     state_extensions.push(extension.clone());
-                    sources.extend(
-                        extension
-                            .parent_owned_rights()
-                            .into_iter()
-                            .map(|(id, _)| id),
-                    );
-                    sources.extend(
-                        extension
-                            .parent_public_rights()
-                            .into_iter()
-                            .map(|(id, _)| id),
-                    );
+                    sources.extend(extension.parent_owned_rights().keys());
+                    sources.extend(extension.parent_public_rights().keys());
                 }
                 _ => Err(Error::StorageError)?,
             }

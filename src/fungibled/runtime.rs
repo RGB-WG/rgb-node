@@ -557,7 +557,7 @@ impl Runtime {
 
     fn forget(
         &mut self,
-        outpoint: OutPoint,
+        _outpoint: OutPoint,
     ) -> Result<Reply, ServiceErrorDomain> {
         todo!("Figure out do we need `forget` function")
         /*
@@ -616,7 +616,7 @@ impl Runtime {
             //       revealing known consignment information with separate
             //       routine
             for (index, assignment) in assignment_vec
-                .into_value_assignment_vec()
+                .to_value_assignment_vec()
                 .into_iter()
                 .enumerate()
             {
