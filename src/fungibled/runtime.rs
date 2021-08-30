@@ -29,10 +29,9 @@ use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{
     AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node,
-    SealDefinition, SealEndpoint, Transition,
+    OutpointValue, SealDefinition, SealEndpoint, Transition,
 };
-use rgb20::schema::OwnedRightsType;
-use rgb20::{schema, Asset, OutpointCoins};
+use rgb20::{schema, Asset};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::Config;
@@ -195,31 +194,27 @@ impl Runtime {
         debug!("Got ISSUE {}", issue);
 
         let issue = issue.clone();
-        let (asset, genesis) = rgb20::issue(
+        let (asset, genesis) = Asset::issue(
             self.config.network.clone(),
             issue.ticker,
             issue.name,
             issue.description,
             issue.precision,
-            issue
-                .allocation
-                .into_iter()
-                .map(|OutpointCoins { coins, outpoint }| (outpoint, coins))
-                .collect(),
+            issue.allocation,
             issue.inflation.into_iter().fold(
                 BTreeMap::new(),
-                |mut map, OutpointCoins { coins, outpoint }| {
+                |mut map, OutpointValue { value, outpoint }| {
                     // We may have only a single secondary issuance right per
                     // outpoint, so folding all outpoints
                     map.entry(outpoint)
-                        .and_modify(|amount| *amount += coins)
-                        .or_insert(coins);
+                        .and_modify(|amount| *amount += value)
+                        .or_insert(value);
                     map
                 },
             ),
             issue.renomination,
             issue.epoch,
-        )?;
+        );
 
         self.import_asset(asset.clone(), genesis)?;
 
@@ -247,11 +242,12 @@ impl Runtime {
         let inputs = transfer
             .inputs
             .iter()
-            .filter(|outpoint| !asset.allocations(**outpoint).is_empty())
+            .filter(|outpoint| {
+                !asset.outpoint_allocations(**outpoint).is_empty()
+            })
             .cloned()
             .collect();
-        let transition = rgb20::transfer(
-            asset,
+        let transition = asset.transfer(
             inputs,
             transfer.payment.clone(),
             transfer.change.clone(),
@@ -299,8 +295,7 @@ impl Runtime {
         for (other_contract, outpoints) in other_outpoint_assets {
             other_transitions.insert(
                 other_contract,
-                rgb20::transfer(
-                    self.cacher.asset(other_contract)?,
+                self.cacher.asset(other_contract)?.transfer(
                     outpoints.iter().map(|(outpoint, _)| *outpoint).collect(),
                     empty!(),
                     outpoints
@@ -564,37 +559,40 @@ impl Runtime {
         &mut self,
         outpoint: OutPoint,
     ) -> Result<Reply, ServiceErrorDomain> {
-        let mut removal_list = Vec::<_>::new();
-        let assets = self
-            .cacher
-            .assets()?
-            .into_iter()
-            .map(Clone::clone)
-            .collect::<Vec<_>>();
-        for asset in assets {
-            let mut asset = asset.clone();
-            for allocation in asset.clone().allocations(outpoint) {
-                asset.remove_allocation(
-                    outpoint,
-                    *allocation.node_id(),
-                    *allocation.index(),
-                    allocation.revealed_amount().clone(),
-                );
-                removal_list.push((*allocation.node_id(), *allocation.index()));
-            }
-            self.cacher.add_asset(asset)?;
-        }
-        if removal_list.is_empty() {
-            return Ok(Reply::Nothing);
-        }
+        todo!("Figure out do we need `forget` function")
+        /*
+           let mut removal_list = Vec::<_>::new();
+           let assets = self
+               .cacher
+               .assets()?
+               .into_iter()
+               .map(Clone::clone)
+               .collect::<Vec<_>>();
+           for asset in assets {
+               let mut asset = asset.clone();
+               for allocation in asset.clone().outpoint_allocations(outpoint) {
+                   asset.remove_allocation(
+                       outpoint,
+                       *allocation.node_id(),
+                       *allocation.index(),
+                       allocation.revealed_amount().clone(),
+                   );
+                   removal_list.push((*allocation.node_id(), *allocation.index()));
+               }
+               self.cacher.add_asset(asset)?;
+           }
+           if removal_list.is_empty() {
+               return Ok(Reply::Nothing);
+           }
 
-        let reply =
-            self.stash_req_rep(rpc::stash::Request::Forget(removal_list))?;
+           let reply =
+               self.stash_req_rep(rpc::stash::Request::Forget(removal_list))?;
 
-        match reply {
-            Reply::Success | Reply::Failure(_) => Ok(reply),
-            _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
-        }
+           match reply {
+               Reply::Success | Reply::Failure(_) => Ok(reply),
+               _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
+           }
+        */
     }
 
     fn update_asset<'a>(
@@ -604,9 +602,10 @@ impl Runtime {
         reveal_outpoints: &'a Vec<OutpointReveal>,
     ) -> Result<(), ServiceErrorDomain> {
         for (transition, txid) in data.into_iter() {
-            let assignments = if let Some(assignments) =
-                transition.owned_rights_by_type(*OwnedRightsType::Assets)
-            {
+            let assignment_vec = if let Some(assignments) = transition
+                .owned_rights_by_type(
+                    rgb20::schema::OwnedRightType::Assets as u16,
+                ) {
                 assignments
             } else {
                 continue;
@@ -616,12 +615,14 @@ impl Runtime {
             //       allocations parsing from consignment, and before that
             //       revealing known consignment information with separate
             //       routine
-            for (index, state) in
-                assignments.to_discrete_state().into_iter().enumerate()
+            for (index, assignment) in assignment_vec
+                .into_value_assignment_vec()
+                .into_iter()
+                .enumerate()
             {
-                let seal_confidential = state.seal_definition_confidential();
+                let seal_confidential = assignment.to_confidential_seal();
                 let seal_revealed = if let Some(seal_revealed) =
-                    state.seal_definition().or_else(|| {
+                    assignment.revealed_seal().or_else(|| {
                         reveal_outpoints
                             .iter()
                             .find(|reveal| {
@@ -635,9 +636,9 @@ impl Runtime {
                     continue;
                 };
 
-                if let Some(state_data) = state.assigned_state() {
+                if let Some(state_data) = assignment.as_revealed_state() {
                     asset.add_allocation(
-                        seal_revealed.outpoint_reveal(txid).into(),
+                        seal_revealed.to_outpoint_reveal(txid).into(),
                         transition.node_id(),
                         index as u16,
                         *state_data,

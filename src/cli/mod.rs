@@ -21,7 +21,7 @@ pub use config::{Config, Opts};
 pub use error::Error;
 pub use runtime::Runtime;
 
-#[derive(Clap, Copy, Clone, PartialEq, Eq, Hash, Debug, Display)]
+#[derive(ArgEnum, Copy, Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
 pub enum OutputFormat {
     Yaml,

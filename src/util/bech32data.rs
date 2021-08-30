@@ -1,4 +1,4 @@
-use bech32::ToBase32;
+use bech32::{ToBase32, Variant};
 
 pub trait ToBech32Data {
     fn to_bech32data(&self) -> String;
@@ -10,7 +10,8 @@ pub trait FromBech32Data {
 
 impl ToBech32Data for Vec<u8> {
     fn to_bech32data(&self) -> String {
-        ::bech32::encode("data", self.to_base32())
+        // TODO: Use Bech32m
+        ::bech32::encode("data", self.to_base32(), Variant::Bech32)
             .expect("HRP is hardcoded and can't fail")
     }
 }

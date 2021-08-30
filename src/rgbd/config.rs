@@ -117,7 +117,7 @@ pub struct Opts {
 }
 
 #[derive(
-    Clap, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display,
+    ArgEnum, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display,
 )]
 #[display(Debug)]
 #[cfg_attr(

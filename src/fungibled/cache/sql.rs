@@ -55,7 +55,7 @@ pub enum SqlCacheError {
     BlindKey(rgb::secp256k1zkp::Error),
 
     #[from]
-    WrongChainData(lnpbp::chain::Chain::ParseError),
+    WrongChainData(lnpbp::chain::ParseError),
 
     #[display("Item not found")]
     NotFound,

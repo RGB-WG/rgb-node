@@ -298,7 +298,9 @@ impl Runtime {
         // [VALIDATION]: Validate genesis node against the scheme
         let electrum = ElectrumTxResolver::new(&self.config.electrum_server)
             .map_err(|_| ServiceErrorDomain::Electrum)?;
-        let validation_status = consignment.validate(&schema, &electrum);
+        let root_schema = self.storage().schema(&schema.root_id).ok();
+        let validation_status =
+            consignment.validate(&schema, root_schema.as_ref(), &electrum);
 
         self.storage.add_genesis(&consignment.genesis)?;
 
@@ -326,7 +328,7 @@ impl Runtime {
     ) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ENCLOSE DISCLOSURE");
 
-        self.know_about(disclosure.clone())
+        self.enclose(&disclosure)
             .map_err(|_| ServiceErrorDomain::Stash)?;
 
         Ok(Reply::Success)

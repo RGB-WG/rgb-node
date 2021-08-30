@@ -15,16 +15,18 @@ use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
 use bp::seals::OutpointReveal;
-use lnpbp::lnpbp4::ProtocolId;
+use commit_verify::multi_commit::ProtocolId;
 use rgb::{
-    Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
-    Extension, Genesis, IntoRevealed, Node, NodeId, SchemaId, SealEndpoint,
-    Stash, Transition,
+    Anchor, AnchorId, AssignmentVec, ConcealState, Consignment, ContractId,
+    Disclosure, Extension, Genesis, Node, NodeId, RevealedByMerge, Schema,
+    SchemaId, SealEndpoint, Stash, Transition,
 };
 
 use super::index::Index;
 use super::storage::Store;
 use super::Runtime;
+use bitcoin::OutPoint;
+use wallet::resolvers::TxResolver;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, From, Error)]
 #[display(doc_comments)]
@@ -61,61 +63,62 @@ impl<T> Iterator for DumbIter<T> {
 
 impl Stash for Runtime {
     type Error = Error;
+    type SchemaIterator = DumbIter<Schema>;
     type GenesisIterator = DumbIter<Genesis>;
     type AnchorIterator = DumbIter<Anchor>;
     type TransitionIterator = DumbIter<Transition>;
     type ExtensionIterator = DumbIter<Extension>;
-    type NidIterator = DumbIter<NodeId>;
+    type NodeIdIterator = DumbIter<NodeId>;
 
-    fn get_schema(
-        &self,
-        _schema_id: SchemaId,
-    ) -> Result<SchemaId, Self::Error> {
-        unimplemented!()
+    fn get_schema(&self, _schema_id: SchemaId) -> Result<Schema, Self::Error> {
+        todo!()
     }
 
     fn get_genesis(
         &self,
         _contract_id: ContractId,
     ) -> Result<Genesis, Self::Error> {
-        unimplemented!()
+        todo!()
     }
 
     fn get_transition(
         &self,
         _node_id: NodeId,
     ) -> Result<Transition, Self::Error> {
-        unimplemented!()
+        todo!()
     }
 
     fn get_extension(
         &self,
         _node_id: NodeId,
     ) -> Result<Extension, Self::Error> {
-        unimplemented!()
+        todo!()
     }
 
-    fn get_anchor(
-        &self,
-        _anchor_id: ContractId,
-    ) -> Result<Anchor, Self::Error> {
-        unimplemented!()
+    fn get_anchor(&self, _anchor_id: AnchorId) -> Result<Anchor, Self::Error> {
+        todo!()
     }
 
     fn genesis_iter(&self) -> Self::GenesisIterator {
-        unimplemented!()
+        todo!()
     }
 
     fn anchor_iter(&self) -> Self::AnchorIterator {
-        unimplemented!()
+        todo!()
     }
 
-    fn transition_iter(&self) -> Self::TransitionIterator {
-        unimplemented!()
+    fn transition_iter(
+        &self,
+        _contract_id: ContractId,
+    ) -> Self::TransitionIterator {
+        todo!()
     }
 
-    fn extension_iter(&self) -> Self::ExtensionIterator {
-        unimplemented!()
+    fn extension_iter(
+        &self,
+        _contract_id: ContractId,
+    ) -> Self::ExtensionIterator {
+        todo!()
     }
 
     fn consign(
@@ -234,9 +237,9 @@ impl Stash for Runtime {
         // Update transition data with the revealed state information that we
         // kept since we did an invoice (and the sender did not know).
         let reveal_known_seals =
-            |(_, assignments): (&usize, &mut Assignments)| match assignments {
-                Assignments::Declarative(_) => {}
-                Assignments::DiscreteFiniteField(set) => {
+            |(_, assignments): (&u16, &mut AssignmentVec)| match assignments {
+                AssignmentVec::Declarative(_) => {}
+                AssignmentVec::DiscreteFiniteField(set) => {
                     *set = set
                         .iter()
                         .map(|a| {
@@ -246,7 +249,7 @@ impl Stash for Runtime {
                         })
                         .collect();
                 }
-                Assignments::CustomData(set) => {
+                AssignmentVec::CustomData(set) => {
                     *set = set
                         .iter()
                         .map(|a| {
@@ -266,18 +269,19 @@ impl Stash for Runtime {
         {
             transition
                 .owned_rights_mut()
-                .into_iter()
+                .iter_mut()
                 .for_each(reveal_known_seals);
             if let Ok(other_transition) =
                 self.storage.transition(&transition.node_id())
             {
-                transition = transition.into_revealed(other_transition).expect(
-                    "Transition id or merge-revealed procedure is broken",
-                );
+                transition =
+                    transition.revealed_by_merge(other_transition).expect(
+                        "Transition id or merge-revealed procedure is broken",
+                    );
             }
             if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
                 anchor = anchor
-                    .into_revealed(other_anchor)
+                    .revealed_by_merge(other_anchor)
                     .expect("Anchor id or merge-revealed procedure is broken");
             }
             // Store the transition and the anchor data in the stash
@@ -289,14 +293,15 @@ impl Stash for Runtime {
         for mut extension in consignment.state_extensions.into_iter() {
             extension
                 .owned_rights_mut()
-                .into_iter()
+                .iter_mut()
                 .for_each(reveal_known_seals);
             if let Ok(other_extension) =
                 self.storage.extension(&extension.node_id())
             {
-                extension = extension.into_revealed(other_extension).expect(
-                    "Extension id or merge-revealed procedure is broken",
-                );
+                extension =
+                    extension.revealed_by_merge(other_extension).expect(
+                        "Extension id or merge-revealed procedure is broken",
+                    );
             }
             self.storage.add_extension(&extension)?;
         }
@@ -304,11 +309,7 @@ impl Stash for Runtime {
         Ok(())
     }
 
-    // TODO #163: Rename into `enclose`
-    fn know_about(
-        &mut self,
-        disclosure: Disclosure,
-    ) -> Result<(), Self::Error> {
+    fn enclose(&mut self, disclosure: &Disclosure) -> Result<(), Self::Error> {
         // Do a disclosure verification: check that we know contract_ids
         let contract_ids = disclosure
             .transitions()
@@ -331,7 +332,7 @@ impl Stash for Runtime {
             let mut anchor: Anchor = anchor.clone();
             if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
                 anchor = anchor
-                    .into_revealed(other_anchor)
+                    .revealed_by_merge(other_anchor)
                     .expect("RGB commitment procedure is broken");
             }
             self.storage.add_anchor(&anchor)?;
@@ -349,7 +350,7 @@ impl Stash for Runtime {
                 self.storage.transition(&transition.node_id())
             {
                 transition = transition
-                    .into_revealed(other_transition)
+                    .revealed_by_merge(other_transition)
                     .expect("RGB commitment procedure is broken");
             }
             self.storage.add_transition(&transition)?;
@@ -361,7 +362,7 @@ impl Stash for Runtime {
                 self.storage.extension(&extension.node_id())
             {
                 extension = extension
-                    .into_revealed(other_extension)
+                    .revealed_by_merge(other_extension)
                     .expect("RGB commitment procedure is broken");
             }
             self.storage.add_extension(&extension)?;
@@ -370,14 +371,11 @@ impl Stash for Runtime {
         Ok(())
     }
 
-    fn forget(
+    fn prune(
         &mut self,
-        _consignment: Consignment,
+        _tx_resolver: &mut impl TxResolver,
+        _ownership_resolver: impl Fn(OutPoint) -> bool,
     ) -> Result<usize, Self::Error> {
-        unimplemented!()
-    }
-
-    fn prune(&mut self) -> Result<usize, Self::Error> {
-        unimplemented!()
+        todo!()
     }
 }

@@ -245,7 +245,7 @@ impl Cache for FileCache {
             result.insert(
                 *asset.id(),
                 asset
-                    .allocations(outpoint)
+                    .outpoint_allocations(outpoint)
                     .into_iter()
                     .map(|a| a.revealed_amount().value)
                     .collect(),

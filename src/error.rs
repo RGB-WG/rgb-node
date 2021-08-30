@@ -127,8 +127,8 @@ pub enum ServiceErrorDomain {
     #[from]
     #[cfg_attr(
         feature = "fungibles",
-        from(rgb20::Error),
-        from(rgb20::TransferError)
+        from(rgb20::transitions::Error),
+        from(rgb20::asset::Error)
     )]
     Internal(String),
 }

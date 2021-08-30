@@ -2,11 +2,12 @@ use diesel::prelude::*;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use bitcoin::hashes::hex::{FromHex, ToHex};
+use amplify::hex::{FromHex, ToHex};
 use bitcoin::{OutPoint, Txid};
+use commit_verify::TaggedHash;
 use lnpbp::chain::Chain;
-use rgb::{value, AtomicValue, ContractId, NodeId};
-use rgb20::{Allocation, Asset, Issue, Supply};
+use rgb::{value, Allocation, AtomicValue, ContractId, NodeId};
+use rgb20::{Asset, Issue, Supply};
 
 use crate::fungibled::sql::schema as cache_schema;
 use crate::fungibled::SqlCacheError;
@@ -63,16 +64,16 @@ impl SqlAsset {
                 None => 0,
             },
             contract_id: asset.id().clone().to_hex(),
-            ticker: asset.ticker().clone(),
-            asset_name: asset.name().clone(),
-            asset_description: asset.description().clone(),
+            ticker: asset.ticker().to_string(),
+            asset_name: asset.name().to_string(),
+            asset_description: asset.ricardian_contract().map(str::to_string),
             known_circulating_supply: *asset.supply().known_circulating()
                 as i64,
             is_issued_known: asset.supply().is_issued_known().clone(),
             max_cap: *asset.supply().issue_limit() as i64,
             chain: asset.chain().to_string(),
             fractional_bits: vec![asset.decimal_precision().clone()],
-            asset_date: asset.date().clone(),
+            asset_date: asset.date().into(),
         })
     }
 

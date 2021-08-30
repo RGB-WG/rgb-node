@@ -215,7 +215,7 @@ impl Index for BTreeIndex {
             .commitments
             .iter()
             .filter(|commitment| commitment.protocol.is_some())
-            .map(|commitment| commitment.commitment)
+            .map(|commitment| commitment.message)
         {
             self.index.node_anchors.insert(
                 NodeId::from_inner(<NodeId as Wrapper>::Inner::from_inner(

@@ -19,10 +19,9 @@ use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use bp::seals::OutpointReveal;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,
-    SealEndpoint,
+    AtomicValue, Consignment, ContractId, Disclosure, Genesis, OutpointValue,
+    SealDefinition, SealEndpoint,
 };
-use rgb20::OutpointCoins;
 
 use microservices::FileFormat;
 
@@ -99,12 +98,12 @@ pub struct IssueReq {
     pub precision: u8,
 
     /// Asset allocation, in form of <amount>@<txid>:<vout>
-    pub allocation: Vec<OutpointCoins>,
+    pub allocation: Vec<OutpointValue>,
 
     /// Outputs controlling inflation (secondary issue);
     /// in form of <amount>@<txid>:<vout>
     #[clap(short, long)]
-    pub inflation: Vec<OutpointCoins>,
+    pub inflation: Vec<OutpointValue>,
 
     /// Enable renomination procedure; parameter takes argument in form of
     /// <txid>:<vout> specifying output controlling renomination right

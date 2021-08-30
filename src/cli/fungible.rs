@@ -23,7 +23,7 @@ use bp::seals::{OutpointHash, OutpointReveal};
 use commit_verify::CommitConceal;
 use microservices::FileFormat;
 use rgb::prelude::*;
-use rgb20::{Asset, SealCoins};
+use rgb20::Asset;
 use strict_encoding::strict_deserialize;
 
 use super::{Error, OutputFormat, Runtime};
@@ -111,7 +111,7 @@ pub struct TransferCli {
     /// Adds additional asset allocations; MUST use transaction inputs
     /// controlled by the local party
     #[clap(short, long)]
-    pub allocate: Vec<SealCoins>,
+    pub allocate: Vec<AllocatedValue>,
 
     /// Whom to pay
     pub receiver: OutpointHash,
@@ -204,8 +204,8 @@ impl Command {
                     .map(|a| {
                         map! {
                             "id" => a.id().to_string(),
-                            "ticker" => a.ticker().clone(),
-                            "name" => a.name().clone()
+                            "ticker" => a.ticker().to_string(),
+                            "name" => a.name().to_string()
                         }
                     })
                     .collect();
@@ -536,7 +536,7 @@ impl TransferCli {
                 .allocate
                 .into_iter()
                 .map(|seal_coins| {
-                    (seal_coins.seal_definition(), seal_coins.coins)
+                    (seal_coins.to_seal_definition(), seal_coins.value)
                 })
                 .collect(),
             payment: bmap! { SealEndpoint::TxOutpoint(self.receiver) => self.amount },
