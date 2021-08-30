@@ -19,12 +19,12 @@ use bitcoin::consensus::{Decodable, Encodable};
 use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use lnpbp::client_side_validation::CommitConceal;
-use lnpbp::seals::{OutpointHash, OutpointReveal};
-use lnpbp::strict_encoding::strict_deserialize;
+use bp::seals::{OutpointHash, OutpointReveal};
+use commit_verify::CommitConceal;
 use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::{Asset, SealCoins};
+use strict_encoding::strict_deserialize;
 
 use super::{Error, OutputFormat, Runtime};
 use crate::rpc::fungible::{AcceptReq, IssueReq, TransferReq};

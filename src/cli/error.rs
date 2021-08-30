@@ -34,7 +34,7 @@ pub enum Error {
     TomlError,
 
     #[from]
-    StrictEncoding(lnpbp::strict_encoding::Error),
+    StrictEncoding(strict_encoding::Error),
 
     #[from]
     ConsensusEncoding(bitcoin::consensus::encode::Error),

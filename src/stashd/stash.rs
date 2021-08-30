@@ -14,8 +14,8 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
+use bp::seals::OutpointReveal;
 use lnpbp::lnpbp4::ProtocolId;
-use lnpbp::seals::OutpointReveal;
 use rgb::{
     Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
     Extension, Genesis, IntoRevealed, Node, NodeId, SchemaId, SealEndpoint,

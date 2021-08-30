@@ -31,7 +31,7 @@ pub enum DiskStorageError {
     HashName,
 
     #[from]
-    Encoding(lnpbp::strict_encoding::Error),
+    Encoding(strict_encoding::Error),
 
     #[from(bitcoin::hashes::hex::Error)]
     #[from(rgb::bech32::Error)]

@@ -23,12 +23,10 @@
     // missing_docs,
 )]
 
-#[cfg_attr(feature = "_rpc", macro_use)]
+#[macro_use]
 extern crate amplify;
 #[macro_use]
-extern crate amplify_derive;
-#[macro_use]
-extern crate lnpbp;
+extern crate strict_encoding;
 #[cfg_attr(feature = "_rpc", macro_use)]
 extern crate internet2;
 

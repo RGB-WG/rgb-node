@@ -18,7 +18,7 @@ use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 use bitcoin::{OutPoint, Txid};
-use lnpbp::seals::OutpointReveal;
+use bp::seals::OutpointReveal;
 use rgb::contract::seal::Revealed;
 use rgb::SealDefinition;
 
@@ -36,7 +36,6 @@ pub struct ParseError;
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, Hash, Display, StrictEncode, StrictDecode,
 )]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize,),

@@ -36,7 +36,7 @@ pub enum Error {
 
     /// Error decoding the provided data from LNP/BP strict encoding
     #[from]
-    Encoding(lnpbp::strict_encoding::Error),
+    Encoding(strict_encoding::Error),
 
     /// Unexpected server response; please check that RGB node uses the same
     /// API version as the client

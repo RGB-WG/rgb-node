@@ -17,9 +17,9 @@ use std::sync::Arc;
 use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
+use bp::seals::OutpointReveal;
 use internet2::{Session, TypedEnum, Unmarshall};
-use lnpbp::seals::OutpointReveal;
-use lnpbp::Chain;
+use lnpbp::chain::Chain;
 use microservices::FileFormat;
 use rgb::{
     AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,

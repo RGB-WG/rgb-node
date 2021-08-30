@@ -3,8 +3,8 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-use lnpbp::strict_encoding::{Error, StrictDecode, StrictEncode};
 use rgb::prelude::*;
+use strict_encoding::{Error, StrictDecode, StrictEncode};
 
 use super::MagicNumber;
 

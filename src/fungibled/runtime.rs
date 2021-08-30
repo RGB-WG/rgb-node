@@ -17,14 +17,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use bitcoin::{OutPoint, Txid};
+use bp::seals::OutpointReveal;
+use commit_verify::CommitConceal;
 use internet2::zmqsocket::ZmqType;
 use internet2::TypedEnum;
 use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
     Unmarshall, Unmarshaller,
 };
-use lnpbp::client_side_validation::CommitConceal;
-use lnpbp::seals::OutpointReveal;
 use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{
@@ -504,6 +504,8 @@ impl Runtime {
             };
             // NB: Previously we were adding endpoint-only data; but I think
             // this filtering is not necessary
+            // TODO: This part is moved to RGB Core library, so replace it with
+            //       consignment processing API from that library
             self.update_asset(
                 asset,
                 accept
@@ -610,6 +612,10 @@ impl Runtime {
                 continue;
             };
 
+            // TODO: Move all of the logic to RGB20 Lib by implementing
+            //       allocations parsing from consignment, and before that
+            //       revealing known consignment information with separate
+            //       routine
             for (index, state) in
                 assignments.to_discrete_state().into_iter().enumerate()
             {

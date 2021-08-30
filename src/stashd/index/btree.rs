@@ -18,9 +18,9 @@ use std::path::PathBuf;
 
 use amplify::{IoError, Wrapper};
 use bitcoin::hashes::Hash;
-use lnpbp::strict_encoding::{StrictDecode, StrictEncode};
 use microservices::FileFormat;
 use rgb::{Anchor, AnchorId, NodeId};
+use strict_encoding::{StrictDecode, StrictEncode};
 
 use super::Index;
 use crate::error::{BootstrapError, ServiceErrorDomain};
@@ -43,7 +43,6 @@ use crate::util::file::{file, FileMode};
     StrictEncode,
     StrictDecode,
 )]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 struct BTreeIndexData {
     /// TODO #164: Replace with DisplayFromStr once RGB node will fix node
     ///       display
@@ -62,7 +61,7 @@ pub enum BTreeIndexError {
 
     #[from]
     /// Encoding error: {0}
-    Encoding(lnpbp::strict_encoding::Error),
+    Encoding(strict_encoding::Error),
 
     #[cfg(feature = "serde")]
     #[from]

@@ -14,11 +14,11 @@ use hammersbald::{persistent, HammersbaldAPI};
 
 use super::store::Store;
 use crate::error::{BootstrapError, ServiceErrorDomain};
-use lnpbp::strict_encoding::{strict_serialize, StrictDecode};
 use rgb::prelude::*;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use strict_encoding::{strict_serialize, StrictDecode};
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
@@ -30,7 +30,7 @@ pub enum HammersbaldError {
     HashName,
 
     #[from]
-    Encoding(lnpbp::strict_encoding::Error),
+    Encoding(strict_encoding::Error),
 
     #[from(bitcoin::hashes::hex::Error)]
     #[from(rgb::bech32::Error)]
@@ -358,8 +358,8 @@ impl Store for HammersbaldStorage {
 mod test {
     use super::*;
     use rgb::schema::{
-        Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema, Occurences,
-        StateFormat, StateSchema, TransitionSchema,
+        Bits, DataFormat, DiscreteFiniteFieldFormat, GenesisSchema,
+        Occurrences, StateFormat, StateSchema, TransitionSchema,
     };
     use std::env;
 
@@ -429,19 +429,19 @@ mod test {
             },
             genesis: GenesisSchema {
                 metadata: bmap! {
-                    FIELD_TICKER => Occurences::Once,
-                    FIELD_NAME => Occurences::Once,
-                    FIELD_DESCRIPTION => Occurences::NoneOrOnce,
-                    FIELD_TOTAL_SUPPLY => Occurences::Once,
-                    FIELD_ISSUED_SUPPLY => Occurences::Once,
-                    FIELD_DUST_LIMIT => Occurences::NoneOrOnce,
-                    FIELD_PRECISION => Occurences::Once,
-                    FIELD_TIMESTAMP => Occurences::Once
+                    FIELD_TICKER => Occurrences::Once,
+                    FIELD_NAME => Occurrences::Once,
+                    FIELD_DESCRIPTION => Occurrences::NoneOrOnce,
+                    FIELD_TOTAL_SUPPLY => Occurrences::Once,
+                    FIELD_ISSUED_SUPPLY => Occurrences::Once,
+                    FIELD_DUST_LIMIT => Occurrences::NoneOrOnce,
+                    FIELD_PRECISION => Occurrences::Once,
+                    FIELD_TIMESTAMP => Occurrences::Once
                 },
                 owned_rights: bmap! {
-                    ASSIGNMENT_ISSUE => Occurences::NoneOrOnce,
-                    ASSIGNMENT_ASSETS => Occurences::NoneOrMore,
-                    ASSIGNMENT_PRUNE => Occurences::NoneOrMore
+                    ASSIGNMENT_ISSUE => Occurrences::NoneOrOnce,
+                    ASSIGNMENT_ASSETS => Occurrences::NoneOrMore,
+                    ASSIGNMENT_PRUNE => Occurrences::NoneOrMore
                 },
                 public_rights: bset! { VALENCIES_DECENTRALIZED_ISSUE },
                 abi: bmap! {},
@@ -450,11 +450,11 @@ mod test {
                 EXTENSION_DECENTRALIZED_ISSUE => ExtensionSchema {
                     extends: bset! { VALENCIES_DECENTRALIZED_ISSUE },
                     metadata: bmap! {
-                        FIELD_ISSUED_SUPPLY => Occurences::Once,
-                        FIELD_PROOF_OF_BURN => Occurences::OnceOrMore
+                        FIELD_ISSUED_SUPPLY => Occurrences::Once,
+                        FIELD_PROOF_OF_BURN => Occurrences::OnceOrMore
                     },
                     owned_rights: bmap! {
-                        ASSIGNMENT_ASSETS => Occurences::NoneOrMore
+                        ASSIGNMENT_ASSETS => Occurrences::NoneOrMore
                     },
                     public_rights: bset! { },
                     abi: bmap! {},
@@ -463,41 +463,41 @@ mod test {
             transitions: bmap! {
                 TRANSITION_ISSUE => TransitionSchema {
                     closes: bmap! {
-                        ASSIGNMENT_ISSUE => Occurences::Once
+                        ASSIGNMENT_ISSUE => Occurrences::Once
                     },
                     metadata: bmap! {
-                        FIELD_ISSUED_SUPPLY => Occurences::Once
+                        FIELD_ISSUED_SUPPLY => Occurrences::Once
                     },
                     owned_rights: bmap! {
-                        ASSIGNMENT_ISSUE => Occurences::NoneOrOnce,
-                        ASSIGNMENT_PRUNE => Occurences::NoneOrMore,
-                        ASSIGNMENT_ASSETS => Occurences::NoneOrMore
+                        ASSIGNMENT_ISSUE => Occurrences::NoneOrOnce,
+                        ASSIGNMENT_PRUNE => Occurrences::NoneOrMore,
+                        ASSIGNMENT_ASSETS => Occurrences::NoneOrMore
                     },
                     public_rights: bset! {},
                     abi: bmap! {}
                 },
                 TRANSITION_TRANSFER => TransitionSchema {
                     closes: bmap! {
-                        ASSIGNMENT_ASSETS => Occurences::OnceOrMore
+                        ASSIGNMENT_ASSETS => Occurrences::OnceOrMore
                     },
                     metadata: bmap! {},
                     owned_rights: bmap! {
-                        ASSIGNMENT_ASSETS => Occurences::NoneOrMore
+                        ASSIGNMENT_ASSETS => Occurrences::NoneOrMore
                     },
                     public_rights: bset! {},
                     abi: bmap! {}
                 },
                 TRANSITION_PRUNE => TransitionSchema {
                     closes: bmap! {
-                        ASSIGNMENT_PRUNE => Occurences::OnceOrMore,
-                        ASSIGNMENT_ASSETS => Occurences::OnceOrMore
+                        ASSIGNMENT_PRUNE => Occurrences::OnceOrMore,
+                        ASSIGNMENT_ASSETS => Occurrences::OnceOrMore
                     },
                     metadata: bmap! {
-                        FIELD_PRUNE_PROOF => Occurences::NoneOrMore
+                        FIELD_PRUNE_PROOF => Occurrences::NoneOrMore
                     },
                     owned_rights: bmap! {
-                        ASSIGNMENT_PRUNE => Occurences::NoneOrMore,
-                        ASSIGNMENT_ASSETS => Occurences::NoneOrMore
+                        ASSIGNMENT_PRUNE => Occurrences::NoneOrMore,
+                        ASSIGNMENT_ASSETS => Occurrences::NoneOrMore
                     },
                     public_rights: bset! {},
                     abi: bmap! {}

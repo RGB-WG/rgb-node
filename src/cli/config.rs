@@ -16,7 +16,7 @@ use core::str::FromStr;
 use std::path::PathBuf;
 
 use internet2::zmqsocket::ZmqSocketAddr;
-use lnpbp::Chain;
+use lnpbp::chain::Chain;
 
 use super::{fungible, stash, Error, Runtime};
 use crate::constants::*;

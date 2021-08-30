@@ -14,7 +14,7 @@
 use std::collections::HashMap;
 
 use internet2::ZmqSocketAddr;
-use lnpbp::Chain;
+use lnpbp::chain::Chain;
 
 use crate::constants::*;
 use crate::rgbd::ContractName;

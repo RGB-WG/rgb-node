@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::{OutPoint, Txid};
-use lnpbp::{Chain, TaggedHash};
+use lnpbp::chain::Chain;
 use rgb::{value, AtomicValue, ContractId, NodeId};
 use rgb20::{Allocation, Asset, Issue, Supply};
 

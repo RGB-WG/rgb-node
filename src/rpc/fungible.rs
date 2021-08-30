@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use lnpbp::seals::OutpointReveal;
+use bp::seals::OutpointReveal;
 use rgb::{
     AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,
     SealEndpoint,
@@ -28,7 +28,6 @@ use microservices::FileFormat;
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display(inner)]
 #[non_exhaustive]
 pub enum Request {
@@ -77,7 +76,6 @@ pub enum Request {
 #[derive(
     Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
 )]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("issue({ticker}, {name}, precision: {precision}, ...)")]
 #[cfg_attr(
     feature = "serde",
@@ -121,7 +119,6 @@ pub struct IssueReq {
 }
 
 #[derive(Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("transfer({contract_id}, ...)")]
 pub struct TransferReq {
     /// Asset contract id
@@ -147,7 +144,6 @@ pub struct TransferReq {
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("accept(...)")]
 pub struct AcceptReq {
     /// Raw consignment data

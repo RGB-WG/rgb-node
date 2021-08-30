@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use internet2::ZmqSocketAddr;
-use lnpbp::Chain;
+use lnpbp::chain::Chain;
 use microservices::FileFormat;
 
 use crate::constants::*;

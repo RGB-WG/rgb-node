@@ -15,7 +15,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
-use lnpbp::seals::OutpointReveal;
+use bp::seals::OutpointReveal;
 use rgb::{
     Consignment, ContractId, Disclosure, Genesis, NodeId, Schema, SchemaId,
     SealEndpoint, Transition,
@@ -23,7 +23,6 @@ use rgb::{
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display(inner)]
 #[non_exhaustive]
 pub enum Request {
@@ -75,7 +74,6 @@ pub enum Request {
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("consign({contract_id}, ...)")]
 pub struct TransferRequest {
     pub contract_id: ContractId,
@@ -87,7 +85,6 @@ pub struct TransferRequest {
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("accept(...)")]
 pub struct AcceptRequest {
     pub consignment: Consignment,

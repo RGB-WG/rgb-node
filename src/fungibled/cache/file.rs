@@ -23,10 +23,10 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::{fs, io};
 
-use lnpbp::strict_encoding::{strict_serialize, StrictDecode, StrictEncode};
 use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::Asset;
+use strict_encoding::{strict_serialize, StrictDecode, StrictEncode};
 
 use super::Cache;
 use crate::fungibled::cache::CacheError;
@@ -46,7 +46,7 @@ pub enum FileCacheError {
     BrokenHexFilenames,
 
     #[from]
-    Encoding(lnpbp::strict_encoding::Error),
+    Encoding(strict_encoding::Error),
 
     #[cfg(feature = "serde")]
     #[from]
@@ -260,8 +260,7 @@ impl Cache for FileCache {
 mod test {
     use super::super::sql::{SqlCache, SqlCacheConfig};
     use super::*;
-    use bitcoin::hashes::hex::FromHex;
-    use lnpbp::TaggedHash;
+    use amplify::hex::FromHex;
     use std::env;
 
     #[test]

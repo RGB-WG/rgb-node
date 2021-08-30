@@ -26,7 +26,6 @@ use crate::error::ServiceError;
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display(inner)]
 #[non_exhaustive]
 pub enum Reply {
@@ -112,12 +111,10 @@ impl From<ServiceError> for Reply {
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("sync(using: {0}, ...)")]
 pub struct SyncFormat(pub FileFormat, pub Vec<u8>);
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("transfer(...)")]
 pub struct Transfer {
     pub consignment: Consignment,
@@ -126,7 +123,6 @@ pub struct Transfer {
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]
-#[strict_encoding_crate(lnpbp::strict_encoding)]
 #[display("failure({code}, {info})")]
 #[non_exhaustive]
 pub struct Failure {

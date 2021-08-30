@@ -55,7 +55,7 @@ pub enum SqlCacheError {
     BlindKey(rgb::secp256k1zkp::Error),
 
     #[from]
-    WrongChainData(lnpbp::chain::ParseError),
+    WrongChainData(lnpbp::chain::Chain::ParseError),
 
     #[display("Item not found")]
     NotFound,
@@ -372,7 +372,7 @@ mod test {
     use super::*;
     use bitcoin::hashes::hex::FromHex;
     use chrono::NaiveDate;
-    use lnpbp::{Chain, TaggedHash};
+    use lnpbp::chain::Chain;
     use rgb::ContractId;
     use std::env;
 

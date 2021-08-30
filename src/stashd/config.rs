@@ -17,7 +17,7 @@ use std::path::PathBuf;
 
 use internet2::zmqsocket::ZmqSocketAddr;
 use internet2::LocalNode;
-use lnpbp::Chain;
+use lnpbp::chain::Chain;
 use microservices::FileFormat;
 
 use crate::constants::*;
