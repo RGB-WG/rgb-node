@@ -79,7 +79,7 @@ shellexpand = { version = "2", optional = true }
 [features]
 default = ["client", "fungibles"]
 all = [
-    "server", "cli", "serde", "tor", "sql", "nosql",
+    "server", "cli", "serde", "tor", "nosql", # "sql", 
     "fungibles", # "collectibles", "identities", "auditlogs"
 ]
 
@@ -117,7 +117,7 @@ serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",
          "amplify/serde", "lnpbp/serde", "internet2/serde", "microservices/serde",
          "chrono/serde", "bitcoin/use-serde", "rgb20/serde"]
 tor = ["microservices/tor", "internet2/tor"]
-sql = ["diesel"]
+# sql = ["diesel"]
 nosql = ["hammersbald"]
 
 # Schema-specific components exposed as features:
