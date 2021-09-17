@@ -22,8 +22,11 @@ use bitcoin::OutPoint;
 use bp::seals::{OutpointHash, OutpointReveal};
 use commit_verify::CommitConceal;
 use microservices::FileFormat;
-use rgb::prelude::*;
-use rgb20::{Asset, SealCoins};
+use rgb::{
+    AllocatedValue, Genesis, ContractId, AtomicValue, Consignment, Disclosure,
+    PSBT_OUT_PUBKEY, SealEndpoint
+};
+use rgb20::Asset;
 use strict_encoding::strict_deserialize;
 
 use super::{Error, OutputFormat, Runtime};
@@ -111,7 +114,7 @@ pub struct TransferCli {
     /// Adds additional asset allocations; MUST use transaction inputs
     /// controlled by the local party
     #[clap(short, long)]
-    pub allocate: Vec<SealCoins>,
+    pub allocate: Vec<AllocatedValue>,
 
     /// Whom to pay
     pub receiver: OutpointHash,
