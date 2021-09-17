@@ -6,8 +6,8 @@ use bitcoin::hashes::hex::{FromHex, ToHex};
 use bitcoin::{OutPoint, Txid};
 use lnpbp::chain::Chain;
 use rgb::{value, AtomicValue, ContractId, NodeId};
-use rgb20::{Allocation, Asset, Issue, Supply};
-
+use rgb20::{Asset, Issue, Supply};
+use rgb::Allocation;
 use crate::fungibled::sql::schema as cache_schema;
 use crate::fungibled::SqlCacheError;
 use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
