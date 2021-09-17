@@ -31,9 +31,9 @@ use rgb::{
     AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node,
     SealDefinition, SealEndpoint, Transition,
 };
-use rgb20::schema::OwnedRightsType;
-use rgb20::{schema, Asset, OutpointCoins};
-
+use rgb20::schema::OwnedRightType;
+use rgb20::{schema, Asset};
+use rgb::OutpointValue;
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::Config;
 use crate::error::{
@@ -204,11 +204,11 @@ impl Runtime {
             issue
                 .allocation
                 .into_iter()
-                .map(|OutpointCoins { coins, outpoint }| (outpoint, coins))
+                .map(|OutpointValue { coins, outpoint }| (outpoint, coins))
                 .collect(),
             issue.inflation.into_iter().fold(
                 BTreeMap::new(),
-                |mut map, OutpointCoins { coins, outpoint }| {
+                |mut map, OutpointValue { coins, outpoint }| {
                     // We may have only a single secondary issuance right per
                     // outpoint, so folding all outpoints
                     map.entry(outpoint)
@@ -605,7 +605,7 @@ impl Runtime {
     ) -> Result<(), ServiceErrorDomain> {
         for (transition, txid) in data.into_iter() {
             let assignments = if let Some(assignments) =
-                transition.owned_rights_by_type(*OwnedRightsType::Assets)
+                transition.owned_rights_by_type(*OwnedRightType::Assets)
             {
                 assignments
             } else {
