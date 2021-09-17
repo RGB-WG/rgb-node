@@ -23,9 +23,9 @@ use lnpbp::chain::Chain;
 use microservices::FileFormat;
 use rgb::{
     AtomicValue, Consignment, ContractId, Disclosure, Genesis, SealDefinition,
-    SealEndpoint, PSBT_OUT_PUBKEY,
+    SealEndpoint, PSBT_OUT_PUBKEY, OutpointValue,
 };
-use rgb20::{Asset, OutpointCoins};
+use rgb20::Asset;
 
 use super::{Error, Runtime};
 use crate::error::ServiceErrorDomain;
@@ -54,8 +54,8 @@ impl Runtime {
         name: String,
         description: Option<String>,
         precision: u8,
-        allocation: Vec<OutpointCoins>,
-        inflation: Vec<OutpointCoins>,
+        allocation: Vec<OutpointValue>,
+        inflation: Vec<OutpointValue>,
         renomination: Option<OutPoint>,
         epoch: Option<OutPoint>,
     ) -> Result<Asset, Error> {
