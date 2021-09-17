@@ -43,6 +43,7 @@ rgb20 = { version = "0.5.0-alpha.1", optional = true }
 # rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 internet2 = "0.5.0-alpha.2"
 microservices = { version = "0.5.0-beta.1", default-features = false }
+client_side_validation = "0.5.7"
 # Bitcoin
 bitcoin = "0.27.0"
 electrum-client = { version = "0.8", optional = true }

@@ -15,10 +15,10 @@ use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
 use bp::seals::OutpointReveal;
-use lnpbp::lnpbp4::ProtocolId;
+use client_side_validation::multi_commit::ProtocolId;
 use rgb::{
-    Anchor, Assignments, ConcealState, Consignment, ContractId, Disclosure,
-    Extension, Genesis, IntoRevealed, Node, NodeId, SchemaId, SealEndpoint,
+    Anchor, AssignmentVec, ConcealState, Consignment, ContractId, Disclosure,
+    Extension, Genesis, Node, NodeId, SchemaId, SealEndpoint,
     Stash, Transition,
 };
 
@@ -65,7 +65,6 @@ impl Stash for Runtime {
     type AnchorIterator = DumbIter<Anchor>;
     type TransitionIterator = DumbIter<Transition>;
     type ExtensionIterator = DumbIter<Extension>;
-    type NidIterator = DumbIter<NodeId>;
 
     fn get_schema(
         &self,
@@ -234,9 +233,9 @@ impl Stash for Runtime {
         // Update transition data with the revealed state information that we
         // kept since we did an invoice (and the sender did not know).
         let reveal_known_seals =
-            |(_, assignments): (&usize, &mut Assignments)| match assignments {
-                Assignments::Declarative(_) => {}
-                Assignments::DiscreteFiniteField(set) => {
+            |(_, assignments): (&usize, &mut AssignmentVec)| match assignments {
+                AssignmentVec::Declarative(_) => {}
+                AssignmentVec::DiscreteFiniteField(set) => {
                     *set = set
                         .iter()
                         .map(|a| {
@@ -246,7 +245,7 @@ impl Stash for Runtime {
                         })
                         .collect();
                 }
-                Assignments::CustomData(set) => {
+                AssignmentVec::CustomData(set) => {
                     *set = set
                         .iter()
                         .map(|a| {
@@ -305,7 +304,7 @@ impl Stash for Runtime {
     }
 
     // TODO #163: Rename into `enclose`
-    fn know_about(
+    fn enclose(
         &mut self,
         disclosure: Disclosure,
     ) -> Result<(), Self::Error> {
@@ -368,13 +367,6 @@ impl Stash for Runtime {
         }
 
         Ok(())
-    }
-
-    fn forget(
-        &mut self,
-        _consignment: Consignment,
-    ) -> Result<usize, Self::Error> {
-        unimplemented!()
     }
 
     fn prune(&mut self) -> Result<usize, Self::Error> {
