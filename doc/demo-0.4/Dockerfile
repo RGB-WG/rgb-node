@@ -1,7 +1,7 @@
 ARG BUILDER_DIR=/srv/rgb
 
 
-FROM rust:1.47.0-slim-buster as builder
+FROM rust:1.60.0-slim-bullseye as builder
 
 ARG SRC_DIR=/usr/local/src/rgb
 ARG BUILDER_DIR
@@ -13,10 +13,11 @@ RUN apt-get update \
 
 WORKDIR "$SRC_DIR"
 
-RUN cargo install --locked --root "${BUILDER_DIR}" rgb_node --version 0.1.1
+RUN cargo install rgb_node --version "=0.4.2" \
+        --locked --all-features --root "${BUILDER_DIR}"
 
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 ARG BUILDER_DIR
 ARG BIN_DIR=/usr/local/bin
@@ -43,6 +44,6 @@ USER ${USER}
 VOLUME "$DATA_DIR"
 
 ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/usr/local/bin/rgbd", \
-			"--bin-dir", "/usr/local/bin", "--data-dir", "/var/lib/rgb"]
+            "--bin-dir", "/usr/local/bin", "--data-dir", "/var/lib/rgb"]
 
 CMD ["-vvvv"]
