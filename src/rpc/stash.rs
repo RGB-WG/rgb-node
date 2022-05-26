@@ -15,10 +15,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
-use bp::seals::OutpointReveal;
 use rgb::{
-    Consignment, ContractId, Disclosure, Genesis, NodeId, Schema, SchemaId,
-    SealEndpoint, Transition,
+    seal, Consignment, ContractId, Disclosure, Genesis, NodeId, Schema,
+    SchemaId, SealEndpoint, Transition,
 };
 
 #[derive(Clone, Debug, Display, Api)]
@@ -88,5 +87,5 @@ pub struct TransferRequest {
 #[display("accept(...)")]
 pub struct AcceptRequest {
     pub consignment: Consignment,
-    pub reveal_outpoints: Vec<OutpointReveal>,
+    pub reveal_outpoints: Vec<seal::Revealed>,
 }

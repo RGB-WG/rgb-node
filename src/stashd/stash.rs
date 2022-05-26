@@ -14,10 +14,9 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
-use bp::seals::OutpointReveal;
 use commit_verify::multi_commit::ProtocolId;
 use rgb::{
-    AssignmentVec, ConcealState, Consignment, ContractId, Disclosure,
+    seal, AssignmentVec, ConcealState, Consignment, ContractId, Disclosure,
     Extension, Genesis, Node, NodeId, RevealedByMerge, Schema, SchemaId,
     SealEndpoint, Stash, Transition,
 };
@@ -208,7 +207,7 @@ impl Stash for Runtime {
     fn accept(
         &mut self,
         consignment: &Consignment,
-        known_seals: &Vec<OutpointReveal>,
+        known_seals: &Vec<seal::Revealed>,
     ) -> Result<(), Error> {
         let consignment = consignment.clone();
 

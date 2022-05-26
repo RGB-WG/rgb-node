@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use bitcoin::{OutPoint, Txid};
-use bp::seals::OutpointReveal;
+use bp::seals::txout::CloseMethod;
 use commit_verify::CommitConceal;
 use internet2::zmqsocket::ZmqType;
 use internet2::TypedEnum;
@@ -28,8 +28,8 @@ use internet2::{
 use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node,
-    OutpointValue, SealDefinition, SealEndpoint, Transition,
+    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node,
+    OutpointValue, SealEndpoint, Transition,
 };
 use rgb20::{schema, Asset};
 
@@ -286,7 +286,9 @@ impl Runtime {
                 ))
             )?.clone()
         } else {
-            SealDefinition::WitnessVout {
+            seal::Revealed {
+                method: CloseMethod::OpretFirst,
+                txid: None,
                 vout: 0,
                 blinding: 0,
             } // Not used
@@ -599,7 +601,7 @@ impl Runtime {
         &mut self,
         mut asset: Asset,
         data: impl IntoIterator<Item = (&'a Transition, Txid)>,
-        reveal_outpoints: &'a Vec<OutpointReveal>,
+        reveal_outpoints: &'a Vec<seal::Revealed>,
     ) -> Result<(), ServiceErrorDomain> {
         for (transition, txid) in data.into_iter() {
             let assignment_vec = if let Some(assignments) = transition
@@ -629,7 +631,6 @@ impl Runtime {
                                 reveal.commit_conceal() == seal_confidential
                             })
                             .copied()
-                            .map(SealDefinition::from)
                     }) {
                     seal_revealed
                 } else {

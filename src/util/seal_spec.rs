@@ -18,9 +18,7 @@ use core::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 use bitcoin::{OutPoint, Txid};
-use bp::seals::OutpointReveal;
 use rgb::contract::seal::Revealed;
-use rgb::SealDefinition;
 
 #[derive(Clone, Copy, Debug, Display, Error, From)]
 #[display(doc_comments)]

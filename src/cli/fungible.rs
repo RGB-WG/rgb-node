@@ -19,7 +19,7 @@ use bitcoin::consensus::{Decodable, Encodable};
 use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use bp::seals::{OutpointHash, OutpointReveal};
+use bp::seals::txout::CloseMethod;
 use commit_verify::CommitConceal;
 use microservices::FileFormat;
 use rgb::prelude::*;
@@ -114,7 +114,7 @@ pub struct TransferCli {
     pub allocate: Vec<AllocatedValue>,
 
     /// Whom to pay
-    pub receiver: OutpointHash,
+    pub receiver: seal::Confidential,
 
     /// Amount to pay, in atomic (non-float) units
     pub amount: AtomicValue,
@@ -152,7 +152,7 @@ impl Command {
             Command::Export { asset } => self.exec_export(runtime, asset),
             Command::Blind { outpoint } => {
                 info!("Blinding outpoint ...");
-                let outpoint_reveal = OutpointReveal::from(outpoint);
+                let outpoint_reveal = seal::Revealed::from(outpoint);
                 eprint!("Blinded outpoint: ");
                 println!("{}", outpoint_reveal.commit_conceal());
                 eprint!("Outpoint blinding secret: ");
@@ -342,9 +342,11 @@ impl Command {
 
         let api = if let Some((_, seal_endpoint)) = consignment.endpoints.get(0)
         {
-            let outpoint_reveal = OutpointReveal {
+            // TODO: Add close method to params
+            let outpoint_reveal = seal::Revealed {
+                method: CloseMethod::TapretFirst,
                 blinding: blinding_factor,
-                txid: outpoint.txid,
+                txid: Some(outpoint.txid),
                 vout: outpoint.vout as u32,
             };
             if outpoint_reveal.commit_conceal()

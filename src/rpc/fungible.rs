@@ -17,10 +17,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use bp::seals::OutpointReveal;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Disclosure, Genesis, OutpointValue,
-    SealDefinition, SealEndpoint,
+    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis,
+    OutpointValue, SealEndpoint,
 };
 
 use microservices::FileFormat;
@@ -139,7 +138,7 @@ pub struct TransferReq {
     /// Asset change allocations
     ///
     /// Here we always know an explicit outpoint that will contain the assets
-    pub change: BTreeMap<SealDefinition, AtomicValue>,
+    pub change: BTreeMap<seal::Revealed, AtomicValue>,
 }
 
 #[derive(Clone, StrictEncode, StrictDecode, Debug, Display)]
@@ -149,7 +148,7 @@ pub struct AcceptReq {
     pub consignment: Consignment,
 
     /// Reveal outpoints data used during invoice creation
-    pub reveal_outpoints: Vec<OutpointReveal>,
+    pub reveal_outpoints: Vec<seal::Revealed>,
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {

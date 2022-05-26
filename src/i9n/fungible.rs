@@ -17,13 +17,12 @@ use std::sync::Arc;
 use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
-use bp::seals::OutpointReveal;
 use internet2::{Session, TypedEnum, Unmarshall};
 use lnpbp::chain::Chain;
 use microservices::FileFormat;
 use rgb::{
-    AtomicValue, Consignment, ContractId, Disclosure, Genesis, OutpointValue,
-    SealDefinition, SealEndpoint, PSBT_OUT_PUBKEY,
+    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis,
+    OutpointValue, SealEndpoint, PSBT_OUT_PUBKEY,
 };
 use rgb20::Asset;
 
@@ -84,7 +83,7 @@ impl Runtime {
         contract_id: ContractId,
         inputs: BTreeSet<OutPoint>,
         payment: BTreeMap<SealEndpoint, AtomicValue>,
-        change: BTreeMap<SealDefinition, AtomicValue>,
+        change: BTreeMap<seal::Revealed, AtomicValue>,
         mut witness: PartiallySignedTransaction,
     ) -> Result<Transfer, Error> {
         for (index, output) in &mut witness.outputs.iter_mut().enumerate() {
@@ -133,7 +132,7 @@ impl Runtime {
     pub fn accept(
         &mut self,
         consignment: Consignment,
-        reveal_outpoints: Vec<OutpointReveal>,
+        reveal_outpoints: Vec<seal::Revealed>,
     ) -> Result<(), Error> {
         let api = AcceptReq {
             consignment,
