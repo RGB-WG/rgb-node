@@ -17,15 +17,16 @@ use bitcoin::hashes::Hash;
 use bp::seals::OutpointReveal;
 use commit_verify::multi_commit::ProtocolId;
 use rgb::{
-    Anchor, AnchorId, AssignmentVec, ConcealState, Consignment, ContractId,
-    Disclosure, Extension, Genesis, Node, NodeId, RevealedByMerge, Schema,
-    SchemaId, SealEndpoint, Stash, Transition,
+    AssignmentVec, ConcealState, Consignment, ContractId, Disclosure,
+    Extension, Genesis, Node, NodeId, RevealedByMerge, Schema, SchemaId,
+    SealEndpoint, Stash, Transition,
 };
 
 use super::index::Index;
 use super::storage::Store;
 use super::Runtime;
 use bitcoin::OutPoint;
+use bp::dbc::{Anchor, AnchorId};
 use wallet::resolvers::TxResolver;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, From, Error)]

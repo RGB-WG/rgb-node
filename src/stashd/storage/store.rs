@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use bp::dbc::{Anchor, AnchorId};
 use rgb::prelude::*;
 
 use crate::error::ServiceErrorDomain;

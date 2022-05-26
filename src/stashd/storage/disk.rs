@@ -15,6 +15,7 @@ use std::path::PathBuf;
 use std::{fs, io};
 
 use bitcoin::hashes::hex::ToHex;
+use bp::dbc::{Anchor, AnchorId};
 use rgb::prelude::*;
 
 use super::Store;

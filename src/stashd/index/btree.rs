@@ -18,8 +18,9 @@ use std::path::PathBuf;
 
 use amplify::{IoError, Wrapper};
 use bitcoin::hashes::Hash;
+use bp::dbc::{Anchor, AnchorId};
 use microservices::FileFormat;
-use rgb::{Anchor, AnchorId, NodeId};
+use rgb::NodeId;
 use strict_encoding::{StrictDecode, StrictEncode};
 
 use super::Index;

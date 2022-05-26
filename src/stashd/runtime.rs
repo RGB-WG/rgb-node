@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use bp::dbc::Anchor;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
@@ -21,7 +22,7 @@ use internet2::{
 };
 use microservices::node::TryService;
 use rgb::{
-    Anchor, Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema,
+    Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema,
     SchemaId, Stash,
 };
 use wallet::resolvers::ElectrumTxResolver;

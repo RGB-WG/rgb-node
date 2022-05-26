@@ -14,6 +14,7 @@ use hammersbald::{persistent, HammersbaldAPI};
 
 use super::store::Store;
 use crate::error::{BootstrapError, ServiceErrorDomain};
+use bp::dbc::{Anchor, AnchorId};
 use rgb::prelude::*;
 use std::fs;
 use std::io;
