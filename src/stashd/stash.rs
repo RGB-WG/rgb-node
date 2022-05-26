@@ -26,7 +26,7 @@ use super::storage::Store;
 use super::Runtime;
 use bitcoin::OutPoint;
 use bp::dbc::{Anchor, AnchorId};
-use wallet::resolvers::TxResolver;
+use wallet::onchain::ResolveTx;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, From, Error)]
 #[display(doc_comments)]
@@ -351,7 +351,7 @@ impl Stash for Runtime {
 
     fn prune(
         &mut self,
-        _tx_resolver: &mut impl TxResolver,
+        _tx_resolver: &mut impl ResolveTx,
         _ownership_resolver: impl Fn(OutPoint) -> bool,
     ) -> Result<usize, Self::Error> {
         todo!()

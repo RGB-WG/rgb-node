@@ -15,6 +15,7 @@ use bp::dbc::Anchor;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
+use electrum_client::Client as ElectrumClient;
 use internet2::zmqsocket::ZmqType;
 use internet2::{
     session, transport, CreateUnmarshaller, PlainTranscoder, Session,
@@ -25,7 +26,6 @@ use rgb::{
     Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema,
     SchemaId, Stash,
 };
-use wallet::resolvers::ElectrumTxResolver;
 
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
@@ -297,7 +297,7 @@ impl Runtime {
             .map_err(|err| ServiceErrorDomain::Storage(err.to_string()))?;
 
         // [VALIDATION]: Validate genesis node against the scheme
-        let electrum = ElectrumTxResolver::new(&self.config.electrum_server)
+        let electrum = ElectrumClient::new(&self.config.electrum_server)
             .map_err(|_| ServiceErrorDomain::Electrum)?;
         let root_schema = self.storage().schema(&schema.root_id).ok();
         let validation_status =
