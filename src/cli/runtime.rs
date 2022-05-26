@@ -64,7 +64,7 @@ impl Runtime {
         let data = command.serialize();
         self.stash_rpc.send_raw_message(&data)?;
         let raw = self.stash_rpc.recv_raw_message()?;
-        let reply = self.unmarshaller.unmarshall(&raw)?;
+        let reply = self.unmarshaller.unmarshall(&*raw)?;
         Ok(reply)
     }
 
@@ -75,7 +75,7 @@ impl Runtime {
         let data = command.serialize();
         self.fungible_rpc.send_raw_message(&data)?;
         let raw = self.fungible_rpc.recv_raw_message()?;
-        let reply = self.unmarshaller.unmarshall(&raw)?;
+        let reply = self.unmarshaller.unmarshall(&*raw)?;
         Ok(reply)
     }
 

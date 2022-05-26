@@ -147,7 +147,7 @@ impl Runtime {
             raw.len(),
             raw.to_bech32data()
         );
-        let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
+        let message = &*self.unmarshaller.unmarshall(&*raw).map_err(|err| {
             ServiceError::from_rpc(ServiceErrorSource::Stash, err)
         })?;
         debug!("Received ZMQ RPC request: {:?}", message);
@@ -301,7 +301,7 @@ impl Runtime {
             .map_err(|_| ServiceErrorDomain::Electrum)?;
         let root_schema = self.storage().schema(&schema.root_id).ok();
         let validation_status =
-            consignment.validate(&schema, root_schema.as_ref(), &electrum);
+            consignment.validate(&schema, root_schema.as_ref(), electrum);
 
         self.storage.add_genesis(&consignment.genesis)?;
 

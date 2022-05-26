@@ -161,7 +161,7 @@ impl Runtime {
             raw.len(),
             raw.to_bech32data()
         );
-        let message = &*self.unmarshaller.unmarshall(&raw).map_err(|err| {
+        let message = &*self.unmarshaller.unmarshall(&*raw).map_err(|err| {
             error!("Error unmarshalling the data: {}", err);
             ServiceError::from_rpc(
                 ServiceErrorSource::Contract(s!("fungible")),
@@ -665,7 +665,7 @@ impl Runtime {
         );
         self.stash_rpc_client.send_raw_message(data.borrow())?;
         let raw = self.stash_rpc_client.recv_raw_message()?;
-        let reply = &*self.reply_unmarshaller.unmarshall(&raw)?.clone();
+        let reply = &*self.reply_unmarshaller.unmarshall(&*raw)?.clone();
         if let Reply::Failure(ref failmsg) = reply {
             error!("Stash daemon has returned failure code: {}", failmsg);
             Err(ServiceErrorDomain::Stash)?
