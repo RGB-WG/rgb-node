@@ -15,7 +15,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use rgb::{
     seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis,
@@ -23,6 +22,7 @@ use rgb::{
 };
 
 use microservices::FileFormat;
+use wallet::psbt::Psbt;
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]
@@ -123,7 +123,7 @@ pub struct TransferReq {
     pub contract_id: ContractId,
 
     /// Base layer transaction structure to use
-    pub witness: PartiallySignedTransaction,
+    pub witness: Psbt,
 
     /// Asset input: unspent transaction outputs
     pub inputs: BTreeSet<OutPoint>,

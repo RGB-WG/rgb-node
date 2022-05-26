@@ -212,8 +212,8 @@ impl Index for BTreeIndex {
 
     fn index_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
         for commitment in anchor
-            .commitment
-            .commitments
+            .lnpbp4_block
+            .commitments()
             .iter()
             .filter(|commitment| commitment.protocol.is_some())
             .map(|commitment| commitment.message)

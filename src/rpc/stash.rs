@@ -13,12 +13,12 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
 use rgb::{
     seal, Consignment, ContractId, Disclosure, Genesis, NodeId, Schema,
     SchemaId, SealEndpoint, Transition,
 };
+use wallet::psbt::Psbt;
 
 #[derive(Clone, Debug, Display, Api)]
 #[api(encoding = "strict")]

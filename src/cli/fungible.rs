@@ -515,7 +515,7 @@ impl TransferCli {
                         subtype: PSBT_OUT_PUBKEY,
                         key: vec![],
                     },
-                    key.key.serialize().to_vec(),
+                    key.serialize().to_vec(),
                 );
                 debug!("Output #{} commitment key will be {}", index, key);
             } else {
@@ -531,17 +531,17 @@ impl TransferCli {
         trace!("{:?}", psbt);
 
         let api = TransferReq {
-            witness: psbt,
+            witness: psbt.into(),
             contract_id: self.asset,
             inputs: self.inputs.into_iter().collect(),
             change: self
                 .allocate
                 .into_iter()
                 .map(|seal_coins| {
-                    (seal_coins.to_seal_definition(), seal_coins.value)
+                    (seal_coins.into_revealed_seal(), seal_coins.value)
                 })
                 .collect(),
-            payment: bmap! { SealEndpoint::TxOutpoint(self.receiver) => self.amount },
+            payment: bmap! { SealEndpoint::from(self.receiver) => self.amount },
         };
 
         let reply = runtime.transfer(api)?;
@@ -556,7 +556,9 @@ impl TransferCli {
 
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
-                transfer.witness.consensus_encode(out_file).map_err(|err| {
+                let psbt =
+                    PartiallySignedTransaction::from(transfer.witness.clone());
+                psbt.consensus_encode(out_file).map_err(|err| {
                     bitcoin::consensus::encode::Error::Io(err)
                 })?;
 

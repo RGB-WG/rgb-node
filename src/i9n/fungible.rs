@@ -15,7 +15,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use bitcoin::util::psbt::raw::ProprietaryKey;
-use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use internet2::{Session, TypedEnum, Unmarshall};
 use lnpbp::chain::Chain;
@@ -25,6 +24,7 @@ use rgb::{
     OutpointValue, SealEndpoint, PSBT_OUT_PUBKEY,
 };
 use rgb20::Asset;
+use wallet::psbt::Psbt;
 
 use super::{Error, Runtime};
 use crate::error::ServiceErrorDomain;
@@ -84,7 +84,7 @@ impl Runtime {
         inputs: BTreeSet<OutPoint>,
         payment: BTreeMap<SealEndpoint, AtomicValue>,
         change: BTreeMap<seal::Revealed, AtomicValue>,
-        mut witness: PartiallySignedTransaction,
+        mut witness: Psbt,
     ) -> Result<Transfer, Error> {
         for (index, output) in &mut witness.outputs.iter_mut().enumerate() {
             if let Some(key) = output.bip32_derivation.keys().next() {
@@ -95,7 +95,7 @@ impl Runtime {
                         subtype: PSBT_OUT_PUBKEY,
                         key: vec![],
                     },
-                    key.key.serialize().to_vec(),
+                    key.serialize().to_vec(),
                 );
                 debug!("Output #{} commitment key will be {}", index, key);
             } else {

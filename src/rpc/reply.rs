@@ -13,11 +13,11 @@
 
 use std::collections::BTreeMap;
 
-use bitcoin::util::psbt::PartiallySignedTransaction as Psbt;
 use bitcoin::OutPoint;
 use microservices::FileFormat;
 use rgb::{AtomicValue, Consignment, ContractId, Disclosure};
 use rgb20::Asset;
+use wallet::psbt::Psbt;
 
 #[cfg(feature = "node")]
 use crate::error::RuntimeError;

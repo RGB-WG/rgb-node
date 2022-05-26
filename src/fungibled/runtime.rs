@@ -17,7 +17,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use bitcoin::{OutPoint, Txid};
-use bp::seals::txout::CloseMethod;
+use bp::seals::txout::{CloseMethod, TxoSeal};
 use commit_verify::CommitConceal;
 use internet2::zmqsocket::ZmqType;
 use internet2::TypedEnum;
@@ -639,7 +639,7 @@ impl Runtime {
 
                 if let Some(state_data) = assignment.as_revealed_state() {
                     asset.add_allocation(
-                        seal_revealed.to_outpoint_reveal(txid).into(),
+                        seal_revealed.outpoint_or(txid),
                         transition.node_id(),
                         index as u16,
                         *state_data,

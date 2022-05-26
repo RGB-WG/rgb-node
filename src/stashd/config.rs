@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use bitcoin::secp256k1::SECP256K1;
 use core::fmt::Display;
 use core::str::FromStr;
 use std::path::PathBuf;
@@ -104,7 +105,7 @@ impl From<Opts> for Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            node_auth: LocalNode::new(),
+            node_auth: LocalNode::new(&SECP256K1),
             verbose: 0,
             data_dir: RGB_DATA_DIR
                 .parse()

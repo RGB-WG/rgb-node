@@ -12,7 +12,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use bp::dbc::Anchor;
-use std::collections::BTreeSet;
+use commit_verify::multi_commit::ProtocolId;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use electrum_client::Client as ElectrumClient;
@@ -232,18 +233,15 @@ impl Runtime {
 
         // Construct anchor
         let mut psbt = request.psbt.clone();
-        let (anchors, map) = Anchor::commit(
-            transitions
-                .iter()
-                .map(|(contract_id, ts)| (*contract_id, ts.node_id()))
-                .collect(),
-            &mut psbt,
-        )
-        .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
-        let anchor = anchors[*map
-            .get(&request.contract_id)
-            .expect("Core LNP/BP anchor commitment procedure is broken")]
-        .clone();
+        let map = transitions
+            .iter()
+            .map(|(contract_id, ts)| {
+                ((*contract_id).into(), ts.node_id().into())
+            })
+            .collect::<BTreeMap<_, _>>();
+        let contract_ids = map.keys().copied().collect::<BTreeSet<_>>();
+        let anchor = Anchor::commit(&mut psbt, map)
+            .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
 
         // Prepare consignments: extract from stash storage the required data
         // and assemble them into a consignment
@@ -258,25 +256,14 @@ impl Runtime {
 
         // Prepare disclosure
         let mut disclosure = Disclosure::default();
-        for (index, anchor) in anchors.into_iter().enumerate() {
-            let contract_ids =
-                map.iter()
-                    .filter_map(|(contract_id, i)| {
-                        if *i == index {
-                            Some(contract_id)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<BTreeSet<_>>();
-            let anchored_transitions = transitions
-                .clone()
-                .into_iter()
-                .filter(|(contract_id, _)| contract_ids.contains(contract_id))
-                .collect();
-            disclosure
-                .insert_anchored_transitions(anchor, anchored_transitions);
-        }
+        let anchored_transitions = transitions
+            .clone()
+            .into_iter()
+            .filter(|(contract_id, _)| {
+                contract_ids.contains(&ProtocolId::from(*contract_id))
+            })
+            .collect();
+        disclosure.insert_anchored_transitions(anchor, anchored_transitions);
 
         Ok(Reply::Transfer(reply::Transfer {
             consignment,
