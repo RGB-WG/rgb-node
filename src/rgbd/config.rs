@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::{AppSettings, ArgEnum, Clap};
+use clap::{ArgEnum, Parser};
 #[cfg(feature = "serde")]
 use serde::Deserialize;
 use std::fmt::Display;
@@ -24,14 +24,8 @@ use microservices::FileFormat;
 
 use crate::constants::*;
 
-#[derive(Clap)]
-#[clap(
-    name = "rgbd",
-    bin_name = "rgbd",
-    author,
-    version,
-    setting = AppSettings::ColoredHelp
-)]
+#[derive(Parser)]
+#[clap(name = "rgbd", bin_name = "rgbd", author, version)]
 pub struct Opts {
     /// Sets verbosity level; can be used multiple times to increase verbosity
     #[clap(short, long, global = true, parse(from_occurrences))]
