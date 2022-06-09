@@ -30,22 +30,22 @@ required-features = ["cli"]
 
 [dependencies]
 # LNP/BP crates
-amplify = "3.9"
-strict_encoding = "1.7.2"
+amplify = "3.12.0"
+strict_encoding = "=1.7.4"
 commit_verify = "0.5.11"
-lnpbp = "0.5.0-beta.3"
-descriptor-wallet = { version = "0.5.0-alpha.3", features = ["electrum"] }
-bp-core = "0.5.0-beta.5"
-rgb-core = "0.5.0-alpha.1"
-rgb20 = { version = "0.5.0-alpha.3", optional = true }
+lnpbp = "0.5.0"
+descriptor-wallet = { version = "0.5.2", features = ["electrum"] }
+bp-core = "0.5.0"
+rgb-core = { version = "0.5.3", default-features = false }
+rgb20 = { version = "0.5.0", optional = true }
 # rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
-internet2 = "0.5.0-alpha.2"
-microservices = { version = "0.5.0-beta.1", default-features = false }
+internet2 = "=0.5.0"
+microservices = { version = "=0.5.0", default-features = false }
 # Bitcoin
 bitcoin = "0.27.0"
-electrum-client = { version = "0.8", optional = true }
+electrum-client = { version = "0.8.0", optional = true }
 # Rust language
 lazy_static = "1.4"
 nix = { version = "0.19", optional = true }
@@ -63,7 +63,7 @@ base64 = { version = "0.12", optional = true }
 # Congig & logging
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 env_logger = "0.7"
-clap = { version = "3.0.0-beta.4", optional = true }
+clap = { version = "=3.0.0-beta.5", optional = true }
 settings = { version = "0.10", package = "config", optional = true }
 configure_me = { version = "0.3", optional = true }
 dotenv = { version = "0.15", optional = true }
@@ -115,7 +115,7 @@ _rpc = []
 
 serde = ["serde_crate", "serde_with", "serde_yaml", "serde_json", "toml",
          "amplify/serde", "lnpbp/serde", "internet2/serde", "microservices/serde",
-         "chrono/serde", "bitcoin/use-serde", "rgb20/serde"]
+         "chrono/serde", "bitcoin/use-serde", "rgb-core/serde", "rgb20/serde"]
 tor = ["microservices/tor", "internet2/tor"]
 # sql = ["diesel"]
 nosql = ["hammersbald"]

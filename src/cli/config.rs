@@ -21,7 +21,7 @@ use lnpbp::chain::Chain;
 use super::{fungible, stash, Error, Runtime};
 use crate::constants::*;
 
-#[derive(Clap, Clone, Debug, Display)]
+#[derive(Parser, Clone, Debug, Display)]
 #[display(Debug)]
 #[clap(
     name = "rgb-cli",
@@ -55,7 +55,7 @@ pub struct Opts {
     pub network: Chain,
 }
 
-#[derive(Clap, Clone, Debug, Display)]
+#[derive(Parser, Clone, Debug, Display)]
 #[display(Debug)]
 pub enum Command {
     Schema {

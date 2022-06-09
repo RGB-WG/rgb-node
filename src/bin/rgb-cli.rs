@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::Clap;
+use clap::Parser;
 use log::*;
 use std::env;
 

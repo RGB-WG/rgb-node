@@ -21,7 +21,7 @@ use microservices::FileFormat;
 
 use crate::constants::*;
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(
     name = "fungibled",
     version = "0.1.0",

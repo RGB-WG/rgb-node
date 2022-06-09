@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 #[cfg(any(feature = "node"))]
-use clap::Clap;
+use clap::Parser;
 use std::{process, thread};
 
 #[cfg(any(feature = "node"))]

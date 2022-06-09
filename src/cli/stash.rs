@@ -16,7 +16,7 @@ use rgb::{ContractId, SchemaId, ToBech32};
 use crate::cli::{Error, OutputFormat, Runtime};
 use crate::rpc::Reply;
 
-#[derive(Clap, Clone, Debug, Display)]
+#[derive(Parser, Clone, Debug, Display)]
 #[display(Debug)]
 pub enum SchemaCommand {
     /// Lists all known schemata
@@ -37,7 +37,7 @@ pub enum SchemaCommand {
     },
 }
 
-#[derive(Clap, Clone, Debug, Display)]
+#[derive(Parser, Clone, Debug, Display)]
 #[display(Debug)]
 pub enum GenesisCommand {
     /// Lists all known contract ids

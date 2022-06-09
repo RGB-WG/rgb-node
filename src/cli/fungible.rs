@@ -31,7 +31,7 @@ use crate::rpc::fungible::{AcceptReq, IssueReq, TransferReq};
 use crate::rpc::{reply, Reply};
 use crate::util::file::ReadWrite;
 
-#[derive(Clap, Clone, Debug, Display)]
+#[derive(Parser, Clone, Debug, Display)]
 #[display(Debug)]
 pub enum Command {
     /// Lists all known assets
@@ -101,7 +101,7 @@ pub enum Command {
     },
 }
 
-#[derive(Clap, Clone, PartialEq, Debug, Display)]
+#[derive(Parser, Clone, PartialEq, Debug, Display)]
 #[display(Debug)]
 pub struct TransferCli {
     /// Asset inputs

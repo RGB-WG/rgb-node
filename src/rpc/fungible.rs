@@ -73,7 +73,7 @@ pub enum Request {
 }
 
 #[derive(
-    Clap, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
+Parser, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
 )]
 #[display("issue({ticker}, {name}, precision: {precision}, ...)")]
 #[cfg_attr(

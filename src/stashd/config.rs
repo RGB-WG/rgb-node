@@ -22,7 +22,7 @@ use microservices::FileFormat;
 
 use crate::constants::*;
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(
     name = "stashd",
     version = "0.1.0",
