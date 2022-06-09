@@ -20,25 +20,20 @@ use internet2::{Session, TypedEnum, Unmarshall};
 use lnpbp::chain::Chain;
 use microservices::FileFormat;
 use rgb::{
-    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis,
-    OutpointValue, SealEndpoint, PSBT_OUT_PUBKEY,
+    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, OutpointValue, SealEndpoint,
+    PSBT_OUT_PUBKEY,
 };
 use rgb20::Asset;
 use wallet::psbt::Psbt;
 
 use super::{Error, Runtime};
 use crate::error::ServiceErrorDomain;
+use crate::rpc::fungible::{AcceptReq, IssueReq, Request, TransferReq};
 use crate::rpc::reply::Transfer;
-use crate::rpc::{
-    fungible::AcceptReq, fungible::IssueReq, fungible::Request,
-    fungible::TransferReq, reply, Reply,
-};
+use crate::rpc::{reply, Reply};
 
 impl Runtime {
-    fn command(
-        &mut self,
-        command: Request,
-    ) -> Result<Arc<Reply>, ServiceErrorDomain> {
+    fn command(&mut self, command: Request) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.serialize();
         self.session_rpc.send_raw_message(&data)?;
         let raw = self.session_rpc.recv_raw_message()?;
@@ -149,10 +144,7 @@ impl Runtime {
         }
     }
 
-    pub fn validate(
-        &mut self,
-        consignment: Consignment,
-    ) -> Result<rgb::validation::Status, Error> {
+    pub fn validate(&mut self, consignment: Consignment) -> Result<rgb::validation::Status, Error> {
         match &*self.command(Request::Validate(consignment))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::ValidationStatus(status) => {
@@ -196,10 +188,7 @@ impl Runtime {
         }
     }
 
-    pub fn export_asset(
-        &mut self,
-        asset_id: ContractId,
-    ) -> Result<Genesis, Error> {
+    pub fn export_asset(&mut self, asset_id: ContractId) -> Result<Genesis, Error> {
         match &*self.command(Request::ExportAsset(asset_id))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Genesis(response) => Ok(response.clone()),
@@ -218,10 +207,7 @@ impl Runtime {
         }
     }
 
-    pub fn list_assets(
-        &mut self,
-        data_format: FileFormat,
-    ) -> Result<reply::SyncFormat, Error> {
+    pub fn list_assets(&mut self, data_format: FileFormat) -> Result<reply::SyncFormat, Error> {
         match &*self.command(Request::Sync(data_format))? {
             Reply::Failure(failure) => Err(Error::Reply(failure.clone())),
             Reply::Sync(response) => Ok(response.clone()),

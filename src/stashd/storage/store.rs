@@ -38,17 +38,11 @@ pub trait Store {
 
     fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error>;
     fn has_transition(&self, id: &NodeId) -> Result<bool, Self::Error>;
-    fn add_transition(
-        &mut self,
-        transition: &Transition,
-    ) -> Result<bool, Self::Error>;
+    fn add_transition(&mut self, transition: &Transition) -> Result<bool, Self::Error>;
     fn remove_transition(&mut self, id: &NodeId) -> Result<bool, Self::Error>;
 
     fn extension(&self, id: &NodeId) -> Result<Extension, Self::Error>;
     fn has_extension(&self, id: &NodeId) -> Result<bool, Self::Error>;
-    fn add_extension(
-        &mut self,
-        extension: &Extension,
-    ) -> Result<bool, Self::Error>;
+    fn add_extension(&mut self, extension: &Extension) -> Result<bool, Self::Error>;
     fn remove_extension(&mut self, id: &NodeId) -> Result<bool, Self::Error>;
 }

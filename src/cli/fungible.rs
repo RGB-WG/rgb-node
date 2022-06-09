@@ -143,12 +143,8 @@ pub struct TransferCli {
 impl Command {
     pub fn exec(self, runtime: Runtime) -> Result<(), Error> {
         match self {
-            Command::List { format, long } => {
-                self.exec_list(runtime, format, long)
-            }
-            Command::Import { ref asset } => {
-                self.exec_import(runtime, asset.clone())
-            }
+            Command::List { format, long } => self.exec_list(runtime, format, long),
+            Command::Import { ref asset } => self.exec_import(runtime, asset.clone()),
             Command::Export { asset } => self.exec_export(runtime, asset),
             Command::Blind { outpoint } => {
                 info!("Blinding outpoint ...");
@@ -168,15 +164,8 @@ impl Command {
                 ref consignment,
                 outpoint,
                 blinding_factor,
-            } => self.exec_accept(
-                runtime,
-                consignment.clone(),
-                outpoint,
-                blinding_factor,
-            ),
-            Command::Enclose { ref disclosure } => {
-                self.exec_enclose(runtime, disclosure.clone())
-            }
+            } => self.exec_accept(runtime, consignment.clone(), outpoint, blinding_factor),
+            Command::Enclose { ref disclosure } => self.exec_enclose(runtime, disclosure.clone()),
             Command::Forget { outpoint } => self.exec_forget(runtime, outpoint),
         }
     }
@@ -241,11 +230,7 @@ impl Command {
         Ok(())
     }
 
-    fn exec_import(
-        &self,
-        mut runtime: Runtime,
-        genesis: Genesis,
-    ) -> Result<(), Error> {
+    fn exec_import(&self, mut runtime: Runtime, genesis: Genesis) -> Result<(), Error> {
         info!("Importing asset ...");
 
         match &*runtime.import(genesis)? {
@@ -264,11 +249,7 @@ impl Command {
         Ok(())
     }
 
-    fn exec_export(
-        &self,
-        mut runtime: Runtime,
-        asset_id: ContractId,
-    ) -> Result<(), Error> {
+    fn exec_export(&self, mut runtime: Runtime, asset_id: ContractId) -> Result<(), Error> {
         info!("Exporting asset ...");
 
         match &*runtime.export(asset_id)? {
@@ -288,21 +269,13 @@ impl Command {
         Ok(())
     }
 
-    fn exec_validate(
-        &self,
-        mut runtime: Runtime,
-        filename: PathBuf,
-    ) -> Result<(), Error> {
+    fn exec_validate(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
         info!("Validating asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
-        let consignment =
-            Consignment::read_file(filename.clone()).map_err(|err| {
-                Error::InputFileFormatError(
-                    format!("{:?}", filename),
-                    format!("{}", err),
-                )
-            })?;
+        let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
+        })?;
         trace!("{:#?}", consignment);
 
         match &*runtime.validate(consignment)? {
@@ -331,17 +304,12 @@ impl Command {
         info!("Accepting asset transfer...");
 
         debug!("Reading consignment from file {:?}", &filename);
-        let consignment =
-            Consignment::read_file(filename.clone()).map_err(|err| {
-                Error::InputFileFormatError(
-                    format!("{:?}", filename),
-                    format!("{}", err),
-                )
-            })?;
+        let consignment = Consignment::read_file(filename.clone()).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
+        })?;
         trace!("{:#?}", consignment);
 
-        let api = if let Some((_, seal_endpoint)) = consignment.endpoints.get(0)
-        {
+        let api = if let Some((_, seal_endpoint)) = consignment.endpoints.get(0) {
             // TODO: Add close method to params
             let outpoint_reveal = seal::Revealed {
                 method: CloseMethod::TapretFirst,
@@ -349,9 +317,7 @@ impl Command {
                 txid: Some(outpoint.txid),
                 vout: outpoint.vout as u32,
             };
-            if outpoint_reveal.commit_conceal()
-                != seal_endpoint.commit_conceal()
-            {
+            if outpoint_reveal.commit_conceal() != seal_endpoint.commit_conceal() {
                 eprintln!(
                     "The provided outpoint and blinding factors does not match \
                     outpoint from the consignment"
@@ -388,21 +354,13 @@ impl Command {
         Ok(())
     }
 
-    fn exec_enclose(
-        &self,
-        mut runtime: Runtime,
-        filename: PathBuf,
-    ) -> Result<(), Error> {
+    fn exec_enclose(&self, mut runtime: Runtime, filename: PathBuf) -> Result<(), Error> {
         info!("Enclosing disclosure...");
 
         debug!("Reading disclosure from file {:?}", &filename);
-        let disclosure =
-            Disclosure::read_file(filename.clone()).map_err(|err| {
-                Error::InputFileFormatError(
-                    format!("{:?}", filename),
-                    format!("{}", err),
-                )
-            })?;
+        let disclosure = Disclosure::read_file(filename.clone()).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filename), format!("{}", err))
+        })?;
         trace!("{:#?}", disclosure);
 
         match &*runtime.enclose(disclosure)? {
@@ -423,11 +381,7 @@ impl Command {
         Ok(())
     }
 
-    fn exec_forget(
-        &self,
-        mut runtime: Runtime,
-        outpoint: OutPoint,
-    ) -> Result<(), Error> {
+    fn exec_forget(&self, mut runtime: Runtime, outpoint: OutPoint) -> Result<(), Error> {
         info!(
             "Forgetting assets allocated to specific bitcoin transaction output that was spent..."
         );
@@ -470,14 +424,11 @@ impl IssueReq {
             }
         };
 
-        eprintln!(
-            "Asset successfully issued. Use this information for sharing:"
-        );
+        eprintln!("Asset successfully issued. Use this information for sharing:");
         #[cfg(feature = "serde")]
         eprintln!(
             "Asset information:\n {}\n",
-            serde_yaml::to_string(asset)
-                .expect("broken asset YAML serialization")
+            serde_yaml::to_string(asset).expect("broken asset YAML serialization")
         );
         println!("{}", asset.genesis());
 
@@ -498,13 +449,9 @@ impl TransferCli {
         let filepath = format!("{:?}", &self.prototype);
         let file = fs::File::open(self.prototype)
             .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
-        let mut psbt = PartiallySignedTransaction::consensus_decode(file)
-            .map_err(|err| {
-                Error::InputFileFormatError(
-                    format!("{:?}", filepath),
-                    format!("{}", err),
-                )
-            })?;
+        let mut psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
+            Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))
+        })?;
 
         for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
             if let Some(key) = output.bip32_derivation.keys().next() {
@@ -537,9 +484,7 @@ impl TransferCli {
             change: self
                 .allocate
                 .into_iter()
-                .map(|seal_coins| {
-                    (seal_coins.into_revealed_seal(), seal_coins.value)
-                })
+                .map(|seal_coins| (seal_coins.into_revealed_seal(), seal_coins.value))
                 .collect(),
             payment: bmap! { SealEndpoint::from(self.receiver) => self.amount },
         };
@@ -556,11 +501,9 @@ impl TransferCli {
 
                 let out_file = fs::File::create(&self.transaction)
                     .expect("can't create output transaction file");
-                let psbt =
-                    PartiallySignedTransaction::from(transfer.witness.clone());
-                psbt.consensus_encode(out_file).map_err(|err| {
-                    bitcoin::consensus::encode::Error::Io(err)
-                })?;
+                let psbt = PartiallySignedTransaction::from(transfer.witness.clone());
+                psbt.consensus_encode(out_file)
+                    .map_err(|err| bitcoin::consensus::encode::Error::Io(err))?;
 
                 eprintln!(
                     "Transfer succeeded, consignments and disclosure are written \

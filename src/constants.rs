@@ -22,11 +22,9 @@ pub const RGB_NETWORK: &'static str = "signet";
 
 pub const STASHD_STASH: &'static str = "{data_dir}/{network}/stash/";
 pub const STASHD_INDEX: &'static str = "{data_dir}/{network}/index/";
-pub const STASHD_RPC_ENDPOINT: &'static str =
-    "lnpz:{data_dir}/{network}/stashd.rpc";
+pub const STASHD_RPC_ENDPOINT: &'static str = "lnpz:{data_dir}/{network}/stashd.rpc";
 
 pub const FUNGIBLED_CACHE: &'static str = "{data_dir}/{network}/cache/fungible";
-pub const FUNGIBLED_RPC_ENDPOINT: &'static str =
-    "lnpz:{data_dir}/{network}/fungibled.rpc";
+pub const FUNGIBLED_RPC_ENDPOINT: &'static str = "lnpz:{data_dir}/{network}/fungibled.rpc";
 
 pub const DEFAULT_ELECTRUM_ENDPOINT: &'static str = "pandora.network:60601";

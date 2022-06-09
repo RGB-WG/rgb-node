@@ -16,7 +16,8 @@ mod disk;
 mod hammersbald;
 mod store;
 
-#[cfg(feature = "hammersbald")]
-pub use self::hammersbald::HammersbaldStorage;
 pub use disk::{DiskStorage, DiskStorageConfig, DiskStorageError};
 pub use store::Store;
+
+#[cfg(feature = "hammersbald")]
+pub use self::hammersbald::HammersbaldStorage;

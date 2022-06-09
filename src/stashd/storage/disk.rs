@@ -40,15 +40,11 @@ pub enum DiskStorageError {
 }
 
 impl From<DiskStorageError> for ServiceErrorDomain {
-    fn from(err: DiskStorageError) -> Self {
-        ServiceErrorDomain::Storage(err.to_string())
-    }
+    fn from(err: DiskStorageError) -> Self { ServiceErrorDomain::Storage(err.to_string()) }
 }
 
 impl From<DiskStorageError> for BootstrapError {
-    fn from(_: DiskStorageError) -> Self {
-        BootstrapError::StorageError
-    }
+    fn from(_: DiskStorageError) -> Self { BootstrapError::StorageError }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
@@ -61,29 +57,19 @@ impl DiskStorageConfig {
     pub const RGB_FILE_EXT: &'static str = "rgb";
 
     #[inline]
-    pub fn schemata_dir(&self) -> PathBuf {
-        self.data_dir.join("schemata")
-    }
+    pub fn schemata_dir(&self) -> PathBuf { self.data_dir.join("schemata") }
 
     #[inline]
-    pub fn geneses_dir(&self) -> PathBuf {
-        self.data_dir.join("geneses")
-    }
+    pub fn geneses_dir(&self) -> PathBuf { self.data_dir.join("geneses") }
 
     #[inline]
-    pub fn anchors_dir(&self) -> PathBuf {
-        self.data_dir.join("anchors")
-    }
+    pub fn anchors_dir(&self) -> PathBuf { self.data_dir.join("anchors") }
 
     #[inline]
-    pub fn transitions_dir(&self) -> PathBuf {
-        self.data_dir.join("transitions")
-    }
+    pub fn transitions_dir(&self) -> PathBuf { self.data_dir.join("transitions") }
 
     #[inline]
-    pub fn extensions_dir(&self) -> PathBuf {
-        self.data_dir.join("extensions")
-    }
+    pub fn extensions_dir(&self) -> PathBuf { self.data_dir.join("extensions") }
 
     #[inline]
     pub fn schema_filename(&self, schema_id: &SchemaId) -> PathBuf {
@@ -203,14 +189,14 @@ impl Store for DiskStorage {
     type Error = DiskStorageError;
 
     fn schema_ids(&self) -> Result<Vec<SchemaId>, Self::Error> {
-        self.config.schema_names()?.into_iter().try_fold(
-            vec![],
-            |mut list, name| {
+        self.config
+            .schema_names()?
+            .into_iter()
+            .try_fold(vec![], |mut list, name| {
                 let name = name.replace(".rgb", "");
                 list.push(SchemaId::from_bech32_str(&name)?);
                 Ok(list)
-            },
-        )
+            })
     }
 
     #[inline]
@@ -238,14 +224,14 @@ impl Store for DiskStorage {
     }
 
     fn contract_ids(&self) -> Result<Vec<ContractId>, Self::Error> {
-        self.config.genesis_names()?.into_iter().try_fold(
-            vec![],
-            |mut list, name| {
+        self.config
+            .genesis_names()?
+            .into_iter()
+            .try_fold(vec![], |mut list, name| {
                 let name = name.replace(".rgb", "");
                 list.push(ContractId::from_bech32_str(&name)?);
                 Ok(list)
-            },
-        )
+            })
     }
 
     #[inline]
@@ -303,10 +289,7 @@ impl Store for DiskStorage {
         Ok(self.config.transition_filename(id).as_path().exists())
     }
 
-    fn add_transition(
-        &mut self,
-        transition: &Transition,
-    ) -> Result<bool, Self::Error> {
+    fn add_transition(&mut self, transition: &Transition) -> Result<bool, Self::Error> {
         let filename = self.config.transition_filename(&transition.node_id());
         let exists = filename.as_path().exists();
         transition.write_file(filename)?;
@@ -328,10 +311,7 @@ impl Store for DiskStorage {
         Ok(self.config.extension_filename(id).as_path().exists())
     }
 
-    fn add_extension(
-        &mut self,
-        extension: &Extension,
-    ) -> Result<bool, Self::Error> {
+    fn add_extension(&mut self, extension: &Extension) -> Result<bool, Self::Error> {
         let filename = self.config.extension_filename(&extension.node_id());
         let exists = filename.as_path().exists();
         extension.write_file(filename)?;

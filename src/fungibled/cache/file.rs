@@ -11,14 +11,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#[cfg(feature = "serde")]
-use serde_json;
 use std::collections::BTreeMap;
-#[cfg(any(
-    feature = "serde_yaml",
-    feature = "serde_json",
-    feature = "toml"
-))]
+#[cfg(any(feature = "serde_yaml", feature = "serde_json", feature = "toml"))]
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::{fs, io};
@@ -26,6 +20,8 @@ use std::{fs, io};
 use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::Asset;
+#[cfg(feature = "serde")]
+use serde_json;
 use strict_encoding::{strict_serialize, StrictDecode, StrictEncode};
 
 use super::Cache;
@@ -73,9 +69,7 @@ pub struct FileCacheConfig {
 
 impl FileCacheConfig {
     #[inline]
-    pub fn assets_dir(&self) -> PathBuf {
-        self.data_dir.join("assets")
-    }
+    pub fn assets_dir(&self) -> PathBuf { self.data_dir.join("assets") }
 
     #[inline]
     pub fn assets_filename(&self) -> PathBuf {
@@ -169,10 +163,7 @@ impl FileCache {
         Ok(())
     }
 
-    pub fn export(
-        &self,
-        data_format: Option<FileFormat>,
-    ) -> Result<Vec<u8>, FileCacheError> {
+    pub fn export(&self, data_format: Option<FileFormat>) -> Result<Vec<u8>, FileCacheError> {
         trace!("Exporting assets information ...");
         let assets = self.assets.values().cloned().collect::<Vec<Asset>>();
         Ok(match data_format.unwrap_or(self.config.data_format) {
@@ -191,9 +182,7 @@ impl FileCache {
 impl Cache for FileCache {
     type Error = CacheError;
 
-    fn assets(&self) -> Result<Vec<&Asset>, CacheError> {
-        Ok(self.assets.values().collect())
-    }
+    fn assets(&self) -> Result<Vec<&Asset>, CacheError> { Ok(self.assets.values().collect()) }
 
     #[inline]
     fn asset(&self, id: ContractId) -> Result<&Asset, CacheError> {
@@ -258,10 +247,12 @@ impl Cache for FileCache {
 
 #[cfg(all(test, feature = "sql"))]
 mod test {
+    use std::env;
+
+    use amplify::hex::FromHex;
+
     use super::super::sql::{SqlCache, SqlCacheConfig};
     use super::*;
-    use amplify::hex::FromHex;
-    use std::env;
 
     #[test]
     #[ignore]
@@ -273,9 +264,8 @@ mod test {
         // As a consequence this should be run after running tests
         // in sql.rs module.
 
-        let database_url = env::var("DATABASE_URL").expect(
-            "Environment Variable 'DATABASE_URL' must be set to run this test",
-        );
+        let database_url = env::var("DATABASE_URL")
+            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
         let filepath = PathBuf::from(&database_url[..]);
         let config = SqlCacheConfig {
             data_dir: filepath.clone(),
@@ -371,12 +361,23 @@ mod test {
         // for 2 assets, Bitcoin and Ethereum. The target map is Map[Asset_name,
         // Allocated_amount]
         let mut expected_map = BTreeMap::new();
-        expected_map.insert(ContractId::from_hex("5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc").unwrap(), vec![1 as AtomicValue, 3, 5]);
-        expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
+        expected_map.insert(
+            ContractId::from_hex(
+                "5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc",
+            )
+            .unwrap(),
+            vec![1 as AtomicValue, 3, 5],
+        );
+        expected_map.insert(
+            ContractId::from_hex(
+                "7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9",
+            )
+            .unwrap(),
+            vec![15 as AtomicValue, 17],
+        );
 
         // Fetch the asset-amount map for the above utxo using cache api
-        let allocation_map_calculated =
-            filecache.outpoint_assets(utxo).unwrap();
+        let allocation_map_calculated = filecache.outpoint_assets(utxo).unwrap();
 
         // Assert caclulation meets expectation
         assert_eq!(expected_map, allocation_map_calculated);

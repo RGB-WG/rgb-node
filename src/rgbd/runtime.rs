@@ -11,10 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#[cfg(any(feature = "node"))]
-use clap::Parser;
 use std::{process, thread};
 
+#[cfg(any(feature = "node"))]
+use clap::Parser;
 #[cfg(any(feature = "node"))]
 use microservices::node::TryService;
 
@@ -30,9 +30,7 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub fn init(config: Config) -> Result<Self, BootstrapError> {
-        Ok(Self { config })
-    }
+    pub fn init(config: Config) -> Result<Self, BootstrapError> { Ok(Self { config }) }
 
     #[cfg(any(feature = "node"))]
     fn get_task_for(
@@ -134,36 +132,26 @@ pub enum DaemonError {
 }
 
 impl std::fmt::Display for DaemonError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{:?}", self) }
 }
 
 impl From<RuntimeError> for DaemonError {
-    fn from(other: RuntimeError) -> DaemonError {
-        DaemonError::Process(other)
-    }
+    fn from(other: RuntimeError) -> DaemonError { DaemonError::Process(other) }
 }
 
 impl From<std::io::Error> for DaemonError {
-    fn from(other: std::io::Error) -> DaemonError {
-        DaemonError::IO(other)
-    }
+    fn from(other: std::io::Error) -> DaemonError { DaemonError::IO(other) }
 }
 
 impl From<BootstrapError> for DaemonError {
-    fn from(other: BootstrapError) -> DaemonError {
-        DaemonError::Bootstrap(other)
-    }
+    fn from(other: BootstrapError) -> DaemonError { DaemonError::Bootstrap(other) }
 }
 
 impl DaemonHandle {
     fn future(self) -> Result<(), DaemonError> {
         match self {
             DaemonHandle::Process(mut proc) => Ok(proc.wait().map(|_| ())?),
-            DaemonHandle::Task(thread) => {
-                Ok(thread.join().map_err(|_| DaemonError::Thread)??)
-            }
+            DaemonHandle::Task(thread) => Ok(thread.join().map_err(|_| DaemonError::Thread)??),
         }
     }
 }
@@ -177,12 +165,13 @@ impl TryService for Runtime {
 
         handlers.push(self.daemon("stashd")?);
 
-        self.config.contracts.iter().try_for_each(
-            |contract_name| -> Result<(), DaemonError> {
+        self.config
+            .contracts
+            .iter()
+            .try_for_each(|contract_name| -> Result<(), DaemonError> {
                 handlers.push(self.daemon(contract_name.daemon_name())?);
                 Ok(())
-            },
-        )?;
+            })?;
 
         handlers
             .into_iter()

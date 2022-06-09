@@ -13,10 +13,7 @@
 
 use std::thread;
 
-use internet2::ZmqType;
-use internet2::{
-    session, transport, CreateUnmarshaller, PlainTranscoder, Unmarshaller,
-};
+use internet2::{session, transport, CreateUnmarshaller, PlainTranscoder, Unmarshaller, ZmqType};
 
 use super::Config;
 use crate::error::BootstrapError;
@@ -25,8 +22,7 @@ use crate::rpc::Reply;
 
 pub struct Runtime {
     pub(super) config: Config,
-    pub(super) session_rpc:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    pub(super) session_rpc: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
     pub(super) unmarshaller: Unmarshaller<Reply>,
 }
 
@@ -66,9 +62,7 @@ impl Runtime {
                 .contract_endpoints
                 .get(&ContractName::Fungible)
                 .as_ref()
-                .expect(
-                    "Fungible engine is not connected in the configuration",
-                ),
+                .expect("Fungible engine is not connected in the configuration"),
             None,
             None,
         )?;

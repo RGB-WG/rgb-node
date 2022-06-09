@@ -11,11 +11,11 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use bitcoin::secp256k1::SECP256K1;
 use core::fmt::Display;
 use core::str::FromStr;
 use std::path::PathBuf;
 
+use bitcoin::secp256k1::SECP256K1;
 use internet2::zmqsocket::ZmqSocketAddr;
 use internet2::LocalNode;
 use lnpbp::chain::Chain;
@@ -138,8 +138,6 @@ impl Config {
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
             .replace("{node_id}", &self.node_auth.node_id().to_string())
             .parse()
-            .unwrap_or_else(|err| {
-                panic!("Error parsing parameter `{}`: {}", param, err)
-            })
+            .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
     }
 }

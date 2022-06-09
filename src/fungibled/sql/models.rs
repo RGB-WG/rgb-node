@@ -1,23 +1,23 @@
-use diesel::prelude::*;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use amplify::hex::{FromHex, ToHex};
 use bitcoin::{OutPoint, Txid};
-use commit_verify::TaggedHash;
-use lnpbp::chain::Chain;
-use rgb::{value, Allocation, AtomicValue, ContractId, NodeId};
-use rgb20::{Asset, Issue, Supply};
-
-use crate::fungibled::sql::schema as cache_schema;
-use crate::fungibled::SqlCacheError;
 use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
 use cache_schema::sql_allocations::dsl::sql_allocations as sql_allocation_table;
 use cache_schema::sql_assets::dsl::sql_assets as sql_asset_table;
 use cache_schema::sql_inflation::dsl::sql_inflation as sql_inflation_table;
 use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
 use cache_schema::*;
+use commit_verify::TaggedHash;
+use diesel::prelude::*;
+use lnpbp::chain::Chain;
 use rgb::contract::value::BlindingFactor;
+use rgb::{value, Allocation, AtomicValue, ContractId, NodeId};
+use rgb20::{Asset, Issue, Supply};
+
+use crate::fungibled::sql::schema as cache_schema;
+use crate::fungibled::SqlCacheError;
 
 /// All the sqlite table structures are defined here.
 /// There are 5 tables namely Asset, Issue, Inflation, AllocationUtxo
@@ -47,10 +47,7 @@ impl SqlAsset {
     /// All other data for the Asset are to be found from fetching other
     /// table entries associated with this Asset entry. So they are implicitly
     /// defined in the table schema.   
-    pub fn from_asset(
-        asset: &Asset,
-        connection: &SqliteConnection,
-    ) -> Result<Self, SqlCacheError> {
+    pub fn from_asset(asset: &Asset, connection: &SqliteConnection) -> Result<Self, SqlCacheError> {
         // Find the last entry and increase index by 1
         let last_asset = sql_asset_table
             .load::<SqlAsset>(connection)?
@@ -67,8 +64,7 @@ impl SqlAsset {
             ticker: asset.ticker().to_string(),
             asset_name: asset.name().to_string(),
             asset_description: asset.ricardian_contract().map(str::to_string),
-            known_circulating_supply: *asset.supply().known_circulating()
-                as i64,
+            known_circulating_supply: *asset.supply().known_circulating() as i64,
             is_issued_known: asset.supply().is_issued_known().clone(),
             max_cap: *asset.supply().issue_limit() as i64,
             chain: asset.chain().to_string(),
@@ -81,14 +77,10 @@ impl SqlAsset {
     /// This fetches all the other tables for entries associated with the given
     /// asset and recreates the full Asset structure. This should be used
     /// while reading Asset data from database table.
-    pub fn to_asset(
-        &self,
-        connection: &SqliteConnection,
-    ) -> Result<Asset, SqlCacheError> {
+    pub fn to_asset(&self, connection: &SqliteConnection) -> Result<Asset, SqlCacheError> {
         let known_inflation = read_inflation(self, connection)?;
 
-        let known_table_issues =
-            SqlIssue::belonging_to(self).load::<SqlIssue>(connection)?;
+        let known_table_issues = SqlIssue::belonging_to(self).load::<SqlIssue>(connection)?;
 
         let mut known_issues = vec![];
 
@@ -206,8 +198,7 @@ pub fn read_inflation(
     asset: &SqlAsset,
     connection: &SqliteConnection,
 ) -> Result<BTreeMap<OutPoint, AtomicValue>, SqlCacheError> {
-    let inflations =
-        SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
+    let inflations = SqlInflation::belonging_to(asset).load::<SqlInflation>(connection)?;
 
     let mut known_inflation_map = BTreeMap::new();
 
@@ -315,7 +306,7 @@ impl SqlIssue {
     Ord,
     PartialOrd,
     Eq,
-    PartialEq,
+    PartialEq
 )]
 #[table_name = "sql_allocation_utxo"]
 #[belongs_to(SqlAsset)]
@@ -341,10 +332,7 @@ pub struct SqlAllocation {
 impl SqlAllocation {
     /// Create an Allocation structure by reading the
     /// corresponding Allocation and AllocationUtxo table entries.
-    pub fn to_allocation(
-        &self,
-        outpoint: &SqlAllocationUtxo,
-    ) -> Result<Allocation, SqlCacheError> {
+    pub fn to_allocation(&self, outpoint: &SqlAllocationUtxo) -> Result<Allocation, SqlCacheError> {
         Ok(Allocation::with(
             NodeId::from_hex(&self.node_id[..])?,
             self.assignment_index as u16,
@@ -421,12 +409,11 @@ pub fn read_allocations(
     connection: &SqliteConnection,
 ) -> Result<Vec<Allocation>, SqlCacheError> {
     // Get the associated utxo with asset entry
-    let utxo_list = SqlAllocationUtxo::belonging_to(asset)
-        .load::<SqlAllocationUtxo>(connection)?;
+    let utxo_list = SqlAllocationUtxo::belonging_to(asset).load::<SqlAllocationUtxo>(connection)?;
 
     // Get the associated allocations with the above utxos
-    let allocation_list = SqlAllocation::belonging_to(&utxo_list)
-        .load::<SqlAllocation>(connection)?;
+    let allocation_list =
+        SqlAllocation::belonging_to(&utxo_list).load::<SqlAllocation>(connection)?;
 
     let utxo_list = utxo_list
         .into_iter()

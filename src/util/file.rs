@@ -1,9 +1,10 @@
-use bp::dbc::Anchor;
 use core::convert::TryFrom;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
+use bp::dbc::Anchor;
+use commit_verify::lnpbp4::MerkleBlock;
 use rgb::prelude::*;
 use strict_encoding::{Error, StrictDecode, StrictEncode};
 
@@ -18,10 +19,7 @@ pub enum FileMode {
 }
 
 #[inline]
-pub fn file(
-    filename: impl AsRef<Path>,
-    mode: FileMode,
-) -> Result<fs::File, io::Error> {
+pub fn file(filename: impl AsRef<Path>, mode: FileMode) -> Result<fs::File, io::Error> {
     match mode {
         FileMode::Read => fs::File::open(filename),
         FileMode::Write => fs::OpenOptions::new().write(true).open(filename),
@@ -48,16 +46,12 @@ pub fn read_dir_filenames(
         let entry = entry?;
         let path = entry.path();
         if let Some(ext) = filter_extensions {
-            if ext
-                != path.extension().map(|s| s.to_str().unwrap()).unwrap_or("")
-            {
+            if ext != path.extension().map(|s| s.to_str().unwrap()).unwrap_or("") {
                 continue;
             }
         }
         if !path.is_dir() {
-            if let Some(name) =
-                path.file_name().map(|s| s.to_str().unwrap().to_string())
-            {
+            if let Some(name) = path.file_name().map(|s| s.to_str().unwrap().to_string()) {
                 list.push(name);
             }
         }
@@ -66,8 +60,7 @@ pub fn read_dir_filenames(
 }
 
 pub trait ReadWrite
-where
-    Self: Sized,
+where Self: Sized
 {
     fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error>;
     fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error>;

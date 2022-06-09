@@ -27,23 +27,8 @@ use super::Index;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::util::file::{file, FileMode};
 
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
-#[derive(
-    Clone,
-    Ord,
-    PartialOrd,
-    Eq,
-    PartialEq,
-    Hash,
-    Debug,
-    Default,
-    StrictEncode,
-    StrictDecode,
-)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate = "serde_crate"))]
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Default, StrictEncode, StrictDecode)]
 struct BTreeIndexData {
     /// TODO #164: Replace with DisplayFromStr once RGB node will fix node
     ///       display
@@ -85,15 +70,11 @@ pub enum BTreeIndexError {
 }
 
 impl From<BTreeIndexError> for ServiceErrorDomain {
-    fn from(err: BTreeIndexError) -> Self {
-        ServiceErrorDomain::Index(err.to_string())
-    }
+    fn from(err: BTreeIndexError) -> Self { ServiceErrorDomain::Index(err.to_string()) }
 }
 
 impl From<BTreeIndexError> for BootstrapError {
-    fn from(_: BTreeIndexError) -> Self {
-        BootstrapError::StorageError
-    }
+    fn from(_: BTreeIndexError) -> Self { BootstrapError::StorageError }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
@@ -105,9 +86,7 @@ pub struct BTreeIndexConfig {
 
 impl BTreeIndexConfig {
     #[inline]
-    pub fn index_dir(&self) -> PathBuf {
-        self.index_dir.clone()
-    }
+    pub fn index_dir(&self) -> PathBuf { self.index_dir.clone() }
 
     #[inline]
     pub fn index_filename(&self) -> PathBuf {
@@ -199,10 +178,7 @@ impl BTreeIndex {
 impl Index for BTreeIndex {
     type Error = BTreeIndexError;
 
-    fn anchor_id_by_transition_id(
-        &self,
-        node_id: NodeId,
-    ) -> Result<AnchorId, Self::Error> {
+    fn anchor_id_by_transition_id(&self, node_id: NodeId) -> Result<AnchorId, Self::Error> {
         self.index
             .node_anchors
             .get(&node_id)

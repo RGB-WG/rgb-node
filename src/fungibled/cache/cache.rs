@@ -11,9 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeMap;
+
 use rgb::prelude::*;
 use rgb20::Asset;
-use std::collections::BTreeMap;
 
 use super::FileCacheError;
 use crate::error::{BootstrapError, ServiceErrorDomain};
@@ -59,42 +60,32 @@ pub enum CacheError {
 }
 
 impl From<CacheError> for ServiceErrorDomain {
-    fn from(_: CacheError) -> Self {
-        ServiceErrorDomain::Cache
-    }
+    fn from(_: CacheError) -> Self { ServiceErrorDomain::Cache }
 }
 
 impl From<CacheError> for BootstrapError {
-    fn from(_: CacheError) -> Self {
-        BootstrapError::CacheError
-    }
+    fn from(_: CacheError) -> Self { BootstrapError::CacheError }
 }
 
 impl From<FileCacheError> for CacheError {
     fn from(err: FileCacheError) -> Self {
         match err {
             FileCacheError::Io(e) => Self::Io(format!("{:?}", e)),
-            FileCacheError::HashName => Self::DataIntegrityError(
-                "File for a given hash id is not found".to_string(),
-            ),
-            FileCacheError::Encoding(e) => {
-                Self::DataIntegrityError(format!("{:?}", e))
+            FileCacheError::HashName => {
+                Self::DataIntegrityError("File for a given hash id is not found".to_string())
             }
-            FileCacheError::BrokenHexFilenames => Self::DataIntegrityError(
-                "Broken filename structure in storage".to_string(),
-            ),
+            FileCacheError::Encoding(e) => Self::DataIntegrityError(format!("{:?}", e)),
+            FileCacheError::BrokenHexFilenames => {
+                Self::DataIntegrityError("Broken filename structure in storage".to_string())
+            }
             #[cfg(feature = "serde_json")]
-            FileCacheError::SerdeJson(e) => {
-                Self::DataIntegrityError(format!("{:?}", e))
-            }
+            FileCacheError::SerdeJson(e) => Self::DataIntegrityError(format!("{:?}", e)),
             #[cfg(feature = "serde_yaml")]
-            FileCacheError::SerdeYaml(e) => {
-                Self::DataIntegrityError(format!("{:?}", e))
-            }
+            FileCacheError::SerdeYaml(e) => Self::DataIntegrityError(format!("{:?}", e)),
             #[cfg(feature = "toml")]
-            FileCacheError::SerdeToml => Self::DataIntegrityError(format!(
-                "TOML serialization/deserialization error"
-            )),
+            FileCacheError::SerdeToml => {
+                Self::DataIntegrityError(format!("TOML serialization/deserialization error"))
+            }
             FileCacheError::NotFound => {
                 Self::DataIntegrityError("Data file is not found".to_string())
             }

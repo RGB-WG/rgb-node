@@ -18,9 +18,8 @@ pub(self) mod sql;
 
 pub(self) mod cache;
 
-pub use config::{Config, Opts};
-pub use runtime::{main_with_config, Runtime};
-
 #[cfg(feature = "sql")]
 pub use cache::SqlCacheError;
 pub use cache::{CacheError, FileCacheError};
+pub use config::{Config, Opts};
+pub use runtime::{main_with_config, Runtime};

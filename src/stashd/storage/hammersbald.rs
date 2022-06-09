@@ -10,16 +10,15 @@
 // You should have received a copy of the MIT License
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
-use hammersbald::{persistent, HammersbaldAPI};
+use std::path::PathBuf;
+use std::{fs, fs, io, io};
+
+use bp::dbc::{Anchor, AnchorId};
+use rgb::prelude::*;
+use strict_encoding::{strict_serialize, StrictDecode};
 
 use super::store::Store;
 use crate::error::{BootstrapError, ServiceErrorDomain};
-use bp::dbc::{Anchor, AnchorId};
-use rgb::prelude::*;
-use std::fs;
-use std::io;
-use std::path::PathBuf;
-use strict_encoding::{strict_serialize, StrictDecode};
 
 #[derive(Debug, Display, Error, From)]
 #[display(Debug)]
@@ -46,15 +45,11 @@ pub enum HammersbaldError {
 }
 
 impl From<HammersbaldError> for ServiceErrorDomain {
-    fn from(err: HammersbaldError) -> Self {
-        ServiceErrorDomain::Storage(err.to_string())
-    }
+    fn from(err: HammersbaldError) -> Self { ServiceErrorDomain::Storage(err.to_string()) }
 }
 
 impl From<HammersbaldError> for BootstrapError {
-    fn from(_: HammersbaldError) -> Self {
-        BootstrapError::StorageError
-    }
+    fn from(_: HammersbaldError) -> Self { BootstrapError::StorageError }
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
@@ -67,19 +62,13 @@ pub struct HammersbaldConfig {
 
 impl HammersbaldConfig {
     #[inline]
-    pub fn schemata_db(&self) -> PathBuf {
-        self.data_dir.join("hammersbald").join("schemata")
-    }
+    pub fn schemata_db(&self) -> PathBuf { self.data_dir.join("hammersbald").join("schemata") }
 
     #[inline]
-    pub fn geneses_db(&self) -> PathBuf {
-        self.data_dir.join("hammersbald").join("geneses")
-    }
+    pub fn geneses_db(&self) -> PathBuf { self.data_dir.join("hammersbald").join("geneses") }
 
     #[inline]
-    pub fn anchors_db(&self) -> PathBuf {
-        self.data_dir.join("hammersbald").join("anchors")
-    }
+    pub fn anchors_db(&self) -> PathBuf { self.data_dir.join("hammersbald").join("anchors") }
 
     #[inline]
     pub fn transitions_db(&self) -> PathBuf {
@@ -87,9 +76,7 @@ impl HammersbaldConfig {
     }
 
     #[inline]
-    pub fn extensions_db(&self) -> PathBuf {
-        self.data_dir.join("hammersbald").join("extensions")
-    }
+    pub fn extensions_db(&self) -> PathBuf { self.data_dir.join("hammersbald").join("extensions") }
 }
 
 /// Keeps all Hammersbald RGB contract data, stash etc
@@ -301,10 +288,7 @@ impl Store for HammersbaldStorage {
         }
     }
 
-    fn add_transition(
-        &mut self,
-        transition: &Transition,
-    ) -> Result<bool, Self::Error> {
+    fn add_transition(&mut self, transition: &Transition) -> Result<bool, Self::Error> {
         let node_id = transition.node_id();
         let key = strict_serialize(&node_id)?;
         let value = strict_serialize(transition)?;
@@ -337,10 +321,7 @@ impl Store for HammersbaldStorage {
         }
     }
 
-    fn add_extension(
-        &mut self,
-        extension: &Extension,
-    ) -> Result<bool, Self::Error> {
+    fn add_extension(&mut self, extension: &Extension) -> Result<bool, Self::Error> {
         let node_id = extension.node_id();
         let key = strict_serialize(&node_id)?;
         let value = strict_serialize(extension)?;
@@ -357,8 +338,9 @@ impl Store for HammersbaldStorage {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use std::env;
+
+    use super::*;
 
     // TODO #165: Add testing for Anchors when easy anchor sample
     // are availble
@@ -375,9 +357,8 @@ mod test {
         let extension = Extension::default();
         let extension_node_id = extension.node_id();
 
-        let database_url = env::var("DATABASE_URL").expect(
-            "Environment Variable 'DATABASE_URL' must be set to run this test",
-        );
+        let database_url = env::var("DATABASE_URL")
+            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
 
         let config = HammersbaldConfig {
             data_dir: std::path::PathBuf::from(&database_url[..]),

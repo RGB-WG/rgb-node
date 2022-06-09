@@ -11,17 +11,15 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::OutPoint;
-use rgb::{
-    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis,
-    OutpointValue, SealEndpoint,
-};
-
 use microservices::FileFormat;
+use rgb::{
+    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, OutpointValue, SealEndpoint,
+};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use wallet::psbt::Psbt;
 
 #[derive(Clone, Debug, Display, Api)]
@@ -71,15 +69,9 @@ pub enum Request {
     Allocations(ContractId),
 }
 
-#[derive(
-    Parser, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display,
-)]
+#[derive(Parser, Clone, PartialEq, StrictEncode, StrictDecode, Debug, Display)]
 #[display("issue({ticker}, {name}, precision: {precision}, ...)")]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize,),
-    serde(crate = "serde_crate")
-)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize,), serde(crate = "serde_crate"))]
 pub struct IssueReq {
     /// Asset ticker (up to 8 characters, always converted to uppercase)
     #[clap(validator=ticker_validator)]
@@ -152,10 +144,7 @@ pub struct AcceptReq {
 }
 
 fn ticker_validator(name: &str) -> Result<(), String> {
-    if name.len() < 3
-        || name.len() > 8
-        || name.chars().any(|c| c < 'A' && c > 'Z')
-    {
+    if name.len() < 3 || name.len() > 8 || name.chars().any(|c| c < 'A' && c > 'Z') {
         Err(
             "Ticker name must be between 3 and 8 chars, contain no spaces and \
             consist only of capital letters\

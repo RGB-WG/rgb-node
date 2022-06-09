@@ -47,9 +47,7 @@ pub enum BootstrapError {
 }
 
 impl From<&str> for BootstrapError {
-    fn from(err: &str) -> Self {
-        BootstrapError::ArgParseError(err.to_string())
-    }
+    fn from(err: &str) -> Self { BootstrapError::ArgParseError(err.to_string()) }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
@@ -125,11 +123,7 @@ pub enum ServiceErrorDomain {
     Anchor(String),
 
     #[from]
-    #[cfg_attr(
-        feature = "fungibles",
-        from(rgb20::transitions::Error),
-        from(rgb20::asset::Error)
-    )]
+    #[cfg_attr(feature = "fungibles", from(rgb20::transitions::Error), from(rgb20::asset::Error))]
     Internal(String),
 }
 
@@ -181,10 +175,7 @@ impl ServiceError {
         }
     }
 
-    pub fn from_rpc(
-        service: ServiceErrorSource,
-        err: internet2::presentation::Error,
-    ) -> Self {
+    pub fn from_rpc(service: ServiceErrorSource, err: internet2::presentation::Error) -> Self {
         Self {
             domain: ServiceErrorDomain::from(err),
             service,

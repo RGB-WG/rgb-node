@@ -14,19 +14,19 @@
 use std::collections::{BTreeSet, VecDeque};
 
 use bitcoin::hashes::Hash;
+use bitcoin::OutPoint;
+use bp::dbc::{Anchor, AnchorId};
 use commit_verify::multi_commit::ProtocolId;
 use rgb::{
-    seal, AssignmentVec, ConcealState, Consignment, ContractId, Disclosure,
-    Extension, Genesis, Node, NodeId, RevealedByMerge, Schema, SchemaId,
-    SealEndpoint, Stash, Transition,
+    seal, AssignmentVec, ConcealState, Consignment, ContractId, Disclosure, Extension, Genesis,
+    Node, NodeId, RevealedByMerge, Schema, SchemaId, SealEndpoint, Stash, Transition,
 };
+use strict_encoding::LargeVec;
+use wallet::onchain::ResolveTx;
 
 use super::index::Index;
 use super::storage::Store;
 use super::Runtime;
-use bitcoin::OutPoint;
-use bp::dbc::{Anchor, AnchorId};
-use wallet::onchain::ResolveTx;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, From, Error)]
 #[display(doc_comments)]
@@ -56,9 +56,7 @@ pub struct DumbIter<T>(std::marker::PhantomData<T>);
 impl<T> Iterator for DumbIter<T> {
     type Item = T;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        unimplemented!()
-    }
+    fn next(&mut self) -> Option<Self::Item> { unimplemented!() }
 }
 
 impl Stash for Runtime {
@@ -70,56 +68,23 @@ impl Stash for Runtime {
     type ExtensionIterator = DumbIter<Extension>;
     type NodeIdIterator = DumbIter<NodeId>;
 
-    fn get_schema(&self, _schema_id: SchemaId) -> Result<Schema, Self::Error> {
-        todo!()
-    }
+    fn get_schema(&self, _schema_id: SchemaId) -> Result<Schema, Self::Error> { todo!() }
 
-    fn get_genesis(
-        &self,
-        _contract_id: ContractId,
-    ) -> Result<Genesis, Self::Error> {
-        todo!()
-    }
+    fn get_genesis(&self, _contract_id: ContractId) -> Result<Genesis, Self::Error> { todo!() }
 
-    fn get_transition(
-        &self,
-        _node_id: NodeId,
-    ) -> Result<Transition, Self::Error> {
-        todo!()
-    }
+    fn get_transition(&self, _node_id: NodeId) -> Result<Transition, Self::Error> { todo!() }
 
-    fn get_extension(
-        &self,
-        _node_id: NodeId,
-    ) -> Result<Extension, Self::Error> {
-        todo!()
-    }
+    fn get_extension(&self, _node_id: NodeId) -> Result<Extension, Self::Error> { todo!() }
 
-    fn get_anchor(&self, _anchor_id: AnchorId) -> Result<Anchor, Self::Error> {
-        todo!()
-    }
+    fn get_anchor(&self, _anchor_id: AnchorId) -> Result<Anchor, Self::Error> { todo!() }
 
-    fn genesis_iter(&self) -> Self::GenesisIterator {
-        todo!()
-    }
+    fn genesis_iter(&self) -> Self::GenesisIterator { todo!() }
 
-    fn anchor_iter(&self) -> Self::AnchorIterator {
-        todo!()
-    }
+    fn anchor_iter(&self) -> Self::AnchorIterator { todo!() }
 
-    fn transition_iter(
-        &self,
-        _contract_id: ContractId,
-    ) -> Self::TransitionIterator {
-        todo!()
-    }
+    fn transition_iter(&self, _contract_id: ContractId) -> Self::TransitionIterator { todo!() }
 
-    fn extension_iter(
-        &self,
-        _contract_id: ContractId,
-    ) -> Self::ExtensionIterator {
-        todo!()
-    }
+    fn extension_iter(&self, _contract_id: ContractId) -> Self::ExtensionIterator { todo!() }
 
     fn consign(
         &self,
@@ -129,9 +94,12 @@ impl Stash for Runtime {
         endpoints: &BTreeSet<SealEndpoint>,
     ) -> Result<Consignment, Error> {
         debug!(
-            "Preparing consignment for contract {} node {} with anchor {} for endpoints {:?}", 
-            contract_id, node.node_id(),
-            anchor.map(|a| a.anchor_id().to_string()).unwrap_or(s!("unspecified")),
+            "Preparing consignment for contract {} node {} with anchor {} for endpoints {:?}",
+            contract_id,
+            node.node_id(),
+            anchor
+                .map(|a| a.anchor_id().to_string())
+                .unwrap_or(s!("unspecified")),
             endpoints
         );
 
@@ -141,14 +109,10 @@ impl Stash for Runtime {
         trace!("Getting node matching node id");
         let mut state_transitions = vec![];
         let mut state_extensions: Vec<Extension> = vec![];
-        if let Some(transition) =
-            node.as_any().downcast_ref::<Transition>().clone()
-        {
+        if let Some(transition) = node.as_any().downcast_ref::<Transition>().clone() {
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));
-        } else if let Some(extension) =
-            node.as_any().downcast_ref::<Extension>().clone()
-        {
+        } else if let Some(extension) = node.as_any().downcast_ref::<Extension>().clone() {
             state_extensions.push(extension.clone());
         } else {
             Err(Error::GenesisNode)?;
@@ -214,48 +178,42 @@ impl Stash for Runtime {
         // [PRIVACY]:
         // Update transition data with the revealed state information that we
         // kept since we did an invoice (and the sender did not know).
-        let reveal_known_seals =
-            |(_, assignments): (&u16, &mut AssignmentVec)| match assignments {
-                AssignmentVec::Declarative(_) => {}
-                AssignmentVec::DiscreteFiniteField(set) => {
-                    *set = set
-                        .iter()
-                        .map(|a| {
-                            let mut a = a.clone();
-                            a.reveal_seals(known_seals.iter());
-                            a
-                        })
-                        .collect();
-                }
-                AssignmentVec::CustomData(set) => {
-                    *set = set
-                        .iter()
-                        .map(|a| {
-                            let mut a = a.clone();
-                            a.reveal_seals(known_seals.iter());
-                            a
-                        })
-                        .collect();
-                }
-            };
+        let reveal_known_seals = |(_, assignments): (&u16, &mut AssignmentVec)| match assignments {
+            AssignmentVec::Declarative(_) => {}
+            AssignmentVec::DiscreteFiniteField(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
+            AssignmentVec::CustomData(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
+        };
 
         // [PRIVACY] [SECURITY]:
         // Update all data with the previously known revealed information in the
         // stash
-        for (mut anchor, mut transition) in
-            consignment.state_transitions.into_iter()
-        {
+        for (mut anchor, mut transition) in consignment.state_transitions.into_iter() {
             transition
                 .owned_rights_mut()
                 .iter_mut()
                 .for_each(reveal_known_seals);
-            if let Ok(other_transition) =
-                self.storage.transition(&transition.node_id())
-            {
-                transition =
-                    transition.revealed_by_merge(other_transition).expect(
-                        "Transition id or merge-revealed procedure is broken",
-                    );
+            if let Ok(other_transition) = self.storage.transition(&transition.node_id()) {
+                transition = transition
+                    .revealed_by_merge(other_transition)
+                    .expect("Transition id or merge-revealed procedure is broken");
             }
             if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
                 anchor = anchor
@@ -273,13 +231,10 @@ impl Stash for Runtime {
                 .owned_rights_mut()
                 .iter_mut()
                 .for_each(reveal_known_seals);
-            if let Ok(other_extension) =
-                self.storage.extension(&extension.node_id())
-            {
-                extension =
-                    extension.revealed_by_merge(other_extension).expect(
-                        "Extension id or merge-revealed procedure is broken",
-                    );
+            if let Ok(other_extension) = self.storage.extension(&extension.node_id()) {
+                extension = extension
+                    .revealed_by_merge(other_extension)
+                    .expect("Extension id or merge-revealed procedure is broken");
             }
             self.storage.add_extension(&extension)?;
         }
@@ -304,9 +259,7 @@ impl Stash for Runtime {
                 .map_err(|_| Error::UnknownContract(contract_id))?;
         }
 
-        for anchor in
-            disclosure.transitions().values().map(|(anchor, _)| anchor)
-        {
+        for anchor in disclosure.transitions().values().map(|(anchor, _)| anchor) {
             let mut anchor: Anchor = anchor.clone();
             if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
                 anchor = anchor
@@ -324,9 +277,7 @@ impl Stash for Runtime {
             .flatten()
         {
             let mut transition: Transition = transition.clone();
-            if let Ok(other_transition) =
-                self.storage.transition(&transition.node_id())
-            {
+            if let Ok(other_transition) = self.storage.transition(&transition.node_id()) {
                 transition = transition
                     .revealed_by_merge(other_transition)
                     .expect("RGB commitment procedure is broken");
@@ -336,9 +287,7 @@ impl Stash for Runtime {
 
         for extension in disclosure.extensions().values().flatten() {
             let mut extension: Extension = extension.clone();
-            if let Ok(other_extension) =
-                self.storage.extension(&extension.node_id())
-            {
+            if let Ok(other_extension) = self.storage.extension(&extension.node_id()) {
                 extension = extension
                     .revealed_by_merge(other_extension)
                     .expect("RGB commitment procedure is broken");

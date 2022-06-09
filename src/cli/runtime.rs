@@ -16,23 +16,21 @@ use std::sync::Arc;
 use bitcoin::OutPoint;
 use internet2::zmqsocket::ZmqType;
 use internet2::{
-    session, transport, CreateUnmarshaller, PlainTranscoder, Session,
-    TypedEnum, Unmarshall, Unmarshaller,
+    session, transport, CreateUnmarshaller, PlainTranscoder, Session, TypedEnum, Unmarshall,
+    Unmarshaller,
 };
+use microservices::FileFormat;
 use rgb::{Consignment, ContractId, Disclosure, Genesis, SchemaId};
 
 use super::{Config, Error};
 use crate::cli::OutputFormat;
 use crate::error::{BootstrapError, ServiceErrorDomain};
 use crate::rpc::fungible::{self, AcceptReq, IssueReq, TransferReq};
-use crate::rpc::stash;
-use crate::rpc::Reply;
-use microservices::FileFormat;
+use crate::rpc::{stash, Reply};
 
 pub struct Runtime {
     stash_rpc: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
-    fungible_rpc:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    fungible_rpc: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
     unmarshaller: Unmarshaller<Reply>,
 }
 
@@ -44,12 +42,8 @@ impl Runtime {
             None,
             None,
         )?;
-        let stash_rpc = session::Raw::with_zmq_unencrypted(
-            ZmqType::Req,
-            &config.stash_endpoint,
-            None,
-            None,
-        )?;
+        let stash_rpc =
+            session::Raw::with_zmq_unencrypted(ZmqType::Req, &config.stash_endpoint, None, None)?;
         Ok(Self {
             stash_rpc,
             fungible_rpc,
@@ -57,10 +51,7 @@ impl Runtime {
         })
     }
 
-    fn stash_command(
-        &mut self,
-        command: stash::Request,
-    ) -> Result<Arc<Reply>, ServiceErrorDomain> {
+    fn stash_command(&mut self, command: stash::Request) -> Result<Arc<Reply>, ServiceErrorDomain> {
         let data = command.serialize();
         self.stash_rpc.send_raw_message(&data)?;
         let raw = self.stash_rpc.recv_raw_message()?;
@@ -95,24 +86,18 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn genesis(
-        &mut self,
-        contract_id: ContractId,
-    ) -> Result<Arc<Reply>, Error> {
+    pub fn genesis(&mut self, contract_id: ContractId) -> Result<Arc<Reply>, Error> {
         Ok(self.stash_command(stash::Request::ReadGenesis(contract_id))?)
     }
 
     #[inline]
-    pub fn list(
-        &mut self,
-        output_format: OutputFormat,
-    ) -> Result<Arc<Reply>, Error> {
+    pub fn list(&mut self, output_format: OutputFormat) -> Result<Arc<Reply>, Error> {
         let data_format = match output_format {
             OutputFormat::Yaml => FileFormat::Yaml,
             OutputFormat::Json => FileFormat::Json,
             OutputFormat::Toml => FileFormat::Toml,
             OutputFormat::StrictEncode => FileFormat::StrictEncode,
-            _ => unimplemented!("The provided output format is not supported for this operation")
+            _ => unimplemented!("The provided output format is not supported for this operation"),
         };
         Ok(self.fungible_command(fungible::Request::Sync(data_format))?)
     }
@@ -123,10 +108,7 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn export(
-        &mut self,
-        asset_id: ContractId,
-    ) -> Result<Arc<Reply>, Error> {
+    pub fn export(&mut self, asset_id: ContractId) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::ExportAsset(asset_id))?)
     }
 
@@ -136,18 +118,12 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn transfer(
-        &mut self,
-        transfer: TransferReq,
-    ) -> Result<Arc<Reply>, Error> {
+    pub fn transfer(&mut self, transfer: TransferReq) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Transfer(transfer))?)
     }
 
     #[inline]
-    pub fn validate(
-        &mut self,
-        consignment: Consignment,
-    ) -> Result<Arc<Reply>, Error> {
+    pub fn validate(&mut self, consignment: Consignment) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Validate(consignment))?)
     }
 
@@ -157,10 +133,7 @@ impl Runtime {
     }
 
     #[inline]
-    pub fn enclose(
-        &mut self,
-        disclosure: Disclosure,
-    ) -> Result<Arc<Reply>, Error> {
+    pub fn enclose(&mut self, disclosure: Disclosure) -> Result<Arc<Reply>, Error> {
         Ok(self.fungible_command(fungible::Request::Enclose(disclosure))?)
     }
 

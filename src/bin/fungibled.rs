@@ -11,10 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::Parser;
-use log::*;
 use std::env;
 
+use clap::Parser;
+use log::*;
 use rgb_node::error::BootstrapError;
 use rgb_node::fungibled::{main_with_config, Config, Opts};
 
@@ -24,17 +24,14 @@ fn main() -> Result<(), BootstrapError> {
     let config: Config = opts.into();
 
     if env::var("RUST_LOG").is_err() {
-        env::set_var(
-            "RUST_LOG",
-            match config.verbose {
-                0 => "error",
-                1 => "warn",
-                2 => "info",
-                3 => "debug",
-                4 => "trace",
-                _ => "trace",
-            },
-        );
+        env::set_var("RUST_LOG", match config.verbose {
+            0 => "error",
+            1 => "warn",
+            2 => "info",
+            3 => "debug",
+            4 => "trace",
+            _ => "trace",
+        });
     }
     env_logger::init();
     log::set_max_level(LevelFilter::Trace);

@@ -11,27 +11,27 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use diesel::prelude::*;
 use std::collections::{BTreeMap, HashMap};
+use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::{fmt, fs, fs::File};
+use std::{fmt, fs};
 
 use amplify::IoError;
 use bitcoin::hashes::hex::ToHex;
-use rgb::bech32;
-use rgb::prelude::*;
-use rgb20::Asset;
-
-use crate::fungibled::sql::schema as cache_schema;
 use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
 use cache_schema::sql_allocations::dsl::sql_allocations as sql_allocation_table;
 use cache_schema::sql_assets::dsl::sql_assets as sql_asset_table;
 use cache_schema::sql_inflation::dsl::sql_inflation as sql_inflation_table;
 use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
+use diesel::prelude::*;
+use rgb::bech32;
+use rgb::prelude::*;
+use rgb20::Asset;
 
 use super::cache::{Cache, CacheError};
 use crate::fungibled::sql::models::*;
+use crate::fungibled::sql::schema as cache_schema;
 
 #[derive(Debug, Display, Error, From)]
 #[display(inner)]
@@ -96,9 +96,7 @@ pub struct SqlCacheConfig {
 
 impl SqlCacheConfig {
     #[inline]
-    pub fn assets_dir(&self) -> PathBuf {
-        self.data_dir.join("assets")
-    }
+    pub fn assets_dir(&self) -> PathBuf { self.data_dir.join("assets") }
 
     #[inline]
     pub fn assets_filename(&self) -> PathBuf {
@@ -113,9 +111,7 @@ pub struct SqlCache {
 }
 
 impl fmt::Display for SqlCache {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:#?}", self.assets)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#?}", self.assets) }
 }
 
 impl SqlCache {
@@ -213,21 +209,13 @@ impl SqlCache {
         // Create and write table entries from updated cached data
         for item in self.assets.clone().into_iter() {
             let table_asset = SqlAsset::from_asset(&item.1, &self.connection)?;
-            let table_issues =
-                SqlIssue::from_asset(&item.1, &table_asset, &self.connection)?;
+            let table_issues = SqlIssue::from_asset(&item.1, &table_asset, &self.connection)?;
 
-            let table_inflations = SqlInflation::from_asset(
-                &item.1,
-                &table_asset,
-                &self.connection,
-            )?;
+            let table_inflations =
+                SqlInflation::from_asset(&item.1, &table_asset, &self.connection)?;
 
             let (table_utxos, table_allocations) =
-                create_allocation_from_asset(
-                    &item.1,
-                    &table_asset,
-                    &self.connection,
-                )?;
+                create_allocation_from_asset(&item.1, &table_asset, &self.connection)?;
 
             diesel::insert_into(sql_asset_table)
                 .values(table_asset)
@@ -265,9 +253,7 @@ impl SqlCache {
 impl Cache for SqlCache {
     type Error = CacheError;
 
-    fn assets(&self) -> Result<Vec<&Asset>, CacheError> {
-        Ok(self.assets.values().collect())
-    }
+    fn assets(&self) -> Result<Vec<&Asset>, CacheError> { Ok(self.assets.values().collect()) }
 
     #[inline]
     fn asset(&self, id: ContractId) -> Result<&Asset, CacheError> {
@@ -337,8 +323,7 @@ impl Cache for SqlCache {
 
         // Create a vector group of Vec<(Utxo, Vec<Allocation>)> for easier
         // processing
-        let utxo_allocation_groups =
-            sql_utxos.into_iter().zip(allocations).collect::<Vec<_>>();
+        let utxo_allocation_groups = sql_utxos.into_iter().zip(allocations).collect::<Vec<_>>();
 
         // Create the empty result map
         let mut result = BTreeMap::new();
@@ -369,18 +354,19 @@ impl Cache for SqlCache {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use bitcoin::hashes::hex::FromHex;
-    use chrono::NaiveDate;
-    use lnpbp::chain::Chain;
-    use rgb::ContractId;
     use std::env;
 
+    use bitcoin::hashes::hex::FromHex;
     use cache_schema::sql_allocation_utxo::dsl::sql_allocation_utxo as sql_allocation_utxo_table;
     use cache_schema::sql_allocations::dsl::sql_allocations as sql_allocation_table;
     use cache_schema::sql_assets::dsl::sql_assets as sql_asset_table;
     use cache_schema::sql_inflation::dsl::sql_inflation as sql_inflation_table;
     use cache_schema::sql_issues::dsl::sql_issues as sql_issue_table;
+    use chrono::NaiveDate;
+    use lnpbp::chain::Chain;
+    use rgb::ContractId;
+
+    use super::*;
 
     // The following tests are ignored by default, because they will break
     // Travis CI unless the build setup is updated (TODO #158). To run these
@@ -391,9 +377,8 @@ mod test {
     #[ignore]
     // Creates a sample table with sample asset data
     fn test_sqlite_create_tables() {
-        let database_url = env::var("DATABASE_URL").expect(
-            "Environment Variable 'DATABASE_URL' must be set to run this test",
-        );
+        let database_url = env::var("DATABASE_URL")
+            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
 
         let filepath = PathBuf::from(&database_url[..]);
 
@@ -743,9 +728,8 @@ mod test {
     #[test]
     #[ignore]
     fn test_sqlite_asset_cache() {
-        let database_url = env::var("DATABASE_URL").expect(
-            "Environment Variable 'DATABASE_URL' must be set to run this test",
-        );
+        let database_url = env::var("DATABASE_URL")
+            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
 
         let filepath = PathBuf::from(&database_url[..]);
         let config = SqlCacheConfig { data_dir: filepath };
@@ -813,9 +797,8 @@ mod test {
             .cloned()
             .unwrap();
 
-        first_sql_asset.contract_id = String::from(
-            "9b9dc7065be8fe0a965f42dc4d64bd1e15aa56cf05d3c72fc472c55490936bb3",
-        );
+        first_sql_asset.contract_id =
+            String::from("9b9dc7065be8fe0a965f42dc4d64bd1e15aa56cf05d3c72fc472c55490936bb3");
 
         let new_asset = first_sql_asset.to_asset(&cache.connection).unwrap();
 
@@ -858,9 +841,8 @@ mod test {
         //----------------------------------------------
         // SETUP SQLITE DB CONNECTION
 
-        let database_url = env::var("DATABASE_URL").expect(
-            "Environment Variable 'DATABASE_URL' must be set to run this test",
-        );
+        let database_url = env::var("DATABASE_URL")
+            .expect("Environment Variable 'DATABASE_URL' must be set to run this test");
         let filepath = PathBuf::from(&database_url[..]);
         let config = SqlCacheConfig { data_dir: filepath };
         let cache = SqlCache::new(&config).unwrap();
@@ -933,8 +915,20 @@ mod test {
         // for 2 assets, Bitcoin and Ethereum. The target map is Map[Asset_name,
         // Allocated_amount]
         let mut expected_map = BTreeMap::new();
-        expected_map.insert(ContractId::from_hex("5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc").unwrap(), vec![1 as AtomicValue, 3, 5]);
-        expected_map.insert(ContractId::from_hex("7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9").unwrap(), vec![15 as AtomicValue, 17]);
+        expected_map.insert(
+            ContractId::from_hex(
+                "5bb162c7c84fa69bd263a12b277b82155787a03537691619fed731432f6855dc",
+            )
+            .unwrap(),
+            vec![1 as AtomicValue, 3, 5],
+        );
+        expected_map.insert(
+            ContractId::from_hex(
+                "7ce3b67036e32628fe5351f23d57186181dba3103b7e0a5d55ed511446f5a6a9",
+            )
+            .unwrap(),
+            vec![15 as AtomicValue, 17],
+        );
 
         // Fetch the asset-amount map for the above utxo using cache api
         let allocation_map_calculated = cache.outpoint_assets(utxo).unwrap();

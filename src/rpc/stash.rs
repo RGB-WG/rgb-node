@@ -15,8 +15,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::OutPoint;
 use rgb::{
-    seal, Consignment, ContractId, Disclosure, Genesis, NodeId, Schema,
-    SchemaId, SealEndpoint, Transition,
+    seal, Consignment, ContractId, Disclosure, Genesis, NodeId, Schema, SchemaId, SealEndpoint,
+    Transition,
 };
 use wallet::psbt::Psbt;
 

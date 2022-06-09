@@ -85,29 +85,21 @@ pub enum Reply {
 }
 
 impl From<internet2::presentation::Error> for Reply {
-    fn from(err: internet2::presentation::Error) -> Self {
-        Reply::Failure(Failure::from(err))
-    }
+    fn from(err: internet2::presentation::Error) -> Self { Reply::Failure(Failure::from(err)) }
 }
 
 impl From<internet2::transport::Error> for Reply {
-    fn from(err: internet2::transport::Error) -> Self {
-        Reply::Failure(Failure::from(err))
-    }
+    fn from(err: internet2::transport::Error) -> Self { Reply::Failure(Failure::from(err)) }
 }
 
 #[cfg(feature = "node")]
 impl From<RuntimeError> for Reply {
-    fn from(err: RuntimeError) -> Self {
-        Reply::Failure(Failure::from(err))
-    }
+    fn from(err: RuntimeError) -> Self { Reply::Failure(Failure::from(err)) }
 }
 
 #[cfg(any(feature = "node", feature = "client"))]
 impl From<ServiceError> for Reply {
-    fn from(err: ServiceError) -> Self {
-        Reply::Failure(Failure::from(err))
-    }
+    fn from(err: ServiceError) -> Self { Reply::Failure(Failure::from(err)) }
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode, Error)]

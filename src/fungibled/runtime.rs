@@ -20,33 +20,27 @@ use bitcoin::{OutPoint, Txid};
 use bp::seals::txout::{CloseMethod, TxoSeal};
 use commit_verify::CommitConceal;
 use internet2::zmqsocket::ZmqType;
-use internet2::TypedEnum;
 use internet2::{
-    session, transport, CreateUnmarshaller, PlainTranscoder, Session,
-    Unmarshall, Unmarshaller,
+    session, transport, CreateUnmarshaller, PlainTranscoder, Session, TypedEnum, Unmarshall,
+    Unmarshaller,
 };
 use microservices::node::TryService;
 use microservices::FileFormat;
 use rgb::{
-    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node,
-    OutpointValue, SealEndpoint, Transition,
+    seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node, OutpointValue,
+    SealEndpoint, Transition,
 };
 use rgb20::{schema, Asset};
 
 use super::cache::{Cache, FileCache, FileCacheConfig};
 use super::Config;
 use crate::error::{
-    ApiErrorType, BootstrapError, RuntimeError, ServiceError,
-    ServiceErrorDomain, ServiceErrorSource,
+    ApiErrorType, BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
+    ServiceErrorSource,
 };
-use crate::rpc::{
-    self,
-    fungible::{AcceptReq, IssueReq, Request, TransferReq},
-    reply,
-    stash::AcceptRequest,
-    stash::TransferRequest,
-    Reply,
-};
+use crate::rpc::fungible::{AcceptReq, IssueReq, Request, TransferReq};
+use crate::rpc::stash::{AcceptRequest, TransferRequest};
+use crate::rpc::{self, reply, Reply};
 use crate::util::ToBech32Data;
 
 pub struct Runtime {
@@ -54,12 +48,10 @@ pub struct Runtime {
     config: Config,
 
     /// Request-response API session
-    fungible_rpc_server:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    fungible_rpc_server: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// Stash RPC client session
-    stash_rpc_client:
-        session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
+    stash_rpc_client: session::Raw<PlainTranscoder, transport::zmqsocket::Connection>,
 
     /// RGB fungible assets data cache: relational database sharing the client-
     /// friendly asset information with clients
@@ -77,9 +69,7 @@ impl Runtime {
     /// use and reduce number of errors. Cacher may be switched with compile
     /// configuration options and, thus, we need to make sure that the structure
     /// we use corresponds to certain trait and not specific type.
-    fn cache(&self) -> &impl Cache {
-        &self.cacher
-    }
+    fn cache(&self) -> &impl Cache { &self.cacher }
 
     pub fn init(config: Config) -> Result<Self, BootstrapError> {
         let cacher = FileCache::new(FileCacheConfig {
@@ -91,19 +81,11 @@ impl Runtime {
             err
         })?;
 
-        let session_rpc = session::Raw::with_zmq_unencrypted(
-            ZmqType::Rep,
-            &config.rpc_endpoint,
-            None,
-            None,
-        )?;
+        let session_rpc =
+            session::Raw::with_zmq_unencrypted(ZmqType::Rep, &config.rpc_endpoint, None, None)?;
 
-        let stash_rpc = session::Raw::with_zmq_unencrypted(
-            ZmqType::Req,
-            &config.stash_rpc,
-            None,
-            None,
-        )?;
+        let stash_rpc =
+            session::Raw::with_zmq_unencrypted(ZmqType::Req, &config.stash_rpc, None, None)?;
 
         Ok(Self {
             config,
@@ -123,9 +105,7 @@ impl TryService for Runtime {
         debug!("Registering RGB20 schema");
         self.register_schema().map_err(|_| {
             error!("Unable to register RGB20 schema");
-            RuntimeError::Internal(
-                "Unable to register RGB20 schema".to_string(),
-            )
+            RuntimeError::Internal("Unable to register RGB20 schema".to_string())
         })?;
 
         loop {
@@ -163,10 +143,7 @@ impl Runtime {
         );
         let message = &*self.unmarshaller.unmarshall(&*raw).map_err(|err| {
             error!("Error unmarshalling the data: {}", err);
-            ServiceError::from_rpc(
-                ServiceErrorSource::Contract(s!("fungible")),
-                err,
-            )
+            ServiceError::from_rpc(ServiceErrorSource::Contract(s!("fungible")), err)
         })?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
@@ -180,17 +157,12 @@ impl Runtime {
             Request::ExportAsset(asset_id) => self.rpc_export_asset(asset_id),
             Request::Sync(data_format) => self.rpc_sync(*data_format),
             Request::Assets(outpoint) => self.rpc_outpoint_assets(*outpoint),
-            Request::Allocations(contract_id) => {
-                self.rpc_asset_allocations(*contract_id)
-            }
+            Request::Allocations(contract_id) => self.rpc_asset_allocations(*contract_id),
         }
         .map_err(|err| ServiceError::contract(err, "fungible"))?)
     }
 
-    fn rpc_issue(
-        &mut self,
-        issue: &IssueReq,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_issue(&mut self, issue: &IssueReq) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ISSUE {}", issue);
 
         let issue = issue.clone();
@@ -223,10 +195,7 @@ impl Runtime {
         Ok(Reply::Asset(asset))
     }
 
-    fn rpc_transfer(
-        &mut self,
-        transfer: &TransferReq,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_transfer(&mut self, transfer: &TransferReq) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", transfer);
 
         // TODO #66: Check inputs that they really exist and have sufficient
@@ -242,27 +211,20 @@ impl Runtime {
         let inputs = transfer
             .inputs
             .iter()
-            .filter(|outpoint| {
-                !asset.outpoint_allocations(**outpoint).is_empty()
-            })
+            .filter(|outpoint| !asset.outpoint_allocations(**outpoint).is_empty())
             .cloned()
             .collect();
-        let transition = asset.transfer(
-            inputs,
-            transfer.payment.clone(),
-            transfer.change.clone(),
-        )?;
+        let transition =
+            asset.transfer(inputs, transfer.payment.clone(), transfer.change.clone())?;
         debug!("State transition: {}", transition);
 
-        trace!("Collecting other assets on the spent outpoints and preparing blank state transitions");
-        let mut other_outpoint_assets: BTreeMap<
-            ContractId,
-            BTreeSet<(OutPoint, AtomicValue)>,
-        > = bmap! {};
+        trace!(
+            "Collecting other assets on the spent outpoints and preparing blank state transitions"
+        );
+        let mut other_outpoint_assets: BTreeMap<ContractId, BTreeSet<(OutPoint, AtomicValue)>> =
+            bmap! {};
         for outpoint in &transfer.inputs {
-            for (other_contract_id, amounts) in
-                self.cacher.outpoint_assets(*outpoint)?
-            {
+            for (other_contract_id, amounts) in self.cacher.outpoint_assets(*outpoint)? {
                 let sum = amounts.into_iter().sum();
                 // Ignoring native asset, current contract and zero balances
                 if other_contract_id == transfer.contract_id || sum == 0 {
@@ -280,11 +242,14 @@ impl Runtime {
         );
         trace!("{:?}", other_outpoint_assets);
         let change_seal = if other_outpoint_assets.len() > 0 {
-            transfer.change.keys().find(|_| true).ok_or(
-                ServiceErrorDomain::Internal(s!(
+            transfer
+                .change
+                .keys()
+                .find(|_| true)
+                .ok_or(ServiceErrorDomain::Internal(s!(
                     "Other assets are present on the provided inputs, but no change address given"
-                ))
-            )?.clone()
+                )))?
+                .clone()
         } else {
             seal::Revealed {
                 method: CloseMethod::OpretFirst,
@@ -335,13 +300,15 @@ impl Runtime {
             let expose = consignment
                 .endpoints
                 .iter()
-                .filter_map(|(_, endpoint)| {
-                    if receivers.contains(endpoint) {
-                        Some(*endpoint)
-                    } else {
-                        None
-                    }
-                })
+                .filter_map(
+                    |(_, endpoint)| {
+                        if receivers.contains(endpoint) {
+                            Some(*endpoint)
+                        } else {
+                            None
+                        }
+                    },
+                )
                 .collect();
             consignment.finalize(&expose, transfer.contract_id);
         }
@@ -349,51 +316,33 @@ impl Runtime {
         Ok(reply)
     }
 
-    fn rpc_validate(
-        &mut self,
-        consignment: &Consignment,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_validate(&mut self, consignment: &Consignment) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got VALIDATE");
         self.validate(consignment.clone())
     }
 
-    fn rpc_accept(
-        &mut self,
-        accept: &AcceptReq,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_accept(&mut self, accept: &AcceptReq) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT");
         Ok(self.accept(accept.clone())?)
     }
 
-    fn rpc_enclose(
-        &mut self,
-        disclosure: &Disclosure,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_enclose(&mut self, disclosure: &Disclosure) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ENCLOSE");
         Ok(self.enclose(disclosure.clone())?)
     }
 
-    fn rpc_forget(
-        &mut self,
-        outpoint: &OutPoint,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_forget(&mut self, outpoint: &OutPoint) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got FORGET");
         Ok(self.forget(outpoint.clone())?)
     }
 
-    fn rpc_sync(
-        &mut self,
-        data_format: FileFormat,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_sync(&mut self, data_format: FileFormat) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got SYNC");
         let data = self.cacher.export(Some(data_format))?;
         Ok(Reply::Sync(reply::SyncFormat(data_format, data)))
     }
 
-    fn rpc_outpoint_assets(
-        &mut self,
-        outpoint: OutPoint,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_outpoint_assets(&mut self, outpoint: OutPoint) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ASSETS");
         let data = self.cacher.outpoint_assets(outpoint)?;
         Ok(Reply::OutpointAssets(data))
@@ -408,61 +357,42 @@ impl Runtime {
         Ok(Reply::AssetAllocations(data))
     }
 
-    fn rpc_import_asset(
-        &mut self,
-        genesis: &Genesis,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_import_asset(&mut self, genesis: &Genesis) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got IMPORT_ASSET");
         let asset = Asset::try_from(genesis.clone())?;
         self.import_asset(asset.clone(), genesis.clone())?;
         Ok(Reply::Asset(asset))
     }
 
-    fn rpc_export_asset(
-        &mut self,
-        asset_id: &ContractId,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_export_asset(&mut self, asset_id: &ContractId) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got EXPORT_ASSET");
         let genesis = self.export_asset(asset_id.clone())?;
         Ok(Reply::Genesis(genesis))
     }
 
     fn register_schema(&mut self) -> Result<(), ServiceErrorDomain> {
-        match self
-            .stash_req_rep(rpc::stash::Request::AddSchema(schema::schema()))?
-        {
+        match self.stash_req_rep(rpc::stash::Request::AddSchema(schema::schema()))? {
             Reply::Success => Ok(()),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
-    fn import_asset(
-        &mut self,
-        asset: Asset,
-        genesis: Genesis,
-    ) -> Result<bool, ServiceErrorDomain> {
+    fn import_asset(&mut self, asset: Asset, genesis: Genesis) -> Result<bool, ServiceErrorDomain> {
         match self.stash_req_rep(rpc::stash::Request::AddGenesis(genesis))? {
             Reply::Success => Ok(self.cacher.add_asset(asset)?),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
-    fn export_asset(
-        &mut self,
-        asset_id: ContractId,
-    ) -> Result<Genesis, ServiceErrorDomain> {
+    fn export_asset(&mut self, asset_id: ContractId) -> Result<Genesis, ServiceErrorDomain> {
         match self.stash_req_rep(rpc::stash::Request::ReadGenesis(asset_id))? {
             Reply::Genesis(genesis) => Ok(genesis.clone()),
             _ => Err(ServiceErrorDomain::Api(ApiErrorType::UnexpectedReply)),
         }
     }
 
-    fn consign(
-        &mut self,
-        transfer_req: TransferRequest,
-    ) -> Result<Reply, ServiceErrorDomain> {
-        let reply =
-            self.stash_req_rep(rpc::stash::Request::Transfer(transfer_req))?;
+    fn consign(&mut self, transfer_req: TransferRequest) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self.stash_req_rep(rpc::stash::Request::Transfer(transfer_req))?;
         if let Reply::Transfer(_) = reply {
             Ok(reply)
         } else {
@@ -470,12 +400,8 @@ impl Runtime {
         }
     }
 
-    fn validate(
-        &mut self,
-        consignment: Consignment,
-    ) -> Result<Reply, ServiceErrorDomain> {
-        let reply =
-            self.stash_req_rep(rpc::stash::Request::Validate(consignment))?;
+    fn validate(&mut self, consignment: Consignment) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self.stash_req_rep(rpc::stash::Request::Validate(consignment))?;
 
         match reply {
             Reply::ValidationStatus(_) => Ok(reply),
@@ -483,15 +409,11 @@ impl Runtime {
         }
     }
 
-    fn accept(
-        &mut self,
-        accept: AcceptReq,
-    ) -> Result<Reply, ServiceErrorDomain> {
-        let reply =
-            self.stash_req_rep(rpc::stash::Request::Accept(AcceptRequest {
-                consignment: accept.consignment.clone(),
-                reveal_outpoints: accept.reveal_outpoints.clone(),
-            }))?;
+    fn accept(&mut self, accept: AcceptReq) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self.stash_req_rep(rpc::stash::Request::Accept(AcceptRequest {
+            consignment: accept.consignment.clone(),
+            reveal_outpoints: accept.reveal_outpoints.clone(),
+        }))?;
         if let Reply::Success = reply {
             let asset_id = accept.consignment.genesis.contract_id();
             let asset = if self.cacher.has_asset(asset_id)? {
@@ -520,12 +442,8 @@ impl Runtime {
         }
     }
 
-    fn enclose(
-        &mut self,
-        disclosure: Disclosure,
-    ) -> Result<Reply, ServiceErrorDomain> {
-        let reply = self
-            .stash_req_rep(rpc::stash::Request::Enclose(disclosure.clone()))?;
+    fn enclose(&mut self, disclosure: Disclosure) -> Result<Reply, ServiceErrorDomain> {
+        let reply = self.stash_req_rep(rpc::stash::Request::Enclose(disclosure.clone()))?;
         if let Reply::Success = reply {
             // TODO #156: Improve RGB Core disclosure API providing methods for
             //       indexing underlying data in different ways. Do the same for
@@ -557,10 +475,7 @@ impl Runtime {
         }
     }
 
-    fn forget(
-        &mut self,
-        _outpoint: OutPoint,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn forget(&mut self, _outpoint: OutPoint) -> Result<Reply, ServiceErrorDomain> {
         todo!("Figure out do we need `forget` function")
         /*
            let mut removal_list = Vec::<_>::new();
@@ -604,10 +519,9 @@ impl Runtime {
         reveal_outpoints: &'a Vec<seal::Revealed>,
     ) -> Result<(), ServiceErrorDomain> {
         for (transition, txid) in data.into_iter() {
-            let assignment_vec = if let Some(assignments) = transition
-                .owned_rights_by_type(
-                    rgb20::schema::OwnedRightType::Assets as u16,
-                ) {
+            let assignment_vec = if let Some(assignments) =
+                transition.owned_rights_by_type(rgb20::schema::OwnedRightType::Assets as u16)
+            {
                 assignments
             } else {
                 continue;
@@ -627,9 +541,7 @@ impl Runtime {
                     assignment.revealed_seal().or_else(|| {
                         reveal_outpoints
                             .iter()
-                            .find(|reveal| {
-                                reveal.commit_conceal() == seal_confidential
-                            })
+                            .find(|reveal| reveal.commit_conceal() == seal_confidential)
                             .copied()
                     }) {
                     seal_revealed
@@ -653,10 +565,7 @@ impl Runtime {
         Ok(())
     }
 
-    fn stash_req_rep(
-        &mut self,
-        request: rpc::stash::Request,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn stash_req_rep(&mut self, request: rpc::stash::Request) -> Result<Reply, ServiceErrorDomain> {
         let data = request.serialize();
         trace!(
             "Sending {} bytes to stashd: {}",

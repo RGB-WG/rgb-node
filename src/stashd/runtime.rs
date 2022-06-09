@@ -11,30 +11,27 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use bp::dbc::Anchor;
-use commit_verify::multi_commit::ProtocolId;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
+use bp::dbc::Anchor;
+use commit_verify::lnpbp4::ProtocolId;
+use commit_verify::multi_commit::ProtocolId;
 use electrum_client::Client as ElectrumClient;
 use internet2::zmqsocket::ZmqType;
 use internet2::{
-    session, transport, CreateUnmarshaller, PlainTranscoder, Session,
-    TypedEnum, Unmarshall, Unmarshaller,
+    session, transport, CreateUnmarshaller, PlainTranscoder, Session, TypedEnum, Unmarshall,
+    Unmarshaller,
 };
 use microservices::node::TryService;
-use rgb::{
-    Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema,
-    SchemaId, Stash,
-};
+use rgb::{Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema, SchemaId, Stash};
 
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
 use super::storage::{DiskStorage, DiskStorageConfig, Store};
 use super::Config;
 use crate::error::{
-    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain,
-    ServiceErrorSource,
+    BootstrapError, RuntimeError, ServiceError, ServiceErrorDomain, ServiceErrorSource,
 };
 use crate::rpc::stash::{AcceptRequest, Request, TransferRequest};
 use crate::rpc::{reply, Reply};
@@ -74,13 +71,9 @@ impl Runtime {
     /// use and reduce number of errors. Indexer may be switched with compile
     /// configuration options and, thus, we need to make sure that the sturcture
     /// we use corresponds to certain trait and not specific type.
-    fn indexer(&self) -> &impl Index {
-        &self.indexer
-    }
+    fn indexer(&self) -> &impl Index { &self.indexer }
 
-    pub fn storage(&self) -> &impl Store {
-        &self.storage
-    }
+    pub fn storage(&self) -> &impl Store { &self.storage }
 
     pub fn init(config: Config) -> Result<Self, BootstrapError> {
         #[cfg(not(store_hammersbald))] // Default store
@@ -93,12 +86,8 @@ impl Runtime {
             data_format: config.format,
         })?;
 
-        let session_rpc = session::Raw::with_zmq_unencrypted(
-            ZmqType::Rep,
-            &config.rpc_endpoint,
-            None,
-            None,
-        )?;
+        let session_rpc =
+            session::Raw::with_zmq_unencrypted(ZmqType::Rep, &config.rpc_endpoint, None, None)?;
 
         Ok(Self {
             config,
@@ -148,18 +137,17 @@ impl Runtime {
             raw.len(),
             raw.to_bech32data()
         );
-        let message = &*self.unmarshaller.unmarshall(&*raw).map_err(|err| {
-            ServiceError::from_rpc(ServiceErrorSource::Stash, err)
-        })?;
+        let message = &*self
+            .unmarshaller
+            .unmarshall(&*raw)
+            .map_err(|err| ServiceError::from_rpc(ServiceErrorSource::Stash, err))?;
         debug!("Received ZMQ RPC request: {:?}", message);
         Ok(match message {
             Request::ListSchemata() => self.rpc_list_schemata(),
             Request::ListGeneses() => self.rpc_list_geneses(),
             Request::AddGenesis(genesis) => self.rpc_add_genesis(genesis),
             Request::AddSchema(schema) => self.rpc_add_schema(schema),
-            Request::ReadGenesis(contract_id) => {
-                self.rpc_read_genesis(contract_id)
-            }
+            Request::ReadGenesis(contract_id) => self.rpc_read_genesis(contract_id),
             Request::ReadSchema(schema_id) => self.rpc_read_schema(schema_id),
             Request::ReadTransitions(_) => unimplemented!(),
             Request::Transfer(consign) => self.rpc_transfer(consign),
@@ -186,46 +174,31 @@ impl Runtime {
         Ok(Reply::ContractIds(ids))
     }
 
-    fn rpc_add_schema(
-        &mut self,
-        schema: &Schema,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_add_schema(&mut self, schema: &Schema) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ADD_SCHEMA {}", schema);
         self.storage.add_schema(schema)?;
         Ok(Reply::Success)
     }
 
-    fn rpc_add_genesis(
-        &mut self,
-        genesis: &Genesis,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_add_genesis(&mut self, genesis: &Genesis) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ADD_GENESIS {}", genesis);
         self.storage.add_genesis(genesis)?;
         Ok(Reply::Success)
     }
 
-    fn rpc_read_genesis(
-        &mut self,
-        contract_id: &ContractId,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_read_genesis(&mut self, contract_id: &ContractId) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got READ_GENESIS {}", contract_id);
         let genesis = self.storage.genesis(contract_id)?;
         Ok(Reply::Genesis(genesis))
     }
 
-    fn rpc_read_schema(
-        &mut self,
-        schema_id: &SchemaId,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_read_schema(&mut self, schema_id: &SchemaId) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got READ_SCHEMA {}", schema_id);
         let schema = self.storage.schema(schema_id)?;
         Ok(Reply::Schema(schema))
     }
 
-    fn rpc_transfer(
-        &mut self,
-        request: &TransferRequest,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_transfer(&mut self, request: &TransferRequest) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", request);
 
         let mut transitions = request.other_transitions.clone();
@@ -235,9 +208,7 @@ impl Runtime {
         let mut psbt = request.psbt.clone();
         let map = transitions
             .iter()
-            .map(|(contract_id, ts)| {
-                ((*contract_id).into(), ts.node_id().into())
-            })
+            .map(|(contract_id, ts)| ((*contract_id).into(), ts.node_id().into()))
             .collect::<BTreeMap<_, _>>();
         let contract_ids = map.keys().copied().collect::<BTreeSet<_>>();
         let anchor = Anchor::commit(&mut psbt, map)
@@ -259,9 +230,7 @@ impl Runtime {
         let anchored_transitions = transitions
             .clone()
             .into_iter()
-            .filter(|(contract_id, _)| {
-                contract_ids.contains(&ProtocolId::from(*contract_id))
-            })
+            .filter(|(contract_id, _)| contract_ids.contains(&ProtocolId::from(*contract_id)))
             .collect();
         disclosure.insert_anchored_transitions(anchor, anchored_transitions);
 
@@ -272,10 +241,7 @@ impl Runtime {
         }))
     }
 
-    fn rpc_validate(
-        &mut self,
-        consignment: &Consignment,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_validate(&mut self, consignment: &Consignment) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got VALIDATE CONSIGNMENT");
 
         let schema = self
@@ -287,18 +253,14 @@ impl Runtime {
         let electrum = ElectrumClient::new(&self.config.electrum_server)
             .map_err(|_| ServiceErrorDomain::Electrum)?;
         let root_schema = self.storage().schema(&schema.root_id).ok();
-        let validation_status =
-            consignment.validate(&schema, root_schema.as_ref(), electrum);
+        let validation_status = consignment.validate(&schema, root_schema.as_ref(), electrum);
 
         self.storage.add_genesis(&consignment.genesis)?;
 
         Ok(Reply::ValidationStatus(validation_status))
     }
 
-    fn rpc_accept(
-        &mut self,
-        accept_req: &AcceptRequest,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_accept(&mut self, accept_req: &AcceptRequest) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ACCEPT CONSIGNMENT");
 
         let known_seals = &accept_req.reveal_outpoints;
@@ -310,10 +272,7 @@ impl Runtime {
         Ok(Reply::Success)
     }
 
-    fn rpc_enclose(
-        &mut self,
-        disclosure: &Disclosure,
-    ) -> Result<Reply, ServiceErrorDomain> {
+    fn rpc_enclose(&mut self, disclosure: &Disclosure) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got ENCLOSE DISCLOSURE");
 
         self.enclose(&disclosure)

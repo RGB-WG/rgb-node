@@ -11,16 +11,16 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::{ArgEnum, Parser};
-#[cfg(feature = "serde")]
-use serde::Deserialize;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+use clap::{ArgEnum, Parser};
 use internet2::ZmqSocketAddr;
 use lnpbp::chain::Chain;
 use microservices::FileFormat;
+#[cfg(feature = "serde")]
+use serde::Deserialize;
 
 use crate::constants::*;
 
@@ -110,15 +110,9 @@ pub struct Opts {
     pub electrum_server: String,
 }
 
-#[derive(
-    ArgEnum, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display,
-)]
+#[derive(ArgEnum, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[display(Debug)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize,),
-    serde(crate = "serde_crate")
-)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize,), serde(crate = "serde_crate"))]
 #[repr(u8)]
 #[non_exhaustive]
 pub enum ContractName {
@@ -256,8 +250,6 @@ impl Config {
             .replace("{network}", &self.network.to_string())
             .replace("{data_dir}", self.data_dir.to_str().unwrap())
             .parse()
-            .unwrap_or_else(|err| {
-                panic!("Error parsing parameter `{}`: {}", param, err)
-            })
+            .unwrap_or_else(|err| panic!("Error parsing parameter `{}`: {}", param, err))
     }
 }
