@@ -17,8 +17,9 @@ use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
 use amplify::{IoError, Wrapper};
-use bitcoin::hashes::Hash;
+use bitcoin::hashes::{sha256t, Hash};
 use bp::dbc::{Anchor, AnchorId};
+use commit_verify::lnpbp4::MerkleBlock;
 use microservices::FileFormat;
 use rgb::NodeId;
 use strict_encoding::{StrictDecode, StrictEncode};
@@ -186,19 +187,13 @@ impl Index for BTreeIndex {
             .ok_or(BTreeIndexError::AnchorNotFound)
     }
 
-    fn index_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
-        for commitment in anchor
-            .lnpbp4_block
-            .commitments()
-            .iter()
-            .filter(|commitment| commitment.protocol.is_some())
-            .map(|commitment| commitment.message)
-        {
+    fn index_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error> {
+        let anchor_id = anchor.anchor_id();
+        for commitment in &anchor.lnpbp4_proof {
+            let scalar = commitment.into_inner();
             self.index.node_anchors.insert(
-                NodeId::from_inner(<NodeId as Wrapper>::Inner::from_inner(
-                    commitment.into_inner(),
-                )),
-                anchor.anchor_id(),
+                NodeId::from_inner(sha256t::Hash::from_inner(scalar)),
+                anchor_id,
             );
         }
         self.store()?;

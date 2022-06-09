@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use bp::dbc::{Anchor, AnchorId};
+use commit_verify::lnpbp4::MerkleBlock;
 use rgb::prelude::*;
 
 use crate::error::ServiceErrorDomain;
@@ -31,9 +32,9 @@ pub trait Store {
     fn add_genesis(&mut self, genesis: &Genesis) -> Result<bool, Self::Error>;
     fn remove_genesis(&mut self, id: &ContractId) -> Result<bool, Self::Error>;
 
-    fn anchor(&self, id: &AnchorId) -> Result<Anchor, Self::Error>;
+    fn anchor(&self, id: &AnchorId) -> Result<Anchor<MerkleBlock>, Self::Error>;
     fn has_anchor(&self, id: &AnchorId) -> Result<bool, Self::Error>;
-    fn add_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error>;
+    fn add_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error>;
     fn remove_anchor(&mut self, id: &AnchorId) -> Result<bool, Self::Error>;
 
     fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error>;

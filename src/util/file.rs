@@ -122,7 +122,7 @@ impl ReadWrite for Genesis {
     }
 }
 
-impl ReadWrite for Anchor {
+impl ReadWrite for Anchor<MerkleBlock> {
     fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;
         let mut magic_buf = [0u8; 4];

@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use bp::dbc::{Anchor, AnchorId};
+use commit_verify::lnpbp4::MerkleBlock;
 use rgb::NodeId;
 
 use crate::error::ServiceErrorDomain;
@@ -21,5 +22,5 @@ pub trait Index {
 
     fn anchor_id_by_transition_id(&self, tsid: NodeId) -> Result<AnchorId, Self::Error>;
 
-    fn index_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error>;
+    fn index_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error>;
 }

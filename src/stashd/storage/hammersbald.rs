@@ -11,9 +11,11 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 use std::path::PathBuf;
-use std::{fs, fs, io, io};
+use std::{fs, io};
 
 use bp::dbc::{Anchor, AnchorId};
+use commit_verify::lnpbp4::MerkleBlock;
+use hammersbald::{HammersbaldAPI, persistent};
 use rgb::prelude::*;
 use strict_encoding::{strict_serialize, StrictDecode};
 
@@ -236,7 +238,7 @@ impl Store for HammersbaldStorage {
         Ok(true)
     }
 
-    fn anchor(&self, id: &AnchorId) -> Result<Anchor, Self::Error> {
+    fn anchor(&self, id: &AnchorId) -> Result<Anchor<MerkleBlock>, Self::Error> {
         let key = strict_serialize(id)?;
         let value = self
             .anchors_db
@@ -255,7 +257,7 @@ impl Store for HammersbaldStorage {
         }
     }
 
-    fn add_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
+    fn add_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error> {
         let anchor_id = anchor.anchor_id();
         let key = strict_serialize(&anchor_id)?;
         let value = strict_serialize(anchor)?;

@@ -16,7 +16,6 @@ use std::path::PathBuf;
 
 use bp::dbc::Anchor;
 use commit_verify::lnpbp4::ProtocolId;
-use commit_verify::multi_commit::ProtocolId;
 use electrum_client::Client as ElectrumClient;
 use internet2::zmqsocket::ZmqType;
 use internet2::{
@@ -213,6 +212,10 @@ impl Runtime {
         let contract_ids = map.keys().copied().collect::<BTreeSet<_>>();
         let anchor = Anchor::commit(&mut psbt, map)
             .map_err(|err| ServiceErrorDomain::Anchor(format!("{}", err)))?;
+        let concealed_anchor = anchor
+            .clone()
+            .into_merkle_proof(request.contract_id)
+            .expect("contract id for the selected transfer not present in the anchor");
 
         // Prepare consignments: extract from stash storage the required data
         // and assemble them into a consignment
@@ -220,7 +223,7 @@ impl Runtime {
             .consign(
                 request.contract_id,
                 &request.transition,
-                Some(&anchor),
+                Some(&concealed_anchor),
                 &request.endpoints,
             )
             .map_err(|_| ServiceErrorDomain::Stash)?;

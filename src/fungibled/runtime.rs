@@ -310,7 +310,7 @@ impl Runtime {
                     },
                 )
                 .collect();
-            consignment.finalize(&expose, transfer.contract_id);
+            consignment.finalize(&expose);
         }
 
         Ok(reply)

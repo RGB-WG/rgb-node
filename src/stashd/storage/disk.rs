@@ -16,6 +16,7 @@ use std::{fs, io};
 
 use bitcoin::hashes::hex::ToHex;
 use bp::dbc::{Anchor, AnchorId};
+use commit_verify::lnpbp4::MerkleBlock;
 use rgb::prelude::*;
 
 use super::Store;
@@ -259,7 +260,7 @@ impl Store for DiskStorage {
         Ok(existed)
     }
 
-    fn anchor(&self, id: &AnchorId) -> Result<Anchor, Self::Error> {
+    fn anchor(&self, id: &AnchorId) -> Result<Anchor<MerkleBlock>, Self::Error> {
         Ok(Anchor::read_file(self.config.anchor_filename(id))?)
     }
 
@@ -267,7 +268,7 @@ impl Store for DiskStorage {
         Ok(self.config.anchor_filename(id).as_path().exists())
     }
 
-    fn add_anchor(&mut self, anchor: &Anchor) -> Result<bool, Self::Error> {
+    fn add_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error> {
         let filename = self.config.anchor_filename(&anchor.anchor_id());
         let exists = filename.as_path().exists();
         anchor.write_file(filename)?;
