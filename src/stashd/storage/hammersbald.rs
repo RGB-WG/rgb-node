@@ -1,5 +1,5 @@
 // RGB standard library
-// Written in 2020 by
+// Written in 2019-2022 by
 //     Rajarshi Maitra <rajarshi149@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -15,7 +15,7 @@ use std::{fs, io};
 
 use bp::dbc::{Anchor, AnchorId};
 use commit_verify::lnpbp4::MerkleBlock;
-use hammersbald::{HammersbaldAPI, persistent};
+use hammersbald::{persistent, HammersbaldAPI};
 use rgb::prelude::*;
 use strict_encoding::{strict_serialize, StrictDecode};
 

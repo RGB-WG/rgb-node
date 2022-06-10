@@ -1,6 +1,6 @@
 // RGB standard library
-// Written in 2020 by
-//     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
+// Written in 2019-2022 by
+//     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -14,11 +14,11 @@
 // TODO #166: Consider moving this to LNP/BP Core Library
 
 use core::str::FromStr;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 use bitcoin::{OutPoint, Txid};
 use rgb::contract::seal::Revealed;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Display, Error, From)]
 #[display(doc_comments)]
@@ -31,14 +31,8 @@ use rgb::contract::seal::Revealed;
 /// a hexadecimal string.
 pub struct ParseError;
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, Display, StrictEncode, StrictDecode,
-)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize,),
-    serde(crate = "serde_crate")
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Display, StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize,), serde(crate = "serde_crate"))]
 #[display(Debug)]
 pub struct SealSpec {
     pub vout: u32,
@@ -46,9 +40,7 @@ pub struct SealSpec {
 }
 
 impl SealSpec {
-    pub fn with_vout(vout: u32) -> Self {
-        Self { vout, txid: None }
-    }
+    pub fn with_vout(vout: u32) -> Self { Self { vout, txid: None } }
 }
 
 impl From<OutPoint> for SealSpec {

@@ -1,6 +1,6 @@
 // RGB standard library
-// Written in 2020 by
-//     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
+// Written in 2019-2022 by
+//     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -26,7 +26,7 @@ use crate::constants::*;
 #[clap(
     name = "rgb-cli",
     version = "0.1.0-beta.2",
-    author = "Dr Maxim Orlovsky <orlovsky@pandoracore.com>",
+    author = "Dr Maxim Orlovsky <orlovsky@lnp-bp.org>",
     about = "RGB node command-line interface; part of Lightning network protocol suite"
 )]
 pub struct Opts {
