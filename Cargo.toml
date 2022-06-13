@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.7.0-alpha.2"
+version = "0.7.0-alpha.4"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -31,13 +31,14 @@ required-features = ["cli"]
 [dependencies]
 # LNP/BP crates
 amplify = "3.12.0"
-strict_encoding = "1.8.1"
+stens = "0.3.1"
+strict_encoding = "1.8.8"
 commit_verify = "0.7.0-rc.4"
 lnpbp = "0.7.0"
 descriptor-wallet = { version = "0.7.1", features = ["electrum"] }
 bp-core = "0.7.0-beta.5"
-rgb-core = "0.7.0-alpha.2"
-rgb20 = { version = "0.7.0-alpha.2", optional = true }
+rgb-core = { version = "0.7.0-alpha.4", git = "https://github.com/RGB-WG/rgb-core" }
+rgb20 = { version = "0.7.0-alpha.4", git = "https://github.com/RGB-WG/rust-rgb20", optional = true }
 # rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }

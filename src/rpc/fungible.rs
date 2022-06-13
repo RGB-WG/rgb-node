@@ -20,6 +20,7 @@ use rgb::{
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use stens::AsciiString;
 use wallet::psbt::Psbt;
 
 #[derive(Clone, Debug, Display, Api)]
@@ -75,10 +76,10 @@ pub enum Request {
 pub struct IssueReq {
     /// Asset ticker (up to 8 characters, always converted to uppercase)
     #[clap(validator=ticker_validator)]
-    pub ticker: String,
+    pub ticker: AsciiString,
 
     /// Asset name (up to 32 characters)
-    pub name: String,
+    pub name: AsciiString,
 
     /// Asset description
     #[clap(short, long)]

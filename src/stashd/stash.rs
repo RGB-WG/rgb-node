@@ -111,8 +111,8 @@ impl Stash for Runtime {
         let genesis = self.storage.genesis(&contract_id)?;
 
         trace!("Getting node matching node id");
-        let mut state_transitions = LargeVec::from(vec![]);
-        let mut state_extensions: LargeVec<Extension> = LargeVec::from(vec![]);
+        let mut state_transitions = empty!();
+        let mut state_extensions: LargeVec<Extension> = empty!();
         if let Some(transition) = node.as_any().downcast_ref::<Transition>().clone() {
             let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
             state_transitions.push((anchor.clone(), transition.clone()));

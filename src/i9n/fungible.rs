@@ -24,6 +24,7 @@ use rgb::{
     PSBT_OUT_PUBKEY,
 };
 use rgb20::Asset;
+use stens::AsciiString;
 use wallet::psbt::Psbt;
 
 use super::{Error, Runtime};
@@ -44,8 +45,8 @@ impl Runtime {
     pub fn issue(
         &mut self,
         chain: Chain,
-        ticker: String,
-        name: String,
+        ticker: AsciiString,
+        name: AsciiString,
         description: Option<String>,
         precision: u8,
         allocation: Vec<OutpointValue>,
