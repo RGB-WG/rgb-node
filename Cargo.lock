@@ -450,9 +450,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.18"
+version = "3.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
+checksum = "a836566fa5f52f7ddf909a8a2f9029b9f78ca584cd95cf7e87f8073110f4c5c9"
 dependencies = [
  "atty",
  "bitflags",
@@ -467,9 +467,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.18"
+version = "3.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
+checksum = "986fd75d1dfd2c34eb8c9275ae38ad87ea9478c9b79e87f1801f7d866dfb1e37"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -480,9 +480,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1578caf06996235e9339c500a68e978cd65c1ab8a9f505889d895b9be26e250"
+checksum = "5538cd660450ebeb4234cfecf8f2284b844ffc4c50531e66d584ad5b91293613"
 dependencies = [
  "os_str_bytes",
 ]
@@ -1046,9 +1046,9 @@ dependencies = [
 
 [[package]]
 name = "internet2"
-version = "0.7.0-rc.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "684c61496d7edee8528c36cf4c1f0fb11922f31dd7824ee926f4f8644c63070a"
+checksum = "aa879ff19a8de89c828f2bb6343bb87228e91f3e1fe98f9090cd7cc4e4e44656"
 dependencies = [
  "amplify",
  "bitcoin_hashes 0.10.0",
@@ -1263,9 +1263,9 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.7.0-rc.3"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "815f6b0b607daf931711ef8b7f085382efe643d541f492b87720c4e95c5a82e9"
+checksum = "ff4230e1f570ee09e699be6e5334bfd32fce25dcf375ebbad58cd5e784e40132"
 dependencies = [
  "amplify",
  "clap",

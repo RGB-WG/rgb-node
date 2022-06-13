@@ -42,8 +42,8 @@ rgb20 = { version = "0.7.0-beta.1", optional = true }
 # rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
-internet2 = "0.7.0-rc.1"
-microservices = { version = "0.7.0-rc.3", default-features = false }
+internet2 = "0.7.0"
+microservices = { version = "0.7.0", default-features = false }
 # Bitcoin
 bitcoin = "0.28.1"
 electrum-client = { version = "0.10.1", optional = true }
