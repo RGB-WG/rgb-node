@@ -1,7 +1,7 @@
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.7.0-beta.1"
+version = "0.7.0-beta.2"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -37,8 +37,8 @@ commit_verify = "0.7.0"
 lnpbp = "0.7.0"
 descriptor-wallet = { version = "0.7.1", features = ["electrum"] }
 bp-core = "0.7.0"
-rgb-core = "0.7.0-beta.1"
-rgb20 = { version = "0.7.0-beta.1", optional = true }
+rgb-core = "0.7.0-rc.1"
+rgb20 = { version = "0.7.0-rc.1", optional = true }
 # rgb21 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb22 = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # rgb23 = { git = "https://github.com/rgb-org/rgb-core", optional = true }

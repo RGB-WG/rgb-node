@@ -56,6 +56,9 @@ pub enum Error {
     #[from(UnrelatedProof)]
     #[from(LeafNotKnown)]
     BrokenAnchor,
+
+    /// Consignment contains too many items (>2 billions).
+    TooManyItems,
 }
 
 pub struct DumbIter<T>(std::marker::PhantomData<T>);
@@ -111,11 +114,14 @@ impl Stash for Runtime {
         trace!("Looking up for genesis");
         let genesis = self.storage.genesis(&contract_id)?;
 
+        trace!("Looking up for schema");
+        let schema = self.storage.schema(&genesis.schema_id())?;
+
         trace!("Getting node matching node id");
         let mut anchored_bundles: AnchoredBundles = LargeVec::new();
         let mut state_extensions: LargeVec<Extension> = empty!();
         let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
-        anchored_bundles.push((anchor.clone(), bundle.clone()));
+        let _ = anchored_bundles.push((anchor.clone(), bundle.clone()));
 
         trace!("Collecting other involved nodes");
         let mut sources = VecDeque::<NodeId>::new();
@@ -152,11 +158,15 @@ impl Stash for Runtime {
                         sources.extend(transition.parent_owned_rights().keys());
                         sources.extend(transition.parent_public_rights().keys());
                     }
-                    anchored_bundles.push((concealed_anchor.clone(), bundle));
+                    anchored_bundles
+                        .push((concealed_anchor.clone(), bundle))
+                        .map_err(|_| Error::TooManyItems)?;
                 }
                 (Err(_), Ok(mut extension)) => {
                     extension.conceal_state();
-                    state_extensions.push(extension.clone());
+                    state_extensions
+                        .push(extension.clone())
+                        .map_err(|_| Error::TooManyItems)?;
                     sources.extend(extension.parent_owned_rights().keys());
                     sources.extend(extension.parent_public_rights().keys());
                 }
@@ -167,6 +177,7 @@ impl Stash for Runtime {
         let bundle_id = bundle.bundle_id();
         let endpoints = endpoints.iter().map(|op| (bundle_id, *op)).collect();
         Ok(Consignment::with(
+            schema,
             genesis,
             endpoints,
             anchored_bundles,
@@ -177,7 +188,7 @@ impl Stash for Runtime {
     fn accept(
         &mut self,
         consignment: &Consignment,
-        known_seals: &Vec<seal::Revealed>,
+        known_seals: &[seal::Revealed],
     ) -> Result<(), Error> {
         let contract_id = consignment.genesis.contract_id();
 

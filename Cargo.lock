@@ -1747,15 +1747,14 @@ checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "rgb-core"
-version = "0.7.0-beta.1"
+version = "0.7.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb58619d95dacaa6f2153fc18be73136d0e9bef36721640d405c2d321063348b"
+checksum = "331e7ebd57096945a943d52ae6eb65cae8a9a9b66c0389765371b517a811f45a"
 dependencies = [
  "aluvm",
  "amplify",
  "bech32 0.9.0",
  "bitcoin",
- "bitcoin_hashes 0.10.0",
  "bp-core",
  "chrono",
  "clap",
@@ -1778,9 +1777,9 @@ dependencies = [
 
 [[package]]
 name = "rgb20"
-version = "0.7.0-beta.1"
+version = "0.7.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d58f8d800f78d55661a636a6f1539ccbd8899e01d50b8a47b44657baca94ca7"
+checksum = "5778dfb84e4d0eb360ab273171aab99451d6104e87f70f10d994c91c105fa463"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1797,7 +1796,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.7.0-beta.1"
+version = "0.7.0-beta.2"
 dependencies = [
  "amplify",
  "base64 0.12.3",

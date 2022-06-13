@@ -57,7 +57,7 @@ pub enum Request {
     Transfer(TransferRequest),
 
     #[api(type = 0x0403)]
-    #[display("validate({0})")]
+    #[display("validate(...)")]
     Validate(Consignment),
 
     #[api(type = 0x0405)]

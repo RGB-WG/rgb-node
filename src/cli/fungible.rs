@@ -15,6 +15,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
+use amplify::hex::ToHex;
 use bitcoin::consensus::{Decodable, Encodable};
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
@@ -23,7 +24,7 @@ use commit_verify::CommitConceal;
 use microservices::FileFormat;
 use rgb::prelude::*;
 use rgb20::Asset;
-use strict_encoding::strict_deserialize;
+use strict_encoding::{strict_deserialize, StrictEncode};
 
 use super::{Error, OutputFormat, Runtime};
 use crate::rpc::fungible::{AcceptReq, IssueReq, TransferReq};
@@ -487,7 +488,10 @@ impl TransferCli {
                     self.consignment, self.disclosure, self.transaction
                 );
                 eprint!("Consignment data to share:");
-                println!("{}", transfer.consignment);
+                println!(
+                    "{}",
+                    transfer.consignment.strict_serialize().unwrap().to_hex()
+                );
             }
             _ => (),
         }
