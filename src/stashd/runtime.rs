@@ -23,7 +23,9 @@ use internet2::{
     Unmarshaller,
 };
 use microservices::node::TryService;
-use rgb::{Consignment, ContractId, Disclosure, Genesis, Node, NodeId, Schema, SchemaId, Stash};
+use rgb::{
+    Consignment, ContractId, Disclosure, Genesis, NodeId, Schema, SchemaId, Stash, TransitionBundle,
+};
 
 use super::index::{BTreeIndex, Index};
 #[cfg(not(store_hammersbald))] // Default store
@@ -197,17 +199,32 @@ impl Runtime {
         Ok(Reply::Schema(schema))
     }
 
+    // TODO: Support bundles
     fn rpc_transfer(&mut self, request: &TransferRequest) -> Result<Reply, ServiceErrorDomain> {
         debug!("Got TRANSFER {}", request);
 
         let mut transitions = request.other_transitions.clone();
         transitions.insert(request.contract_id, request.transition.clone());
 
+        let inputs = request
+            .inputs
+            .iter()
+            .map(|outpoint| outpoint.vout as u16)
+            .collect::<BTreeSet<_>>();
+
         // Construct anchor
         let mut psbt = request.psbt.clone();
-        let map = transitions
+        let bundle = TransitionBundle::from(bmap! { request.transition.clone() => inputs.clone() });
+        let bundles = transitions
             .iter()
-            .map(|(contract_id, ts)| ((*contract_id).into(), ts.node_id().into()))
+            .map(|(contract_id, transition)| {
+                let bundle = TransitionBundle::from(bmap! { transition.clone() => inputs.clone() });
+                (*contract_id, bundle)
+            })
+            .collect::<BTreeMap<_, _>>();
+        let map = bundles
+            .iter()
+            .map(|(contract_id, bundle)| ((*contract_id).into(), bundle.bundle_id().into()))
             .collect::<BTreeMap<_, _>>();
         let contract_ids = map.keys().copied().collect::<BTreeSet<_>>();
         let anchor = Anchor::commit(&mut psbt, map)
@@ -222,7 +239,7 @@ impl Runtime {
         let consignment = self
             .consign(
                 request.contract_id,
-                &request.transition,
+                bundle,
                 Some(&concealed_anchor),
                 &request.endpoints,
             )
@@ -230,12 +247,11 @@ impl Runtime {
 
         // Prepare disclosure
         let mut disclosure = Disclosure::default();
-        let anchored_transitions = transitions
-            .clone()
+        let anchored_bundles = bundles
             .into_iter()
             .filter(|(contract_id, _)| contract_ids.contains(&ProtocolId::from(*contract_id)))
             .collect();
-        disclosure.insert_anchored_transitions(anchor, anchored_transitions);
+        disclosure.insert_anchored_bundles(anchor, anchored_bundles);
 
         Ok(Reply::Transfer(reply::Transfer {
             consignment,

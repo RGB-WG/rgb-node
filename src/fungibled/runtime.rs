@@ -26,6 +26,7 @@ use internet2::{
 };
 use microservices::node::TryService;
 use microservices::FileFormat;
+use rgb::vm::embedded::constants::TRANSITION_TYPE_VALUE_TRANSFER;
 use rgb::{
     seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, Node, OutpointValue,
     SealEndpoint, Transition,
@@ -419,7 +420,7 @@ impl Runtime {
             let asset = if self.cacher.has_asset(asset_id)? {
                 self.cacher.asset(asset_id)?.clone()
             } else {
-                Asset::try_from(accept.consignment.genesis)?
+                Asset::try_from(accept.consignment.genesis.clone())?
             };
             // NB: Previously we were adding endpoint-only data; but I think
             // this filtering is not necessary
@@ -429,9 +430,7 @@ impl Runtime {
                 asset,
                 accept
                     .consignment
-                    .state_transitions
-                    .iter()
-                    .map(|(anchor, transition)| (transition, anchor.txid)),
+                    .transition_witness_iter(&[TRANSITION_TYPE_VALUE_TRANSFER]),
                 &accept.reveal_outpoints,
             )?;
             Ok(reply)
@@ -449,20 +448,21 @@ impl Runtime {
             //       indexing underlying data in different ways. Do the same for
             //       Consignment
             for contract_id in disclosure
-                .transitions()
+                .anchored_bundles()
                 .values()
                 .map(|(_, map)| map.keys())
                 .flatten()
             {
                 let asset = self.cacher.asset(*contract_id)?.clone();
                 let data = disclosure
-                    .transitions()
+                    .anchored_bundles()
                     .values()
                     .map(|(anchor, map)| {
                         let txid: Txid = anchor.txid;
                         map.iter()
                             .filter(|(id, _)| *id == contract_id)
-                            .map(move |(_, transition)| (transition, txid))
+                            .flat_map(|(_, bundle)| bundle.known_transitions())
+                            .map(move |transition| (transition, txid))
                     })
                     .flatten();
                 self.update_asset(asset, data, &vec![])?;

@@ -150,6 +150,34 @@ impl ReadWrite for Anchor<MerkleBlock> {
     }
 }
 
+impl ReadWrite for TransitionBundle {
+    fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
+        let mut file = file(filename, FileMode::Read)?;
+        let mut magic_buf = [0u8; 4];
+        file.read_exact(&mut magic_buf)?;
+        let magic = u32::from_be_bytes(magic_buf);
+        let magic = MagicNumber::try_from(magic).map_err(|detected| {
+            Error::DataIntegrityError(format!(
+                "Wrong file type: expected state transition file, got unknown magic number {}",
+                detected
+            ))
+        })?;
+        if magic != MagicNumber::Bundle {
+            Err(Error::DataIntegrityError(format!(
+                "Wrong file type: expected transition bundle file, got {}",
+                magic
+            )))?
+        }
+        TransitionBundle::strict_decode(file)
+    }
+
+    fn write_file(&self, filename: impl AsRef<Path>) -> Result<usize, Error> {
+        let mut file = file(filename, FileMode::Create)?;
+        file.write(&MagicNumber::Bundle.to_u32().to_be_bytes())?;
+        self.strict_encode(file)
+    }
+}
+
 impl ReadWrite for Transition {
     fn read_file(filename: impl AsRef<Path>) -> Result<Self, Error> {
         let mut file = file(filename, FileMode::Read)?;

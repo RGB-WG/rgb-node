@@ -20,7 +20,11 @@ use crate::error::ServiceErrorDomain;
 pub trait Index {
     type Error: ::std::error::Error + Into<ServiceErrorDomain>;
 
-    fn anchor_id_by_transition_id(&self, tsid: NodeId) -> Result<AnchorId, Self::Error>;
+    fn anchor_id_by_transition_id(&self, node_id: NodeId) -> Result<AnchorId, Self::Error>;
 
-    fn index_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error>;
+    fn index_anchor(
+        &mut self,
+        anchor: &Anchor<MerkleBlock>,
+        node_id: NodeId,
+    ) -> Result<bool, Self::Error>;
 }

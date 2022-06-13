@@ -35,6 +35,10 @@ pub enum MagicNumber {
     /// = 2e91cbc08b6205efb4f908bb9bd3fcf5c148763f7b23b0506ef64ffd414fc9b4
     Genesis = 0x2e91cbc0,
 
+    /// Equals to first 4 bytes of SHA256("rgb:bundle")
+    /// = a927fbcc904512d2644fe3d7e1409a52ead272a682b69d51580f4d9c0203fac2
+    Bundle = 0xa927fbcc,
+
     /// Equals to first 4 bytes of SHA256("rgb:transition")
     /// = bf11926e3db131632bdfa8f996d52d6d19e25d0884c922365ff8cd3c73f10198
     Transition = 0xbf11926e,

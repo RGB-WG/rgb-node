@@ -18,8 +18,9 @@ use bitcoin::OutPoint;
 use bp::dbc::{Anchor, AnchorId};
 use commit_verify::lnpbp4::{LeafNotKnown, MerkleBlock, MerkleProof, ProtocolId, UnrelatedProof};
 use rgb::{
-    seal, AssignmentVec, ConcealState, Consignment, ContractId, Disclosure, Extension, Genesis,
-    MergeReveal, Node, NodeId, Schema, SchemaId, SealEndpoint, Stash, Transition,
+    seal, AnchoredBundles, AssignmentVec, ConcealState, ConcealTransitions, Consignment,
+    ContractId, Disclosure, Extension, Genesis, MergeReveal, Node, NodeId, Schema, SchemaId,
+    SealEndpoint, Stash, Transition, TransitionBundle,
 };
 use strict_encoding::LargeVec;
 use wallet::onchain::ResolveTx;
@@ -96,14 +97,14 @@ impl Stash for Runtime {
     fn consign(
         &self,
         contract_id: ContractId,
-        node: &impl Node,
+        bundle: TransitionBundle,
         anchor: Option<&Anchor<MerkleProof>>,
         endpoints: &BTreeSet<SealEndpoint>,
     ) -> Result<Consignment, Error> {
         debug!(
-            "Preparing consignment for contract {} node {} for endpoints {:?}",
+            "Preparing consignment for contract {} bundle {} for endpoints {:?}",
             contract_id,
-            node.node_id(),
+            bundle.bundle_id(),
             endpoints
         );
 
@@ -111,21 +112,17 @@ impl Stash for Runtime {
         let genesis = self.storage.genesis(&contract_id)?;
 
         trace!("Getting node matching node id");
-        let mut state_transitions = empty!();
+        let mut anchored_bundles: AnchoredBundles = LargeVec::new();
         let mut state_extensions: LargeVec<Extension> = empty!();
-        if let Some(transition) = node.as_any().downcast_ref::<Transition>().clone() {
-            let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
-            state_transitions.push((anchor.clone(), transition.clone()));
-        } else if let Some(extension) = node.as_any().downcast_ref::<Extension>().clone() {
-            state_extensions.push(extension.clone());
-        } else {
-            Err(Error::GenesisNode)?;
-        }
+        let anchor = anchor.ok_or(Error::AnchorParameterIsRequired)?;
+        anchored_bundles.push((anchor.clone(), bundle.clone()));
 
         trace!("Collecting other involved nodes");
         let mut sources = VecDeque::<NodeId>::new();
-        sources.extend(node.parent_owned_rights().iter().map(|(id, _)| id));
-        sources.extend(node.parent_public_rights().iter().map(|(id, _)| id));
+        for transition in bundle.known_transitions() {
+            sources.extend(transition.parent_owned_rights().iter().map(|(id, _)| id));
+            sources.extend(transition.parent_public_rights().iter().map(|(id, _)| id));
+        }
         trace!("Node list for consignment: {:#?}", sources);
         while let Some(node_id) = sources.pop_front() {
             if node_id.into_inner() == genesis.contract_id().into_inner() {
@@ -144,14 +141,18 @@ impl Stash for Runtime {
             trace!("Extending source data with the ancestors");
             // TODO #162: (new) Improve this logic
             match (
-                self.storage.transition(&node_id),
+                self.storage.bundle(&bundle.bundle_id()),
                 self.storage.extension(&node_id),
             ) {
-                (Ok(mut transition), Err(_)) => {
-                    transition.conceal_state();
-                    state_transitions.push((concealed_anchor, transition.clone()));
-                    sources.extend(transition.parent_owned_rights().keys());
-                    sources.extend(transition.parent_public_rights().keys());
+                (Ok(mut bundle), Err(_)) => {
+                    bundle.conceal_transitions_except(&[node_id]);
+                    for transition in bundle.known_transitions() {
+                        let mut transition = transition.clone();
+                        transition.conceal_state();
+                        sources.extend(transition.parent_owned_rights().keys());
+                        sources.extend(transition.parent_public_rights().keys());
+                    }
+                    anchored_bundles.push((concealed_anchor.clone(), bundle));
                 }
                 (Err(_), Ok(mut extension)) => {
                     extension.conceal_state();
@@ -163,12 +164,12 @@ impl Stash for Runtime {
             }
         }
 
-        let node_id = node.node_id();
-        let endpoints = endpoints.iter().map(|op| (node_id, *op)).collect();
+        let bundle_id = bundle.bundle_id();
+        let endpoints = endpoints.iter().map(|op| (bundle_id, *op)).collect();
         Ok(Consignment::with(
             genesis,
             endpoints,
-            state_transitions,
+            anchored_bundles,
             state_extensions,
         ))
     }
@@ -205,34 +206,47 @@ impl Stash for Runtime {
                     })
                     .collect();
             }
+            AssignmentVec::Container(set) => {
+                *set = set
+                    .iter()
+                    .map(|a| {
+                        let mut a = a.clone();
+                        a.reveal_seals(known_seals.iter());
+                        a
+                    })
+                    .collect();
+            }
         };
 
         // [PRIVACY] [SECURITY]:
         // Update all data with the previously known revealed information in the
         // stash
-        for (anchor, transition) in consignment.state_transitions.iter() {
-            let mut transition = transition.clone();
-            transition
-                .owned_rights_mut()
-                .iter_mut()
-                .for_each(reveal_known_seals);
-            let node_id = transition.node_id();
-            if let Ok(other_transition) = self.storage.transition(&node_id) {
-                transition = transition
-                    .merge_reveal(other_transition)
-                    .expect("Transition id or merge-revealed procedure is broken");
-            }
-            let mut anchor = anchor.to_merkle_block(contract_id, node_id.into())?;
+        for (anchor, bundle) in consignment.anchored_bundles.iter() {
+            let bundle_id = bundle.bundle_id();
+            let mut anchor = anchor.to_merkle_block(contract_id, bundle_id.into())?;
             let anchor_id = anchor.anchor_id();
             if let Ok(other_anchor) = self.storage.anchor(&anchor_id) {
                 anchor = anchor
                     .merge_reveal(other_anchor)
                     .expect("Anchor id or merge-revealed procedure is broken");
             }
-            // Store the transition and the anchor data in the stash
             self.storage.add_anchor(&anchor)?;
-            self.indexer.index_anchor(&anchor)?;
-            self.storage.add_transition(&transition)?;
+            for transition in bundle.known_transitions() {
+                let mut transition = transition.clone();
+                transition
+                    .owned_rights_mut()
+                    .iter_mut()
+                    .for_each(reveal_known_seals);
+                let node_id = transition.node_id();
+                if let Ok(other_transition) = self.storage.transition(&node_id) {
+                    transition = transition
+                        .merge_reveal(other_transition)
+                        .expect("Transition id or merge-revealed procedure is broken");
+                }
+                // Store the transition and the anchor data in the stash
+                self.storage.add_transition(&transition)?;
+                self.indexer.index_anchor(&anchor, node_id)?;
+            }
         }
 
         for extension in consignment.state_extensions.iter() {
@@ -255,7 +269,7 @@ impl Stash for Runtime {
     fn enclose(&mut self, disclosure: &Disclosure) -> Result<(), Self::Error> {
         // Do a disclosure verification: check that we know contract_ids
         let contract_ids = disclosure
-            .transitions()
+            .anchored_bundles()
             .values()
             .map(|(_, map)| map.keys())
             .flatten()
@@ -269,7 +283,7 @@ impl Stash for Runtime {
                 .map_err(|_| Error::UnknownContract(contract_id))?;
         }
 
-        for anchor in disclosure.transitions().values().map(|(anchor, _)| anchor) {
+        for (anchor, map) in disclosure.anchored_bundles().values() {
             let mut anchor = anchor.clone();
             if let Ok(other_anchor) = self.storage.anchor(&anchor.anchor_id()) {
                 anchor = anchor
@@ -277,22 +291,28 @@ impl Stash for Runtime {
                     .expect("RGB commitment procedure is broken");
             }
             self.storage.add_anchor(&anchor)?;
-            self.indexer.index_anchor(&anchor)?;
+            for (contract_id, bundle) in map {
+                for transition in bundle.known_transitions() {
+                    self.indexer.index_anchor(&anchor, transition.node_id())?;
+                }
+            }
         }
 
-        for transition in disclosure
-            .transitions()
+        for bundle in disclosure
+            .anchored_bundles()
             .values()
             .map(|(_, map)| map.values())
             .flatten()
         {
-            let mut transition: Transition = transition.clone();
-            if let Ok(other_transition) = self.storage.transition(&transition.node_id()) {
-                transition = transition
-                    .merge_reveal(other_transition)
-                    .expect("RGB commitment procedure is broken");
+            for transition in bundle.known_transitions() {
+                let mut transition: Transition = transition.clone();
+                if let Ok(other_transition) = self.storage.transition(&transition.node_id()) {
+                    transition = transition
+                        .merge_reveal(other_transition)
+                        .expect("RGB commitment procedure is broken");
+                }
+                self.storage.add_transition(&transition)?;
             }
-            self.storage.add_transition(&transition)?;
         }
 
         for extension in disclosure.extensions().values().flatten() {

@@ -31,7 +31,7 @@ required-features = ["cli"]
 [dependencies]
 # LNP/BP crates
 amplify = "3.12.0"
-stens = "0.3.1"
+stens = "0.3.2"
 strict_encoding = "1.8.8"
 commit_verify = "0.7.0-rc.4"
 lnpbp = "0.7.0"

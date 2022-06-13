@@ -67,6 +67,9 @@ impl DiskStorageConfig {
     pub fn anchors_dir(&self) -> PathBuf { self.data_dir.join("anchors") }
 
     #[inline]
+    pub fn bundles_dir(&self) -> PathBuf { self.data_dir.join("bundles") }
+
+    #[inline]
     pub fn transitions_dir(&self) -> PathBuf { self.data_dir.join("transitions") }
 
     #[inline]
@@ -90,6 +93,13 @@ impl DiskStorageConfig {
     pub fn anchor_filename(&self, anchor_id: &AnchorId) -> PathBuf {
         self.anchors_dir()
             .join(anchor_id.to_hex())
+            .with_extension(Self::RGB_FILE_EXT)
+    }
+
+    #[inline]
+    pub fn bundle_filename(&self, bundle_id: &BundleId) -> PathBuf {
+        self.bundles_dir()
+            .join(bundle_id.to_hex())
             .with_extension(Self::RGB_FILE_EXT)
     }
 
@@ -280,6 +290,12 @@ impl Store for DiskStorage {
         let existed = filename.as_path().exists();
         fs::remove_file(filename)?;
         Ok(existed)
+    }
+
+    fn bundle(&self, id: &BundleId) -> Result<TransitionBundle, Self::Error> {
+        Ok(TransitionBundle::read_file(
+            self.config.bundle_filename(id),
+        )?)
     }
 
     fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error> {

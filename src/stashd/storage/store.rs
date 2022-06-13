@@ -37,6 +37,7 @@ pub trait Store {
     fn add_anchor(&mut self, anchor: &Anchor<MerkleBlock>) -> Result<bool, Self::Error>;
     fn remove_anchor(&mut self, id: &AnchorId) -> Result<bool, Self::Error>;
 
+    fn bundle(&self, id: &BundleId) -> Result<TransitionBundle, Self::Error>;
     fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error>;
     fn has_transition(&self, id: &NodeId) -> Result<bool, Self::Error>;
     fn add_transition(&mut self, transition: &Transition) -> Result<bool, Self::Error>;

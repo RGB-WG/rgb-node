@@ -73,6 +73,9 @@ impl HammersbaldConfig {
     pub fn anchors_db(&self) -> PathBuf { self.data_dir.join("hammersbald").join("anchors") }
 
     #[inline]
+    pub fn bundles_db(&self) -> PathBuf { self.data_dir.join("hammersbald").join("bundles") }
+
+    #[inline]
     pub fn transitions_db(&self) -> PathBuf {
         self.data_dir.join("hammersbald").join("transitions")
     }
@@ -86,6 +89,7 @@ pub struct HammersbaldStorage {
     schemata_db: Box<dyn HammersbaldAPI>,
     geneses_db: Box<dyn HammersbaldAPI>,
     anchors_db: Box<dyn HammersbaldAPI>,
+    bundles_db: Box<dyn HammersbaldAPI>,
     transitions_db: Box<dyn HammersbaldAPI>,
     extensions_db: Box<dyn HammersbaldAPI>,
 }
@@ -125,6 +129,15 @@ impl HammersbaldStorage {
             config.bucket_fill_targes,
         )?;
 
+        let bundles_db = persistent(
+            config
+                .bundles_db()
+                .to_str()
+                .ok_or(HammersbaldError::DataDirNotFound)?,
+            config.cached_pages,
+            config.bucket_fill_targes,
+        )?;
+
         let transitions_db = persistent(
             config
                 .transitions_db()
@@ -147,6 +160,7 @@ impl HammersbaldStorage {
             schemata_db,
             geneses_db,
             anchors_db,
+            bundles_db,
             transitions_db,
             extensions_db,
         })
@@ -269,6 +283,16 @@ impl Store for HammersbaldStorage {
         let key = strict_serialize(id)?;
         self.anchors_db.forget(&key[..])?;
         Ok(true)
+    }
+
+    fn bundle(&self, id: &BundleId) -> Result<TransitionBundle, Self::Error> {
+        let key = strict_serialize(id)?;
+        let value = self
+            .bundles_db
+            .get_keyed(&key[..])?
+            .ok_or(HammersbaldError::DataNotFound)?;
+        let bundle = TransitionBundle::strict_decode(&value.1[..])?;
+        Ok(bundle)
     }
 
     fn transition(&self, id: &NodeId) -> Result<Transition, Self::Error> {
