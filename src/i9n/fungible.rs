@@ -14,14 +14,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::OutPoint;
 use internet2::{Session, TypedEnum, Unmarshall};
 use lnpbp::chain::Chain;
 use microservices::FileFormat;
 use rgb::{
     seal, AtomicValue, Consignment, ContractId, Disclosure, Genesis, OutpointValue, SealEndpoint,
-    PSBT_OUT_PUBKEY,
 };
 use rgb20::Asset;
 use stens::AsciiString;
@@ -80,30 +78,8 @@ impl Runtime {
         inputs: BTreeSet<OutPoint>,
         payment: BTreeMap<SealEndpoint, AtomicValue>,
         change: BTreeMap<seal::Revealed, AtomicValue>,
-        mut witness: Psbt,
+        witness: Psbt,
     ) -> Result<Transfer, Error> {
-        for (index, output) in &mut witness.outputs.iter_mut().enumerate() {
-            if let Some(key) = output.bip32_derivation.keys().next() {
-                let key = key.clone();
-                output.proprietary.insert(
-                    ProprietaryKey {
-                        prefix: b"RGB".to_vec(),
-                        subtype: PSBT_OUT_PUBKEY,
-                        key: vec![],
-                    },
-                    key.serialize().to_vec(),
-                );
-                debug!("Output #{} commitment key will be {}", index, key);
-            } else {
-                warn!(
-                    "No public key information found for output #{}; \
-                    LNPBP1/2 commitment will be impossible.\
-                    In order to allow commitment pls add known keys derivation \
-                    information to PSBT output map",
-                    index
-                );
-            }
-        }
         trace!("{:?}", witness);
 
         let api = TransferReq {

@@ -518,9 +518,9 @@ dependencies = [
 
 [[package]]
 name = "commit_verify"
-version = "0.7.0-rc.6"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad25aed1344b18f28ac3c59e843b11e4da25785abda49ad7ab85a4a510dd262f"
+checksum = "eac05c39ea303b263fff5ac3af85110e8ed306bccf4222ba11d434db3b4f78ba"
 dependencies = [
  "amplify",
  "bitcoin_hashes 0.10.0",
@@ -1762,7 +1762,7 @@ checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 [[package]]
 name = "rgb-core"
 version = "0.7.0-alpha.4"
-source = "git+https://github.com/RGB-WG/rgb-core#b0b8f1d4e986b5316f39dea66252f1d822694f00"
+source = "git+https://github.com/RGB-WG/rgb-core#8e6981caae8bb6c2fc52c7d965ec73f8e720339f"
 dependencies = [
  "aluvm",
  "amplify",
@@ -2082,9 +2082,9 @@ checksum = "f054c6c1a6e95179d6f23ed974060dcefb2d9388bb7256900badad682c499de4"
 
 [[package]]
 name = "single_use_seals"
-version = "0.7.0-rc.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa09c03c4cc349e6767cc3cfbbc9043ddb25210fd59720390a9e23f58d838c6f"
+checksum = "e15e3bb0130780a5ffe11965dfd80a1b9ee608d13e5c1afed9817bdb560c0326"
 dependencies = [
  "amplify_derive",
 ]

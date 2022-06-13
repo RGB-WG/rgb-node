@@ -16,7 +16,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use bitcoin::consensus::{Decodable, Encodable};
-use bitcoin::util::psbt::raw::ProprietaryKey;
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::OutPoint;
 use bp::seals::txout::CloseMethod;
@@ -449,32 +448,9 @@ impl TransferCli {
         let filepath = format!("{:?}", &self.prototype);
         let file = fs::File::open(self.prototype)
             .map_err(|_| Error::InputFileIoError(format!("{:?}", filepath)))?;
-        let mut psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
+        let psbt = PartiallySignedTransaction::consensus_decode(file).map_err(|err| {
             Error::InputFileFormatError(format!("{:?}", filepath), format!("{}", err))
         })?;
-
-        for (index, output) in &mut psbt.outputs.iter_mut().enumerate() {
-            if let Some(key) = output.bip32_derivation.keys().next() {
-                let key = key.clone();
-                output.proprietary.insert(
-                    ProprietaryKey {
-                        prefix: b"RGB".to_vec(),
-                        subtype: PSBT_OUT_PUBKEY,
-                        key: vec![],
-                    },
-                    key.serialize().to_vec(),
-                );
-                debug!("Output #{} commitment key will be {}", index, key);
-            } else {
-                warn!(
-                    "No public key information found for output #{}; \
-                    LNPBP1/2 commitment will be impossible.\
-                    In order to allow commitment pls add known keys derivation \
-                    information to PSBT output map",
-                    index
-                );
-            }
-        }
         trace!("{:?}", psbt);
 
         let api = TransferReq {
