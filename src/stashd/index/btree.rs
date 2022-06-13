@@ -20,7 +20,7 @@ use amplify::IoError;
 use bp::dbc::{Anchor, AnchorId};
 use commit_verify::lnpbp4::MerkleBlock;
 use microservices::FileFormat;
-use rgb::{BundleId, NodeId};
+use rgb::NodeId;
 use strict_encoding::{StrictDecode, StrictEncode};
 
 use super::Index;
@@ -192,10 +192,10 @@ impl Index for BTreeIndex {
         node_id: NodeId,
     ) -> Result<bool, Self::Error> {
         let anchor_id = anchor.anchor_id();
-        for commitment in &anchor.lnpbp4_proof {
-            let bundle_id = BundleId::from(commitment);
-            self.index.node_anchors.insert(node_id, anchor_id);
-        }
+        self.index.node_anchors.insert(node_id, anchor_id);
+        // for commitment in &anchor.lnpbp4_proof {
+        //     let bundle_id = BundleId::from(commitment);
+        // }
         self.store()?;
         Ok(true)
     }

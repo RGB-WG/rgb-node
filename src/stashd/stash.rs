@@ -302,7 +302,7 @@ impl Stash for Runtime {
                     .expect("RGB commitment procedure is broken");
             }
             self.storage.add_anchor(&anchor)?;
-            for (contract_id, bundle) in map {
+            for (_, bundle) in map {
                 for transition in bundle.known_transitions() {
                     self.indexer.index_anchor(&anchor, transition.node_id())?;
                 }

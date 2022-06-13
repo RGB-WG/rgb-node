@@ -13,6 +13,7 @@
 
 #![recursion_limit = "256"]
 // Coding conventions
+#![allow(dead_code, deprecated)]
 #![deny(
     non_upper_case_globals,
     non_camel_case_types,
