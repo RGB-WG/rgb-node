@@ -1,195 +1,82 @@
-// RGB standard library
-// Written in 2019-2022 by
+// RGB node providing smart contracts functionality for Bitcoin & Lightning.
+//
+// Written in 2022 by
 //     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
+// Copyright (C) 2022 by LNP/BP Standards Association, Switzerland.
 //
-// You should have received a copy of the MIT License
-// along with this software.
+// You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-// TODO #152: Consider moving parts of this file to common daemon modules
-//       (Internet2)
+use internet2::presentation;
+use microservices::{esb, rpc};
+use rgb_rpc::{FailureCode, RpcMsg};
 
-use std::collections::HashMap;
-use std::io;
-
-#[derive(Debug, Display, Error, From)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum BootstrapError {
-    TorNotYetSupported,
-
-    #[from]
-    IoError(io::Error),
-
-    #[from]
-    ArgParseError(String),
-
-    #[from]
-    MessageBusError(internet2::transport::Error),
-
-    #[cfg(feature = "electrum-client")]
-    #[from]
-    ElectrumError(electrum_client::Error),
-
-    StorageError,
-
-    #[cfg(feature = "fungibles")]
-    #[from(crate::fungibled::FileCacheError)]
-    #[cfg_attr(feature = "sql", from(crate::fungibled::SqlCacheError))]
-    CacheError,
-
-    Other,
-}
-
-impl From<&str> for BootstrapError {
-    fn from(err: &str) -> Self { BootstrapError::ArgParseError(err.to_string()) }
-}
+use crate::bus::{ServiceBus, ServiceId};
 
 #[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum RuntimeError {
-    #[from(std::io::Error)]
-    Io(amplify::IoError),
+#[display(doc_comments)]
+pub enum LaunchError {
+    /// unable to connect LNP node message bus
+    NoLnpdConnection,
+}
 
+impl microservices::error::Error for LaunchError {}
+
+#[derive(Clone, Debug, Display, Error, From)]
+#[display(doc_comments)]
+pub(crate) enum DaemonError {
     #[from]
-    Lnp(internet2::transport::Error),
+    #[display(inner)]
+    Encoding(strict_encoding::Error),
 
-    #[from(internet2::presentation::Error)]
-    BrokenTransport,
-
-    Internal(String),
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum RoutedError {
-    Global(RuntimeError),
-    RequestSpecific(ServiceError),
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum ServiceErrorDomain {
-    #[from(::std::io::Error)]
-    Io(amplify::IoError),
-
-    Stash,
-
-    Storage(String),
-
-    Index(String),
-
-    #[cfg(feature = "fungibles")]
-    #[from(crate::fungibled::FileCacheError)]
-    #[cfg_attr(feature = "sql", from(crate::fungibled::SqlCacheError))]
-    Cache,
-
-    Multithreading,
-
-    P2pwire,
-
+    /// ESB error: {0}
     #[from]
-    LnpRpc(internet2::presentation::Error),
+    Esb(esb::Error<ServiceId>),
 
+    /// invalid storm message encoding. Details: {0}
     #[from]
-    LnpTransport(internet2::transport::Error),
+    StormEncoding(presentation::Error),
 
-    Api(ApiErrorType),
+    /// request `{1}` is not supported on {0} message bus
+    RequestNotSupported(ServiceBus, String),
 
-    Monitoring,
-
-    Bifrost,
-
-    BpNode,
-
-    LnpNode,
-
-    Bitcoin,
-
-    Lightning,
-
-    Electrum,
-
-    Schema(String),
-
-    Anchor(String),
-
-    #[from]
-    #[cfg_attr(feature = "fungibles", from(rgb20::transitions::Error), from(rgb20::asset::Error))]
-    Internal(String),
+    /// request `{1}` is not supported on {0} message bus for service {2}
+    SourceNotSupported(ServiceBus, String, ServiceId),
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum ServiceErrorSource {
-    Broker,
-    Stash,
-    Contract(String),
+impl microservices::error::Error for DaemonError {}
+
+impl From<DaemonError> for esb::Error<ServiceId> {
+    fn from(err: DaemonError) -> Self { esb::Error::ServiceError(err.to_string()) }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum ServiceSocketType {
-    Request,
-    Reply,
-    Publish,
-    Subscribe,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum ApiErrorType {
-    MalformedRequest { request: String },
-    UnknownCommand { command: String },
-    UnimplementedCommand,
-    MissedArgument { request: String, argument: String },
-    UnknownArgument { request: String, argument: String },
-    MalformedArgument { request: String, argument: String },
-    UnexpectedReply,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error)]
-#[display(Debug)]
-#[non_exhaustive]
-pub struct ServiceError {
-    pub domain: ServiceErrorDomain,
-    pub service: ServiceErrorSource,
-}
-
-impl ServiceError {
-    pub fn contract(domain: ServiceErrorDomain, contract_name: &str) -> Self {
-        Self {
-            domain,
-            service: ServiceErrorSource::Contract(contract_name.to_string()),
-        }
-    }
-
-    pub fn from_rpc(service: ServiceErrorSource, err: internet2::presentation::Error) -> Self {
-        Self {
-            domain: ServiceErrorDomain::from(err),
-            service,
-        }
+impl From<DaemonError> for RpcMsg {
+    fn from(err: DaemonError) -> Self {
+        let code = match err {
+            DaemonError::StormEncoding(_) | DaemonError::Encoding(_) => FailureCode::Encoding,
+            DaemonError::Esb(_) => FailureCode::Esb,
+            DaemonError::RequestNotSupported(_, _) | DaemonError::SourceNotSupported(_, _, _) => {
+                FailureCode::UnexpectedRequest
+            }
+        };
+        RpcMsg::Failure(rpc::Failure {
+            code: code.into(),
+            info: err.to_string(),
+        })
     }
 }
 
-#[derive(Debug, Display, Error)]
-#[display(Debug)]
-#[non_exhaustive]
-pub struct ServiceErrorRepresentation {
-    pub domain: String,
-    pub service: String,
-    pub name: String,
-    pub description: String,
-    pub info: HashMap<String, String>,
+impl DaemonError {
+    pub(crate) fn wrong_esb_msg(bus: ServiceBus, message: &impl ToString) -> DaemonError {
+        DaemonError::RequestNotSupported(bus, message.to_string())
+    }
+
+    pub(crate) fn wrong_esb_msg_source(
+        bus: ServiceBus,
+        message: &impl ToString,
+        source: ServiceId,
+    ) -> DaemonError {
+        DaemonError::SourceNotSupported(bus, message.to_string(), source)
+    }
 }

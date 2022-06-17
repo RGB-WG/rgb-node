@@ -1,0 +1,24 @@
+[package]
+name = "rgb-cli"
+description = "RGB node command-line interface"
+version = "0.8.0-alpha.1"
+authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
+license = "MIT"
+keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
+categories = ["network-programming", "command-line-tools"]
+edition = "2021"
+rust-version = "1.56.0"
+readme = "../README.md"
+
+[[bin]]
+path = "src/main.rs"
+name = "rgb-cli"
+
+[dependencies]
+amplify = "3.12.0"
+internet2 = "0.8.0-beta.1"
+microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"] }
+rgb_rpc = { version = "0.8.0-alpha.1", path = "../rpc" }
+clap = { version = "~3.1.18", features = ["derive", "env"] }
+log = "0.4.14"
+colored = "2"

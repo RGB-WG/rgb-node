@@ -10,25 +10,100 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  default:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Default build
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --workspace
+  features:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature:
+          - serde
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Feature ${{ matrix.feature }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --no-default-features --features=${{ matrix.feature }}
+      - name: Defaults + ${{ matrix.feature }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features=${{ matrix.feature }}
+  platforms:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, windows-2019, windows-2022 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build with all features
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --workspace --all-targets --all-features
   toolchains:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [ nightly, beta, stable, 1.47.0 ]
+        toolchain: [ nightly, beta, stable, 1.59.0 ]
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libzmq3-dev libpcre3-dev libpq-dev libssl-dev
-      - name: Install rust ${{matrix.toolchain}}
+      - name: Install rust ${{ matrix.toolchain }}
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{matrix.toolchain}}
+          toolchain: ${{ matrix.toolchain }}
           override: true
       - name: All features
         uses: actions-rs/cargo@v1
         with:
-          command: build
+          command: check
           args: --workspace --all-targets --all-features
+  dependency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Create dependency
+        run: |
+          cargo new dep_test
+          cp contrib/depCargo.toml dep_test/Cargo.toml
+          cd dep_test
+      - name: Build dependency
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --verbose
+      - name: Clean up
+        run: |
+          cd ..
+          rm -rf dep_test

@@ -8,6 +8,8 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+#![recursion_limit = "256"]
+
 #[macro_use]
 extern crate amplify;
 #[macro_use]
@@ -17,11 +19,19 @@ extern crate internet2;
 #[macro_use]
 extern crate log;
 
-mod config;
-mod error;
-pub mod rgbd;
-pub mod bus;
+#[cfg(feature = "serde")]
+extern crate serde_crate as serde;
+//#[cfg(feature = "serde")]
+//#[macro_use]
+//extern crate serde_with;
 
-pub use config::Config;
-pub(crate) use error::DaemonError;
-pub use error::LaunchError;
+pub mod client;
+mod error;
+mod messages;
+
+pub use client::Client;
+pub use error::FailureCode;
+pub use messages::RpcMsg;
+
+// TODO: Change port
+pub const RGB_NODE_RPC_ENDPOINT: &str = "0.0.0.0:61399";

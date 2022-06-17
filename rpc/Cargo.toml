@@ -1,0 +1,32 @@
+[package]
+name = "rgb_rpc"
+description = "RGB node RPC API"
+version = "0.8.0-alpha.1"
+authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
+license = "MIT"
+keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
+categories = ["network-programming"]
+edition = "2021"
+rust-version = "1.59.0"
+readme = "../README.md"
+
+[lib]
+name = "rgb_rpc"
+
+[dependencies]
+amplify = "3.12.0"
+strict_encoding = "1.8.1"
+internet2 = "0.8.0-beta.1"
+microservices = { version = "0.8.0-rc.4", default-features = false, features = ["client"] }
+serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
+serde_with = { version = "1.8", optional = true }
+serde_yaml = { version = "0.8.23", optional = true }
+log = "0.4.14"
+
+[features]
+default = ["serde"]
+all = ["serde"]
+serde = [
+    "serde_crate", "serde_with", "serde_yaml",
+    "amplify/serde", "internet2/serde", "microservices/serde",
+]

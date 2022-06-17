@@ -1,0 +1,16 @@
+[general]
+env_prefix = "STORMD"
+conf_file_param = "config"
+doc = ""
+
+[[param]]
+name = "data_dir"
+type = "std::path::PathBuf"
+abbr = "d"
+doc = "Path to the directory that contains data, and where ZMQ RPC socket files are located"
+
+[[param]]
+name = "rpc_socket"
+type = "lnp::transport::zmq::SocketLocator"
+abbr = "r"
+doc = "ZMQ socket name/address for RPC control protocol"

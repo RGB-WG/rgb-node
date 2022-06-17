@@ -1,0 +1,39 @@
+#compdef rgbd
+
+autoload -U is-at-least
+
+_rgbd() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-d+[Data directory path]:DATA_DIR:_files -/' \
+'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
+'--storm-endpoint=[ZMQ socket for connecting Storm node message bus]:STORM_ENDPOINT:_files' \
+'--store-endpoint=[ZMQ socket for connecting Storm node message bus]:STORE_ENDPOINT:_files' \
+'-x+[ZMQ socket name/address for storm node RPC interface]:RPC_ENDPOINT:_files' \
+'--rpc-endpoint=[ZMQ socket name/address for storm node RPC interface]:RPC_ENDPOINT:_files' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'-V[Print version information]' \
+'--version[Print version information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+&& ret=0
+}
+
+(( $+functions[_rgbd_commands] )) ||
+_rgbd_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgbd commands' commands "$@"
+}
+
+_rgbd "$@"

@@ -1,0 +1,78 @@
+#compdef rgb-cli
+
+autoload -U is-at-least
+
+_rgb-cli() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-r+[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'--rpc-endpoint=[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'-V[Print version information]' \
+'--version[Print version information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+":: :_rgb-cli_commands" \
+"*::: :->rgb-cli" \
+&& ret=0
+    case $state in
+    (rgb-cli)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:rgb-cli-command-$line[1]:"
+        case $line[1] in
+            (none)
+_arguments "${_arguments_options[@]}" \
+'-r+[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'--rpc-endpoint=[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+'-r+[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'--rpc-endpoint=[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+'*::subcommand -- The subcommand whose help message to display:' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_rgb-cli_commands] )) ||
+_rgb-cli_commands() {
+    local commands; commands=(
+'none:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'rgb-cli commands' commands "$@"
+}
+(( $+functions[_rgb-cli__help_commands] )) ||
+_rgb-cli__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli help commands' commands "$@"
+}
+(( $+functions[_rgb-cli__none_commands] )) ||
+_rgb-cli__none_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli none commands' commands "$@"
+}
+
+_rgb-cli "$@"
