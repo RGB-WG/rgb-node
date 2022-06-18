@@ -22,6 +22,9 @@ pub struct Config {
     /// ZMQ socket for RPC API.
     pub rpc_endpoint: ServiceAddr,
 
+    /// ZMQ socket for RPC API.
+    pub ctl_endpoint: ServiceAddr,
+
     /// ZMQ socket for Storm node service bus.
     pub storm_endpoint: ServiceAddr,
 
@@ -47,7 +50,7 @@ impl Config {
 
         fs::create_dir_all(&self.data_dir).expect("Unable to access data directory");
 
-        for dir in vec![&mut self.rpc_endpoint] {
+        for dir in vec![&mut self.rpc_endpoint, &mut self.ctl_endpoint] {
             if let ServiceAddr::Ipc(ref mut path) = dir {
                 me.process_dir(path);
             }

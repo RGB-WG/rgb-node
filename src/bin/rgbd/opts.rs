@@ -30,6 +30,7 @@ pub const RGB_NODE_DATA_DIR: &str = "~/Documents";
 pub const RGB_NODE_DATA_DIR: &str = ".";
 
 pub const RGB_NODE_CONFIG: &str = "{data_dir}/rgbd.toml";
+pub const RGB_NODE_CTL_ENDPOINT: &str = "ctl";
 
 /// Command-line arguments
 #[derive(Parser)]
@@ -56,7 +57,7 @@ pub struct Opts {
     )]
     pub data_dir: PathBuf,
 
-    /// ZMQ socket for connecting Storm node message bus.
+    /// ZMQ socket for connecting RGB node message bus.
     #[clap(
         long,
         env = "STORM_NODE_APP_ENDPOINT",
@@ -65,7 +66,7 @@ pub struct Opts {
     )]
     pub storm_endpoint: ServiceAddr,
 
-    /// ZMQ socket for connecting Storm node message bus.
+    /// ZMQ socket for connecting RGB node message bus.
     #[clap(
         long,
         env = "STORED_RPC_ENDPOINT",
@@ -74,7 +75,7 @@ pub struct Opts {
     )]
     pub store_endpoint: ServiceAddr,
 
-    /// ZMQ socket name/address for storm node RPC interface.
+    /// ZMQ socket name/address for RGB node RPC interface.
     ///
     /// Internal interface for control PRC protocol communications.
     #[clap(
@@ -85,4 +86,23 @@ pub struct Opts {
         default_value = RGB_NODE_RPC_ENDPOINT
     )]
     pub rpc_endpoint: ServiceAddr,
+
+    /// ZMQ socket for internal service bus.
+    ///
+    /// A user needs to specify this socket usually if it likes to distribute daemons
+    /// over different server instances. In this case all daemons within the same node
+    /// must use the same socket address.
+    ///
+    /// Socket can be either TCP address in form of `<ipv4 | ipv6>:<port>` – or a path
+    /// to an IPC file.
+    ///
+    /// Defaults to `ctl` file inside `--data-dir` directory, unless `--threaded-daemons`
+    /// is specified; in that cases uses in-memory communication protocol.
+    #[clap(
+        long = "ctl",
+        env = "RGB_NODE_CTL_ENDPOINT",
+        default_value = RGB_NODE_CTL_ENDPOINT,
+        value_hint = ValueHint::FilePath
+    )]
+    pub ctl_endpoint: ServiceAddr,
 }

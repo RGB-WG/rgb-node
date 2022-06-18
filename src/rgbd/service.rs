@@ -17,12 +17,13 @@ use microservices::node::TryService;
 use rgb_rpc::RpcMsg;
 use storm_app::AppMsg as StormMsg;
 
-use crate::bus::{BusMsg, ClientId, Endpoints, Responder, ServiceBus, ServiceId};
+use crate::bus::{BusMsg, ClientId, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
 use crate::{Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let msg_endpoint = config.storm_endpoint.clone();
     let rpc_endpoint = config.rpc_endpoint.clone();
+    let ctl_endpoint = config.ctl_endpoint.clone();
     let runtime = Runtime::init(config)?;
 
     debug!("Connecting to service bus {}", msg_endpoint);
@@ -35,7 +36,12 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
             ),
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,
-                ZmqSocketType::Rep,
+                ZmqSocketType::RouterBind,
+                None
+            ),
+            ServiceBus::Ctl => esb::BusConfig::with_addr(
+                ctl_endpoint,
+                ZmqSocketType::RouterBind,
                 None
             )
         },
@@ -93,6 +99,7 @@ impl esb::Handler<ServiceBus> for Runtime {
             (ServiceBus::Rpc, BusMsg::Rpc(msg), ServiceId::Client(client_id)) => {
                 self.handle_rpc(endpoints, client_id, msg)
             }
+            (ServiceBus::Ctl, BusMsg::Ctl(msg), source) => self.handle_ctl(endpoints, source, msg),
             (bus, msg, _) => Err(DaemonError::wrong_esb_msg(bus, &msg)),
         }
     }
@@ -135,6 +142,22 @@ impl Runtime {
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn handle_ctl(
+        &mut self,
+        endpoints: &mut Endpoints,
+        source: ServiceId,
+        message: CtlMsg,
+    ) -> Result<(), DaemonError> {
+        match message {
+            wrong_msg => {
+                error!("Request is not supported by the CTL interface");
+                return Err(DaemonError::wrong_esb_msg(ServiceBus::Ctl, &wrong_msg));
             }
         }
 

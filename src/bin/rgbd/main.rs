@@ -34,6 +34,7 @@ fn main() -> Result<(), BootstrapError<LaunchError>> {
     let mut config = Config {
         data_dir: opts.data_dir,
         rpc_endpoint: opts.rpc_endpoint,
+        ctl_endpoint: opts.ctl_endpoint,
         storm_endpoint: opts.storm_endpoint,
         store_endpoint: opts.store_endpoint,
         verbose: opts.verbose,

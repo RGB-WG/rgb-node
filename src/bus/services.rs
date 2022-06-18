@@ -17,6 +17,8 @@ use rgb_rpc::RpcMsg;
 use storm_app::AppMsg as StormMsg;
 use strict_encoding::{strict_deserialize, strict_serialize};
 
+use crate::bus::BusMsg;
+
 pub(crate) type Endpoints = esb::EndpointList<ServiceBus>;
 
 pub type ClientId = u64;
@@ -83,6 +85,9 @@ pub(crate) enum ServiceBus {
     #[display("RPC")]
     Rpc,
 
+    #[display("CTL")]
+    Ctl,
+
     /// Storm P2P message bus
     #[display("STORM")]
     Storm,
@@ -112,26 +117,6 @@ impl From<Vec<u8>> for ServiceId {
         })
     }
 }
-
-/// Service controller messages
-#[derive(Clone, Debug, Display, From, Api)]
-#[api(encoding = "strict")]
-#[display(inner)]
-pub(crate) enum BusMsg {
-    /// RPC requests
-    #[api(type = 4)]
-    #[display(inner)]
-    #[from]
-    Rpc(RpcMsg),
-
-    /// Storm node <-> application extensions messaging
-    #[api(type = 5)]
-    #[display(inner)]
-    #[from]
-    Storm(StormMsg),
-}
-
-impl rpc::Request for BusMsg {}
 
 pub(crate) trait Responder
 where
