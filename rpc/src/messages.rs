@@ -30,6 +30,28 @@ impl rpc::Request for BusMsg {}
 #[derive(NetworkEncode, NetworkDecode)]
 #[display(inner)]
 pub enum RpcMsg {
+    // Contract creation
+    // -----------------
+    SchemaRegister,
+
+    Schemata,
+
+    // Stash operations
+    // ----------------
+    Invoice,
+
+    Consign,
+
+    Accept,
+
+    Enclose,
+
+    // Stash read operations
+    // ---------------------
+    ContractIds,
+
+    ContactState,
+
     // Responses to CLI
     // ----------------
     #[display("success({0})")]
