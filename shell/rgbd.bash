@@ -19,7 +19,7 @@ _rgbd() {
 
     case "${cmd}" in
         rgbd)
-            opts="-h -V -v -d -x --help --version --verbose --data-dir --store-endpoint --rpc-endpoint --ctl --storm-endpoint"
+            opts="-h -V -v -d -x --help --version --verbose --data-dir --store-endpoint --ctl --rpc-endpoint --storm-endpoint"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -37,15 +37,15 @@ _rgbd() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                --ctl)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 --rpc-endpoint)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
                 -x)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --ctl)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

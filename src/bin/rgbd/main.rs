@@ -28,6 +28,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Config {
         let mut config = Config::from(opts.shared);
         config.set_storm_endpoint(opts.storm_endpoint);
+        config.set_rpc_endpoint(opts.rpc_endpoint);
         config
     }
 }

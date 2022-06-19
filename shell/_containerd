@@ -18,8 +18,6 @@ _containerd() {
 '-d+[Data directory path]:DATA_DIR:_files -/' \
 '--data-dir=[Data directory path]:DATA_DIR:_files -/' \
 '--store-endpoint=[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
-'-x+[ZMQ socket name/address for RGB node RPC interface]:RPC_ENDPOINT:_files' \
-'--rpc-endpoint=[ZMQ socket name/address for RGB node RPC interface]:RPC_ENDPOINT:_files' \
 '--ctl=[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
 '-h[Print help information]' \
 '--help[Print help information]' \

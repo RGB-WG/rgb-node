@@ -12,6 +12,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use internet2::addr::ServiceAddr;
+use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_app::STORM_NODE_APP_ENDPOINT;
 
 use crate::opts::Opts;
@@ -70,7 +71,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Config {
             data_dir: opts.data_dir,
-            rpc_endpoint: opts.rpc_endpoint,
+            rpc_endpoint: RGB_NODE_RPC_ENDPOINT.parse().expect("error in constant value"),
             ctl_endpoint: opts.ctl_endpoint,
             storm_endpoint: STORM_NODE_APP_ENDPOINT.parse().expect("error in constant value"),
             store_endpoint: opts.store_endpoint,
@@ -80,5 +81,6 @@ impl From<Opts> for Config {
 }
 
 impl Config {
+    pub fn set_rpc_endpoint(&mut self, endpoint: ServiceAddr) { self.rpc_endpoint = endpoint; }
     pub fn set_storm_endpoint(&mut self, endpoint: ServiceAddr) { self.storm_endpoint = endpoint; }
 }

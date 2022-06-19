@@ -11,6 +11,7 @@
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
 use rgb_node::opts::Opts as SharedOpts;
+use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_app::STORM_NODE_APP_ENDPOINT;
 
 /// Command-line arguments
@@ -22,6 +23,18 @@ pub struct Opts {
     /// command-line args or environment variables
     #[clap(flatten)]
     pub shared: SharedOpts,
+
+    /// ZMQ socket name/address for RGB node RPC interface.
+    ///
+    /// Internal interface for control PRC protocol communications.
+    #[clap(
+        short = 'x',
+        long,
+        env = "RGB_NODE_RPC_ENDPOINT",
+        value_hint = ValueHint::FilePath,
+        default_value = RGB_NODE_RPC_ENDPOINT
+    )]
+    pub rpc_endpoint: ServiceAddr,
 
     /// ZMQ socket for connecting RGB node message bus.
     #[clap(
