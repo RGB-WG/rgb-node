@@ -20,20 +20,16 @@ mod opts;
 use clap::Parser;
 use microservices::error::BootstrapError;
 use microservices::shell::LogLevel;
-use rgb_node::{rgbd, Config, LaunchError};
+use rgb_node::{containerd, Config, LaunchError};
 
 use crate::opts::Opts;
 
 impl From<Opts> for Config {
-    fn from(opts: Opts) -> Config {
-        let mut config = Config::from(opts.shared);
-        config.set_storm_endpoint(opts.storm_endpoint);
-        config
-    }
+    fn from(opts: Opts) -> Config { Config::from(opts.shared) }
 }
 
 fn main() -> Result<(), BootstrapError<LaunchError>> {
-    println!("rgbd: RGB stash microservice");
+    println!("containerd: RGB container microservice");
 
     let opts = Opts::parse();
     LogLevel::from_verbosity_flag_count(opts.shared.verbose).apply();
@@ -55,7 +51,7 @@ fn main() -> Result<(), BootstrapError<LaunchError>> {
      */
 
     debug!("Starting runtime ...");
-    rgbd::service::run(config).expect("running rgbd runtime");
+    containerd::service::run(config).expect("running containerd runtime");
 
     unreachable!()
 }

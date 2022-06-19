@@ -18,8 +18,18 @@ use clap::IntoApp;
 use clap_complete::generate_to;
 use clap_complete::shells::*;
 
+pub mod rgb_node {
+    pub mod opts {
+        include!("src/opts.rs");
+    }
+}
 pub mod rgbd {
+    pub use super::rgb_node;
     include!("src/bin/rgbd/opts.rs");
+}
+pub mod containerd {
+    pub use super::rgb_node;
+    include!("src/bin/containerd/opts.rs");
 }
 pub mod cli {
     include!("cli/src/opts.rs");
@@ -28,7 +38,8 @@ pub mod cli {
 fn main() -> Result<(), configure_me_codegen::Error> {
     let outdir = "./shell";
 
-    for app in [rgbd::Opts::command(), cli::Opts::command()].iter_mut() {
+    for app in [rgbd::Opts::command(), containerd::Opts::command(), cli::Opts::command()].iter_mut()
+    {
         let name = app.get_name().to_string();
         generate_to(Bash, app, &name, &outdir)?;
         generate_to(PowerShell, app, &name, &outdir)?;

@@ -2,12 +2,12 @@
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
 
-Register-ArgumentCompleter -Native -CommandName 'rgbd' -ScriptBlock {
+Register-ArgumentCompleter -Native -CommandName 'containerd' -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 
     $commandElements = $commandAst.CommandElements
     $command = @(
-        'rgbd'
+        'containerd'
         for ($i = 1; $i -lt $commandElements.Count; $i++) {
             $element = $commandElements[$i]
             if ($element -isnot [StringConstantExpressionAst] -or
@@ -20,14 +20,13 @@ Register-ArgumentCompleter -Native -CommandName 'rgbd' -ScriptBlock {
     }) -join ';'
 
     $completions = @(switch ($command) {
-        'rgbd' {
+        'containerd' {
             [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'Data directory path')
             [CompletionResult]::new('--data-dir', 'data-dir', [CompletionResultType]::ParameterName, 'Data directory path')
             [CompletionResult]::new('--store-endpoint', 'store-endpoint', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting RGB node message bus')
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'ZMQ socket name/address for RGB node RPC interface')
             [CompletionResult]::new('--rpc-endpoint', 'rpc-endpoint', [CompletionResultType]::ParameterName, 'ZMQ socket name/address for RGB node RPC interface')
             [CompletionResult]::new('--ctl', 'ctl', [CompletionResultType]::ParameterName, 'ZMQ socket for internal service bus')
-            [CompletionResult]::new('--storm-endpoint', 'storm-endpoint', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting RGB node message bus')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help information')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help information')
             [CompletionResult]::new('-V', 'V', [CompletionResultType]::ParameterName, 'Print version information')

@@ -21,19 +21,13 @@ use crate::bus::{BusMsg, ClientId, CtlMsg, Endpoints, Responder, ServiceBus, Ser
 use crate::{Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
-    let storm_endpoint = config.storm_endpoint.clone();
     let rpc_endpoint = config.rpc_endpoint.clone();
     let ctl_endpoint = config.ctl_endpoint.clone();
     let runtime = Runtime::init(config)?;
 
-    debug!("Connecting to service buses {}, {}, {}", storm_endpoint, rpc_endpoint, ctl_endpoint);
+    debug!("Connecting to service buses {}, {}", rpc_endpoint, ctl_endpoint);
     let controller = esb::Controller::with(
         map! {
-            ServiceBus::Storm => esb::BusConfig::with_addr(
-                storm_endpoint,
-                ZmqSocketType::RouterConnect,
-                None
-            ),
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,
                 ZmqSocketType::RouterBind,
@@ -49,7 +43,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     )
     .map_err(|_| LaunchError::NoLnpdConnection)?;
 
-    controller.run_or_panic("rgbd");
+    controller.run_or_panic("containerd");
 
     unreachable!()
 }
@@ -67,7 +61,7 @@ impl Runtime {
         // debug!("Initializing storage provider {:?}", config.storage_conf());
         // let storage = storage::FileDriver::with(config.storage_conf())?;
 
-        info!("RGBd runtime started successfully");
+        info!("Containerd runtime started successfully");
 
         Ok(Self {
             config,
@@ -92,10 +86,6 @@ impl esb::Handler<ServiceBus> for Runtime {
         request: Self::Request,
     ) -> Result<(), Self::Error> {
         match (bus_id, request, source) {
-            (ServiceBus::Storm, BusMsg::Storm(msg), ServiceId::Storm) => {
-                // TODO: Add remote peers to Strom message protocol
-                self.handle_storm(endpoints, /* remote_peer, */ msg)
-            }
             (ServiceBus::Rpc, BusMsg::Rpc(msg), ServiceId::Client(client_id)) => {
                 self.handle_rpc(endpoints, client_id, msg)
             }
@@ -117,21 +107,6 @@ impl esb::Handler<ServiceBus> for Runtime {
 }
 
 impl Runtime {
-    fn handle_storm(
-        &mut self,
-        endpoints: &mut Endpoints,
-        // remote_peer: NodeAddr,
-        message: StormMsg,
-    ) -> Result<(), DaemonError> {
-        match message {
-            wrong_msg => {
-                error!("Request is not supported by the Storm interface");
-                return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
-            }
-        }
-        Ok(())
-    }
-
     fn handle_rpc(
         &mut self,
         endpoints: &mut Endpoints,

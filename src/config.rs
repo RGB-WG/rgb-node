@@ -12,6 +12,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use internet2::addr::ServiceAddr;
+use storm_app::STORM_NODE_APP_ENDPOINT;
+
+use crate::opts::Opts;
 
 /// Final configuration resulting from data contained in config file environment
 /// variables and command-line options. For security reasons node key is kept
@@ -61,4 +64,21 @@ impl Config {
         *path = path.replace("{data_dir}", &self.data_dir.to_string_lossy());
         *path = shellexpand::tilde(path).to_string();
     }
+}
+
+impl From<Opts> for Config {
+    fn from(opts: Opts) -> Self {
+        Config {
+            data_dir: opts.data_dir,
+            rpc_endpoint: opts.rpc_endpoint,
+            ctl_endpoint: opts.ctl_endpoint,
+            storm_endpoint: STORM_NODE_APP_ENDPOINT.parse().expect("error in constant value"),
+            store_endpoint: opts.store_endpoint,
+            verbose: opts.verbose,
+        }
+    }
+}
+
+impl Config {
+    pub fn set_storm_endpoint(&mut self, endpoint: ServiceAddr) { self.storm_endpoint = endpoint; }
 }

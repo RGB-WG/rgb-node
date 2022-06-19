@@ -1,4 +1,4 @@
-_rgbd() {
+_containerd() {
     local i cur prev opts cmds
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -10,7 +10,7 @@ _rgbd() {
     do
         case "${i}" in
             "$1")
-                cmd="rgbd"
+                cmd="containerd"
                 ;;
             *)
                 ;;
@@ -18,8 +18,8 @@ _rgbd() {
     done
 
     case "${cmd}" in
-        rgbd)
-            opts="-h -V -v -d -x --help --version --verbose --data-dir --store-endpoint --rpc-endpoint --ctl --storm-endpoint"
+        containerd)
+            opts="-h -V -v -d -x --help --version --verbose --data-dir --store-endpoint --rpc-endpoint --ctl"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -49,10 +49,6 @@ _rgbd() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                --storm-endpoint)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
                 *)
                     COMPREPLY=()
                     ;;
@@ -63,4 +59,4 @@ _rgbd() {
     esac
 }
 
-complete -F _rgbd -o bashdefault -o default rgbd
+complete -F _containerd -o bashdefault -o default containerd

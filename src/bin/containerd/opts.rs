@@ -8,27 +8,16 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use clap::{Parser, ValueHint};
-use internet2::addr::ServiceAddr;
+use clap::Parser;
 use rgb_node::opts::Opts as SharedOpts;
-use storm_app::STORM_NODE_APP_ENDPOINT;
 
 /// Command-line arguments
 #[derive(Parser)]
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[clap(author, version, name = "rgbd", about = "RGB node managing service")]
+#[clap(author, version, name = "containerd", about = "RGB node container processor")]
 pub struct Opts {
     /// These params can be read also from the configuration file, not just
     /// command-line args or environment variables
     #[clap(flatten)]
     pub shared: SharedOpts,
-
-    /// ZMQ socket for connecting RGB node message bus.
-    #[clap(
-        long,
-        env = "STORM_NODE_APP_ENDPOINT",
-        default_value = STORM_NODE_APP_ENDPOINT,
-        value_hint = ValueHint::FilePath
-    )]
-    pub storm_endpoint: ServiceAddr,
 }
