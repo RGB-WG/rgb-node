@@ -78,7 +78,7 @@ pub enum RpcMsg {
     #[from]
     Progress(String),
 
-    #[display("success({0})")]
+    #[display("success{0}")]
     Success(OptionDetails),
 
     #[display("failure({0:#})")]
@@ -103,7 +103,7 @@ impl Display for OptionDetails {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.as_inner() {
             None => Ok(()),
-            Some(msg) => write!(f, "\"{}\"", msg),
+            Some(msg) => write!(f, "; \"{}\"", msg),
         }
     }
 }

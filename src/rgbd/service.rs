@@ -138,6 +138,11 @@ impl Runtime {
         message: RpcMsg,
     ) -> Result<(), DaemonError> {
         match message {
+            RpcMsg::AddContract(contract) => {
+                info!("Registering contract {}", contract.contract_id());
+                trace!("{:?}", contract);
+                self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
+            }
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));

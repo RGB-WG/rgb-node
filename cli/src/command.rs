@@ -28,7 +28,7 @@ impl Exec for Opts {
     type Error = Error;
 
     fn exec(self, runtime: &mut Self::Client) -> Result<(), Self::Error> {
-        eprintln!("{} ... ", self.command.action_string());
+        print!("{} ... ", self.command.action_string());
         match self.command {
             Command::Register { contract } => {
                 runtime.request(ServiceId::Rgb, RpcMsg::AddContract(contract))?;
