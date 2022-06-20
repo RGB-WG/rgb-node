@@ -16,10 +16,10 @@ use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
-use rgb::Node;
+use rgb::{MergeReveal, Node};
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_app::AppMsg as StormMsg;
-use strict_encoding::StrictEncode;
+use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
 use crate::{Config, DaemonError, LaunchError};
@@ -108,10 +108,35 @@ impl Runtime {
         })
     }
 
-    pub(super) fn store<'a, T: 'a + sha256t::Tag>(
+    pub(super) fn retrieve<'a, H: 'a + sha256t::Tag, T: StrictDecode>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, T> + 'a,
+        key: impl TaggedHash<'a, H> + 'a,
+    ) -> Result<Option<T>, DaemonError> {
+        let slice = key.into_inner();
+        let slice = slice.into_inner();
+        match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
+            Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
+            None => Ok(None),
+        }
+    }
+
+    pub(super) fn retrieve_h<T: StrictDecode>(
+        &mut self,
+        table: &'static str,
+        key: impl Hash<Inner = [u8; 32]>,
+    ) -> Result<Option<T>, DaemonError> {
+        let slice = *key.as_inner();
+        match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
+            Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
+            None => Ok(None),
+        }
+    }
+
+    pub(super) fn store<'a, H: 'a + sha256t::Tag>(
+        &mut self,
+        table: &'static str,
+        key: impl TaggedHash<'a, H> + 'a,
         data: &impl StrictEncode,
     ) -> Result<(), DaemonError> {
         let slice = key.into_inner();
@@ -129,6 +154,32 @@ impl Runtime {
         let slice = *key.as_inner();
         self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
         Ok(())
+    }
+
+    pub(super) fn store_merge<'a, H: 'a + sha256t::Tag>(
+        &mut self,
+        table: &'static str,
+        key: impl TaggedHash<'a, H> + Copy + 'a,
+        new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
+    ) -> Result<(), DaemonError> {
+        let stored_obj = self.retrieve(table, key)?.unwrap_or_else(|| new_obj.clone());
+        let obj = new_obj
+            .merge_reveal(stored_obj)
+            .expect("merge-revealed objects does not match; usually it means hacked database");
+        self.store(DB_TABLE_GENESIS, key, &obj)
+    }
+
+    pub(super) fn store_merge_h(
+        &mut self,
+        table: &'static str,
+        key: impl Hash<Inner = [u8; 32]>,
+        new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
+    ) -> Result<(), DaemonError> {
+        let stored_obj = self.retrieve_h(table, key)?.unwrap_or_else(|| new_obj.clone());
+        let obj = new_obj
+            .merge_reveal(stored_obj)
+            .expect("merge-revealed objects does not match; usually it means hacked database");
+        self.store_h(DB_TABLE_GENESIS, key, &obj)
     }
 }
 
@@ -198,7 +249,9 @@ impl Runtime {
             RpcMsg::AddContract(contract) => {
                 // TODO: Validate consignment
 
-                info!("Registering contract {}", contract.contract_id());
+                let contract_id = contract.contract_id();
+
+                info!("Registering contract {}", contract_id);
                 trace!("{:?}", contract);
 
                 self.store(DB_TABLE_SCHEMATA, contract.schema.schema_id(), &contract.schema)?;
@@ -206,27 +259,26 @@ impl Runtime {
                     self.store(DB_TABLE_SCHEMATA, root_schema.schema_id(), root_schema)?;
                 }
 
-                // TODO: IMPORTANT: concealed data will replace explicit.
-                //       do a proper merge-reveal operation
-                self.store(DB_TABLE_GENESIS, contract.genesis.contract_id(), &contract.genesis)?;
+                self.store_merge(DB_TABLE_GENESIS, contract_id, contract.genesis)?;
 
-                for (anchor, bundle) in &contract.anchored_bundles {
-                    // TODO: IMPORTANT: concealed data will replace explicit.
-                    //       do a proper merge-reveal operation
-                    self.store_h(DB_TABLE_ANCHORS, anchor.txid, anchor)?;
-                    let mut data = Vec::new();
-                    for (transition, inputs) in bundle {
-                        self.store(DB_TABLE_TRANSITIONS, transition.node_id(), transition)?;
-                        // TODO: IMPORTANT: concealed data will replace explicit.
-                        //       do a proper merge-reveal operation
+                for (anchor, bundle) in contract.anchored_bundles {
+                    let bundle_id = bundle.bundle_id();
+                    let anchor = anchor
+                        .into_merkle_block(contract_id, bundle_id.into())
+                        .expect("broken anchor data");
+                    self.store_merge_h(DB_TABLE_ANCHORS, anchor.txid, anchor)?;
+                    let mut data = bundle
+                        .concealed_iter()
+                        .map(|(id, set)| (*id, set.clone()))
+                        .collect::<Vec<_>>();
+                    for (transition, inputs) in bundle.into_revealed_iter() {
                         data.push((transition.node_id(), inputs.clone()));
+                        self.store_merge(DB_TABLE_TRANSITIONS, transition.node_id(), transition)?;
                     }
-                    // TODO: IMPORTANT: concealed data will replace explicit.
-                    //       do a proper merge-reveal operation
-                    self.store(DB_TABLE_BUNDLES, bundle.bundle_id(), &data)?;
+                    self.store(DB_TABLE_BUNDLES, bundle_id, &data)?;
                 }
-                for extension in &contract.state_extensions {
-                    self.store(DB_TABLE_EXTENSIONS, extension.node_id(), extension)?;
+                for extension in contract.state_extensions {
+                    self.store_merge(DB_TABLE_EXTENSIONS, extension.node_id(), extension)?;
                 }
 
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
