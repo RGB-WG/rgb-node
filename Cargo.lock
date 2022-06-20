@@ -1788,35 +1788,14 @@ dependencies = [
  "internet2",
  "log",
  "microservices",
+ "rgb-std",
  "rgb_rpc",
 ]
 
 [[package]]
 name = "rgb-core"
 version = "0.8.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "403c23b76a2ab2a8364d5e6b86b790f61a0035df89733bff15680085d1873342"
-dependencies = [
- "aluvm",
- "amplify",
- "bitcoin",
- "bp-core",
- "commit_verify",
- "descriptor-wallet",
- "grin_secp256k1zkp",
- "half",
- "lnpbp",
- "once_cell",
- "serde 1.0.137",
- "serde_with",
- "stens",
- "strict_encoding",
-]
-
-[[package]]
-name = "rgb-core"
-version = "0.8.0-alpha.1"
-source = "git+https://github.com/RGB-WG/rgb-core#f67494c5963d7b942fdb97aae1d9ba67ef29c46d"
+source = "git+https://github.com/RGB-WG/rgb-core#3493641be447e217c0c21b2a5c3beedcac8c754d"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1837,8 +1816,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40da3fa9c6c051fe4ed3fd2a19eb7c98d9020c9196c347ada2921f41e1ed33a7"
+source = "git+https://github.com/RGB-WG/rgb-std#1a1161bcc987d197b98feb1d9b49f21aa01050da"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1848,28 +1826,7 @@ dependencies = [
  "descriptor-wallet",
  "electrum-client",
  "lnpbp_bech32",
- "rgb-core 0.8.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.137",
- "serde_json",
- "serde_with",
- "serde_yaml",
- "strict_encoding",
-]
-
-[[package]]
-name = "rgb-std"
-version = "0.8.0-alpha.1"
-source = "git+https://github.com/RGB-WG/rgb-std#e9ff54a886aa9dd3ed14cdb10095fa10b103e3f0"
-dependencies = [
- "amplify",
- "bitcoin",
- "bp-core",
- "clap",
- "commit_verify",
- "descriptor-wallet",
- "electrum-client",
- "lnpbp_bech32",
- "rgb-core 0.8.0-alpha.1 (git+https://github.com/RGB-WG/rgb-core)",
+ "rgb-core",
  "serde 1.0.137",
  "serde_json",
  "serde_with",
@@ -1896,7 +1853,7 @@ dependencies = [
  "log",
  "microservices",
  "nix 0.24.1",
- "rgb-std 0.8.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rgb-std",
  "rgb_rpc",
  "shellexpand",
  "store_rpc",
@@ -1913,10 +1870,11 @@ dependencies = [
  "internet2",
  "log",
  "microservices",
- "rgb-std 0.8.0-alpha.1 (git+https://github.com/RGB-WG/rgb-std)",
+ "rgb-std",
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
+ "shellexpand",
  "strict_encoding",
 ]
 

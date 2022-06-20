@@ -44,7 +44,7 @@ fn main() -> Result<(), BootstrapError<LaunchError>> {
     trace!("Daemon configuration: {:?}", config);
     config.process();
     trace!("Processed configuration: {:?}", config);
-    debug!("CTL RPC socket {}", config.rpc_endpoint);
+    debug!("RPC socket {}", config.rpc_endpoint);
 
     /*
     use self::internal::ResultExt;

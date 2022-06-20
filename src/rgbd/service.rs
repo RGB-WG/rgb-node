@@ -32,7 +32,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
             ServiceBus::Storm => esb::BusConfig::with_addr(
                 storm_endpoint,
                 ZmqSocketType::RouterConnect,
-                None
+                Some(ServiceId::Storm)
             ),
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,

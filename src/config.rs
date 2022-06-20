@@ -54,7 +54,12 @@ impl Config {
 
         fs::create_dir_all(&self.data_dir).expect("Unable to access data directory");
 
-        for dir in vec![&mut self.rpc_endpoint, &mut self.ctl_endpoint] {
+        for dir in vec![
+            &mut self.rpc_endpoint,
+            &mut self.ctl_endpoint,
+            &mut self.storm_endpoint,
+            &mut self.store_endpoint,
+        ] {
             if let ServiceAddr::Ipc(ref mut path) = dir {
                 me.process_dir(path);
             }

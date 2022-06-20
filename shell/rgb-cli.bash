@@ -15,8 +15,8 @@ _rgb-cli() {
             help)
                 cmd+="__help"
                 ;;
-            none)
-                cmd+="__none"
+            register)
+                cmd+="__register"
                 ;;
             *)
                 ;;
@@ -25,7 +25,7 @@ _rgb-cli() {
 
     case "${cmd}" in
         rgb__cli)
-            opts="-h -V -r -v --help --version --rpc-endpoint --verbose none help"
+            opts="-h -V -r -d -v --help --version --rpc-endpoint --data-dir --verbose register help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -39,6 +39,14 @@ _rgb-cli() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                --data-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -d)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=()
                     ;;
@@ -47,7 +55,7 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__help)
-            opts="-r -v --rpc-endpoint --verbose <SUBCOMMAND>..."
+            opts="-r -d -v --rpc-endpoint --data-dir --verbose <SUBCOMMAND>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -58,6 +66,14 @@ _rgb-cli() {
                     return 0
                     ;;
                 -r)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --data-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -d)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
@@ -68,8 +84,8 @@ _rgb-cli() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        rgb__cli__none)
-            opts="-h -r -v --help --rpc-endpoint --verbose"
+        rgb__cli__register)
+            opts="-h -r -d -v --help --rpc-endpoint --data-dir --verbose <CONTRACT>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -80,6 +96,14 @@ _rgb-cli() {
                     return 0
                     ;;
                 -r)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --data-dir)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -d)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

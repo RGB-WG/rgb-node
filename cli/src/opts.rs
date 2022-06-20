@@ -8,8 +8,12 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::path::PathBuf;
+
+use clap::ValueHint;
 use internet2::addr::ServiceAddr;
-use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
+use rgb::Contract;
+use rgb_rpc::{RGB_NODE_DATA_DIR, RGB_NODE_RPC_ENDPOINT};
 
 /// Command-line tool for working with RGB node
 #[derive(Parser, Clone, PartialEq, Eq, Debug)]
@@ -30,6 +34,20 @@ pub struct Opts {
     )]
     pub rpc_endpoint: ServiceAddr,
 
+    /// Data directory path.
+    ///
+    /// Path to the directory that contains stored data, and where ZMQ RPC
+    /// socket files are located
+    #[clap(
+        short,
+        long,
+        global = true,
+        default_value = RGB_NODE_DATA_DIR,
+        env = "RGB_NODE_DATA_DIR",
+        value_hint = ValueHint::DirPath
+    )]
+    pub data_dir: PathBuf,
+
     /// Set verbosity level.
     ///
     /// Can be used multiple times to increase verbosity.
@@ -44,6 +62,7 @@ pub struct Opts {
 /// Command-line commands:
 #[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
 pub enum Command {
-    #[display("none")]
-    None,
+    /// Add new contract to the node
+    #[display("register(...)")]
+    Register { contract: Contract },
 }

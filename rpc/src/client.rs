@@ -8,6 +8,9 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::fs;
+use std::path::PathBuf;
+
 use internet2::addr::ServiceAddr;
 use internet2::session::LocalSession;
 use internet2::{
@@ -28,6 +31,9 @@ pub struct Config {
     /// ZMQ socket for RPC API
     pub rpc_endpoint: ServiceAddr,
 
+    /// Data location
+    pub data_dir: PathBuf,
+
     /// Verbosity level
     pub verbose: u8,
 }
@@ -44,7 +50,7 @@ impl Client {
         debug!("Initializing runtime");
         trace!("Connecting to RGB daemon at {}", config.rpc_endpoint);
         let session_rpc = LocalSession::connect(
-            ZmqSocketType::Req,
+            ZmqSocketType::RouterConnect,
             &config.rpc_endpoint,
             None,
             None,
@@ -70,5 +76,30 @@ impl Client {
         match &*reply {
             BusMsg::Rpc(rpc) => Ok(rpc.clone()),
         }
+    }
+}
+
+impl Config {
+    pub fn process(&mut self) {
+        self.data_dir =
+            PathBuf::from(shellexpand::tilde(&self.data_dir.display().to_string()).to_string());
+
+        let me = self.clone();
+        let mut data_dir = self.data_dir.to_string_lossy().into_owned();
+        self.process_dir(&mut data_dir);
+        self.data_dir = PathBuf::from(data_dir);
+
+        fs::create_dir_all(&self.data_dir).expect("Unable to access data directory");
+
+        for dir in vec![&mut self.rpc_endpoint] {
+            if let ServiceAddr::Ipc(ref mut path) = dir {
+                me.process_dir(path);
+            }
+        }
+    }
+
+    pub fn process_dir(&self, path: &mut String) {
+        *path = path.replace("{data_dir}", &self.data_dir.to_string_lossy());
+        *path = shellexpand::tilde(path).to_string();
     }
 }

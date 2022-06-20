@@ -33,6 +33,7 @@ impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Config {
             rpc_endpoint: opts.rpc_endpoint,
+            data_dir: opts.data_dir,
             verbose: opts.verbose,
         }
     }
@@ -45,8 +46,11 @@ fn main() {
     LogLevel::from_verbosity_flag_count(opts.verbose).apply();
     trace!("Command-line arguments: {:#?}", &opts);
 
-    let config: Config = opts.clone().into();
+    let mut config: Config = opts.clone().into();
     trace!("Tool configuration: {:#?}", &config);
+    config.process();
+    trace!("Processed configuration: {:?}", config);
+    debug!("RPC socket {}", config.rpc_endpoint);
 
     let mut client = Client::with(config).expect("Error initializing client");
 
