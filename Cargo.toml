@@ -23,6 +23,10 @@ name = "rgb_node"
 name = "rgbd"
 required-features = ["server"]
 
+[[bin]]
+name = "containerd"
+required-features = ["server"]
+
 [dependencies]
 # LNP/BP crates
 amplify = "3.12.0"
@@ -45,7 +49,7 @@ settings = { version = "0.10", package = "config", optional = true }
 configure_me = { version = "0.4", optional = true }
 dotenv = { version = "0.15", optional = true }
 colored = "2.0.0"
-shellexpand = { version = "2", optional = true }
+shellexpand = { version = "2.1", optional = true }
 
 [build-dependencies]
 amplify = "3.12.0"
@@ -58,7 +62,7 @@ store_rpc = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/stor
 clap = { version = "~3.1.18", features = ["env"] }
 clap_complete = "~3.1.4"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
-shellexpand = "2"
+shellexpand = "2.1"
 configure_me_codegen = "0.4"
 
 [features]

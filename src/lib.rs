@@ -22,6 +22,7 @@ mod error;
 pub mod rgbd;
 pub mod bus;
 pub mod containerd;
+#[cfg(feature = "server")]
 pub mod opts;
 
 pub use config::Config;

@@ -15,6 +15,7 @@ use internet2::addr::ServiceAddr;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_app::STORM_NODE_APP_ENDPOINT;
 
+#[cfg(feature = "server")]
 use crate::opts::Opts;
 
 /// Final configuration resulting from data contained in config file environment
@@ -42,6 +43,7 @@ pub struct Config {
     pub verbose: u8,
 }
 
+#[cfg(feature = "server")]
 impl Config {
     pub fn process(&mut self) {
         self.data_dir =
@@ -72,6 +74,7 @@ impl Config {
     }
 }
 
+#[cfg(feature = "server")]
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
         Config {
