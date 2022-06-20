@@ -9,16 +9,21 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use internet2::presentation;
+use microservices::rpc::ServerError;
 use microservices::{esb, rpc};
 use rgb_rpc::{FailureCode, RpcMsg};
 
 use crate::bus::{ServiceBus, ServiceId};
 
-#[derive(Clone, PartialEq, Eq, Debug, Display, Error, From)]
+#[derive(Clone, Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub enum LaunchError {
     /// unable to connect LNP node message bus
     NoLnpdConnection,
+
+    /// can't connect to store service. Details: {0}
+    #[from]
+    StoreConnection(ServerError<store_rpc::FailureCode>),
 }
 
 impl microservices::error::Error for LaunchError {}
