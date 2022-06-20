@@ -28,10 +28,13 @@ extern crate serde_crate as serde;
 pub mod client;
 mod error;
 mod messages;
+mod service_id;
 
 pub use client::Client;
-pub use error::FailureCode;
-pub use messages::RpcMsg;
+pub use error::{Error, FailureCode};
+pub(crate) use messages::BusMsg;
+pub use messages::{OptionDetails, RpcMsg};
+pub use service_id::{ClientId, ServiceId, ServiceName};
 
 #[cfg(any(target_os = "linux"))]
 pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
@@ -47,4 +50,4 @@ pub const RGB_NODE_DATA_DIR: &str = "~/Documents";
 pub const RGB_NODE_DATA_DIR: &str = ".";
 
 // TODO: Change port
-pub const RGB_NODE_RPC_ENDPOINT: &str = "{data_dir}/rpc";
+pub const RGB_NODE_RPC_ENDPOINT: &str = const_format::concatcp!(RGB_NODE_DATA_DIR, "/rpc");

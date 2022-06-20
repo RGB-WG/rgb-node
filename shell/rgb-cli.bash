@@ -25,17 +25,17 @@ _rgb-cli() {
 
     case "${cmd}" in
         rgb__cli)
-            opts="-h -V -r -d -v --help --version --rpc-endpoint --data-dir --verbose register help"
+            opts="-h -V -c -d -v --help --version --connect --data-dir --verbose register help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --rpc-endpoint)
+                --connect)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -r)
+                -c)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
@@ -55,17 +55,17 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__help)
-            opts="-r -d -v --rpc-endpoint --data-dir --verbose <SUBCOMMAND>..."
+            opts="-c -d -v --connect --data-dir --verbose <SUBCOMMAND>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --rpc-endpoint)
+                --connect)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -r)
+                -c)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
@@ -85,17 +85,17 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__register)
-            opts="-h -r -d -v --help --rpc-endpoint --data-dir --verbose <CONTRACT>"
+            opts="-h -c -d -v --help --connect --data-dir --verbose <CONTRACT>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --rpc-endpoint)
+                --connect)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -r)
+                -c)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

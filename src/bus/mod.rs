@@ -16,7 +16,7 @@ use rgb_rpc::RpcMsg;
 use storm_app::AppMsg as StormMsg;
 
 pub use self::ctl::CtlMsg;
-pub use self::services::{ClientId, DaemonId, ServiceId, ServiceName};
+pub use self::services::{DaemonId, ServiceId};
 pub(crate) use self::services::{Endpoints, Responder, ServiceBus};
 
 /// Service controller messages

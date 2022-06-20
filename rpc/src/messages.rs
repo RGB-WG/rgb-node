@@ -9,7 +9,9 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::collections::BTreeSet;
+use std::fmt::{self, Display, Formatter};
 
+use amplify::Wrapper;
 use internet2::presentation;
 use microservices::rpc;
 use rgb::{Contract, ContractId, ContractState, StateTransfer};
@@ -72,8 +74,12 @@ pub enum RpcMsg {
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),
 
+    #[display("progress(\"{0}\")")]
+    #[from]
+    Progress(String),
+
     #[display("success({0})")]
-    Success,
+    Success(OptionDetails),
 
     #[display("failure({0:#})")]
     #[from]
@@ -87,4 +93,35 @@ impl From<presentation::Error> for RpcMsg {
             info: format!("{}", err),
         })
     }
+}
+
+#[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]
+#[derive(NetworkEncode, NetworkDecode)]
+pub struct OptionDetails(pub Option<String>);
+
+impl Display for OptionDetails {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self.as_inner() {
+            None => Ok(()),
+            Some(msg) => write!(f, "\"{}\"", msg),
+        }
+    }
+}
+
+impl OptionDetails {
+    pub fn with(s: impl ToString) -> Self { Self(Some(s.to_string())) }
+
+    pub fn new() -> Self { Self(None) }
+}
+
+impl From<String> for OptionDetails {
+    fn from(s: String) -> Self { OptionDetails(Some(s)) }
+}
+
+impl From<&str> for OptionDetails {
+    fn from(s: &str) -> Self { OptionDetails(Some(s.to_string())) }
+}
+
+impl From<&str> for RpcMsg {
+    fn from(s: &str) -> Self { RpcMsg::Progress(s.to_owned()) }
 }

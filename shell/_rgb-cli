@@ -15,8 +15,8 @@ _rgb-cli() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
-'-r+[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
-'--rpc-endpoint=[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'-c+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--connect=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-d+[Data directory path]:DATA_DIR:_files -/' \
 '--data-dir=[Data directory path]:DATA_DIR:_files -/' \
 '-h[Print help information]' \
@@ -36,8 +36,8 @@ _rgb-cli() {
         case $line[1] in
             (register)
 _arguments "${_arguments_options[@]}" \
-'-r+[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
-'--rpc-endpoint=[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'-c+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--connect=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-d+[Data directory path]:DATA_DIR:_files -/' \
 '--data-dir=[Data directory path]:DATA_DIR:_files -/' \
 '-h[Print help information]' \
@@ -49,8 +49,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (help)
 _arguments "${_arguments_options[@]}" \
-'-r+[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
-'--rpc-endpoint=[ZMQ socket for connecting daemon RPC interface]:RPC_ENDPOINT: ' \
+'-c+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--connect=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-d+[Data directory path]:DATA_DIR:_files -/' \
 '--data-dir=[Data directory path]:DATA_DIR:_files -/' \
 '*-v[Set verbosity level]' \

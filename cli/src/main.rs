@@ -24,20 +24,11 @@ mod opts;
 
 use clap::Parser;
 use colored::Colorize;
+use internet2::addr::ServiceAddr;
 use microservices::shell::{Exec, LogLevel};
-use rgb_rpc::client::{Client, Config};
+use rgb_rpc::client::Client;
 
 pub use crate::opts::{Command, Opts};
-
-impl From<Opts> for Config {
-    fn from(opts: Opts) -> Self {
-        Config {
-            rpc_endpoint: opts.rpc_endpoint,
-            data_dir: opts.data_dir,
-            verbose: opts.verbose,
-        }
-    }
-}
 
 fn main() {
     println!("rgb-cli: command-line tool for working with RGB node");
@@ -46,13 +37,13 @@ fn main() {
     LogLevel::from_verbosity_flag_count(opts.verbose).apply();
     trace!("Command-line arguments: {:#?}", &opts);
 
-    let mut config: Config = opts.clone().into();
-    trace!("Tool configuration: {:#?}", &config);
-    config.process();
-    trace!("Processed configuration: {:?}", config);
-    debug!("RPC socket {}", config.rpc_endpoint);
+    let mut connect = opts.connect.clone();
+    if let ServiceAddr::Ipc(ref mut path) = connect {
+        *path = shellexpand::tilde(path).to_string();
+    }
+    debug!("RPC socket {}", connect);
 
-    let mut client = Client::with(config).expect("Error initializing client");
+    let mut client = Client::with(connect).expect("Error initializing client");
 
     trace!("Executing command: {}", opts.command);
     opts.exec(&mut client).unwrap_or_else(|err| {

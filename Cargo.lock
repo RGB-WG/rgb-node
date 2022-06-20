@@ -567,6 +567,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "const_format"
+version = "0.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2906f2480cdc015e998deac388331a0f1c1cd88744948c749513020c83c370bc"
+dependencies = [
+ "const_format_proc_macros",
+]
+
+[[package]]
+name = "const_format_proc_macros"
+version = "0.2.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef196d5d972878a48da7decb7686eded338b4858fbabeed513d63a7c98b2b82d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-xid",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1790,6 +1810,7 @@ dependencies = [
  "microservices",
  "rgb-std",
  "rgb_rpc",
+ "shellexpand",
 ]
 
 [[package]]
@@ -1867,6 +1888,8 @@ name = "rgb_rpc"
 version = "0.8.0-alpha.1"
 dependencies = [
  "amplify",
+ "colored",
+ "const_format",
  "internet2",
  "log",
  "microservices",

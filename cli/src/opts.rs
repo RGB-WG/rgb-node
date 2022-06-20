@@ -32,7 +32,7 @@ pub struct Opts {
         default_value = RGB_NODE_RPC_ENDPOINT,
         env = "RGB_NODE_RPC_ENDPOINT"
     )]
-    pub rpc_endpoint: ServiceAddr,
+    pub connect: ServiceAddr,
 
     /// Data directory path.
     ///

@@ -22,8 +22,10 @@ microservices = { version = "0.8.0-rc.4", default-features = false, features = [
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", optional = true }
 serde_yaml = { version = "0.8.23", optional = true }
+const_format = "0.2.25"
 shellexpand = "2.1"
 log = "0.4.14"
+colored = "2"
 
 [features]
 default = ["serde"]

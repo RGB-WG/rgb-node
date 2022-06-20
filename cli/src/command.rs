@@ -8,9 +8,8 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use microservices::rpc::ServerError;
 use microservices::shell::Exec;
-use rgb_rpc::{Client, FailureCode, RpcMsg};
+use rgb_rpc::{Client, Error, RpcMsg, ServiceId};
 
 use crate::{Command, Opts};
 
@@ -26,22 +25,17 @@ impl Command {
 
 impl Exec for Opts {
     type Client = Client;
-    type Error = ServerError<FailureCode>;
+    type Error = Error;
 
     fn exec(self, runtime: &mut Self::Client) -> Result<(), Self::Error> {
         eprintln!("{} ... ", self.command.action_string());
-        let reply = match self.command {
-            Command::Register { contract } => runtime.request(RpcMsg::AddContract(contract))?,
+        match self.command {
+            Command::Register { contract } => {
+                runtime.request(ServiceId::Rgb, RpcMsg::AddContract(contract))?;
+                runtime.report_response()?;
+            }
         };
-        match reply {
-            RpcMsg::ContractIds(_) => {}
-            RpcMsg::Contract(_) => {}
-            RpcMsg::ContractState(_) => {}
-            RpcMsg::StateTransfer(_) => {}
-            RpcMsg::Success => eprintln!("success"),
-            RpcMsg::Failure(_) => {}
-            wrong => unreachable!("unrecognized node reply {}", wrong),
-        }
+
         Ok(())
     }
 }

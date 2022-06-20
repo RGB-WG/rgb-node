@@ -8,16 +8,15 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use internet2::addr::NodeAddr;
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
 use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
-use rgb_rpc::RpcMsg;
+use rgb_rpc::{ClientId, RpcMsg};
 use storm_app::AppMsg as StormMsg;
 
-use crate::bus::{BusMsg, ClientId, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
+use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
 use crate::{Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
