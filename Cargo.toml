@@ -39,7 +39,6 @@ rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
 storm_app = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
 store_rpc = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-stored" }
 # OS
-zmq = { package = "zmq2", version = "0.5.0" }
 chrono = "0.4"
 nix = "0.24"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }

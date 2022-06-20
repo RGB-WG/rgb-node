@@ -15,9 +15,20 @@ use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_app::AppMsg as StormMsg;
+use strict_encoding::StrictEncode;
 
 use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
 use crate::{Config, DaemonError, LaunchError};
+
+const DB_TABLE_SCHEMATA: &str = "schemata";
+const DB_TABLE_BUNDLES: &str = "bundles";
+const DB_TABLE_GENESIS: &str = "genesis";
+const DB_TABLE_TRANSITIONS: &str = "transitions";
+const DB_TABLE_ANCHORS: &str = "transitions";
+const DB_TABLE_EXTENSIONS: &str = "extensions";
+const DB_TABLE_ATTACHMENT_CHUNKS: &str = "chunks";
+const DB_TABLE_ATTACHMENT_INDEX: &str = "attachments";
+const DB_TABLE_ALU_LIBS: &str = "alu";
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let storm_endpoint = config.storm_endpoint.clone();
@@ -67,7 +78,22 @@ impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError<LaunchError>> {
         debug!("Connecting to store service at {}", config.store_endpoint);
 
-        let store = store_rpc::Client::with(&config.store_endpoint).map_err(LaunchError::from)?;
+        let mut store =
+            store_rpc::Client::with(&config.store_endpoint).map_err(LaunchError::from)?;
+
+        for table in [
+            DB_TABLE_SCHEMATA,
+            DB_TABLE_BUNDLES,
+            DB_TABLE_GENESIS,
+            DB_TABLE_TRANSITIONS,
+            DB_TABLE_ANCHORS,
+            DB_TABLE_EXTENSIONS,
+            DB_TABLE_ATTACHMENT_CHUNKS,
+            DB_TABLE_ATTACHMENT_INDEX,
+            DB_TABLE_ALU_LIBS,
+        ] {
+            store.use_table(table.to_owned()).map_err(LaunchError::from)?;
+        }
 
         info!("RGBd runtime started successfully");
 
@@ -76,6 +102,15 @@ impl Runtime {
             store,
             unmarshaller: BusMsg::create_unmarshaller(),
         })
+    }
+
+    pub(super) fn store(
+        &mut self,
+        table: &'static str,
+        data: &impl StrictEncode,
+    ) -> Result<(), DaemonError> {
+        self.store.store(table.to_owned(), data.strict_serialize()?)?;
+        Ok(())
     }
 }
 
@@ -145,6 +180,12 @@ impl Runtime {
             RpcMsg::AddContract(contract) => {
                 info!("Registering contract {}", contract.contract_id());
                 trace!("{:?}", contract);
+
+                self.store(DB_TABLE_SCHEMATA, &contract.schema)?;
+                if let Some(root_schema) = &contract.root_schema {
+                    self.store(DB_TABLE_SCHEMATA, root_schema)?;
+                }
+
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
             wrong_msg => {

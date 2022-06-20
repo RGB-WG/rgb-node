@@ -31,6 +31,7 @@ impl microservices::error::Error for LaunchError {}
 #[derive(Clone, Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub(crate) enum DaemonError {
+    /// data encoding error. Details: {0}
     #[from]
     #[display(inner)]
     Encoding(strict_encoding::Error),
@@ -42,6 +43,10 @@ pub(crate) enum DaemonError {
     /// invalid storm message encoding. Details: {0}
     #[from]
     StormEncoding(presentation::Error),
+
+    /// storage error. Details: {0}
+    #[from]
+    Store(ServerError<store_rpc::FailureCode>),
 
     /// request `{1}` is not supported on {0} message bus
     RequestNotSupported(ServiceBus, String),
@@ -64,6 +69,7 @@ impl From<DaemonError> for RpcMsg {
             DaemonError::RequestNotSupported(_, _) | DaemonError::SourceNotSupported(_, _, _) => {
                 FailureCode::UnexpectedRequest
             }
+            DaemonError::Store(_) => FailureCode::Store,
         };
         RpcMsg::Failure(rpc::Failure {
             code: code.into(),

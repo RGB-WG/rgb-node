@@ -1880,7 +1880,6 @@ dependencies = [
  "store_rpc",
  "storm_app",
  "strict_encoding",
- "zmq2",
 ]
 
 [[package]]
@@ -2231,8 +2230,8 @@ dependencies = [
 
 [[package]]
 name = "store_rpc"
-version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-stored#5bc7e81527182abf3f8ebb9cd82fa69bcc3be1d2"
+version = "0.8.0-beta.1"
+source = "git+https://github.com/Storm-WG/storm-stored#47fc29a5c7be23da5ed3b0c274b86e9e629fc939"
 dependencies = [
  "amplify",
  "colored",
@@ -2278,7 +2277,7 @@ dependencies = [
 [[package]]
 name = "storm_app"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#8d612066746513cca21ac55d3b619ee4f54ee9ee"
+source = "git+https://github.com/Storm-WG/storm-node#2ee6b34edb0635aa6e5f71859f993c44d088bdad"
 dependencies = [
  "amplify",
  "internet2",
@@ -2297,7 +2296,7 @@ dependencies = [
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#8d612066746513cca21ac55d3b619ee4f54ee9ee"
+source = "git+https://github.com/Storm-WG/storm-node#2ee6b34edb0635aa6e5f71859f993c44d088bdad"
 dependencies = [
  "amplify",
  "internet2",
