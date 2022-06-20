@@ -1897,7 +1897,6 @@ dependencies = [
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
- "shellexpand",
  "strict_encoding",
 ]
 

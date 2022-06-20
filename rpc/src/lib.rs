@@ -49,5 +49,4 @@ pub const RGB_NODE_DATA_DIR: &str = "~/Documents";
 #[cfg(target_os = "android")]
 pub const RGB_NODE_DATA_DIR: &str = ".";
 
-// TODO: Change port
 pub const RGB_NODE_RPC_ENDPOINT: &str = const_format::concatcp!(RGB_NODE_DATA_DIR, "/rpc");
