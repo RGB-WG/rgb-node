@@ -8,11 +8,12 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use internet2::session::LocalSession;
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
 use microservices::error::BootstrapError;
-use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
+use microservices::{esb, ZMQ_CONTEXT};
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_app::AppMsg as StormMsg;
 
@@ -57,19 +58,29 @@ pub struct Runtime {
     /// Original configuration object
     pub(crate) config: Config,
 
+    pub(crate) store_session: LocalSession,
+
     /// Unmarshaller instance used for parsing RPC request
     pub(crate) unmarshaller: Unmarshaller<BusMsg>,
 }
 
 impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError<LaunchError>> {
-        // debug!("Initializing storage provider {:?}", config.storage_conf());
-        // let storage = storage::FileDriver::with(config.storage_conf())?;
+        debug!("Connecting to store service at {}", config.store_endpoint);
+
+        let store_session = LocalSession::connect(
+            ZmqSocketType::Req,
+            &config.store_endpoint,
+            None,
+            None,
+            &ZMQ_CONTEXT,
+        )?;
 
         info!("RGBd runtime started successfully");
 
         Ok(Self {
             config,
+            store_session,
             unmarshaller: BusMsg::create_unmarshaller(),
         })
     }

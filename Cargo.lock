@@ -1816,7 +1816,7 @@ dependencies = [
 [[package]]
 name = "rgb-core"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/RGB-WG/rgb-core#3493641be447e217c0c21b2a5c3beedcac8c754d"
+source = "git+https://github.com/RGB-WG/rgb-core#9eae1fead096a060a16e796a95f927c4ea136de8"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1837,7 +1837,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/RGB-WG/rgb-std#1a1161bcc987d197b98feb1d9b49f21aa01050da"
+source = "git+https://github.com/RGB-WG/rgb-std#8a0eabe0ec9663c58aa3c6b7963a5f3e56ee197d"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2232,11 +2232,12 @@ dependencies = [
 [[package]]
 name = "store_rpc"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-stored#f098fb334150862098acba4238d17118485b8513"
+source = "git+https://github.com/Storm-WG/storm-stored#5bc7e81527182abf3f8ebb9cd82fa69bcc3be1d2"
 dependencies = [
  "amplify",
  "colored",
  "commit_verify",
+ "const_format",
  "internet2",
  "log",
  "microservices",
@@ -2246,7 +2247,6 @@ dependencies = [
  "serde_yaml",
  "storm-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "strict_encoding",
- "zmq2",
 ]
 
 [[package]]
