@@ -46,9 +46,9 @@ dependencies = [
 
 [[package]]
 name = "amplify"
-version = "3.12.0"
+version = "3.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47cfa6a69eeb140125a63e4f5ae1156a530f8744ea1d35aa1b8b5613e4d8b41d"
+checksum = "e45c604e86700ffea68a7d90c3ffb1508dad1120902f31dbb08afc942cf8acf3"
 dependencies = [
  "amplify_apfloat",
  "amplify_derive",
@@ -1860,6 +1860,7 @@ name = "rgb_node"
 version = "0.8.0-alpha.1"
 dependencies = [
  "amplify",
+ "bitcoin",
  "chrono",
  "clap",
  "clap_complete",
@@ -2231,7 +2232,7 @@ dependencies = [
 [[package]]
 name = "store_rpc"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/Storm-WG/storm-stored#47fc29a5c7be23da5ed3b0c274b86e9e629fc939"
+source = "git+https://github.com/Storm-WG/storm-stored#d4e9425088ef51b420b72933b1659ecabdd605dd"
 dependencies = [
  "amplify",
  "colored",

@@ -8,11 +8,15 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use amplify::Slice32;
+use bitcoin::hashes::{sha256t, Hash};
+use commit_verify::TaggedHash;
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
 use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
+use rgb::Node;
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_app::AppMsg as StormMsg;
 use strict_encoding::StrictEncode;
@@ -104,12 +108,26 @@ impl Runtime {
         })
     }
 
-    pub(super) fn store(
+    pub(super) fn store<'a, T: 'a + sha256t::Tag>(
         &mut self,
         table: &'static str,
+        key: impl TaggedHash<'a, T> + 'a,
         data: &impl StrictEncode,
     ) -> Result<(), DaemonError> {
-        self.store.store(table.to_owned(), data.strict_serialize()?)?;
+        let slice = key.into_inner();
+        let slice = slice.into_inner();
+        self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
+        Ok(())
+    }
+
+    pub(super) fn store_h(
+        &mut self,
+        table: &'static str,
+        key: impl Hash<Inner = [u8; 32]>,
+        data: &impl StrictEncode,
+    ) -> Result<(), DaemonError> {
+        let slice = *key.as_inner();
+        self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
         Ok(())
     }
 }
@@ -178,12 +196,37 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         match message {
             RpcMsg::AddContract(contract) => {
+                // TODO: Validate consignment
+
                 info!("Registering contract {}", contract.contract_id());
                 trace!("{:?}", contract);
 
-                self.store(DB_TABLE_SCHEMATA, &contract.schema)?;
+                self.store(DB_TABLE_SCHEMATA, contract.schema.schema_id(), &contract.schema)?;
                 if let Some(root_schema) = &contract.root_schema {
-                    self.store(DB_TABLE_SCHEMATA, root_schema)?;
+                    self.store(DB_TABLE_SCHEMATA, root_schema.schema_id(), root_schema)?;
+                }
+
+                // TODO: IMPORTANT: concealed data will replace explicit.
+                //       do a proper merge-reveal operation
+                self.store(DB_TABLE_GENESIS, contract.genesis.contract_id(), &contract.genesis)?;
+
+                for (anchor, bundle) in &contract.anchored_bundles {
+                    // TODO: IMPORTANT: concealed data will replace explicit.
+                    //       do a proper merge-reveal operation
+                    self.store_h(DB_TABLE_ANCHORS, anchor.txid, anchor)?;
+                    let mut data = Vec::new();
+                    for (transition, inputs) in bundle {
+                        self.store(DB_TABLE_TRANSITIONS, transition.node_id(), transition)?;
+                        // TODO: IMPORTANT: concealed data will replace explicit.
+                        //       do a proper merge-reveal operation
+                        data.push((transition.node_id(), inputs.clone()));
+                    }
+                    // TODO: IMPORTANT: concealed data will replace explicit.
+                    //       do a proper merge-reveal operation
+                    self.store(DB_TABLE_BUNDLES, bundle.bundle_id(), &data)?;
+                }
+                for extension in &contract.state_extensions {
+                    self.store(DB_TABLE_EXTENSIONS, extension.node_id(), extension)?;
                 }
 
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
