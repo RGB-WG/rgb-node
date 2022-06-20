@@ -8,8 +8,11 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
+
 use internet2::presentation;
 use microservices::rpc;
+use rgb::{Contract, ContractId, ContractState, StateTransfer};
 
 use crate::FailureCode;
 
@@ -26,34 +29,49 @@ pub(crate) enum BusMsg {
 
 impl rpc::Request for BusMsg {}
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Display, From)]
+#[derive(Clone, Eq, PartialEq, Debug, Display, From)]
 #[derive(NetworkEncode, NetworkDecode)]
 #[display(inner)]
 pub enum RpcMsg {
-    // Contract creation
-    // -----------------
-    SchemaRegister,
+    // Contract operations
+    // -------------------
+    #[display("add_contract(...)")]
+    AddContract(Contract),
 
-    Schemata,
+    #[display("list_contracts")]
+    ListContracts,
+
+    #[display("list_contract_ids")]
+    ListContractIds,
+
+    #[display("get_contract({0})")]
+    GetContact(ContractId),
+
+    #[display("get_contract_state({0})")]
+    GetContractState(ContractId),
 
     // Stash operations
     // ----------------
-    Invoice,
+    BlindUtxo,
 
-    Consign,
+    ComposeTransfer,
 
-    Accept,
-
-    Enclose,
-
-    // Stash read operations
-    // ---------------------
-    ContractIds,
-
-    ContactState,
+    AcceptTransfer,
 
     // Responses to CLI
     // ----------------
+    #[display("contract_ids(...)")]
+    ContractIds(BTreeSet<ContractId>),
+
+    #[display("contract(...)")]
+    Contract(Contract),
+
+    #[display("contract_state(...)")]
+    ContractState(ContractState),
+
+    #[display("state_transfer(...)")]
+    StateTransfer(StateTransfer),
+
     #[display("success({0})")]
     Success,
 

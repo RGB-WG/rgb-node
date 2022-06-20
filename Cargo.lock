@@ -232,9 +232,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_scripts"
-version = "0.7.0"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8ef0ceaddc4fc71a8c6c923201abbf269f36ae7d7e50ee2d93fd4c32537e113"
+checksum = "dcfdf7d9a0b3af94a35b92daa2e3f1c5b02b7293b5938a4cd4cc426852e52249"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1479,9 +1479,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.39"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c54b25569025b7fc9651de43004ae593a75ad88543b17178aa5e1b9c4f15f56f"
+checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
 dependencies = [
  "unicode-ident",
 ]
@@ -1511,9 +1511,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.18"
+version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
+checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
 dependencies = [
  "proc-macro2",
 ]
@@ -1814,6 +1814,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "rgb-core"
+version = "0.8.0-alpha.1"
+source = "git+https://github.com/RGB-WG/rgb-core#f67494c5963d7b942fdb97aae1d9ba67ef29c46d"
+dependencies = [
+ "aluvm",
+ "amplify",
+ "bitcoin",
+ "bp-core",
+ "commit_verify",
+ "descriptor-wallet",
+ "grin_secp256k1zkp",
+ "half",
+ "lnpbp",
+ "once_cell",
+ "serde 1.0.137",
+ "serde_with",
+ "stens",
+ "strict_encoding",
+]
+
+[[package]]
 name = "rgb-std"
 version = "0.8.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1827,7 +1848,28 @@ dependencies = [
  "descriptor-wallet",
  "electrum-client",
  "lnpbp_bech32",
- "rgb-core",
+ "rgb-core 0.8.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.137",
+ "serde_json",
+ "serde_with",
+ "serde_yaml",
+ "strict_encoding",
+]
+
+[[package]]
+name = "rgb-std"
+version = "0.8.0-alpha.1"
+source = "git+https://github.com/RGB-WG/rgb-std#e9ff54a886aa9dd3ed14cdb10095fa10b103e3f0"
+dependencies = [
+ "amplify",
+ "bitcoin",
+ "bp-core",
+ "clap",
+ "commit_verify",
+ "descriptor-wallet",
+ "electrum-client",
+ "lnpbp_bech32",
+ "rgb-core 0.8.0-alpha.1 (git+https://github.com/RGB-WG/rgb-core)",
  "serde 1.0.137",
  "serde_json",
  "serde_with",
@@ -1854,7 +1896,7 @@ dependencies = [
  "log",
  "microservices",
  "nix 0.24.1",
- "rgb-std",
+ "rgb-std 0.8.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rgb_rpc",
  "shellexpand",
  "store_rpc",
@@ -1871,6 +1913,7 @@ dependencies = [
  "internet2",
  "log",
  "microservices",
+ "rgb-std 0.8.0-alpha.1 (git+https://github.com/RGB-WG/rgb-std)",
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
@@ -2241,7 +2284,7 @@ dependencies = [
 [[package]]
 name = "storm-core"
 version = "0.1.0"
-source = "git+https://github.com/Storm-WG/storm-core#b49caa4fd3d6c476829e3b9c9e60a19fb5a6ae70"
+source = "git+https://github.com/Storm-WG/storm-core#363386f7afd4620af222543ce03d7e877247f444"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -2255,7 +2298,7 @@ dependencies = [
 [[package]]
 name = "storm_app"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#2dc61f1aba2a05d0fb7090a8b22cae268b8ce459"
+source = "git+https://github.com/Storm-WG/storm-node#8d612066746513cca21ac55d3b619ee4f54ee9ee"
 dependencies = [
  "amplify",
  "internet2",
@@ -2274,7 +2317,7 @@ dependencies = [
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#2dc61f1aba2a05d0fb7090a8b22cae268b8ce459"
+source = "git+https://github.com/Storm-WG/storm-node#8d612066746513cca21ac55d3b619ee4f54ee9ee"
 dependencies = [
  "amplify",
  "internet2",
@@ -2288,9 +2331,9 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding"
-version = "1.8.8"
+version = "1.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1bbb5109701ede3df3e20b82a134d601036f02b8b2f259965266a6a784cc749"
+checksum = "3379d91cf1a6dda3ad54629ae868f0dd65a8fb42fae697c94777253e795a12b3"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2339,9 +2382,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.96"
+version = "1.0.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0748dd251e24453cb8717f0354206b91557e4ec8703673a4b30208f2abaf1ebf"
+checksum = "c50aef8a904de4c23c788f104b7dddc7d6f79c647c7c8ce4cc8f73eb0ca773dd"
 dependencies = [
  "proc-macro2",
  "quote",
