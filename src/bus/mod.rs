@@ -31,7 +31,7 @@ pub(crate) enum BusMsg {
     Rpc(RpcMsg),
 
     /// CTL requests
-    #[api(type = 5)]
+    #[api(type = 6)]
     #[display(inner)]
     #[from]
     Ctl(CtlMsg),

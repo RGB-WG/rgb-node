@@ -8,6 +8,9 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::thread;
+use std::time::Duration;
+
 use bitcoin::secp256k1::rand::random;
 use commit_verify::ConsensusCommit;
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
@@ -91,12 +94,8 @@ impl esb::Handler<ServiceBus> for Runtime {
     fn identity(&self) -> ServiceId { ServiceId::Container(self.id) }
 
     fn on_ready(&mut self, endpoints: &mut EndpointList<ServiceBus>) -> Result<(), Self::Error> {
-        endpoints.send_to(
-            ServiceBus::Ctl,
-            self.identity(),
-            ServiceId::Rgb,
-            BusMsg::Ctl(CtlMsg::Hello),
-        )?;
+        thread::sleep(Duration::from_millis(100));
+        self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::Hello)?;
         Ok(())
     }
 
