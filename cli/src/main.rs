@@ -43,7 +43,8 @@ fn main() {
     }
     debug!("RPC socket {}", connect);
 
-    let mut client = Client::with(connect).expect("Error initializing client");
+    let mut client = Client::with(connect, s!("rgb-cli"), opts.chain.clone())
+        .expect("Error initializing client");
 
     trace!("Executing command: {}", opts.command);
     opts.exec(&mut client)

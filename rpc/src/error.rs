@@ -8,14 +8,14 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use microservices::{esb, rpc};
-
-use crate::ServiceId;
+use microservices::rpc;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 pub enum FailureCode {
     /// Catch-all
     Unknown = 0xFFF,
+
+    ChainMismatch = 0x01,
 
     /// Encoding
     Encoding = 0x02,
@@ -47,30 +47,3 @@ impl From<FailureCode> for rpc::FailureCode<FailureCode> {
 }
 
 impl rpc::FailureCodeExt for FailureCode {}
-
-#[derive(Debug, Display, From, Error)]
-#[display(doc_comments)]
-#[non_exhaustive]
-pub enum Error {
-    /// ESB error: {0}
-    #[from]
-    Esb(esb::Error<ServiceId>),
-
-    /// RPC error: {0}
-    #[from]
-    Server(rpc::ServerError<FailureCode>),
-
-    /// other error type with string explanation
-    #[display(inner)]
-    #[from(internet2::addr::NoOnionSupportError)]
-    Other(String),
-}
-
-impl From<Error> for esb::Error<ServiceId> {
-    fn from(err: Error) -> Self {
-        match err {
-            Error::Esb(err) => err,
-            err => esb::Error::ServiceError(err.to_string()),
-        }
-    }
-}

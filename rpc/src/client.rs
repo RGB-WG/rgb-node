@@ -14,9 +14,14 @@ use std::time::Duration;
 use colored::Colorize;
 use internet2::addr::ServiceAddr;
 use internet2::ZmqSocketType;
+use lnpbp::chain::Chain;
 use microservices::esb::{self, BusId};
+use microservices::rpc;
 
-use crate::{BusMsg, ClientId, Error, OptionDetails, RpcMsg, ServiceId};
+use crate::messages::HelloReq;
+use crate::{BusMsg, ClientId, FailureCode, OptionDetails, RpcMsg, ServiceId};
+
+type Error = esb::Error<ServiceId>;
 
 // We have just a single service bus (RPC), so we can use any id
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Default, Display)]
@@ -32,12 +37,14 @@ type Bus = esb::EndpointList<RpcBus>;
 #[repr(C)]
 pub struct Client {
     identity: ClientId,
+    user_agent: String,
+    network: Chain,
     response_queue: Vec<RpcMsg>,
     esb: esb::Controller<RpcBus, BusMsg, Handler>,
 }
 
 impl Client {
-    pub fn with(connect: ServiceAddr) -> Result<Self, Error> {
+    pub fn with(connect: ServiceAddr, user_agent: String, network: Chain) -> Result<Self, Error> {
         use rgb::secp256k1zkp::rand;
 
         debug!("RPC socket {}", connect);
@@ -63,6 +70,8 @@ impl Client {
 
         Ok(Self {
             identity,
+            user_agent,
+            network,
             response_queue: empty!(),
             esb,
         })
@@ -70,9 +79,10 @@ impl Client {
 
     pub fn identity(&self) -> ClientId { self.identity }
 
-    pub fn request(&mut self, daemon: ServiceId, req: RpcMsg) -> Result<(), Error> {
+    pub fn request(&mut self, req: impl Into<RpcMsg>) -> Result<(), Error> {
+        let req = req.into();
         debug!("Executing {}", req);
-        self.esb.send_to(RpcBus, daemon, BusMsg::Rpc(req))?;
+        self.esb.send_to(RpcBus, ServiceId::Rgb, BusMsg::Rpc(req))?;
         Ok(())
     }
 
@@ -91,7 +101,7 @@ impl Client {
         match self.response()? {
             RpcMsg::Failure(fail) => {
                 eprintln!("{}: {}", "Request failure".bright_red(), fail.to_string().red());
-                Err(Error::Server(fail.into()))
+                Err(Error::ServiceError(fail.to_string()))
             }
             resp => Ok(resp),
         }
@@ -143,11 +153,29 @@ impl Client {
                         "Unexpected message".bright_yellow(),
                         other.to_string().yellow()
                     );
-                    return Err(Error::Other(s!("Unexpected server response")));
+                    return Err(Error::ServiceError(s!("Unexpected server response")));
                 }
             }
         }
         Ok(counter)
+    }
+}
+
+impl Client {
+    pub fn hello(&mut self) -> Result<bool, Error> {
+        self.request(HelloReq {
+            user_agent: self.user_agent.clone(),
+            network: self.network.clone(),
+        })?;
+        match self.response()? {
+            RpcMsg::Success(_) => Ok(true),
+            RpcMsg::Failure(rpc::Failure {
+                code: rpc::FailureCode::Other(FailureCode::ChainMismatch),
+                ..
+            }) => Ok(false),
+            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
+            _ => Err(Error::UnexpectedServerResponse),
+        }
     }
 }
 

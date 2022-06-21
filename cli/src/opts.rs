@@ -9,6 +9,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use internet2::addr::ServiceAddr;
+use lnpbp::chain::Chain;
 use rgb::Contract;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 
@@ -30,6 +31,17 @@ pub struct Opts {
         env = "RGB_NODE_RPC_ENDPOINT"
     )]
     pub connect: ServiceAddr,
+
+    /// Blockchain to use
+    #[clap(
+        short = 'n',
+        long,
+        global = true,
+        alias = "network",
+        default_value = "signet",
+        env = "RGB_NETWORK"
+    )]
+    pub chain: Chain,
 
     /// Set verbosity level.
     ///

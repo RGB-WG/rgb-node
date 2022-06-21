@@ -17,6 +17,7 @@ name = "rgb_rpc"
 amplify = "3.12.0"
 strict_encoding = "1.8.1"
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
+lnpbp = "0.7.0"
 bitcoin = "0.28.1"
 internet2 = "0.8.0-beta.1"
 microservices = { version = "0.8.0-rc.4", default-features = false, features = ["client"], git = "https://github.com/Internet2-WG/rust-microservices" }

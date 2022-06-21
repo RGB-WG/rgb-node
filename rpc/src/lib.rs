@@ -28,7 +28,7 @@ mod messages;
 mod service_id;
 
 pub use client::Client;
-pub use error::{Error, FailureCode};
+pub use error::FailureCode;
 pub(crate) use messages::BusMsg;
 pub use messages::{OptionDetails, RpcMsg};
 pub use service_id::{ClientId, ServiceId, ServiceName};

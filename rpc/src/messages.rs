@@ -14,6 +14,7 @@ use std::fmt::{self, Display, Formatter};
 use amplify::Wrapper;
 use bitcoin::Txid;
 use internet2::presentation;
+use lnpbp::chain::Chain;
 use microservices::rpc;
 use rgb::{validation, Contract, ContractId, ContractState, StateTransfer};
 
@@ -36,6 +37,9 @@ impl rpc::Request for BusMsg {}
 #[derive(NetworkEncode, NetworkDecode)]
 #[display(inner)]
 pub enum RpcMsg {
+    #[from]
+    Hello(HelloReq),
+
     // Contract operations
     // -------------------
     #[display("add_contract(...)")]
@@ -46,9 +50,6 @@ pub enum RpcMsg {
 
     #[display("list_contract_ids")]
     ListContractIds,
-
-    #[display("get_contract({0})")]
-    GetContact(ContractId),
 
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),
@@ -105,6 +106,14 @@ impl From<presentation::Error> for RpcMsg {
 
 impl RpcMsg {
     pub fn success() -> Self { RpcMsg::Success(None.into()) }
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("hello({network}, {user_agent})")]
+pub struct HelloReq {
+    pub user_agent: String,
+    pub network: Chain,
 }
 
 #[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]
