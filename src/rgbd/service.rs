@@ -132,7 +132,7 @@ impl esb::Handler<ServiceBus> for Runtime {
 impl Runtime {
     fn handle_storm(
         &mut self,
-        endpoints: &mut Endpoints,
+        _endpoints: &mut Endpoints,
         // remote_peer: NodeAddr,
         message: StormMsg,
     ) -> Result<(), DaemonError> {

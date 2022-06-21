@@ -12,6 +12,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
+use lnpbp::chain::Chain;
 use store_rpc::STORED_RPC_ENDPOINT;
 
 #[cfg(any(target_os = "linux"))]
@@ -86,4 +87,30 @@ pub struct Opts {
         value_hint = ValueHint::FilePath
     )]
     pub ctl_endpoint: ServiceAddr,
+
+    /// Blockchain to use
+    #[clap(
+        short = 'n',
+        long,
+        global = true,
+        alias = "network",
+        default_value = "signet",
+        env = "LNP_NODE_NETWORK"
+    )]
+    pub chain: Chain,
+
+    /// Electrum server to use.
+    #[clap(
+        long,
+        global = true,
+        default_value("pandora.network"),
+        env = "RGB_NODE_ELECTRUM_SERVER",
+        value_hint = ValueHint::Hostname
+    )]
+    pub electrum_server: String,
+
+    /// Customize Electrum server port number. By default the wallet will use port
+    /// matching the selected network.
+    #[clap(long, global = true, env = "RGB_NODE_ELECTRUM_PORT")]
+    pub electrum_port: Option<u16>,
 }

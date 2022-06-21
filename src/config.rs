@@ -12,6 +12,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use internet2::addr::ServiceAddr;
+use lnpbp::chain::Chain;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
@@ -40,11 +41,23 @@ pub struct Config {
     /// Data location
     pub data_dir: PathBuf,
 
-    /// Verbosity level
-    pub verbose: u8,
+    /// URL for the electrum server connection
+    pub electrum_url: String,
 
     /// Indicates whether deamons should be spawned as threads (true) or as child processes (false)
     pub threaded: bool,
+}
+
+// TODO: Move to descriptor wallet
+fn default_electrum_port(chain: &Chain) -> u16 {
+    match chain {
+        Chain::Mainnet => 50001,
+        Chain::Testnet3 | Chain::Regtest(_) => 60001,
+        Chain::Signet | Chain::SignetCustom(_) => 60601,
+        Chain::LiquidV1 => 50501,
+        Chain::Other(_) => 60001,
+        _ => 60001,
+    }
 }
 
 #[cfg(feature = "server")]
@@ -81,14 +94,20 @@ impl Config {
 #[cfg(feature = "server")]
 impl From<Opts> for Config {
     fn from(opts: Opts) -> Self {
+        let electrum_url = format!(
+            "{}:{}",
+            opts.electrum_server,
+            opts.electrum_port.unwrap_or_else(|| default_electrum_port(&opts.chain))
+        );
+
         Config {
             data_dir: opts.data_dir,
             rpc_endpoint: RGB_NODE_RPC_ENDPOINT.parse().expect("error in constant value"),
             ctl_endpoint: opts.ctl_endpoint,
             storm_endpoint: STORM_NODE_EXT_ENDPOINT.parse().expect("error in constant value"),
             store_endpoint: opts.store_endpoint,
+            electrum_url,
             threaded: true,
-            verbose: opts.verbose,
         }
     }
 }

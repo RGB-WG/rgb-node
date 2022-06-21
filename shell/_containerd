@@ -21,6 +21,10 @@ _containerd() {
 '--store=[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
 '-X+[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
 '--ctl=[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'--electrum-server=[Electrum server to use]:ELECTRUM_SERVER:_hosts' \
+'--electrum-port=[Customize Electrum server port number. By default the wallet will use port matching the selected network]:ELECTRUM_PORT: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '-V[Print version information]' \

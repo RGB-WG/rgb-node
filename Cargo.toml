@@ -34,6 +34,7 @@ strict_encoding = "1.8.8"
 commit_verify = "0.7.0" # TODO: Update to 0.8
 internet2 = { version = "0.8.0-rc.3", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.0-rc.6", default-features = false, features = ["node", "peer"] }
+lnpbp = "0.7.0"
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
 storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
@@ -55,6 +56,7 @@ shellexpand = { version = "2.1", optional = true }
 amplify = "3.12.0"
 internet2 = "0.8.0-beta.1"
 microservices = { version = "0.8.0-rc.5", default-features = false, features = ["peer"] }
+lnpbp = "0.7.0"
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
 storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }

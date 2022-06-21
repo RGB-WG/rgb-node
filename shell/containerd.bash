@@ -19,7 +19,7 @@ _containerd() {
 
     case "${cmd}" in
         containerd)
-            opts="-h -V -v -d -S -X --help --version --verbose --data-dir --store --ctl"
+            opts="-h -V -v -d -S -X -n --help --version --verbose --data-dir --store --ctl --chain --electrum-server --electrum-port"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -46,6 +46,22 @@ _containerd() {
                     return 0
                     ;;
                 -X)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --chain)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -n)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --electrum-server)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --electrum-port)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

@@ -1863,6 +1863,7 @@ dependencies = [
  "dotenv",
  "env_logger",
  "internet2",
+ "lnpbp",
  "log",
  "microservices",
  "nix",
