@@ -12,11 +12,24 @@ use std::path::PathBuf;
 
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
-use rgb_rpc::RGB_NODE_DATA_DIR;
 use store_rpc::STORED_RPC_ENDPOINT;
 
-pub const RGB_NODE_CONFIG: &str = "{data_dir}/rgbd.toml";
+#[cfg(any(target_os = "linux"))]
+pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
+#[cfg(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
+pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
+#[cfg(target_os = "macos")]
+pub const RGB_NODE_DATA_DIR: &str = "~/Library/Application Support/RGB Node";
+#[cfg(target_os = "windows")]
+pub const RGB_NODE_DATA_DIR: &str = "~\\AppData\\Local\\RGB Node";
+#[cfg(target_os = "ios")]
+pub const RGB_NODE_DATA_DIR: &str = "~/Documents";
+#[cfg(target_os = "android")]
+pub const RGB_NODE_DATA_DIR: &str = ".";
+
 pub const RGB_NODE_CTL_ENDPOINT: &str = "{data_dir}/ctl";
+
+pub const RGB_NODE_CONFIG: &str = "{data_dir}/rgbd.toml";
 
 /// Command-line arguments
 #[derive(Parser)]
@@ -44,7 +57,9 @@ pub struct Opts {
 
     /// ZMQ socket for connecting RGB node message bus.
     #[clap(
-        long,
+        short = 'S',
+        long = "store",
+        global = true,
         env = "STORED_RPC_ENDPOINT",
         default_value = STORED_RPC_ENDPOINT,
         value_hint = ValueHint::FilePath
@@ -63,7 +78,9 @@ pub struct Opts {
     /// Defaults to `ctl` file inside `--data-dir` directory, unless `--threaded-daemons`
     /// is specified; in that cases uses in-memory communication protocol.
     #[clap(
+        short = 'X',
         long = "ctl",
+        global = true,
         env = "RGB_NODE_CTL_ENDPOINT",
         default_value = RGB_NODE_CTL_ENDPOINT,
         value_hint = ValueHint::FilePath

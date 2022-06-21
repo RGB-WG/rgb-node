@@ -21,9 +21,6 @@ extern crate log;
 
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
-//#[cfg(feature = "serde")]
-//#[macro_use]
-//extern crate serde_with;
 
 pub mod client;
 mod error;
@@ -36,17 +33,4 @@ pub(crate) use messages::BusMsg;
 pub use messages::{OptionDetails, RpcMsg};
 pub use service_id::{ClientId, ServiceId, ServiceName};
 
-#[cfg(any(target_os = "linux"))]
-pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
-#[cfg(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
-pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
-#[cfg(target_os = "macos")]
-pub const RGB_NODE_DATA_DIR: &str = "~/Library/Application Support/RGB Node";
-#[cfg(target_os = "windows")]
-pub const RGB_NODE_DATA_DIR: &str = "~\\AppData\\Local\\RGB Node";
-#[cfg(target_os = "ios")]
-pub const RGB_NODE_DATA_DIR: &str = "~/Documents";
-#[cfg(target_os = "android")]
-pub const RGB_NODE_DATA_DIR: &str = ".";
-
-pub const RGB_NODE_RPC_ENDPOINT: &str = const_format::concatcp!(RGB_NODE_DATA_DIR, "/rpc");
+pub const RGB_NODE_RPC_ENDPOINT: &str = "0.0.0.0:63963";

@@ -23,8 +23,8 @@ mod command;
 mod opts;
 
 use clap::Parser;
-use colored::Colorize;
 use internet2::addr::ServiceAddr;
+use microservices::cli::LogStyle;
 use microservices::shell::{Exec, LogLevel};
 use rgb_rpc::client::Client;
 
@@ -46,7 +46,6 @@ fn main() {
     let mut client = Client::with(connect).expect("Error initializing client");
 
     trace!("Executing command: {}", opts.command);
-    opts.exec(&mut client).unwrap_or_else(|err| {
-        eprintln!("{} {}\n", "Error:".bright_red(), err.to_string().replace(": ", "\n  > ").red())
-    });
+    opts.exec(&mut client)
+        .unwrap_or_else(|err| eprintln!("{} {}\n", "Error:".err(), err.err_details()));
 }

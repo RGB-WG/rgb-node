@@ -17,7 +17,9 @@ _containerd() {
     _arguments "${_arguments_options[@]}" \
 '-d+[Data directory path]:DATA_DIR:_files -/' \
 '--data-dir=[Data directory path]:DATA_DIR:_files -/' \
-'--store-endpoint=[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
+'-S+[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
+'--store=[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
+'-X+[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
 '--ctl=[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
 '-h[Print help information]' \
 '--help[Print help information]' \

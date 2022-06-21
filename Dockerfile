@@ -1,38 +1,32 @@
 ARG BUILDER_DIR=/srv/rgb
 
 
-FROM rust:1.47.0-slim-buster as builder
+FROM rust:1.59.0-slim-bullseye as builder
 
 ARG SRC_DIR=/usr/local/src/rgb
 ARG BUILDER_DIR
 
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends \
-        build-essential cmake git pkg-config \
-        libpq-dev libssl-dev libzmq3-dev libsqlite3-dev
-
 WORKDIR "$SRC_DIR"
 
-COPY src src
-COPY Cargo.lock Cargo.toml README.md ./
+COPY doc ${SRC_DIR}/doc
+COPY shell ${SRC_DIR}/shell
+COPY src ${SRC_DIR}/src
+COPY build.rs Cargo.lock Cargo.toml codecov.yml config_spec.toml \
+     LICENSE license_header README.md ${SRC_DIR}/
 
-RUN cargo install --path . --root "${BUILDER_DIR}" --features all
+WORKDIR ${SRC_DIR}
+
+RUN mkdir "${BUILDER_DIR}"
+
+RUN cargo install --path . --root "${BUILDER_DIR}" --bins --all-features
 
 
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 ARG BUILDER_DIR
 ARG BIN_DIR=/usr/local/bin
 ARG DATA_DIR=/var/lib/rgb
-ARG USER=rgbd
-
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends \
-       libsqlite3-0 \
-       libssl1.1 \
-       tini \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ARG USER=rgb
 
 RUN adduser --home "${DATA_DIR}" --shell /bin/bash --disabled-login \
         --gecos "${USER} user" ${USER}
@@ -45,7 +39,8 @@ USER ${USER}
 
 VOLUME "$DATA_DIR"
 
-ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/usr/local/bin/rgbd", \
-			"--bin-dir", "/usr/local/bin", "--data-dir", "/var/lib/rgb"]
+EXPOSE 63963
 
-CMD ["-vvvv"]
+ENTRYPOINT ["rgbd"]
+
+CMD ["-vvv", "--data-dir", "/var/lib/rgbd"]

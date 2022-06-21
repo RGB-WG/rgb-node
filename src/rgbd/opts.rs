@@ -29,8 +29,8 @@ pub struct Opts {
     ///
     /// Internal interface for control PRC protocol communications.
     #[clap(
-        short = 'x',
-        long,
+        short = 'R',
+        long = "rpc",
         env = "RGB_NODE_RPC_ENDPOINT",
         value_hint = ValueHint::FilePath,
         default_value = RGB_NODE_RPC_ENDPOINT
@@ -39,7 +39,8 @@ pub struct Opts {
 
     /// ZMQ socket for connecting RGB node message bus.
     #[clap(
-        long,
+        short = 'E',
+        long = "storm",
         env = "STORM_NODE_EXT_ENDPOINT",
         default_value = STORM_NODE_EXT_ENDPOINT,
         value_hint = ValueHint::FilePath
@@ -47,6 +48,6 @@ pub struct Opts {
     pub storm_endpoint: ServiceAddr,
 
     /// Spawn daemons as threads and not processes
-    #[clap(long)]
+    #[clap(short = 't', long = "threaded")]
     pub threaded_daemons: bool,
 }

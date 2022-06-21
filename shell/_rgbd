@@ -17,18 +17,22 @@ _rgbd() {
     _arguments "${_arguments_options[@]}" \
 '-d+[Data directory path]:DATA_DIR:_files -/' \
 '--data-dir=[Data directory path]:DATA_DIR:_files -/' \
-'--store-endpoint=[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
+'-S+[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
+'--store=[ZMQ socket for connecting RGB node message bus]:STORE_ENDPOINT:_files' \
+'-X+[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
 '--ctl=[ZMQ socket for internal service bus]:CTL_ENDPOINT:_files' \
-'-x+[ZMQ socket name/address for RGB node RPC interface]:RPC_ENDPOINT:_files' \
-'--rpc-endpoint=[ZMQ socket name/address for RGB node RPC interface]:RPC_ENDPOINT:_files' \
-'--storm-endpoint=[ZMQ socket for connecting RGB node message bus]:STORM_ENDPOINT:_files' \
+'-R+[ZMQ socket name/address for RGB node RPC interface]:RPC_ENDPOINT:_files' \
+'--rpc=[ZMQ socket name/address for RGB node RPC interface]:RPC_ENDPOINT:_files' \
+'-E+[ZMQ socket for connecting RGB node message bus]:STORM_ENDPOINT:_files' \
+'--storm=[ZMQ socket for connecting RGB node message bus]:STORM_ENDPOINT:_files' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '-V[Print version information]' \
 '--version[Print version information]' \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
-'--threaded-daemons[Spawn daemons as threads and not processes]' \
+'-t[Spawn daemons as threads and not processes]' \
+'--threaded[Spawn daemons as threads and not processes]' \
 && ret=0
 }
 

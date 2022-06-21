@@ -8,12 +8,11 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use microservices::rpc;
 use rgb::{
-    validation, ConsignmentId, ConsignmentType, Contract, ContractConsignment, InmemConsignment,
-    StateTransfer, TransferConsignment,
+    validation, ConsignmentId, ConsignmentType, ContractConsignment, InmemConsignment,
+    TransferConsignment,
 };
-use rgb_rpc::{ClientId, FailureCode};
+use rgb_rpc::ClientId;
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]

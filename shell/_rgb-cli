@@ -15,10 +15,8 @@ _rgb-cli() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
-'-c+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
-'--connect=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
-'-d+[Data directory path]:DATA_DIR:_files -/' \
-'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '-V[Print version information]' \
@@ -36,10 +34,8 @@ _rgb-cli() {
         case $line[1] in
             (register)
 _arguments "${_arguments_options[@]}" \
-'-c+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
-'--connect=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
-'-d+[Data directory path]:DATA_DIR:_files -/' \
-'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '*-v[Set verbosity level]' \
@@ -49,10 +45,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (help)
 _arguments "${_arguments_options[@]}" \
-'-c+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
-'--connect=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
-'-d+[Data directory path]:DATA_DIR:_files -/' \
-'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
 '*::subcommand -- The subcommand whose help message to display:' \

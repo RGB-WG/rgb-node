@@ -10,7 +10,7 @@
 
 use std::collections::{BTreeSet, VecDeque};
 
-use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
+use internet2::ZmqSocketType;
 use microservices::cli::LogStyle;
 use microservices::error::BootstrapError;
 use microservices::esb;
@@ -69,9 +69,6 @@ pub struct Runtime {
     pub(crate) containerd_free: VecDeque<DaemonId>,
     pub(crate) containerd_busy: BTreeSet<DaemonId>,
     pub(crate) ctl_queue: VecDeque<CtlMsg>,
-
-    /// Unmarshaller instance used for parsing RPC request
-    pub(crate) unmarshaller: Unmarshaller<BusMsg>,
 }
 
 impl Runtime {
@@ -88,7 +85,6 @@ impl Runtime {
             containerd_free: empty!(),
             containerd_busy: empty!(),
             ctl_queue: empty!(),
-            unmarshaller: BusMsg::create_unmarshaller(),
         })
     }
 }

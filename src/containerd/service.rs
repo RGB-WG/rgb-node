@@ -13,7 +13,7 @@ use std::time::Duration;
 
 use bitcoin::secp256k1::rand::random;
 use commit_verify::ConsensusCommit;
-use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
+use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
@@ -57,13 +57,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
 pub struct Runtime {
     id: DaemonId,
 
-    /// Original configuration object
-    pub(crate) config: Config,
-
     pub(crate) db: Db,
-
-    /// Unmarshaller instance used for parsing RPC request
-    pub(crate) unmarshaller: Unmarshaller<BusMsg>,
 }
 
 impl Runtime {
@@ -76,12 +70,7 @@ impl Runtime {
 
         info!("Containerd runtime started successfully");
 
-        Ok(Self {
-            id,
-            config,
-            db,
-            unmarshaller: BusMsg::create_unmarshaller(),
-        })
+        Ok(Self { id, db })
     }
 }
 
@@ -130,8 +119,8 @@ impl esb::Handler<ServiceBus> for Runtime {
 impl Runtime {
     fn handle_rpc(
         &mut self,
-        endpoints: &mut Endpoints,
-        client_id: ClientId,
+        _endpoints: &mut Endpoints,
+        _client_id: ClientId,
         message: RpcMsg,
     ) -> Result<(), DaemonError> {
         match message {

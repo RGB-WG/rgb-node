@@ -1,5 +1,5 @@
 [general]
-env_prefix = "STORMD"
+env_prefix = "RGB_NODE"
 conf_file_param = "config"
 doc = ""
 
@@ -10,7 +10,7 @@ abbr = "d"
 doc = "Path to the directory that contains data, and where ZMQ RPC socket files are located"
 
 [[param]]
-name = "rpc_socket"
-type = "lnp::transport::zmq::SocketLocator"
-abbr = "r"
+name = "rpc_endpoint"
+type = "internet2::addr::ServiceAddr"
+abbr = "R"
 doc = "ZMQ socket name/address for RPC control protocol"
