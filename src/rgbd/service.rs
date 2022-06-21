@@ -18,7 +18,7 @@ use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
 use rgb::{MergeReveal, Node};
 use rgb_rpc::{ClientId, RpcMsg};
-use storm_app::AppMsg as StormMsg;
+use storm_ext::ExtMsg as StormMsg;
 use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};

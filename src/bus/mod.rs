@@ -13,7 +13,7 @@ mod ctl;
 
 use microservices::rpc;
 use rgb_rpc::RpcMsg;
-use storm_app::AppMsg as StormMsg;
+use storm_ext::ExtMsg as StormMsg;
 
 pub use self::ctl::CtlMsg;
 pub use self::services::{DaemonId, ServiceId};

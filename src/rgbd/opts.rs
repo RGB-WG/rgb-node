@@ -11,7 +11,7 @@
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
-use storm_app::STORM_NODE_APP_ENDPOINT;
+use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
 use crate::opts::Opts as SharedOpts;
 
@@ -40,8 +40,8 @@ pub struct Opts {
     /// ZMQ socket for connecting RGB node message bus.
     #[clap(
         long,
-        env = "STORM_NODE_APP_ENDPOINT",
-        default_value = STORM_NODE_APP_ENDPOINT,
+        env = "STORM_NODE_EXT_ENDPOINT",
+        default_value = STORM_NODE_EXT_ENDPOINT,
         value_hint = ValueHint::FilePath
     )]
     pub storm_endpoint: ServiceAddr,

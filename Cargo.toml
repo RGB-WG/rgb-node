@@ -36,7 +36,7 @@ internet2 = { version = "0.8.0-rc.3", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.0-rc.4", default-features = false, features = ["node", "peer"] }
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
-storm_app = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
+storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
 store_rpc = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-stored" }
 bitcoin = "0.28.1"
 # OS
@@ -57,7 +57,7 @@ internet2 = "0.8.0-beta.1"
 microservices = { version = "0.8.0-rc.2", default-features = false, features = ["peer"] }
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
-storm_app = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
+storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
 store_rpc = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-stored" }
 clap = { version = "~3.1.18", features = ["env"] }
 clap_complete = "~3.1.4"

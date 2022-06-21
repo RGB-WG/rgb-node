@@ -12,7 +12,7 @@ use std::str::FromStr;
 
 use microservices::esb;
 use rgb_rpc::{ClientId, RpcMsg, ServiceName};
-use storm_app::AppMsg as StormMsg;
+use storm_ext::ExtMsg as StormMsg;
 use strict_encoding::{strict_deserialize, strict_serialize};
 
 use crate::bus::BusMsg;

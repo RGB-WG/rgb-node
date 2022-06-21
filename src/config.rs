@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 use internet2::addr::ServiceAddr;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
-use storm_app::STORM_NODE_APP_ENDPOINT;
+use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
 #[cfg(feature = "server")]
 use crate::opts::Opts;
@@ -82,7 +82,7 @@ impl From<Opts> for Config {
             data_dir: opts.data_dir,
             rpc_endpoint: RGB_NODE_RPC_ENDPOINT.parse().expect("error in constant value"),
             ctl_endpoint: opts.ctl_endpoint,
-            storm_endpoint: STORM_NODE_APP_ENDPOINT.parse().expect("error in constant value"),
+            storm_endpoint: STORM_NODE_EXT_ENDPOINT.parse().expect("error in constant value"),
             store_endpoint: opts.store_endpoint,
             verbose: opts.verbose,
         }

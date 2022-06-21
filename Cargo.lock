@@ -1881,7 +1881,7 @@ dependencies = [
  "rgb_rpc",
  "shellexpand",
  "store_rpc",
- "storm_app",
+ "storm_ext",
  "strict_encoding",
 ]
 
@@ -2234,7 +2234,7 @@ dependencies = [
 [[package]]
 name = "store_rpc"
 version = "0.8.0-beta.2"
-source = "git+https://github.com/Storm-WG/storm-stored#349e8cb7b07b4da8862baab9325dd214c9e596c6"
+source = "git+https://github.com/Storm-WG/storm-stored#9f59e4ae098dac52387a357e6c6b0f05625fdb86"
 dependencies = [
  "amplify",
  "colored",
@@ -2247,7 +2247,7 @@ dependencies = [
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
- "storm-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "storm-core 0.1.0",
  "strict_encoding",
 ]
 
@@ -2265,8 +2265,8 @@ dependencies = [
 
 [[package]]
 name = "storm-core"
-version = "0.1.0"
-source = "git+https://github.com/Storm-WG/storm-core#363386f7afd4620af222543ce03d7e877247f444"
+version = "0.2.0"
+source = "git+https://github.com/Storm-WG/storm-core#88c993ac9e9dc3cb97867b7892e9bfe627f8b69c"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -2278,9 +2278,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "storm_app"
+name = "storm_ext"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#2ee6b34edb0635aa6e5f71859f993c44d088bdad"
+source = "git+https://github.com/Storm-WG/storm-node#4f6491fd1f94cff188ec0444bc7e4d23761c34b7"
 dependencies = [
  "amplify",
  "internet2",
@@ -2290,7 +2290,7 @@ dependencies = [
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
- "storm-core 0.1.0 (git+https://github.com/Storm-WG/storm-core)",
+ "storm-core 0.2.0",
  "storm_rpc",
  "strict_encoding",
  "zmq2",
@@ -2299,7 +2299,7 @@ dependencies = [
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#2ee6b34edb0635aa6e5f71859f993c44d088bdad"
+source = "git+https://github.com/Storm-WG/storm-node#4f6491fd1f94cff188ec0444bc7e4d23761c34b7"
 dependencies = [
  "amplify",
  "internet2",
