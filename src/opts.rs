@@ -117,12 +117,12 @@ pub struct Opts {
 }
 
 impl Opts {
-    pub fn process(&mut self) {
-        shell_setup(
-            self.verbose,
-            [&mut self.ctl_endpoint, &mut self.store_endpoint],
-            &mut self.data_dir,
-            &[("{chain}", self.chain.to_string())],
-        );
+    pub fn process<'s>(&'s mut self, other: impl IntoIterator<Item = &'s mut ServiceAddr>) {
+        let mut services = vec![&mut self.ctl_endpoint, &mut self.store_endpoint];
+        services.extend(other);
+        shell_setup(self.verbose, services, &mut self.data_dir, &[(
+            "{chain}",
+            self.chain.to_string(),
+        )]);
     }
 }

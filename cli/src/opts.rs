@@ -10,7 +10,7 @@
 
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
-use rgb::Contract;
+use rgb::{Contract, ContractId};
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 
 /// Command-line tool for working with RGB node
@@ -58,6 +58,24 @@ pub struct Opts {
 #[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
 pub enum Command {
     /// Add new contract to the node
-    #[display("register(...)")]
+    #[display("register ...")]
     Register { contract: Contract },
+
+    /// List all known contract ids
+    #[display("contracts")]
+    Contracts,
+
+    /// Query contract state
+    #[display("state {contract_id}")]
+    State {
+        /// Contract id to read state
+        contract_id: ContractId,
+    },
+
+    /// Request contract source
+    #[display("contract {contract_id}")]
+    Contract {
+        /// Contract id to read source
+        contract_id: ContractId,
+    },
 }

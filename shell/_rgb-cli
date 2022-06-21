@@ -47,6 +47,44 @@ _arguments "${_arguments_options[@]}" \
 ':contract:' \
 && ret=0
 ;;
+(contracts)
+_arguments "${_arguments_options[@]}" \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+&& ret=0
+;;
+(state)
+_arguments "${_arguments_options[@]}" \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+':contract-id -- Contract id to read state:' \
+&& ret=0
+;;
+(contract)
+_arguments "${_arguments_options[@]}" \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+':contract-id -- Contract id to read source:' \
+&& ret=0
+;;
 (help)
 _arguments "${_arguments_options[@]}" \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
@@ -67,9 +105,22 @@ esac
 _rgb-cli_commands() {
     local commands; commands=(
 'register:Add new contract to the node' \
+'contracts:List all known contract ids' \
+'state:Query contract state' \
+'contract:Request contract source' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'rgb-cli commands' commands "$@"
+}
+(( $+functions[_rgb-cli__contract_commands] )) ||
+_rgb-cli__contract_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli contract commands' commands "$@"
+}
+(( $+functions[_rgb-cli__contracts_commands] )) ||
+_rgb-cli__contracts_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli contracts commands' commands "$@"
 }
 (( $+functions[_rgb-cli__help_commands] )) ||
 _rgb-cli__help_commands() {
@@ -80,6 +131,11 @@ _rgb-cli__help_commands() {
 _rgb-cli__register_commands() {
     local commands; commands=()
     _describe -t commands 'rgb-cli register commands' commands "$@"
+}
+(( $+functions[_rgb-cli__state_commands] )) ||
+_rgb-cli__state_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli state commands' commands "$@"
 }
 
 _rgb-cli "$@"

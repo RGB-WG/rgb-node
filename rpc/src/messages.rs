@@ -48,8 +48,8 @@ pub enum RpcMsg {
     #[display("list_contracts")]
     ListContracts,
 
-    #[display("list_contract_ids")]
-    ListContractIds,
+    #[display("get_contract({0})")]
+    GetContract(ContractId),
 
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),

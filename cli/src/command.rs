@@ -20,6 +20,11 @@ impl Command {
             Command::Register { contract } => {
                 format!("Registering contract {}", contract.contract_id())
             }
+            Command::Contracts => s!("Listring contracts"),
+            Command::State { contract_id } => format!("Quering state of {}", contract_id),
+            Command::Contract { contract_id } => {
+                format!("Retrieving contract source for {}", contract_id)
+            }
         }
     }
 }
@@ -28,12 +33,23 @@ impl Exec for Opts {
     type Client = Client;
     type Error = esb::Error<ServiceId>;
 
-    fn exec(self, runtime: &mut Self::Client) -> Result<(), Self::Error> {
+    fn exec(self, client: &mut Self::Client) -> Result<(), Self::Error> {
         println!("{}...", self.command.action_string());
         match self.command {
             Command::Register { contract } => {
-                runtime.request(RpcMsg::AddContract(contract))?;
-                runtime.report_progress()?;
+                client.request(RpcMsg::AddContract(contract))?;
+                client.report_progress()?;
+            }
+            Command::Contracts => {
+                client.list_contracts()?.iter().for_each(|id| println!("{}", id));
+            }
+            Command::State { contract_id } => {
+                let state = client.contract_state(contract_id)?;
+                println!("{}", serde_yaml::to_string(&state).unwrap());
+            }
+            Command::Contract { contract_id } => {
+                let contract = client.contract(contract_id)?;
+                println!("{}", contract);
             }
         };
 

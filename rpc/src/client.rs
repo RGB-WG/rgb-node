@@ -8,6 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -17,6 +18,7 @@ use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::esb::{self, BusId};
 use microservices::rpc;
+use rgb::{Contract, ContractId, ContractState};
 
 use crate::messages::HelloReq;
 use crate::{BusMsg, ClientId, FailureCode, OptionDetails, RpcMsg, ServiceId};
@@ -173,6 +175,33 @@ impl Client {
                 code: rpc::FailureCode::Other(FailureCode::ChainMismatch),
                 ..
             }) => Ok(false),
+            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
+            _ => Err(Error::UnexpectedServerResponse),
+        }
+    }
+
+    pub fn list_contracts(&mut self) -> Result<BTreeSet<ContractId>, Error> {
+        self.request(RpcMsg::ListContracts)?;
+        match self.response()? {
+            RpcMsg::ContractIds(list) => Ok(list),
+            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
+            _ => Err(Error::UnexpectedServerResponse),
+        }
+    }
+
+    pub fn contract_state(&mut self, contract_id: ContractId) -> Result<ContractState, Error> {
+        self.request(RpcMsg::GetContractState(contract_id))?;
+        match self.response()? {
+            RpcMsg::ContractState(state) => Ok(state),
+            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
+            _ => Err(Error::UnexpectedServerResponse),
+        }
+    }
+
+    pub fn contract(&mut self, contract_id: ContractId) -> Result<Contract, Error> {
+        self.request(RpcMsg::GetContract(contract_id))?;
+        match self.response()? {
+            RpcMsg::Contract(contract) => Ok(contract),
             RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
             _ => Err(Error::UnexpectedServerResponse),
         }

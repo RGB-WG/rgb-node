@@ -1782,6 +1782,9 @@ dependencies = [
  "microservices",
  "rgb-std",
  "rgb_rpc",
+ "serde 1.0.137",
+ "serde_json",
+ "serde_yaml",
  "shellexpand",
 ]
 
@@ -1809,7 +1812,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-std#59e6804de26ecfac6ea7ea37fe81e0e664113753"
+source = "git+https://github.com/RGB-WG/rgb-std#ba2a15084808b352b142ca6ed3a4c9d207a8fb88"
 dependencies = [
  "amplify",
  "bitcoin",

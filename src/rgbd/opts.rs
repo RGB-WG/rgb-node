@@ -10,7 +10,6 @@
 
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
-use microservices::shell::shell_setup;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
@@ -55,12 +54,6 @@ pub struct Opts {
 
 impl Opts {
     pub fn process(&mut self) {
-        self.shared.process();
-        shell_setup(
-            self.shared.verbose,
-            [&mut self.rpc_endpoint, &mut self.storm_endpoint],
-            &mut self.shared.data_dir,
-            &[("{chain}", self.shared.chain.to_string())],
-        );
+        self.shared.process([&mut self.rpc_endpoint, &mut self.storm_endpoint]);
     }
 }
