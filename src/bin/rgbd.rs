@@ -44,7 +44,7 @@ fn main() -> Result<(), BootstrapError<LaunchError>> {
      */
 
     debug!("Starting runtime ...");
-    rgbd::service::run(config).expect("running rgbd runtime");
+    rgbd::run(config).expect("running rgbd runtime");
 
     unreachable!()
 }

@@ -44,7 +44,7 @@ fn main() -> Result<(), BootstrapError<LaunchError>> {
      */
 
     debug!("Starting runtime ...");
-    containerd::service::run(config).expect("running containerd runtime");
+    containerd::run(config).expect("running containerd runtime");
 
     unreachable!()
 }

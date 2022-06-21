@@ -42,6 +42,9 @@ pub struct Config {
 
     /// Verbosity level
     pub verbose: u8,
+
+    /// Indicates whether deamons should be spawned as threads (true) or as child processes (false)
+    pub threaded: bool,
 }
 
 #[cfg(feature = "server")]
@@ -84,6 +87,7 @@ impl From<Opts> for Config {
             ctl_endpoint: opts.ctl_endpoint,
             storm_endpoint: STORM_NODE_EXT_ENDPOINT.parse().expect("error in constant value"),
             store_endpoint: opts.store_endpoint,
+            threaded: true,
             verbose: opts.verbose,
         }
     }
@@ -94,6 +98,7 @@ impl From<rgbd::Opts> for Config {
         let mut config = Config::from(opts.shared);
         config.set_storm_endpoint(opts.storm_endpoint);
         config.set_rpc_endpoint(opts.rpc_endpoint);
+        config.threaded = opts.threaded_daemons;
         config
     }
 }

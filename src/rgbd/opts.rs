@@ -45,4 +45,8 @@ pub struct Opts {
         value_hint = ValueHint::FilePath
     )]
     pub storm_endpoint: ServiceAddr,
+
+    /// Spawn daemons as threads and not processes
+    #[clap(long)]
+    pub threaded_daemons: bool,
 }
