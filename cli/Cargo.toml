@@ -5,10 +5,11 @@ version = "0.8.0-alpha.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
-categories = ["network-programming", "command-line-tools"]
+categories = ["network-programming", "command-line-utilities"]
 edition = "2021"
 rust-version = "1.56.0"
 readme = "../README.md"
+build = "build.rs"
 
 [[bin]]
 path = "src/main.rs"
@@ -18,9 +19,18 @@ name = "rgb-cli"
 amplify = "3.12.0"
 internet2 = "0.8.0-beta.1"
 microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"] }
-rgb-std = { version = "0.8.0-alpha.1", git = "https://github.com/RGB-WG/rgb-std" }
+rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "../rpc" }
 clap = { version = "~3.1.18", features = ["derive", "env"] }
 log = "0.4.14"
 shellexpand = "2.1"
 colored = "2"
+
+[build-dependencies]
+amplify = "3.12.0"
+clap = { version = "~3.1.18", features = ["derive", "env"] }
+clap_complete = "~3.1.4"
+internet2 = "0.8.0-beta.1"
+rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
+rgb_rpc = { version = "0.8.0-alpha.1", path = "../rpc" }
+configure_me_codegen = "0.4"

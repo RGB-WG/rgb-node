@@ -17,6 +17,7 @@ use storm_app::STORM_NODE_APP_ENDPOINT;
 
 #[cfg(feature = "server")]
 use crate::opts::Opts;
+use crate::{containerd, rgbd};
 
 /// Final configuration resulting from data contained in config file environment
 /// variables and command-line options. For security reasons node key is kept
@@ -86,6 +87,19 @@ impl From<Opts> for Config {
             verbose: opts.verbose,
         }
     }
+}
+
+impl From<rgbd::Opts> for Config {
+    fn from(opts: rgbd::Opts) -> Config {
+        let mut config = Config::from(opts.shared);
+        config.set_storm_endpoint(opts.storm_endpoint);
+        config.set_rpc_endpoint(opts.rpc_endpoint);
+        config
+    }
+}
+
+impl From<containerd::Opts> for Config {
+    fn from(opts: containerd::Opts) -> Config { Config::from(opts.shared) }
 }
 
 impl Config {

@@ -1804,7 +1804,9 @@ version = "0.8.0-alpha.1"
 dependencies = [
  "amplify",
  "clap",
+ "clap_complete",
  "colored",
+ "configure_me_codegen",
  "internet2",
  "log",
  "microservices",
@@ -1815,8 +1817,8 @@ dependencies = [
 
 [[package]]
 name = "rgb-core"
-version = "0.8.0-alpha.1"
-source = "git+https://github.com/RGB-WG/rgb-core#c597729f6122b7c7c276c0a16fe984213fed7c15"
+version = "0.8.0-beta.1"
+source = "git+https://github.com/RGB-WG/rgb-core#b96ede4bdeb7558c6fa613cfa2337733d0f066a3"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1836,8 +1838,8 @@ dependencies = [
 
 [[package]]
 name = "rgb-std"
-version = "0.8.0-alpha.1"
-source = "git+https://github.com/RGB-WG/rgb-std#2bdc3f0a81b72d2e1a47364ed8a2f1f734b86cd6"
+version = "0.8.0-beta.1"
+source = "git+https://github.com/RGB-WG/rgb-std#bea6e2f98d9d5850eb8f746beab621805e8c81ed"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2231,8 +2233,8 @@ dependencies = [
 
 [[package]]
 name = "store_rpc"
-version = "0.8.0-beta.1"
-source = "git+https://github.com/Storm-WG/storm-stored#d4e9425088ef51b420b72933b1659ecabdd605dd"
+version = "0.8.0-beta.2"
+source = "git+https://github.com/Storm-WG/storm-stored#349e8cb7b07b4da8862baab9325dd214c9e596c6"
 dependencies = [
  "amplify",
  "colored",

@@ -9,7 +9,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use clap::Parser;
-use rgb_node::opts::Opts as SharedOpts;
+
+use crate::opts::Opts as SharedOpts;
 
 /// Command-line arguments
 #[derive(Parser)]

@@ -1,5 +1,4 @@
-// Storage daemon (stored): microservice frontend for different storage backends
-// used in LNP/BP nodes.
+// RGB node providing smart contracts functionality for Bitcoin & Lightning.
 //
 // Written in 2022 by
 //     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
@@ -20,23 +19,15 @@ use clap::IntoApp;
 use clap_complete::generate_to;
 use clap_complete::shells::*;
 
-pub mod opts {
+pub mod cli {
     include!("src/opts.rs");
-}
-pub mod rgbd {
-    pub use super::opts;
-    include!("src/rgbd/opts.rs");
-}
-pub mod containerd {
-    pub use super::opts;
-    include!("src/containerd/opts.rs");
 }
 
 fn main() -> Result<(), configure_me_codegen::Error> {
-    let outdir = "./shell";
+    let outdir = "../shell";
 
     fs::create_dir_all(outdir).expect("failed to create shell dir");
-    for app in [rgbd::Opts::command(), containerd::Opts::command()].iter_mut() {
+    for app in [cli::Opts::command()].iter_mut() {
         let name = app.get_name().to_string();
         generate_to(Bash, app, &name, &outdir)?;
         generate_to(PowerShell, app, &name, &outdir)?;

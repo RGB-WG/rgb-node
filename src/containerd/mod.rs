@@ -10,4 +10,7 @@
 
 pub mod service;
 #[cfg(feature = "server")]
-pub mod opts;
+mod opts;
+
+#[cfg(feature = "server")]
+pub use opts::Opts;

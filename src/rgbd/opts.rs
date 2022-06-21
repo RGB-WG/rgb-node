@@ -10,9 +10,10 @@
 
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
-use rgb_node::opts::Opts as SharedOpts;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_app::STORM_NODE_APP_ENDPOINT;
+
+use crate::opts::Opts as SharedOpts;
 
 /// Command-line arguments
 #[derive(Parser)]

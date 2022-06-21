@@ -18,12 +18,8 @@ extern crate log;
 use clap::Parser;
 use microservices::error::BootstrapError;
 use microservices::shell::LogLevel;
-use rgb_node::containerd::opts::Opts;
+use rgb_node::containerd::Opts;
 use rgb_node::{containerd, Config, LaunchError};
-
-impl From<Opts> for Config {
-    fn from(opts: Opts) -> Config { Config::from(opts.shared) }
-}
 
 fn main() -> Result<(), BootstrapError<LaunchError>> {
     println!("containerd: RGB container microservice");
