@@ -1308,18 +1308,19 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.8.0-rc.5"
+version = "0.8.0-rc.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d889ab6379f36310b7cbb9c57cdd27e53b8213595740129c8053887c2c107f6d"
+checksum = "d1f42568dd4e7ac23b9bb66967be6c2fad0818ac75c4201b93b861762004119f"
 dependencies = [
  "amplify",
  "clap",
+ "colored",
  "config",
  "env_logger",
  "internet2",
  "lightning_encoding",
  "log",
- "nix 0.19.1",
+ "nix",
  "once_cell",
  "secp256k1",
  "serde 1.0.137",
@@ -1327,18 +1328,6 @@ dependencies = [
  "strict_encoding",
  "toml",
  "zmq2",
-]
-
-[[package]]
-name = "nix"
-version = "0.19.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2ccba0cfe4fdf15982d1674c69b1fd80bad427d293849982668dfe454bd61f2"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
 ]
 
 [[package]]
@@ -1839,7 +1828,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-std#90f8892ae5c6f3eceaf2b86441b23bfb393ec36e"
+source = "git+https://github.com/RGB-WG/rgb-std#b59887270e6041562799536d1ce84e498ac087e0"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1876,7 +1865,7 @@ dependencies = [
  "internet2",
  "log",
  "microservices",
- "nix 0.24.1",
+ "nix",
  "rgb-std",
  "rgb_rpc",
  "shellexpand",

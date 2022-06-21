@@ -15,7 +15,7 @@ use rgb_rpc::{ClientId, RpcMsg, ServiceName};
 use storm_ext::ExtMsg as StormMsg;
 use strict_encoding::{strict_deserialize, strict_serialize};
 
-use crate::bus::BusMsg;
+use crate::bus::{BusMsg, CtlMsg};
 
 pub(crate) type Endpoints = esb::EndpointList<ServiceBus>;
 
@@ -103,6 +103,16 @@ where
             ServiceId::Client(client_id),
             BusMsg::Rpc(message.into()),
         )
+    }
+
+    #[inline]
+    fn send_ctl(
+        &self,
+        endpoints: &mut Endpoints,
+        service_id: ServiceId,
+        message: impl Into<CtlMsg>,
+    ) -> Result<(), esb::Error<ServiceId>> {
+        endpoints.send_to(ServiceBus::Ctl, self.identity(), service_id, BusMsg::Ctl(message.into()))
     }
 
     #[inline]

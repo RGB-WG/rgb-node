@@ -8,6 +8,8 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use rgb::{validation, ConsignmentId, Contract, StateTransfer, Validity};
+
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]
 #[derive(NetworkEncode, NetworkDecode)]
@@ -15,4 +17,19 @@
 pub enum CtlMsg {
     #[display("hello()")]
     Hello,
+
+    #[display("process_contract(...)")]
+    ProcessContract(Contract),
+
+    #[display("process_transfer(...)")]
+    ProcessTransfer(StateTransfer),
+
+    #[display("validity(...)")]
+    Validity(ValidityReport),
+}
+
+#[derive(Clone, Debug, Default, StrictEncode, StrictDecode)]
+pub struct ValidityReport {
+    pub consignment_id: ConsignmentId,
+    pub status: validation::Status,
 }

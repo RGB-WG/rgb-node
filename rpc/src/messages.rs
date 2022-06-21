@@ -58,7 +58,8 @@ pub enum RpcMsg {
 
     ComposeTransfer,
 
-    AcceptTransfer,
+    #[display("accept_transfer(...)")]
+    AcceptTransfer(StateTransfer),
 
     // Responses to CLI
     // ----------------

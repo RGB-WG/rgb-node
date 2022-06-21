@@ -8,16 +8,19 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::{BTreeSet, VecDeque};
+
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
+use microservices::cli::LogStyle;
 use microservices::error::BootstrapError;
-use microservices::esb::{EndpointList, Error};
+use microservices::esb;
+use microservices::esb::EndpointList;
 use microservices::node::TryService;
-use microservices::{esb, DaemonHandle};
-use rgb::{ConsignmentType, InmemConsignment};
+use rgb::{Contract, StateTransfer};
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 
-use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
+use crate::bus::{BusMsg, CtlMsg, DaemonId, Endpoints, Responder, ServiceBus, ServiceId};
 use crate::daemons::Daemon;
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -61,7 +64,10 @@ pub struct Runtime {
 
     pub(crate) db: Db,
 
-    pub(crate) containerd: Vec<DaemonHandle<Daemon>>,
+    pub(crate) containerd_free: VecDeque<DaemonId>,
+    pub(crate) containerd_busy: BTreeSet<DaemonId>,
+    pub(crate) contracts_await: VecDeque<Contract>,
+    pub(crate) transfers_await: VecDeque<StateTransfer>,
 
     /// Unmarshaller instance used for parsing RPC request
     pub(crate) unmarshaller: Unmarshaller<BusMsg>,
@@ -78,7 +84,10 @@ impl Runtime {
         Ok(Self {
             config,
             db,
-            containerd: empty!(),
+            containerd_free: empty!(),
+            containerd_busy: empty!(),
+            contracts_await: empty!(),
+            transfers_await: empty!(),
             unmarshaller: BusMsg::create_unmarshaller(),
         })
     }
@@ -115,7 +124,7 @@ impl esb::Handler<ServiceBus> for Runtime {
     fn handle_err(
         &mut self,
         _endpoints: &mut EndpointList<ServiceBus>,
-        _error: Error<ServiceId>,
+        _error: esb::Error<ServiceId>,
     ) -> Result<(), Self::Error> {
         // We do nothing and do not propagate error; it's already being reported
         // with `error!` macro by the controller. If we propagate error here
@@ -148,7 +157,13 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         match message {
             RpcMsg::AddContract(contract) => {
-                self.process_consignment(contract)?;
+                self.process_contract(endpoints, contract)?;
+                // TODO: Send this only after processing
+                self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
+            }
+            RpcMsg::AcceptTransfer(transfer) => {
+                self.process_transfer(endpoints, transfer)?;
+                // TODO: Send this only after processing
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
             wrong_msg => {
@@ -167,6 +182,13 @@ impl Runtime {
         message: CtlMsg,
     ) -> Result<(), DaemonError> {
         match message {
+            CtlMsg::Hello => self.handle_hello(endpoints, source)?,
+
+            CtlMsg::Validity(report) => {
+                self.handle_validity(endpoints, source)?;
+                self.pick_consignment(endpoints)?;
+            }
+
             wrong_msg => {
                 error!("Request is not supported by the CTL interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Ctl, &wrong_msg));
@@ -178,12 +200,92 @@ impl Runtime {
 }
 
 impl Runtime {
-    fn process_consignment<C: ConsignmentType>(
+    fn handle_hello(
         &mut self,
-        consignment: InmemConsignment<C>,
+        endpoints: &mut Endpoints,
+        source: ServiceId,
+    ) -> Result<(), esb::Error<ServiceId>> {
+        info!("{} daemon is {}", source.ended(), "connected".ended());
+
+        match source {
+            ServiceId::Rgb => {
+                error!("{}", "Unexpected another RGBd instance connection".err());
+            }
+            ServiceId::Container(daemon_id) => {
+                info!(
+                    "Container daemon {} is registered; total {} container processors are known",
+                    daemon_id,
+                    self.containerd_busy.len()
+                );
+                self.containerd_free.push_back(daemon_id);
+                self.pick_consignment(endpoints)?;
+            }
+            _ => {
+                // Ignoring the rest of daemon/client types
+            }
+        }
+
+        Ok(())
+    }
+
+    fn handle_validity(
+        &mut self,
+        endpoints: &mut Endpoints,
+        source: ServiceId,
+    ) -> Result<(), esb::Error<ServiceId>> {
+        todo!()
+    }
+
+    fn pick_consignment(
+        &mut self,
+        endpoints: &mut Endpoints,
+    ) -> Result<bool, esb::Error<ServiceId>> {
+        let service = match self.containerd_free.pop_front() {
+            Some(damon_id) => ServiceId::Container(damon_id),
+            None => return Ok(false),
+        };
+
+        let msg = match self.contracts_await.pop_front() {
+            None => match self.transfers_await.pop_front() {
+                None => return Ok(true),
+                Some(transfer) => CtlMsg::ProcessTransfer(transfer),
+            },
+            Some(contract) => CtlMsg::ProcessContract(contract),
+        };
+
+        self.send_ctl(endpoints, service, msg)?;
+        Ok(true)
+    }
+
+    fn process_contract(
+        &mut self,
+        endpoints: &mut Endpoints,
+        contract: Contract,
     ) -> Result<(), DaemonError> {
-        let handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
-        self.containerd.push(handle);
+        self.contracts_await.push_back(contract);
+
+        if self.pick_consignment(endpoints)? {
+            return Ok(());
+        }
+
+        let _handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
+        // TODO: Store daemon handlers
+        Ok(())
+    }
+
+    fn process_transfer(
+        &mut self,
+        endpoints: &mut Endpoints,
+        transfer: StateTransfer,
+    ) -> Result<(), DaemonError> {
+        self.transfers_await.push_back(transfer);
+
+        if self.pick_consignment(endpoints)? {
+            return Ok(());
+        }
+
+        let _handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
+        // TODO: Store daemon handlers
         Ok(())
     }
 }
