@@ -21,7 +21,7 @@ pub struct Opts {
     /// Socket can be either TCP address in form of `<ipv4 | ipv6>:<port>` – or a path
     /// to an IPC file.
     ///
-    /// Defaults to `127.0.0.1:63963`.
+    /// Defaults to `0.0.0.0:61961`.
     #[clap(
         short = 'R',
         long = "rpc",

@@ -23,8 +23,8 @@ Register-ArgumentCompleter -Native -CommandName 'rgbd' -ScriptBlock {
         'rgbd' {
             [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'Data directory path')
             [CompletionResult]::new('--data-dir', 'data-dir', [CompletionResultType]::ParameterName, 'Data directory path')
-            [CompletionResult]::new('-S', 'S', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting RGB node message bus')
-            [CompletionResult]::new('--store', 'store', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting RGB node message bus')
+            [CompletionResult]::new('-S', 'S', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting storage daemon')
+            [CompletionResult]::new('--store', 'store', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting storage daemon')
             [CompletionResult]::new('-X', 'X', [CompletionResultType]::ParameterName, 'ZMQ socket for internal service bus')
             [CompletionResult]::new('--ctl', 'ctl', [CompletionResultType]::ParameterName, 'ZMQ socket for internal service bus')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')

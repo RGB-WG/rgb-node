@@ -17,22 +17,23 @@ extern crate log;
 
 use clap::Parser;
 use microservices::error::BootstrapError;
-use microservices::shell::LogLevel;
 use rgb_node::rgbd::Opts;
 use rgb_node::{rgbd, Config, LaunchError};
 
 fn main() -> Result<(), BootstrapError<LaunchError>> {
     println!("rgbd: RGB stash microservice");
 
-    let opts = Opts::parse();
-    LogLevel::from_verbosity_flag_count(opts.shared.verbose).apply();
-    trace!("Command-line arguments: {:?}", &opts);
+    let mut opts = Opts::parse();
+    trace!("Command-line arguments: {:?}", opts);
+    opts.process();
+    trace!("Processed arguments: {:?}", opts);
 
-    let mut config: Config = opts.into();
+    let config = Config::from(opts);
     trace!("Daemon configuration: {:?}", config);
-    config.process();
-    trace!("Processed configuration: {:?}", config);
+    debug!("CTL socket {}", config.ctl_endpoint);
     debug!("RPC socket {}", config.rpc_endpoint);
+    debug!("STORE socket {}", config.store_endpoint);
+    debug!("STORM socket {}", config.storm_endpoint);
 
     /*
     use self::internal::ResultExt;

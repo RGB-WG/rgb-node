@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
+use microservices::shell::shell_setup;
 use store_rpc::STORED_RPC_ENDPOINT;
 
 #[cfg(any(target_os = "linux"))]
@@ -30,7 +31,7 @@ pub const RGB_NODE_DATA_DIR: &str = ".";
 
 pub const RGB_NODE_CTL_ENDPOINT: &str = "{data_dir}/ctl";
 
-pub const RGB_NODE_CONFIG: &str = "{data_dir}/rgbd.toml";
+pub const RGB_NODE_CONFIG: &str = "{data_dir}/rgb_node.toml";
 
 /// Command-line arguments
 #[derive(Parser)]
@@ -56,7 +57,7 @@ pub struct Opts {
     )]
     pub data_dir: PathBuf,
 
-    /// ZMQ socket for connecting RGB node message bus.
+    /// ZMQ socket for connecting storage daemon.
     #[clap(
         short = 'S',
         long = "store",
@@ -95,7 +96,7 @@ pub struct Opts {
         global = true,
         alias = "network",
         default_value = "signet",
-        env = "LNP_NODE_NETWORK"
+        env = "RGB_NODE_NETWORK"
     )]
     pub chain: Chain,
 
@@ -113,4 +114,15 @@ pub struct Opts {
     /// matching the selected network.
     #[clap(long, global = true, env = "RGB_NODE_ELECTRUM_PORT")]
     pub electrum_port: Option<u16>,
+}
+
+impl Opts {
+    pub fn process(&mut self) {
+        shell_setup(
+            self.verbose,
+            [&mut self.ctl_endpoint, &mut self.store_endpoint],
+            &mut self.data_dir,
+            &[("{chain}", self.chain.to_string())],
+        );
+    }
 }

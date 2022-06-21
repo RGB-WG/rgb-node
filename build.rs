@@ -18,6 +18,7 @@ use clap_complete::shells::*;
 pub mod opts {
     include!("src/opts.rs");
 }
+
 pub mod rgbd {
     pub use super::opts;
     include!("src/rgbd/opts.rs");

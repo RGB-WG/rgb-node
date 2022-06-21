@@ -10,6 +10,7 @@
 
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
+use microservices::shell::shell_setup;
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
@@ -32,8 +33,8 @@ pub struct Opts {
         short = 'R',
         long = "rpc",
         env = "RGB_NODE_RPC_ENDPOINT",
-        value_hint = ValueHint::FilePath,
-        default_value = RGB_NODE_RPC_ENDPOINT
+        default_value = RGB_NODE_RPC_ENDPOINT,
+        value_hint = ValueHint::FilePath
     )]
     pub rpc_endpoint: ServiceAddr,
 
@@ -50,4 +51,16 @@ pub struct Opts {
     /// Spawn daemons as threads and not processes
     #[clap(short = 't', long = "threaded")]
     pub threaded_daemons: bool,
+}
+
+impl Opts {
+    pub fn process(&mut self) {
+        self.shared.process();
+        shell_setup(
+            self.shared.verbose,
+            [&mut self.rpc_endpoint, &mut self.storm_endpoint],
+            &mut self.shared.data_dir,
+            &[("{chain}", self.shared.chain.to_string())],
+        );
+    }
 }

@@ -8,7 +8,6 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::fs;
 use std::path::PathBuf;
 
 use internet2::addr::ServiceAddr;
@@ -18,6 +17,7 @@ use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
 #[cfg(feature = "server")]
 use crate::opts::Opts;
+#[cfg(feature = "server")]
 use crate::{containerd, rgbd};
 
 /// Final configuration resulting from data contained in config file environment
@@ -57,37 +57,6 @@ fn default_electrum_port(chain: &Chain) -> u16 {
         Chain::LiquidV1 => 50501,
         Chain::Other(_) => 60001,
         _ => 60001,
-    }
-}
-
-#[cfg(feature = "server")]
-impl Config {
-    pub fn process(&mut self) {
-        self.data_dir =
-            PathBuf::from(shellexpand::tilde(&self.data_dir.display().to_string()).to_string());
-
-        let me = self.clone();
-        let mut data_dir = self.data_dir.to_string_lossy().into_owned();
-        self.process_dir(&mut data_dir);
-        self.data_dir = PathBuf::from(data_dir);
-
-        fs::create_dir_all(&self.data_dir).expect("Unable to access data directory");
-
-        for dir in vec![
-            &mut self.rpc_endpoint,
-            &mut self.ctl_endpoint,
-            &mut self.storm_endpoint,
-            &mut self.store_endpoint,
-        ] {
-            if let ServiceAddr::Ipc(ref mut path) = dir {
-                me.process_dir(path);
-            }
-        }
-    }
-
-    pub fn process_dir(&self, path: &mut String) {
-        *path = path.replace("{data_dir}", &self.data_dir.to_string_lossy());
-        *path = shellexpand::tilde(path).to_string();
     }
 }
 
