@@ -8,7 +8,11 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use rgb::{validation, ConsignmentId, Contract, StateTransfer, Validity};
+use rgb::{
+    validation, ConsignmentId, ConsignmentType, Contract, ContractConsignment, InmemConsignment,
+    StateTransfer, TransferConsignment,
+};
+use rgb_rpc::ClientId;
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]
@@ -18,18 +22,27 @@ pub enum CtlMsg {
     #[display("hello()")]
     Hello,
 
-    #[display("process_contract(...)")]
-    ProcessContract(Contract),
+    #[display("process_contract({0})")]
+    ProcessContract(ProcessReq<ContractConsignment>),
 
-    #[display("process_transfer(...)")]
-    ProcessTransfer(StateTransfer),
+    #[display("process_transfer({0})")]
+    ProcessTransfer(ProcessReq<TransferConsignment>),
 
-    #[display("validity(...)")]
-    Validity(ValidityReport),
+    #[display(inner)]
+    Validity(ValidityResp),
 }
 
-#[derive(Clone, Debug, Default, StrictEncode, StrictDecode)]
-pub struct ValidityReport {
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
+#[display("{client_id}, ...")]
+pub struct ProcessReq<T: ConsignmentType> {
+    pub client_id: ClientId,
+    pub consignment: InmemConsignment<T>,
+}
+
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
+#[display("validity({client_id}, {consignment_id}, ...)")]
+pub struct ValidityResp {
+    pub client_id: ClientId,
     pub consignment_id: ConsignmentId,
     pub status: validation::Status,
 }

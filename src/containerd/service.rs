@@ -8,6 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use bitcoin::secp256k1::rand::random;
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
 use microservices::error::BootstrapError;
 use microservices::esb;
@@ -15,7 +16,7 @@ use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
 use rgb_rpc::{ClientId, RpcMsg};
 
-use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
+use crate::bus::{BusMsg, CtlMsg, DaemonId, Endpoints, Responder, ServiceBus, ServiceId};
 use crate::{Config, DaemonError, Db, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
@@ -47,6 +48,8 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
 }
 
 pub struct Runtime {
+    id: DaemonId,
+
     /// Original configuration object
     pub(crate) config: Config,
 
@@ -62,9 +65,12 @@ impl Runtime {
 
         let db = Db::with(&config.store_endpoint)?;
 
+        let id = random();
+
         info!("Containerd runtime started successfully");
 
         Ok(Self {
+            id,
             config,
             db,
             unmarshaller: BusMsg::create_unmarshaller(),
@@ -78,7 +84,17 @@ impl esb::Handler<ServiceBus> for Runtime {
     type Request = BusMsg;
     type Error = DaemonError;
 
-    fn identity(&self) -> ServiceId { ServiceId::Rgb }
+    fn identity(&self) -> ServiceId { ServiceId::Container(self.id) }
+
+    fn on_ready(&mut self, endpoints: &mut EndpointList<ServiceBus>) -> Result<(), Self::Error> {
+        endpoints.send_to(
+            ServiceBus::Ctl,
+            self.identity(),
+            ServiceId::Rgb,
+            BusMsg::Ctl(CtlMsg::Hello),
+        )?;
+        Ok(())
+    }
 
     fn handle(
         &mut self,

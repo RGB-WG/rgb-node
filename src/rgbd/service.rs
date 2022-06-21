@@ -20,7 +20,9 @@ use rgb::{Contract, StateTransfer};
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 
-use crate::bus::{BusMsg, CtlMsg, DaemonId, Endpoints, Responder, ServiceBus, ServiceId};
+use crate::bus::{
+    BusMsg, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
+};
 use crate::daemons::Daemon;
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -66,8 +68,7 @@ pub struct Runtime {
 
     pub(crate) containerd_free: VecDeque<DaemonId>,
     pub(crate) containerd_busy: BTreeSet<DaemonId>,
-    pub(crate) contracts_await: VecDeque<Contract>,
-    pub(crate) transfers_await: VecDeque<StateTransfer>,
+    pub(crate) ctl_queue: VecDeque<CtlMsg>,
 
     /// Unmarshaller instance used for parsing RPC request
     pub(crate) unmarshaller: Unmarshaller<BusMsg>,
@@ -86,8 +87,7 @@ impl Runtime {
             db,
             containerd_free: empty!(),
             containerd_busy: empty!(),
-            contracts_await: empty!(),
-            transfers_await: empty!(),
+            ctl_queue: empty!(),
             unmarshaller: BusMsg::create_unmarshaller(),
         })
     }
@@ -157,12 +157,12 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         match message {
             RpcMsg::AddContract(contract) => {
-                self.process_contract(endpoints, contract)?;
+                self.process_contract(endpoints, contract, client_id)?;
                 // TODO: Send this only after processing
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
             RpcMsg::AcceptTransfer(transfer) => {
-                self.process_transfer(endpoints, transfer)?;
+                self.process_transfer(endpoints, transfer, client_id)?;
                 // TODO: Send this only after processing
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
@@ -245,25 +245,16 @@ impl Runtime {
             None => return Ok(false),
         };
 
-        let msg = match self.contracts_await.pop_front() {
-            None => match self.transfers_await.pop_front() {
-                None => return Ok(true),
-                Some(transfer) => CtlMsg::ProcessTransfer(transfer),
-            },
-            Some(contract) => CtlMsg::ProcessContract(contract),
+        let msg = match self.ctl_queue.pop_front() {
+            None => return Ok(true),
+            Some(req) => req,
         };
 
         self.send_ctl(endpoints, service, msg)?;
         Ok(true)
     }
 
-    fn process_contract(
-        &mut self,
-        endpoints: &mut Endpoints,
-        contract: Contract,
-    ) -> Result<(), DaemonError> {
-        self.contracts_await.push_back(contract);
-
+    fn pick_or_start_containerd(&mut self, endpoints: &mut Endpoints) -> Result<(), DaemonError> {
         if self.pick_consignment(endpoints)? {
             return Ok(());
         }
@@ -273,19 +264,29 @@ impl Runtime {
         Ok(())
     }
 
+    fn process_contract(
+        &mut self,
+        endpoints: &mut Endpoints,
+        contract: Contract,
+        client_id: ClientId,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::ProcessContract(ProcessReq {
+            client_id,
+            consignment: contract,
+        }));
+        self.pick_or_start_containerd(endpoints)
+    }
+
     fn process_transfer(
         &mut self,
         endpoints: &mut Endpoints,
         transfer: StateTransfer,
+        client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        self.transfers_await.push_back(transfer);
-
-        if self.pick_consignment(endpoints)? {
-            return Ok(());
-        }
-
-        let _handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
-        // TODO: Store daemon handlers
-        Ok(())
+        self.ctl_queue.push_back(CtlMsg::ProcessTransfer(ProcessReq {
+            client_id,
+            consignment: transfer,
+        }));
+        self.pick_or_start_containerd(endpoints)
     }
 }
