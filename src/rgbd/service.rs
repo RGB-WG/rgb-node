@@ -16,7 +16,7 @@ use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
-use rgb::{MergeReveal, Node};
+use rgb::{Consignment, ConsignmentType, InmemConsignment, MergeReveal, Node};
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 use strict_encoding::{StrictDecode, StrictEncode};
@@ -247,40 +247,7 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         match message {
             RpcMsg::AddContract(contract) => {
-                // TODO: Validate consignment
-
-                let contract_id = contract.contract_id();
-
-                info!("Registering contract {}", contract_id);
-                trace!("{:?}", contract);
-
-                self.store(DB_TABLE_SCHEMATA, contract.schema.schema_id(), &contract.schema)?;
-                if let Some(root_schema) = &contract.root_schema {
-                    self.store(DB_TABLE_SCHEMATA, root_schema.schema_id(), root_schema)?;
-                }
-
-                self.store_merge(DB_TABLE_GENESIS, contract_id, contract.genesis)?;
-
-                for (anchor, bundle) in contract.anchored_bundles {
-                    let bundle_id = bundle.bundle_id();
-                    let anchor = anchor
-                        .into_merkle_block(contract_id, bundle_id.into())
-                        .expect("broken anchor data");
-                    self.store_merge_h(DB_TABLE_ANCHORS, anchor.txid, anchor)?;
-                    let mut data = bundle
-                        .concealed_iter()
-                        .map(|(id, set)| (*id, set.clone()))
-                        .collect::<Vec<_>>();
-                    for (transition, inputs) in bundle.into_revealed_iter() {
-                        data.push((transition.node_id(), inputs.clone()));
-                        self.store_merge(DB_TABLE_TRANSITIONS, transition.node_id(), transition)?;
-                    }
-                    self.store(DB_TABLE_BUNDLES, bundle_id, &data)?;
-                }
-                for extension in contract.state_extensions {
-                    self.store_merge(DB_TABLE_EXTENSIONS, extension.node_id(), extension)?;
-                }
-
+                self.process_consignment(contract)?;
                 self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
             wrong_msg => {
@@ -303,6 +270,46 @@ impl Runtime {
                 error!("Request is not supported by the CTL interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Ctl, &wrong_msg));
             }
+        }
+
+        Ok(())
+    }
+}
+
+impl Runtime {
+    fn process_consignment<C: ConsignmentType>(
+        &mut self,
+        consignment: InmemConsignment<C>,
+    ) -> Result<(), DaemonError> {
+        let contract_id = consignment.contract_id();
+
+        info!("Registering consignment for contract {}", contract_id);
+
+        // TODO: Validate consignment
+
+        self.store(DB_TABLE_SCHEMATA, consignment.schema.schema_id(), &consignment.schema)?;
+        if let Some(root_schema) = &consignment.root_schema {
+            self.store(DB_TABLE_SCHEMATA, root_schema.schema_id(), root_schema)?;
+        }
+
+        self.store_merge(DB_TABLE_GENESIS, contract_id, consignment.genesis)?;
+
+        for (anchor, bundle) in consignment.anchored_bundles {
+            let bundle_id = bundle.bundle_id();
+            let anchor = anchor
+                .into_merkle_block(contract_id, bundle_id.into())
+                .expect("broken anchor data");
+            self.store_merge_h(DB_TABLE_ANCHORS, anchor.txid, anchor)?;
+            let mut data =
+                bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect::<Vec<_>>();
+            for (transition, inputs) in bundle.into_revealed_iter() {
+                data.push((transition.node_id(), inputs.clone()));
+                self.store_merge(DB_TABLE_TRANSITIONS, transition.node_id(), transition)?;
+            }
+            self.store(DB_TABLE_BUNDLES, bundle_id, &data)?;
+        }
+        for extension in consignment.state_extensions {
+            self.store_merge(DB_TABLE_EXTENSIONS, extension.node_id(), extension)?;
         }
 
         Ok(())
