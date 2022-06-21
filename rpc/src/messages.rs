@@ -12,9 +12,10 @@ use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 
 use amplify::Wrapper;
+use bitcoin::Txid;
 use internet2::presentation;
 use microservices::rpc;
-use rgb::{Contract, ContractId, ContractState, StateTransfer};
+use rgb::{validation, Contract, ContractId, ContractState, StateTransfer};
 
 use crate::FailureCode;
 
@@ -31,7 +32,7 @@ pub(crate) enum BusMsg {
 
 impl rpc::Request for BusMsg {}
 
-#[derive(Clone, Eq, PartialEq, Debug, Display, From)]
+#[derive(Clone, Debug, Display, From)]
 #[derive(NetworkEncode, NetworkDecode)]
 #[display(inner)]
 pub enum RpcMsg {
@@ -85,6 +86,12 @@ pub enum RpcMsg {
     #[display("failure({0:#})")]
     #[from]
     Failure(rpc::Failure<FailureCode>),
+
+    #[display("unresolved_txids(...)")]
+    UnresolvedTxids(Vec<Txid>),
+
+    #[display("invalid(...)")]
+    Invalid(validation::Status),
 }
 
 impl From<presentation::Error> for RpcMsg {
@@ -94,6 +101,10 @@ impl From<presentation::Error> for RpcMsg {
             info: format!("{}", err),
         })
     }
+}
+
+impl RpcMsg {
+    pub fn success() -> Self { RpcMsg::Success(None.into()) }
 }
 
 #[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]

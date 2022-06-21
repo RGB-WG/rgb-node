@@ -8,20 +8,21 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use rgb::{ConsignmentType, InmemConsignment, Node};
+use rgb::{validation, ConsignmentType, InmemConsignment, Node};
 
 use super::Runtime;
 use crate::{DaemonError, Db};
 
 impl Runtime {
-    fn process_consignment<C: ConsignmentType>(
+    pub(super) fn process_consignment<C: ConsignmentType>(
         &mut self,
         consignment: InmemConsignment<C>,
-    ) -> Result<(), DaemonError> {
+    ) -> Result<validation::Status, DaemonError> {
         let contract_id = consignment.contract_id();
 
         info!("Registering consignment for contract {}", contract_id);
 
+        let status = validation::Status::new();
         // TODO: Validate consignment
 
         self.db.store(Db::SCHEMATA, consignment.schema.schema_id(), &consignment.schema)?;
@@ -49,6 +50,6 @@ impl Runtime {
             self.db.store_merge(Db::EXTENSIONS, extension.node_id(), extension)?;
         }
 
-        Ok(())
+        Ok(status)
     }
 }

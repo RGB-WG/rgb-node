@@ -1879,6 +1879,7 @@ name = "rgb_rpc"
 version = "0.8.0-alpha.1"
 dependencies = [
  "amplify",
+ "bitcoin",
  "colored",
  "const_format",
  "internet2",

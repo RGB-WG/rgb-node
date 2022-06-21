@@ -8,11 +8,12 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use microservices::rpc;
 use rgb::{
     validation, ConsignmentId, ConsignmentType, Contract, ContractConsignment, InmemConsignment,
     StateTransfer, TransferConsignment,
 };
-use rgb_rpc::ClientId;
+use rgb_rpc::{ClientId, FailureCode};
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]
@@ -29,7 +30,11 @@ pub enum CtlMsg {
     ProcessTransfer(ProcessReq<TransferConsignment>),
 
     #[display(inner)]
+    #[from]
     Validity(ValidityResp),
+
+    #[display("processing_failed()")]
+    ProcessingFailed,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
