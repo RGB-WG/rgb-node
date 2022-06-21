@@ -8,7 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use rgb::{validation, ConsignmentType, InmemConsignment, Node};
+use rgb::{validation, ConsignmentType, InmemConsignment, Node, Validator, Validity};
 
 use super::Runtime;
 use crate::{DaemonError, Db};
@@ -22,8 +22,11 @@ impl Runtime {
 
         info!("Registering consignment for contract {}", contract_id);
 
-        let status = validation::Status::new();
-        // TODO: Validate consignment
+        let status = Validator::validate(&consignment, &self.electrum);
+        if status.validity() != Validity::Valid {
+            // We skip import only for invalid information
+            return Ok(status);
+        }
 
         self.db.store(Db::SCHEMATA, consignment.schema.schema_id(), &consignment.schema)?;
         if let Some(root_schema) = &consignment.root_schema {

@@ -480,9 +480,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5538cd660450ebeb4234cfecf8f2284b844ffc4c50531e66d584ad5b91293613"
+checksum = "87eba3c8c7f42ef17f6c659fc7416d0f4758cd3e58861ee63c5fa4a4dde649e4"
 dependencies = [
  "os_str_bytes",
 ]
@@ -564,26 +564,6 @@ dependencies = [
  "toml",
  "unicode-segmentation",
  "void",
-]
-
-[[package]]
-name = "const_format"
-version = "0.2.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2906f2480cdc015e998deac388331a0f1c1cd88744948c749513020c83c370bc"
-dependencies = [
- "const_format_proc_macros",
-]
-
-[[package]]
-name = "const_format_proc_macros"
-version = "0.2.22"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef196d5d972878a48da7decb7686eded338b4858fbabeed513d63a7c98b2b82d"
-dependencies = [
- "proc-macro2",
- "quote",
- "unicode-xid",
 ]
 
 [[package]]
@@ -1042,9 +1022,9 @@ checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "indexmap"
-version = "1.9.0"
+version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c6392766afd7964e2531940894cffe4bd8d7d17dbc3c1c4857040fd4b33bdb3"
+checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
 dependencies = [
  "autocfg 1.1.0",
  "hashbrown",
@@ -1308,9 +1288,8 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.8.0-rc.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1f42568dd4e7ac23b9bb66967be6c2fad0818ac75c4201b93b861762004119f"
+version = "0.8.0-rc.8"
+source = "git+https://github.com/Internet2-WG/rust-microservices#8fc95d98401b619bc770d7432a3b88a197ede895"
 dependencies = [
  "amplify",
  "clap",
@@ -1325,6 +1304,7 @@ dependencies = [
  "secp256k1",
  "serde 1.0.137",
  "serde_with",
+ "shellexpand",
  "strict_encoding",
  "toml",
  "zmq2",
@@ -1807,7 +1787,7 @@ dependencies = [
 [[package]]
 name = "rgb-core"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-core#b96ede4bdeb7558c6fa613cfa2337733d0f066a3"
+source = "git+https://github.com/RGB-WG/rgb-core#9c63f3282d22bb1dcbd4c94f1a9c1bc6b9af9e9b"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1821,14 +1801,14 @@ dependencies = [
  "once_cell",
  "serde 1.0.137",
  "serde_with",
- "stens",
+ "stens 0.4.1",
  "strict_encoding",
 ]
 
 [[package]]
 name = "rgb-std"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-std#33f535bf93c40c17a168dde2a6534c6c7139ed0e"
+source = "git+https://github.com/RGB-WG/rgb-std#59e6804de26ecfac6ea7ea37fe81e0e664113753"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1861,6 +1841,7 @@ dependencies = [
  "configure_me",
  "configure_me_codegen",
  "dotenv",
+ "electrum-client",
  "env_logger",
  "internet2",
  "lnpbp",
@@ -2215,6 +2196,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e56c50a9ee6529486f13b8ca5682c4f23260f5900e4f2206cd7be689bb4f095"
 dependencies = [
  "amplify",
+ "strict_encoding",
+]
+
+[[package]]
+name = "stens"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc1e031ab71b85047628043fc99cbd286277b956534fd4f6762cce7cdb26b150"
+dependencies = [
+ "amplify",
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
@@ -2224,12 +2215,11 @@ dependencies = [
 [[package]]
 name = "store_rpc"
 version = "0.8.0-beta.2"
-source = "git+https://github.com/Storm-WG/storm-stored#9f59e4ae098dac52387a357e6c6b0f05625fdb86"
+source = "git+https://github.com/Storm-WG/storm-stored#ffd19fdb909dde46242e91d6b900631401ede1d4"
 dependencies = [
  "amplify",
  "colored",
  "commit_verify",
- "const_format",
  "internet2",
  "log",
  "microservices",
@@ -2263,14 +2253,14 @@ dependencies = [
  "commit_verify",
  "internet2",
  "once_cell",
- "stens",
+ "stens 0.3.2",
  "strict_encoding",
 ]
 
 [[package]]
 name = "storm_ext"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#4f6491fd1f94cff188ec0444bc7e4d23761c34b7"
+source = "git+https://github.com/Storm-WG/storm-node#f4b6bfdf737dcc24f13f475dea5e9b280e0aa5dd"
 dependencies = [
  "amplify",
  "internet2",
@@ -2289,7 +2279,7 @@ dependencies = [
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#4f6491fd1f94cff188ec0444bc7e4d23761c34b7"
+source = "git+https://github.com/Storm-WG/storm-node#f4b6bfdf737dcc24f13f475dea5e9b280e0aa5dd"
 dependencies = [
  "amplify",
  "internet2",

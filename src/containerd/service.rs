@@ -13,6 +13,7 @@ use std::time::Duration;
 
 use bitcoin::secp256k1::rand::random;
 use commit_verify::ConsensusCommit;
+use electrum_client::Client as ElectrumClient;
 use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
 use microservices::esb;
@@ -57,6 +58,8 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
 pub struct Runtime {
     id: DaemonId,
 
+    pub(crate) electrum: ElectrumClient,
+
     pub(crate) db: Db,
 }
 
@@ -68,9 +71,12 @@ impl Runtime {
 
         let id = random();
 
+        let electrum = ElectrumClient::new(&config.electrum_url)
+            .map_err(|_| LaunchError::ElectrumConnectivity)?;
+
         info!("Containerd runtime started successfully");
 
-        Ok(Self { id, db })
+        Ok(Self { id, db, electrum })
     }
 }
 

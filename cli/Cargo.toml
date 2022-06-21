@@ -18,7 +18,7 @@ name = "rgb-cli"
 [dependencies]
 amplify = "3.12.0"
 internet2 = "0.8.0-beta.1"
-microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"] }
+microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"], git = "https://github.com/Internet2-WG/rust-microservices" }
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "../rpc" }
 clap = { version = "~3.1.18", features = ["derive", "env"] }

@@ -25,6 +25,9 @@ pub enum LaunchError {
     /// can't connect to store service. Details: {0}
     #[from]
     StoreConnection(ServerError<store_rpc::FailureCode>),
+
+    /// can't connect to electrum server
+    ElectrumConnectivity,
 }
 
 impl microservices::error::Error for LaunchError {}
