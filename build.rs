@@ -25,11 +25,11 @@ pub mod rgb_node {
 }
 pub mod rgbd {
     pub use super::rgb_node;
-    include!("src/bin/rgbd/opts.rs");
+    include!("src/rgbd/opts.rs");
 }
 pub mod containerd {
     pub use super::rgb_node;
-    include!("src/bin/containerd/opts.rs");
+    include!("src/containerd/opts.rs");
 }
 pub mod cli {
     include!("cli/src/opts.rs");

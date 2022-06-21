@@ -14,7 +14,7 @@ edition = "2021"
 rust-version = "1.59.0"
 readme = "README.md"
 build = "build.rs"
-exclude = [".github", "Dockerfile", ".dockerignore", "contrib", "doc", "shell"]
+exclude = [".github", "Dockerfile", ".dockerignore", "contrib", "doc"]
 
 [lib]
 name = "rgb_node"
