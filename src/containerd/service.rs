@@ -33,13 +33,13 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
         map! {
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,
-                ZmqSocketType::RouterBind,
-                None
+                ZmqSocketType::RouterConnect,
+                Some(ServiceId::Rgb)
             ),
             ServiceBus::Ctl => esb::BusConfig::with_addr(
                 ctl_endpoint,
-                ZmqSocketType::RouterBind,
-                None
+                ZmqSocketType::RouterConnect,
+                Some(ServiceId::Rgb)
             )
         },
         runtime,

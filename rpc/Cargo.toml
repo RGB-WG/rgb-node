@@ -31,6 +31,6 @@ colored = "2"
 default = ["serde"]
 all = ["serde"]
 serde = [
-    "serde_crate", "serde_with", "serde_yaml",
+    "serde_crate", "serde_with", "serde_yaml", "rgb-std/serde",
     "amplify/serde", "internet2/serde", "microservices/serde",
 ]

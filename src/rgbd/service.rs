@@ -158,13 +158,9 @@ impl Runtime {
         match message {
             RpcMsg::AddContract(contract) => {
                 self.process_contract(endpoints, contract, client_id)?;
-                // TODO: Send this only after processing
-                self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
             RpcMsg::AcceptTransfer(transfer) => {
                 self.process_transfer(endpoints, transfer, client_id)?;
-                // TODO: Send this only after processing
-                self.send_rpc(endpoints, client_id, RpcMsg::Success(None.into()))?;
             }
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
@@ -184,7 +180,7 @@ impl Runtime {
         match message {
             CtlMsg::Hello => self.handle_hello(endpoints, source)?,
 
-            CtlMsg::Validity(report) => {
+            CtlMsg::Validity(_) => {
                 self.handle_validity(endpoints, source)?;
                 self.pick_consignment(endpoints)?;
             }
@@ -230,10 +226,11 @@ impl Runtime {
 
     fn handle_validity(
         &mut self,
-        endpoints: &mut Endpoints,
-        source: ServiceId,
+        _endpoints: &mut Endpoints,
+        _source: ServiceId,
     ) -> Result<(), esb::Error<ServiceId>> {
-        todo!()
+        // Nothing to do here for now
+        Ok(())
     }
 
     fn pick_consignment(
@@ -254,12 +251,27 @@ impl Runtime {
         Ok(true)
     }
 
-    fn pick_or_start_containerd(&mut self, endpoints: &mut Endpoints) -> Result<(), DaemonError> {
+    fn pick_or_start_containerd(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+    ) -> Result<(), DaemonError> {
         if self.pick_consignment(endpoints)? {
+            let _ = self.send_rpc(
+                endpoints,
+                client_id,
+                RpcMsg::Progress(s!("Consignment forwarded to container daemon")),
+            );
             return Ok(());
         }
 
         let _handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
+        let _ = self.send_rpc(
+            endpoints,
+            client_id,
+            RpcMsg::Progress(s!("A new container daemon instance is started")),
+        );
+
         // TODO: Store daemon handlers
         Ok(())
     }
@@ -274,7 +286,7 @@ impl Runtime {
             client_id,
             consignment: contract,
         }));
-        self.pick_or_start_containerd(endpoints)
+        self.pick_or_start_containerd(endpoints, client_id)
     }
 
     fn process_transfer(
@@ -287,6 +299,6 @@ impl Runtime {
             client_id,
             consignment: transfer,
         }));
-        self.pick_or_start_containerd(endpoints)
+        self.pick_or_start_containerd(endpoints, client_id)
     }
 }

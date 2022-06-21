@@ -33,7 +33,7 @@ pub enum ServiceId {
     #[display("bpd")]
     Bp,
 
-    #[display("stormd")]
+    #[display("contained<{0}>")]
     Container(DaemonId),
 
     #[display("stormd")]

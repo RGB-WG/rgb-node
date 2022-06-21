@@ -121,6 +121,22 @@ impl Client {
                 RpcMsg::Success(OptionDetails(None)) => {
                     println!("{}", "Success".bright_green());
                 }
+                RpcMsg::UnresolvedTxids(txids) => {
+                    eprintln!(
+                        "{}: some of the transactions can't be resolved",
+                        "Warning".bright_yellow()
+                    );
+                    for txid in txids {
+                        println!("{}", txid);
+                    }
+                }
+                RpcMsg::Invalid(status) => {
+                    eprintln!("{}: consignment is invalid", "Error".bright_red());
+                    #[cfg(feature = "serde")]
+                    eprintln!("{}", serde_yaml::to_string(&status).unwrap());
+                    #[cfg(not(feature = "serde"))]
+                    eprintln!("{:#?}", status);
+                }
                 other => {
                     eprintln!(
                         "{}: {}",
