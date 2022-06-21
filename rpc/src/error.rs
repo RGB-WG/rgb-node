@@ -24,7 +24,10 @@ pub enum FailureCode {
 
     Store = 0x04,
 
-    UnexpectedRequest = 0x05,
+    /// Daemon launcher error
+    Launcher = 0x05,
+
+    UnexpectedRequest = 0x06,
 }
 
 impl From<u16> for FailureCode {

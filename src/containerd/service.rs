@@ -16,7 +16,7 @@ use microservices::node::TryService;
 use rgb_rpc::{ClientId, RpcMsg};
 
 use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
-use crate::{Config, DaemonError, LaunchError};
+use crate::{Config, DaemonError, Db, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let rpc_endpoint = config.rpc_endpoint.clone();
@@ -50,19 +50,23 @@ pub struct Runtime {
     /// Original configuration object
     pub(crate) config: Config,
 
+    pub(crate) db: Db,
+
     /// Unmarshaller instance used for parsing RPC request
     pub(crate) unmarshaller: Unmarshaller<BusMsg>,
 }
 
 impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError<LaunchError>> {
-        // debug!("Initializing storage provider {:?}", config.storage_conf());
-        // let storage = storage::FileDriver::with(config.storage_conf())?;
+        debug!("Connecting to store service at {}", config.store_endpoint);
+
+        let db = Db::with(&config.store_endpoint)?;
 
         info!("Containerd runtime started successfully");
 
         Ok(Self {
             config,
+            db,
             unmarshaller: BusMsg::create_unmarshaller(),
         })
     }

@@ -13,7 +13,7 @@ use std::process::Command;
 use microservices::error::BootstrapError;
 use microservices::{DaemonHandle, Launcher, LauncherError};
 
-use super::Runtime;
+use crate::rgbd::Runtime;
 use crate::{containerd, Config, LaunchError};
 
 /// Daemons that can be launched by lnpd
@@ -47,7 +47,7 @@ impl Launcher for Daemon {
 }
 
 impl Runtime {
-    pub(super) fn launch_daemon(
+    pub(crate) fn launch_daemon(
         &self,
         daemon: Daemon,
         config: Config,

@@ -11,7 +11,6 @@
 mod service;
 #[cfg(feature = "server")]
 mod opts;
-pub(self) mod daemons;
 
 #[cfg(feature = "server")]
 pub use opts::Opts;

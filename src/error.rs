@@ -10,10 +10,11 @@
 
 use internet2::presentation;
 use microservices::rpc::ServerError;
-use microservices::{esb, rpc};
+use microservices::{esb, rpc, LauncherError};
 use rgb_rpc::{FailureCode, RpcMsg};
 
 use crate::bus::{ServiceBus, ServiceId};
+use crate::daemons::Daemon;
 
 #[derive(Clone, Debug, Display, Error, From)]
 #[display(doc_comments)]
@@ -28,7 +29,7 @@ pub enum LaunchError {
 
 impl microservices::error::Error for LaunchError {}
 
-#[derive(Clone, Debug, Display, Error, From)]
+#[derive(Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub(crate) enum DaemonError {
     /// data encoding error. Details: {0}
@@ -43,6 +44,10 @@ pub(crate) enum DaemonError {
     /// invalid storm message encoding. Details: {0}
     #[from]
     StormEncoding(presentation::Error),
+
+    /// launching container daemon. Details: {0}
+    #[from]
+    ContainerLauncher(LauncherError<Daemon>),
 
     /// storage error. Details: {0}
     #[from]
@@ -70,6 +75,7 @@ impl From<DaemonError> for RpcMsg {
                 FailureCode::UnexpectedRequest
             }
             DaemonError::Store(_) => FailureCode::Store,
+            DaemonError::ContainerLauncher(_) => FailureCode::Launcher,
         };
         RpcMsg::Failure(rpc::Failure {
             code: code.into(),

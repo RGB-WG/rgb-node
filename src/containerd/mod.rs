@@ -11,6 +11,7 @@
 mod service;
 #[cfg(feature = "server")]
 mod opts;
+mod processor;
 
 #[cfg(feature = "server")]
 pub use opts::Opts;

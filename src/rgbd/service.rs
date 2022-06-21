@@ -8,31 +8,18 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use amplify::Slice32;
-use bitcoin::hashes::{sha256t, Hash};
-use commit_verify::TaggedHash;
 use internet2::{CreateUnmarshaller, Unmarshaller, ZmqSocketType};
 use microservices::error::BootstrapError;
-use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
-use rgb::{Consignment, ConsignmentType, InmemConsignment, MergeReveal, Node};
+use microservices::{esb, DaemonHandle};
+use rgb::{ConsignmentType, InmemConsignment};
 use rgb_rpc::{ClientId, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
-use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::bus::{BusMsg, CtlMsg, Endpoints, Responder, ServiceBus, ServiceId};
-use crate::{Config, DaemonError, LaunchError};
-
-const DB_TABLE_SCHEMATA: &str = "schemata";
-const DB_TABLE_BUNDLES: &str = "bundles";
-const DB_TABLE_GENESIS: &str = "genesis";
-const DB_TABLE_TRANSITIONS: &str = "transitions";
-const DB_TABLE_ANCHORS: &str = "transitions";
-const DB_TABLE_EXTENSIONS: &str = "extensions";
-const DB_TABLE_ATTACHMENT_CHUNKS: &str = "chunks";
-const DB_TABLE_ATTACHMENT_INDEX: &str = "attachments";
-const DB_TABLE_ALU_LIBS: &str = "alu";
+use crate::daemons::Daemon;
+use crate::{Config, DaemonError, Db, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let storm_endpoint = config.storm_endpoint.clone();
@@ -72,7 +59,9 @@ pub struct Runtime {
     /// Original configuration object
     pub(crate) config: Config,
 
-    pub(crate) store: store_rpc::Client,
+    pub(crate) db: Db,
+
+    pub(crate) containerd: Vec<DaemonHandle<Daemon>>,
 
     /// Unmarshaller instance used for parsing RPC request
     pub(crate) unmarshaller: Unmarshaller<BusMsg>,
@@ -82,104 +71,16 @@ impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError<LaunchError>> {
         debug!("Connecting to store service at {}", config.store_endpoint);
 
-        let mut store =
-            store_rpc::Client::with(&config.store_endpoint).map_err(LaunchError::from)?;
-
-        for table in [
-            DB_TABLE_SCHEMATA,
-            DB_TABLE_BUNDLES,
-            DB_TABLE_GENESIS,
-            DB_TABLE_TRANSITIONS,
-            DB_TABLE_ANCHORS,
-            DB_TABLE_EXTENSIONS,
-            DB_TABLE_ATTACHMENT_CHUNKS,
-            DB_TABLE_ATTACHMENT_INDEX,
-            DB_TABLE_ALU_LIBS,
-        ] {
-            store.use_table(table.to_owned()).map_err(LaunchError::from)?;
-        }
+        let db = Db::with(&config.store_endpoint)?;
 
         info!("RGBd runtime started successfully");
 
         Ok(Self {
             config,
-            store,
+            db,
+            containerd: empty!(),
             unmarshaller: BusMsg::create_unmarshaller(),
         })
-    }
-
-    pub(super) fn retrieve<'a, H: 'a + sha256t::Tag, T: StrictDecode>(
-        &mut self,
-        table: &'static str,
-        key: impl TaggedHash<'a, H> + 'a,
-    ) -> Result<Option<T>, DaemonError> {
-        let slice = key.into_inner();
-        let slice = slice.into_inner();
-        match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
-            Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    pub(super) fn retrieve_h<T: StrictDecode>(
-        &mut self,
-        table: &'static str,
-        key: impl Hash<Inner = [u8; 32]>,
-    ) -> Result<Option<T>, DaemonError> {
-        let slice = *key.as_inner();
-        match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
-            Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    pub(super) fn store<'a, H: 'a + sha256t::Tag>(
-        &mut self,
-        table: &'static str,
-        key: impl TaggedHash<'a, H> + 'a,
-        data: &impl StrictEncode,
-    ) -> Result<(), DaemonError> {
-        let slice = key.into_inner();
-        let slice = slice.into_inner();
-        self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
-        Ok(())
-    }
-
-    pub(super) fn store_h(
-        &mut self,
-        table: &'static str,
-        key: impl Hash<Inner = [u8; 32]>,
-        data: &impl StrictEncode,
-    ) -> Result<(), DaemonError> {
-        let slice = *key.as_inner();
-        self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
-        Ok(())
-    }
-
-    pub(super) fn store_merge<'a, H: 'a + sha256t::Tag>(
-        &mut self,
-        table: &'static str,
-        key: impl TaggedHash<'a, H> + Copy + 'a,
-        new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
-    ) -> Result<(), DaemonError> {
-        let stored_obj = self.retrieve(table, key)?.unwrap_or_else(|| new_obj.clone());
-        let obj = new_obj
-            .merge_reveal(stored_obj)
-            .expect("merge-revealed objects does not match; usually it means hacked database");
-        self.store(DB_TABLE_GENESIS, key, &obj)
-    }
-
-    pub(super) fn store_merge_h(
-        &mut self,
-        table: &'static str,
-        key: impl Hash<Inner = [u8; 32]>,
-        new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
-    ) -> Result<(), DaemonError> {
-        let stored_obj = self.retrieve_h(table, key)?.unwrap_or_else(|| new_obj.clone());
-        let obj = new_obj
-            .merge_reveal(stored_obj)
-            .expect("merge-revealed objects does not match; usually it means hacked database");
-        self.store_h(DB_TABLE_GENESIS, key, &obj)
     }
 }
 
@@ -281,37 +182,8 @@ impl Runtime {
         &mut self,
         consignment: InmemConsignment<C>,
     ) -> Result<(), DaemonError> {
-        let contract_id = consignment.contract_id();
-
-        info!("Registering consignment for contract {}", contract_id);
-
-        // TODO: Validate consignment
-
-        self.store(DB_TABLE_SCHEMATA, consignment.schema.schema_id(), &consignment.schema)?;
-        if let Some(root_schema) = &consignment.root_schema {
-            self.store(DB_TABLE_SCHEMATA, root_schema.schema_id(), root_schema)?;
-        }
-
-        self.store_merge(DB_TABLE_GENESIS, contract_id, consignment.genesis)?;
-
-        for (anchor, bundle) in consignment.anchored_bundles {
-            let bundle_id = bundle.bundle_id();
-            let anchor = anchor
-                .into_merkle_block(contract_id, bundle_id.into())
-                .expect("broken anchor data");
-            self.store_merge_h(DB_TABLE_ANCHORS, anchor.txid, anchor)?;
-            let mut data =
-                bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect::<Vec<_>>();
-            for (transition, inputs) in bundle.into_revealed_iter() {
-                data.push((transition.node_id(), inputs.clone()));
-                self.store_merge(DB_TABLE_TRANSITIONS, transition.node_id(), transition)?;
-            }
-            self.store(DB_TABLE_BUNDLES, bundle_id, &data)?;
-        }
-        for extension in consignment.state_extensions {
-            self.store_merge(DB_TABLE_EXTENSIONS, extension.node_id(), extension)?;
-        }
-
+        let handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
+        self.containerd.push(handle);
         Ok(())
     }
 }
