@@ -17,9 +17,9 @@ use microservices::shell::shell_setup;
 use store_rpc::STORED_RPC_ENDPOINT;
 
 #[cfg(any(target_os = "linux"))]
-pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
+pub const RGB_NODE_DATA_DIR: &str = "~/.rgb_node";
 #[cfg(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))]
-pub const RGB_NODE_DATA_DIR: &str = "~/.rgb";
+pub const RGB_NODE_DATA_DIR: &str = "~/.rgb_node";
 #[cfg(target_os = "macos")]
 pub const RGB_NODE_DATA_DIR: &str = "~/Library/Application Support/RGB Node";
 #[cfg(target_os = "windows")]
