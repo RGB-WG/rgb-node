@@ -8,11 +8,14 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
+
+use rgb::schema::TransitionType;
 use rgb::{
-    validation, ConsignmentId, ConsignmentType, ContractConsignment, InmemConsignment,
+    validation, ConsignmentId, ConsignmentType, ContractConsignment, ContractId, InmemConsignment,
     TransferConsignment,
 };
-use rgb_rpc::ClientId;
+use rgb_rpc::{ClientId, OutpointSelection};
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]
@@ -28,9 +31,18 @@ pub enum CtlMsg {
     #[display("process_transfer({0})")]
     ProcessTransfer(ProcessReq<TransferConsignment>),
 
+    #[display("consign_contract({0})")]
+    ConsignContract(ConsignReq<ContractConsignment>),
+
+    #[display("consign_transition({0})")]
+    ConsignTransition(ConsignReq<ContractConsignment>),
+
     #[display(inner)]
     #[from]
     Validity(ValidityResp),
+
+    #[display("processing_complete()")]
+    ProcessingComplete,
 
     #[display("processing_failed()")]
     ProcessingFailed,
@@ -41,6 +53,17 @@ pub enum CtlMsg {
 pub struct ProcessReq<T: ConsignmentType> {
     pub client_id: ClientId,
     pub consignment: InmemConsignment<T>,
+}
+
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
+#[display("{client_id}, {contract_id}, ...")]
+pub struct ConsignReq<T: ConsignmentType> {
+    pub client_id: ClientId,
+    pub contract_id: ContractId,
+    pub include: BTreeSet<TransitionType>,
+    pub outpoints: OutpointSelection,
+    #[strict_encoding(skip)]
+    pub _phantom: T,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]

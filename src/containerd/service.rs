@@ -8,6 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
 use std::thread;
 use std::time::Duration;
 
@@ -19,11 +20,13 @@ use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
-use rgb::{ConsignmentType, InmemConsignment, Validity};
-use rgb_rpc::{ClientId, RpcMsg};
+use rgb::schema::TransitionType;
+use rgb::{ConsignmentType, ContractConsignment, ContractId, InmemConsignment, Validity};
+use rgb_rpc::{ClientId, OutpointSelection, RpcMsg};
 
 use crate::bus::{
-    BusMsg, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
+    ValidityResp,
 };
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -159,6 +162,22 @@ impl Runtime {
                 self.handle_consignment(endpoints, client_id, consignment)?;
             }
 
+            CtlMsg::ConsignContract(ConsignReq {
+                client_id,
+                contract_id,
+                include,
+                outpoints,
+                _phantom,
+            }) => {
+                self.handle_consign_contract(
+                    endpoints,
+                    client_id,
+                    contract_id,
+                    include,
+                    outpoints,
+                )?;
+            }
+
             wrong_msg => {
                 error!("Request is not supported by the CTL interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Ctl, &wrong_msg));
@@ -194,6 +213,24 @@ impl Runtime {
                     consignment_id: id,
                     status,
                 })?
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_consign_contract(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        contract_id: ContractId,
+        include: BTreeSet<TransitionType>,
+        outpoints: OutpointSelection,
+    ) -> Result<(), DaemonError> {
+        match self.compose_consignment(contract_id, include, outpoints, ContractConsignment) {
+            Err(_) => self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?,
+            Ok(consignment) => {
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::Contract(consignment));
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
             }
         }
         Ok(())

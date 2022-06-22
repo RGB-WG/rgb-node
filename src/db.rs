@@ -8,13 +8,16 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
 use std::fmt::Debug;
 
 use amplify::Slice32;
 use bitcoin::hashes::{sha256t, Hash};
 use commit_verify::TaggedHash;
 use internet2::addr::ServiceAddr;
-use rgb::MergeReveal;
+use rgb::schema::TransitionType;
+use rgb::{ContractId, MergeReveal, NodeId};
+use storm::ChunkId;
 use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::{DaemonError, LaunchError};
@@ -35,6 +38,15 @@ impl Db {
     pub const ATTACHMENT_INDEX: &'static str = "attachments";
     pub const ALU_LIBS: &'static str = "alu";
 
+    pub const CONTRACT_TRANSITIONS: &'static str = "contract_transitions";
+
+    pub fn index_two_pieces(a: impl StrictEncode, b: impl StrictEncode) -> ChunkId {
+        let mut engine = ChunkId::engine();
+        let _ = a.strict_encode(&mut engine);
+        let _ = b.strict_encode(&mut engine);
+        ChunkId::from_engine(engine)
+    }
+
     pub fn with(store_endpoint: &ServiceAddr) -> Result<Db, LaunchError> {
         let mut store = store_rpc::Client::with(store_endpoint).map_err(LaunchError::from)?;
 
@@ -49,11 +61,37 @@ impl Db {
             Db::ATTACHMENT_CHUNKS,
             Db::ATTACHMENT_INDEX,
             Db::ALU_LIBS,
+            Db::CONTRACT_TRANSITIONS,
         ] {
             store.use_table(table.to_owned()).map_err(LaunchError::from)?;
         }
 
         Ok(Db { store })
+    }
+
+    pub fn transitions_by_type(
+        &mut self,
+        contract_id: ContractId,
+        transition_type: TransitionType,
+    ) -> Result<BTreeSet<NodeId>, DaemonError> {
+        let chunk_id = Db::index_two_pieces(contract_id, transition_type);
+        Ok(self.retrieve_h(Db::CONTRACT_TRANSITIONS, chunk_id)?.unwrap_or_default())
+    }
+
+    pub fn insert_into_set<T>(
+        &mut self,
+        table: &'static str,
+        id: ChunkId,
+        item: T,
+    ) -> Result<(), DaemonError>
+    where
+        T: Ord,
+        BTreeSet<T>: StrictEncode + StrictDecode,
+    {
+        let mut set: BTreeSet<T> = self.retrieve_h(table, id)?.unwrap_or_default();
+        set.insert(item);
+        self.store_h(table, id, &set)?;
+        Ok(())
     }
 
     pub fn retrieve<'a, H: 'a + sha256t::Tag, T: StrictDecode>(

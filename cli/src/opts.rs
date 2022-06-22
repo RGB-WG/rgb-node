@@ -10,6 +10,7 @@
 
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
+use rgb::schema::TransitionType;
 use rgb::{Contract, ContractId};
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 
@@ -75,6 +76,9 @@ pub enum Command {
     /// Request contract source
     #[display("contract {contract_id}")]
     Contract {
+        #[clap(short = 't', long = "node-type")]
+        node_types: Vec<TransitionType>,
+
         /// Contract id to read source
         contract_id: ContractId,
     },

@@ -8,9 +8,14 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
+
+use rgb::schema::TransitionType;
 use rgb::{
-    validation, ConsignmentType, ContractState, InmemConsignment, Node, Validator, Validity,
+    validation, ConsignmentType, ContractId, ContractState, InmemConsignment, Node, Validator,
+    Validity,
 };
+use rgb_rpc::OutpointSelection;
 
 use super::Runtime;
 use crate::{DaemonError, Db};
@@ -67,6 +72,7 @@ impl Runtime {
                 bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect::<Vec<_>>();
             for (transition, inputs) in bundle.into_revealed_iter() {
                 let node_id = transition.node_id();
+                let transition_type = transition.transition_type();
                 debug!("Processing state transition {}", node_id);
                 trace!("State transition: {:?}", transition);
 
@@ -75,6 +81,10 @@ impl Runtime {
 
                 data.push((node_id, inputs.clone()));
                 self.db.store_merge(Db::TRANSITIONS, node_id, transition)?;
+
+                trace!("Indexing transition");
+                let index_id = Db::index_two_pieces(contract_id, transition_type);
+                self.db.insert_into_set(Db::CONTRACT_TRANSITIONS, index_id, node_id)?;
             }
             self.db.store(Db::BUNDLES, bundle_id, &data)?;
         }
@@ -95,5 +105,15 @@ impl Runtime {
 
         info!("Consignment processing complete for {}", id);
         Ok(status)
+    }
+
+    pub(super) fn compose_consignment<T: ConsignmentType>(
+        &mut self,
+        contract_id: ContractId,
+        include: BTreeSet<TransitionType>,
+        outpoints: OutpointSelection,
+        _phantom: T,
+    ) -> Result<InmemConsignment<T>, DaemonError> {
+        todo!()
     }
 }

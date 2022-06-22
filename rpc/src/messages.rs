@@ -12,10 +12,11 @@ use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 
 use amplify::Wrapper;
-use bitcoin::Txid;
+use bitcoin::{OutPoint, Txid};
 use internet2::presentation;
 use lnpbp::chain::Chain;
 use microservices::rpc;
+use rgb::schema::TransitionType;
 use rgb::{validation, Contract, ContractId, ContractState, StateTransfer};
 
 use crate::FailureCode;
@@ -49,7 +50,7 @@ pub enum RpcMsg {
     ListContracts,
 
     #[display("get_contract({0})")]
-    GetContract(ContractId),
+    GetContract(ContractReq),
 
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),
@@ -58,7 +59,7 @@ pub enum RpcMsg {
     // ----------------
     BlindUtxo,
 
-    ComposeTransfer,
+    ConsignTransfer,
 
     #[display("accept_transfer(...)")]
     AcceptTransfer(StateTransfer),
@@ -108,12 +109,28 @@ impl RpcMsg {
     pub fn success() -> Self { RpcMsg::Success(None.into()) }
 }
 
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[derive(StrictEncode, StrictDecode)]
+pub enum OutpointSelection {
+    All,
+    Spending(BTreeSet<OutPoint>),
+}
+
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
 #[display("hello({network}, {user_agent})")]
 pub struct HelloReq {
     pub user_agent: String,
     pub network: Chain,
+}
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("get_contract({contract_id}, ...)")]
+pub struct ContractReq {
+    pub contract_id: ContractId,
+    pub include: BTreeSet<TransitionType>,
+    pub outpoints: OutpointSelection,
 }
 
 #[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]

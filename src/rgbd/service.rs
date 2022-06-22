@@ -13,17 +13,19 @@ use std::collections::{BTreeSet, VecDeque};
 use amplify::Wrapper;
 use bitcoin::hashes::Hash;
 use internet2::ZmqSocketType;
+use lnpbp::chain::Chain;
 use microservices::cli::LogStyle;
 use microservices::error::BootstrapError;
 use microservices::esb::EndpointList;
 use microservices::node::TryService;
 use microservices::{esb, rpc};
-use rgb::{Contract, ContractId, StateTransfer};
-use rgb_rpc::{ClientId, FailureCode, HelloReq, RpcMsg};
+use rgb::schema::TransitionType;
+use rgb::{Contract, ContractConsignment, ContractId, StateTransfer};
+use rgb_rpc::{ClientId, ContractReq, FailureCode, HelloReq, OutpointSelection, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
-    BusMsg, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::daemons::Daemon;
 use crate::{Config, DaemonError, Db, LaunchError};
@@ -154,23 +156,30 @@ impl Runtime {
         message: RpcMsg,
     ) -> Result<(), DaemonError> {
         match message {
-            RpcMsg::Hello(hello) => {
-                self.process_hello(endpoints, hello, client_id)?;
+            RpcMsg::Hello(HelloReq {
+                user_agent,
+                network,
+            }) => {
+                self.accept_client(endpoints, client_id, user_agent, network)?;
             }
             RpcMsg::ListContracts => {
                 self.list_contracts(endpoints, client_id)?;
             }
-            RpcMsg::GetContract(contract_id) => {
-                self.get_contract(endpoints, contract_id, client_id)?;
+            RpcMsg::GetContract(ContractReq {
+                contract_id,
+                include,
+                outpoints,
+            }) => {
+                self.get_contract(endpoints, client_id, contract_id, include, outpoints)?;
             }
             RpcMsg::GetContractState(contract_id) => {
-                self.get_contract_state(endpoints, contract_id, client_id)?;
+                self.get_contract_state(endpoints, client_id, contract_id)?;
             }
             RpcMsg::AddContract(contract) => {
-                self.process_contract(endpoints, contract, client_id)?;
+                self.process_contract(endpoints, client_id, contract)?;
             }
             RpcMsg::AcceptTransfer(transfer) => {
-                self.process_transfer(endpoints, transfer, client_id)?;
+                self.process_transfer(endpoints, client_id, transfer)?;
             }
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
@@ -188,11 +197,12 @@ impl Runtime {
         message: CtlMsg,
     ) -> Result<(), DaemonError> {
         match message {
-            CtlMsg::Hello => self.handle_hello(endpoints, source)?,
-
-            CtlMsg::Validity(_) => {
-                self.handle_validity(endpoints, source)?;
-                self.pick_consignment(endpoints)?;
+            CtlMsg::Hello => {
+                self.accept_daemon(source)?;
+                self.pick_task(endpoints)?;
+            }
+            CtlMsg::Validity(_) | CtlMsg::ProcessingFailed | CtlMsg::ProcessingComplete => {
+                self.pick_task(endpoints)?;
             }
 
             wrong_msg => {
@@ -206,11 +216,7 @@ impl Runtime {
 }
 
 impl Runtime {
-    fn handle_hello(
-        &mut self,
-        endpoints: &mut Endpoints,
-        source: ServiceId,
-    ) -> Result<(), esb::Error<ServiceId>> {
+    fn accept_daemon(&mut self, source: ServiceId) -> Result<(), esb::Error<ServiceId>> {
         info!("{} daemon is {}", source.ended(), "connected".ended());
 
         match source {
@@ -218,13 +224,12 @@ impl Runtime {
                 error!("{}", "Unexpected another RGBd instance connection".err());
             }
             ServiceId::Container(daemon_id) => {
+                self.containerd_free.push_back(daemon_id);
                 info!(
                     "Container daemon {} is registered; total {} container processors are known",
                     daemon_id,
-                    self.containerd_busy.len()
+                    self.containerd_free.len() + self.containerd_busy.len()
                 );
-                self.containerd_free.push_back(daemon_id);
-                self.pick_consignment(endpoints)?;
             }
             _ => {
                 // Ignoring the rest of daemon/client types
@@ -234,19 +239,7 @@ impl Runtime {
         Ok(())
     }
 
-    fn handle_validity(
-        &mut self,
-        _endpoints: &mut Endpoints,
-        _source: ServiceId,
-    ) -> Result<(), esb::Error<ServiceId>> {
-        // Nothing to do here for now
-        Ok(())
-    }
-
-    fn pick_consignment(
-        &mut self,
-        endpoints: &mut Endpoints,
-    ) -> Result<bool, esb::Error<ServiceId>> {
+    fn pick_task(&mut self, endpoints: &mut Endpoints) -> Result<bool, esb::Error<ServiceId>> {
         let service = match self.containerd_free.pop_front() {
             Some(damon_id) => ServiceId::Container(damon_id),
             None => return Ok(false),
@@ -261,12 +254,12 @@ impl Runtime {
         Ok(true)
     }
 
-    fn pick_or_start_containerd(
+    fn pick_or_start(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        if self.pick_consignment(endpoints)? {
+        if self.pick_task(endpoints)? {
             let _ = self.send_rpc(
                 endpoints,
                 client_id,
@@ -286,13 +279,15 @@ impl Runtime {
         Ok(())
     }
 
-    fn process_hello(
+    fn accept_client(
         &mut self,
         endpoints: &mut Endpoints,
-        hello: HelloReq,
         client_id: ClientId,
+        user_agent: String,
+        network: Chain,
     ) -> Result<(), DaemonError> {
-        let msg = match self.config.chain == hello.network {
+        info!("Accepting new client with id {} ({})", client_id, user_agent);
+        let msg = match self.config.chain == network {
             true => RpcMsg::success(),
             false => rpc::Failure {
                 code: rpc::FailureCode::Other(FailureCode::ChainMismatch),
@@ -321,17 +316,26 @@ impl Runtime {
     fn get_contract(
         &mut self,
         endpoints: &mut Endpoints,
-        contract_id: ContractId,
         client_id: ClientId,
+        contract_id: ContractId,
+        include: BTreeSet<TransitionType>,
+        outpoints: OutpointSelection,
     ) -> Result<(), DaemonError> {
-        todo!()
+        self.ctl_queue.push_back(CtlMsg::ConsignContract(ConsignReq {
+            client_id,
+            contract_id,
+            include,
+            outpoints,
+            _phantom: ContractConsignment,
+        }));
+        self.pick_or_start(endpoints, client_id)
     }
 
     fn get_contract_state(
         &mut self,
         endpoints: &mut Endpoints,
-        contract_id: ContractId,
         client_id: ClientId,
+        contract_id: ContractId,
     ) -> Result<(), DaemonError> {
         let msg = match self.db.retrieve(Db::CONTRACTS, contract_id)? {
             Some(state) => RpcMsg::ContractState(state),
@@ -348,26 +352,26 @@ impl Runtime {
     fn process_contract(
         &mut self,
         endpoints: &mut Endpoints,
-        contract: Contract,
         client_id: ClientId,
+        contract: Contract,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ProcessContract(ProcessReq {
             client_id,
             consignment: contract,
         }));
-        self.pick_or_start_containerd(endpoints, client_id)
+        self.pick_or_start(endpoints, client_id)
     }
 
     fn process_transfer(
         &mut self,
         endpoints: &mut Endpoints,
-        transfer: StateTransfer,
         client_id: ClientId,
+        transfer: StateTransfer,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ProcessTransfer(ProcessReq {
             client_id,
             consignment: transfer,
         }));
-        self.pick_or_start_containerd(endpoints, client_id)
+        self.pick_or_start(endpoints, client_id)
     }
 }

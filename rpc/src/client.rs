@@ -18,10 +18,13 @@ use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::esb::{self, BusId};
 use microservices::rpc;
+use rgb::schema::TransitionType;
 use rgb::{Contract, ContractId, ContractState};
 
 use crate::messages::HelloReq;
-use crate::{BusMsg, ClientId, FailureCode, OptionDetails, RpcMsg, ServiceId};
+use crate::{
+    BusMsg, ClientId, ContractReq, FailureCode, OptionDetails, OutpointSelection, RpcMsg, ServiceId,
+};
 
 type Error = esb::Error<ServiceId>;
 
@@ -198,8 +201,16 @@ impl Client {
         }
     }
 
-    pub fn contract(&mut self, contract_id: ContractId) -> Result<Contract, Error> {
-        self.request(RpcMsg::GetContract(contract_id))?;
+    pub fn contract(
+        &mut self,
+        contract_id: ContractId,
+        node_types: Vec<TransitionType>,
+    ) -> Result<Contract, Error> {
+        self.request(RpcMsg::GetContract(ContractReq {
+            contract_id,
+            include: node_types.into_iter().collect(),
+            outpoints: OutpointSelection::All,
+        }))?;
         match self.response()? {
             RpcMsg::Contract(contract) => Ok(contract),
             RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),

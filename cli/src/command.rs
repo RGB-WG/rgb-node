@@ -52,8 +52,11 @@ impl Exec for Opts {
                 let state = client.contract_state(contract_id)?;
                 println!("{}", serde_yaml::to_string(&state).unwrap());
             }
-            Command::Contract { contract_id } => {
-                let contract = client.contract(contract_id)?;
+            Command::Contract {
+                node_types,
+                contract_id,
+            } => {
+                let contract = client.contract(contract_id, node_types)?;
                 println!("{}", contract);
             }
         };

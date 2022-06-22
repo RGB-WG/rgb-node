@@ -30,7 +30,7 @@ mod service_id;
 pub use client::Client;
 pub use error::FailureCode;
 pub(crate) use messages::BusMsg;
-pub use messages::{HelloReq, OptionDetails, RpcMsg};
+pub use messages::{ContractReq, HelloReq, OptionDetails, OutpointSelection, RpcMsg};
 pub use service_id::{ClientId, ServiceId, ServiceName};
 
 pub const RGB_NODE_RPC_ENDPOINT: &str = "0.0.0.0:63963";
