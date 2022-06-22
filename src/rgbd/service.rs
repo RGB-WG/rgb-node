@@ -147,7 +147,6 @@ impl Runtime {
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
             }
         }
-        Ok(())
     }
 
     fn handle_rpc(

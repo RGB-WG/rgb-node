@@ -15,8 +15,8 @@ use commit_verify::lnpbp4;
 use rgb::schema::TransitionType;
 use rgb::{
     bundle, validation, Anchor, BundleId, ConsignmentType, ContractId, ContractState, Genesis,
-    InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, Transition, TransitionBundle,
-    Validator, Validity,
+    InmemConsignment, Node, NodeId, NodeOutpoint, Schema, SchemaId, SealEndpoint, Transition,
+    TransitionBundle, Validator, Validity,
 };
 use rgb_rpc::OutpointSelection;
 
@@ -144,6 +144,7 @@ impl Runtime {
                 debug!("Processing state transition {}", node_id);
                 trace!("State transition: {:?}", transition);
 
+                // TODO: For owned state, use only state which is a part of state tips
                 state.add_transition(witness_txid, &transition);
                 trace!("Contract state now is {:?}", state);
 
@@ -163,6 +164,7 @@ impl Runtime {
             debug!("Processing state extension {}", node_id);
             trace!("State transition: {:?}", extension);
 
+            // TODO: For owned state, use only state which is a part of state tips
             state.add_extension(&extension);
             trace!("Contract state now is {:?}", state);
 
@@ -203,14 +205,15 @@ impl Runtime {
         };
 
         let mut collector = Collector::new(contract_id);
+        let mut tips: Vec<NodeOutpoint> = vec![];
         for transition_type in include {
             let node_ids = self.db.transitions_by_type(contract_id, transition_type)?;
-            collector.process(&mut self.db, node_ids, &outpoint_selection)?;
+            tips.extend(collector.process(&mut self.db, node_ids, &outpoint_selection)?);
         }
 
         collector = collector.iterate(&mut self.db)?;
 
-        collector.consignment(schema, root_schema, genesis)
+        collector.consignment(schema, root_schema, genesis, tips)
     }
 }
 
@@ -237,9 +240,10 @@ impl Collector {
         db: &mut Db,
         node_ids: impl IntoIterator<Item = NodeId>,
         outpoint_selection: &OutpointSelection,
-    ) -> Result<(), DaemonError> {
+    ) -> Result<Vec<NodeOutpoint>, DaemonError> {
         let contract_id = self.contract_id;
 
+        let mut tips: Vec<NodeOutpoint> = vec![];
         for transition_id in node_ids {
             let transition: Transition = db
                 .retrieve(Db::TRANSITIONS, transition_id)?
@@ -264,21 +268,24 @@ impl Collector {
             };
 
             let bundle_id = bundle.bundle_id();
-            for seal in transition.filter_revealed_seals() {
-                let txid = seal.txid.unwrap_or(witness_txid);
-                let outpoint = OutPoint::new(txid, seal.vout);
-                let seal_endpoint = SealEndpoint::from(seal);
-                if outpoint_selection.includes(outpoint) {
-                    self.endpoints.push((bundle_id, seal_endpoint));
-                    self.endpoint_inputs
-                        .extend(transition.parent_outputs().into_iter().map(|out| out.node_id));
+            for (output_no, (_, assignments)) in transition.owned_rights().iter().enumerate() {
+                for seal in assignments.filter_revealed_seals() {
+                    let txid = seal.txid.unwrap_or(witness_txid);
+                    let outpoint = OutPoint::new(txid, seal.vout);
+                    let seal_endpoint = SealEndpoint::from(seal);
+                    if outpoint_selection.includes(outpoint) {
+                        tips.push(NodeOutpoint::new(transition_id, output_no as u16));
+                        self.endpoints.push((bundle_id, seal_endpoint));
+                        self.endpoint_inputs
+                            .extend(transition.parent_outputs().into_iter().map(|out| out.node_id));
+                    }
                 }
             }
 
             bundle.reveal_transition(transition)?;
         }
 
-        Ok(())
+        Ok(tips)
     }
 
     pub fn iterate(mut self, db: &mut Db) -> Result<Self, DaemonError> {
@@ -299,6 +306,7 @@ impl Collector {
         schema: Schema,
         root_schema: Option<Schema>,
         genesis: Genesis,
+        tips: Vec<NodeOutpoint>,
     ) -> Result<InmemConsignment<T>, DaemonError> {
         let anchored_bundles = self
             .anchored_bundles
@@ -307,10 +315,13 @@ impl Collector {
             .try_into()
             .map_err(|_| StashError::OutsizedBundle)?;
 
+        let tips = tips.into_iter().collect();
+
         Ok(InmemConsignment::<T>::with(
             schema,
             root_schema,
             genesis,
+            tips,
             self.endpoints,
             anchored_bundles,
             empty!(),
