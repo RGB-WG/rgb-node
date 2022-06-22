@@ -29,7 +29,7 @@ impl Db {
     pub const BUNDLES: &'static str = "bundles";
     pub const GENESIS: &'static str = "genesis";
     pub const TRANSITIONS: &'static str = "transitions";
-    pub const ANCHORS: &'static str = "transitions";
+    pub const ANCHORS: &'static str = "anchors";
     pub const EXTENSIONS: &'static str = "extensions";
     pub const ATTACHMENT_CHUNKS: &'static str = "chunks";
     pub const ATTACHMENT_INDEX: &'static str = "attachments";
