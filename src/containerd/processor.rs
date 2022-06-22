@@ -144,7 +144,7 @@ impl Runtime {
                 trace!("State transition: {:?}", transition);
 
                 // TODO: For owned state, use only state which is a part of state tips
-                state.add_transition(witness_txid, &transition);
+                state.add_transition(witness_txid, transition);
                 trace!("Contract state now is {:?}", state);
 
                 trace!("Storing state transition data");
