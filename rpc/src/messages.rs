@@ -107,6 +107,20 @@ impl From<presentation::Error> for RpcMsg {
 
 impl RpcMsg {
     pub fn success() -> Self { RpcMsg::Success(None.into()) }
+    pub fn failure(code: FailureCode, message: impl ToString) -> Self {
+        RpcMsg::Failure(rpc::Failure {
+            code: rpc::FailureCode::Other(code),
+            info: message.to_string(),
+        })
+    }
+}
+
+#[derive(Clone, Debug)]
+#[derive(StrictEncode, StrictDecode)]
+pub enum ContractValidity {
+    Valid,
+    Invalid(validation::Status),
+    UnknownTxids(Vec<Txid>),
 }
 
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]

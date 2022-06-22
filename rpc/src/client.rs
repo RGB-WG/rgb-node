@@ -12,7 +12,6 @@ use std::collections::BTreeSet;
 use std::thread::sleep;
 use std::time::Duration;
 
-use colored::Colorize;
 use internet2::addr::ServiceAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
@@ -23,10 +22,9 @@ use rgb::{Contract, ContractId, ContractState};
 
 use crate::messages::HelloReq;
 use crate::{
-    BusMsg, ClientId, ContractReq, FailureCode, OptionDetails, OutpointSelection, RpcMsg, ServiceId,
+    BusMsg, ClientId, ContractReq, ContractValidity, Error, FailureCode, OutpointSelection, RpcMsg,
+    ServiceId,
 };
-
-type Error = esb::Error<ServiceId>;
 
 // We have just a single service bus (RPC), so we can use any id
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Default, Display)]
@@ -41,7 +39,7 @@ type Bus = esb::EndpointList<RpcBus>;
 
 #[repr(C)]
 pub struct Client {
-    identity: ClientId,
+    client_id: ClientId,
     user_agent: String,
     network: Chain,
     response_queue: Vec<RpcMsg>,
@@ -55,7 +53,7 @@ impl Client {
         debug!("RPC socket {}", connect);
 
         debug!("Setting up RPC client...");
-        let identity = rand::random();
+        let client_id = rand::random();
         let bus_config = esb::BusConfig::with_addr(
             connect,
             ZmqSocketType::RouterConnect,
@@ -66,7 +64,7 @@ impl Client {
                 RpcBus => bus_config
             },
             Handler {
-                identity: ServiceId::Client(identity),
+                identity: ServiceId::Client(client_id),
             },
         )?;
 
@@ -74,7 +72,7 @@ impl Client {
         sleep(Duration::from_secs_f32(0.1));
 
         Ok(Self {
-            identity,
+            client_id,
             user_agent,
             network,
             response_queue: empty!(),
@@ -82,87 +80,27 @@ impl Client {
         })
     }
 
-    pub fn identity(&self) -> ClientId { self.identity }
+    pub fn client_id(&self) -> ClientId { self.client_id }
 
-    pub fn request(&mut self, req: impl Into<RpcMsg>) -> Result<(), Error> {
+    fn request(&mut self, req: impl Into<RpcMsg>) -> Result<(), Error> {
         let req = req.into();
         debug!("Executing {}", req);
         self.esb.send_to(RpcBus, ServiceId::Rgb, BusMsg::Rpc(req))?;
         Ok(())
     }
 
-    pub fn response(&mut self) -> Result<RpcMsg, Error> {
-        if self.response_queue.is_empty() {
-            for poll in self.esb.recv_poll()? {
-                match poll.request {
-                    BusMsg::Rpc(msg) => self.response_queue.push(msg),
-                }
-            }
-        }
-        Ok(self.response_queue.pop().expect("We always have at least one element"))
-    }
-
-    pub fn report_failure(&mut self) -> Result<RpcMsg, Error> {
-        match self.response()? {
-            RpcMsg::Failure(fail) => {
-                eprintln!("{}: {}", "Request failure".bright_red(), fail.to_string().red());
-                Err(Error::ServiceError(fail.to_string()))
-            }
-            resp => Ok(resp),
-        }
-    }
-
-    pub fn report_response(&mut self) -> Result<(), Error> {
-        let resp = self.report_failure()?;
-        println!("{:#}", resp);
-        Ok(())
-    }
-
-    pub fn report_progress(&mut self) -> Result<usize, Error> {
-        let mut counter = 0;
-        let mut finished = false;
-        while !finished {
-            finished = true;
-            counter += 1;
-            match self.report_failure()? {
-                // Failure is already covered by `report_response()`
-                RpcMsg::Progress(info) => {
-                    println!("{}", info);
-                    finished = false;
-                }
-                RpcMsg::Success(OptionDetails(Some(info))) => {
-                    println!("{}{}", "Success: ".bright_green(), info);
-                }
-                RpcMsg::Success(OptionDetails(None)) => {
-                    println!("{}", "Success".bright_green());
-                }
-                RpcMsg::UnresolvedTxids(txids) => {
-                    eprintln!(
-                        "{}: some of the transactions can't be resolved",
-                        "Warning".bright_yellow()
-                    );
-                    for txid in txids {
-                        println!("{}", txid);
+    fn response(&mut self) -> Result<RpcMsg, Error> {
+        loop {
+            if let Some(resp) = self.response_queue.pop() {
+                return Ok(resp);
+            } else {
+                for poll in self.esb.recv_poll()? {
+                    match poll.request {
+                        BusMsg::Rpc(msg) => self.response_queue.push(msg),
                     }
                 }
-                RpcMsg::Invalid(status) => {
-                    eprintln!("{}: consignment is invalid", "Error".bright_red());
-                    #[cfg(feature = "serde")]
-                    eprintln!("{}", serde_yaml::to_string(&status).unwrap());
-                    #[cfg(not(feature = "serde"))]
-                    eprintln!("{:#?}", status);
-                }
-                other => {
-                    eprintln!(
-                        "{}: {}",
-                        "Unexpected message".bright_yellow(),
-                        other.to_string().yellow()
-                    );
-                    return Err(Error::ServiceError(s!("Unexpected server response")));
-                }
             }
         }
-        Ok(counter)
     }
 }
 
@@ -178,25 +116,33 @@ impl Client {
                 code: rpc::FailureCode::Other(FailureCode::ChainMismatch),
                 ..
             }) => Ok(false),
-            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
+            resp @ RpcMsg::Failure(_) => Err(resp.failure_to_error().unwrap_err()),
+            _ => Err(Error::UnexpectedServerResponse),
+        }
+    }
+
+    pub fn register_contract(&mut self, contract: Contract) -> Result<ContractValidity, Error> {
+        self.request(RpcMsg::AddContract(contract))?;
+        match self.response()?.failure_to_error()? {
+            RpcMsg::Invalid(status) => Ok(ContractValidity::Invalid(status)),
+            RpcMsg::UnresolvedTxids(txids) => Ok(ContractValidity::UnknownTxids(txids)),
+            RpcMsg::Success(_) => Ok(ContractValidity::Valid),
             _ => Err(Error::UnexpectedServerResponse),
         }
     }
 
     pub fn list_contracts(&mut self) -> Result<BTreeSet<ContractId>, Error> {
         self.request(RpcMsg::ListContracts)?;
-        match self.response()? {
+        match self.response()?.failure_to_error()? {
             RpcMsg::ContractIds(list) => Ok(list),
-            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
             _ => Err(Error::UnexpectedServerResponse),
         }
     }
 
     pub fn contract_state(&mut self, contract_id: ContractId) -> Result<ContractState, Error> {
         self.request(RpcMsg::GetContractState(contract_id))?;
-        match self.response()? {
+        match self.response()?.failure_to_error()? {
             RpcMsg::ContractState(state) => Ok(state),
-            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
             _ => Err(Error::UnexpectedServerResponse),
         }
     }
@@ -211,9 +157,8 @@ impl Client {
             include: node_types.into_iter().collect(),
             outpoints: OutpointSelection::All,
         }))?;
-        match self.response()? {
+        match self.response()?.failure_to_error()? {
             RpcMsg::Contract(contract) => Ok(contract),
-            RpcMsg::Failure(failure) => Err(Error::ServiceError(failure.to_string())),
             _ => Err(Error::UnexpectedServerResponse),
         }
     }
@@ -223,9 +168,10 @@ pub struct Handler {
     identity: ServiceId,
 }
 
+// Not used in clients
 impl esb::Handler<RpcBus> for Handler {
     type Request = BusMsg;
-    type Error = Error;
+    type Error = esb::Error<ServiceId>;
 
     fn identity(&self) -> ServiceId { self.identity.clone() }
 

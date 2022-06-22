@@ -8,9 +8,8 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use microservices::esb;
 use microservices::shell::Exec;
-use rgb_rpc::{Client, RpcMsg, ServiceId};
+use rgb_rpc::Client;
 
 use crate::{Command, Opts};
 
@@ -31,7 +30,7 @@ impl Command {
 
 impl Exec for Opts {
     type Client = Client;
-    type Error = esb::Error<ServiceId>;
+    type Error = rgb_rpc::Error;
 
     fn exec(self, client: &mut Self::Client) -> Result<(), Self::Error> {
         if !client.hello()? {
@@ -42,8 +41,7 @@ impl Exec for Opts {
         println!("{}...", self.command.action_string());
         match self.command {
             Command::Register { contract } => {
-                client.request(RpcMsg::AddContract(contract))?;
-                client.report_progress()?;
+                client.register_contract(contract)?;
             }
             Command::Contracts => {
                 client.list_contracts()?.iter().for_each(|id| println!("{}", id));
@@ -59,7 +57,7 @@ impl Exec for Opts {
                 let contract = client.contract(contract_id, node_types)?;
                 println!("{}", contract);
             }
-        };
+        }
 
         Ok(())
     }

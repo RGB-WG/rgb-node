@@ -197,7 +197,10 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         let id = consignment.consensus_commit();
         match self.process_consignment(consignment) {
-            Err(_) => self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?,
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+            }
             Ok(status) => {
                 // We ignore client reporting if it fails
                 let msg = match status.validity() {
@@ -227,7 +230,10 @@ impl Runtime {
         outpoints: OutpointSelection,
     ) -> Result<(), DaemonError> {
         match self.compose_consignment(contract_id, include, outpoints, ContractConsignment) {
-            Err(_) => self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?,
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+            }
             Ok(consignment) => {
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::Contract(consignment));
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?

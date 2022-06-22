@@ -8,7 +8,11 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use microservices::rpc;
+use std::fmt::{self, Display, Formatter};
+
+use microservices::{esb, rpc};
+
+use crate::{RpcMsg, ServiceId};
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 pub enum FailureCode {
@@ -34,6 +38,13 @@ pub enum FailureCode {
     Launcher = 0x81,
 }
 
+impl Display for FailureCode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let val = *self as u16;
+        Display::fmt(&val, f)
+    }
+}
+
 impl From<u16> for FailureCode {
     fn from(value: u16) -> Self {
         match value {
@@ -51,3 +62,42 @@ impl From<FailureCode> for rpc::FailureCode<FailureCode> {
 }
 
 impl rpc::FailureCodeExt for FailureCode {}
+
+#[derive(Debug, Display, Error, From)]
+#[display(doc_comments)]
+pub enum Error {
+    #[display(inner)]
+    #[from]
+    Esb(esb::Error<ServiceId>),
+
+    /// (RGB#{code:06}) {message}
+    LocalFailure { code: FailureCode, message: String },
+
+    /// (EXT#{code:08}) {message}
+    RemoteFailure {
+        code: rpc::FailureCode<FailureCode>,
+        message: String,
+    },
+
+    /// unexpected server response
+    UnexpectedServerResponse,
+}
+
+impl RpcMsg {
+    pub fn failure_to_error(self) -> Result<RpcMsg, Error> {
+        match self {
+            RpcMsg::Failure(rpc::Failure {
+                code: rpc::FailureCode::Other(code),
+                info,
+            }) => Err(Error::LocalFailure {
+                code,
+                message: info,
+            }),
+            RpcMsg::Failure(failure) => Err(Error::RemoteFailure {
+                code: failure.code,
+                message: failure.info,
+            }),
+            msg => Ok(msg),
+        }
+    }
+}
