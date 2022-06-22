@@ -121,13 +121,20 @@ impl Client {
         }
     }
 
-    pub fn register_contract(&mut self, contract: Contract) -> Result<ContractValidity, Error> {
+    pub fn register_contract(
+        &mut self,
+        contract: Contract,
+        progress: impl Fn(String),
+    ) -> Result<ContractValidity, Error> {
         self.request(RpcMsg::AddContract(contract))?;
-        match self.response()?.failure_to_error()? {
-            RpcMsg::Invalid(status) => Ok(ContractValidity::Invalid(status)),
-            RpcMsg::UnresolvedTxids(txids) => Ok(ContractValidity::UnknownTxids(txids)),
-            RpcMsg::Success(_) => Ok(ContractValidity::Valid),
-            _ => Err(Error::UnexpectedServerResponse),
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Invalid(status) => return Ok(ContractValidity::Invalid(status)),
+                RpcMsg::UnresolvedTxids(txids) => return Ok(ContractValidity::UnknownTxids(txids)),
+                RpcMsg::Success(_) => return Ok(ContractValidity::Valid),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
         }
     }
 
@@ -151,15 +158,19 @@ impl Client {
         &mut self,
         contract_id: ContractId,
         node_types: Vec<TransitionType>,
+        progress: impl Fn(String),
     ) -> Result<Contract, Error> {
         self.request(RpcMsg::GetContract(ContractReq {
             contract_id,
             include: node_types.into_iter().collect(),
             outpoints: OutpointSelection::All,
         }))?;
-        match self.response()?.failure_to_error()? {
-            RpcMsg::Contract(contract) => Ok(contract),
-            _ => Err(Error::UnexpectedServerResponse),
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Contract(contract) => return Ok(contract),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
         }
     }
 }

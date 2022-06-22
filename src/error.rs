@@ -58,7 +58,7 @@ pub(crate) enum DaemonError {
     #[from]
     Store(ServerError<store_rpc::FailureCode>),
 
-    /// internal stash inconsistancy; data storage probably compromised. Details: {0}
+    #[display(inner)]
     #[from]
     #[from(lnpbp4::LeafNotKnown)]
     #[from(rgb::bundle::RevealError)]

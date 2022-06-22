@@ -26,34 +26,58 @@ use crate::{DaemonError, Db};
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub enum StashError {
-    /// contract genesis is unknown
+    /// contract is unknown. Probably you haven't yet imported the contract yet.
     GenesisAbsent,
 
-    /// schema {0} is unknown
+    /// schema {0} is unknown.
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     SchemaAbsent(SchemaId),
 
-    /// transition {0} is absent
+    /// transition {0} is absent.
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     TransitionAbsent(NodeId),
 
     /// witness Txid is not known for transition {0}
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     TransitionTxidAbsent(NodeId),
 
     /// anchor for txid {0} is absent
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     AnchorAbsent(Txid),
 
     /// bundle data for txid {0} is absent
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     BundleAbsent(Txid),
 
     /// the anchor is not related to the contract
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     #[from(lnpbp4::LeafNotKnown)]
     UnrelatedAnchor,
 
     /// bundle reveal error
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     #[from]
     #[display(inner)]
     BundleReveal(bundle::RevealError),
 
     /// the resulting bundle size exceeds consensus restrictions
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
     OutsizedBundle,
 }
 

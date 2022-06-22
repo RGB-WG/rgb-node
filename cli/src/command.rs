@@ -39,9 +39,14 @@ impl Exec for Opts {
         }
 
         println!("{}...", self.command.action_string());
+
+        let progress = |info| {
+            println!("{}", info);
+        };
+
         match self.command {
             Command::Register { contract } => {
-                client.register_contract(contract)?;
+                client.register_contract(contract, progress)?;
             }
             Command::Contracts => {
                 client.list_contracts()?.iter().for_each(|id| println!("{}", id));
@@ -54,7 +59,7 @@ impl Exec for Opts {
                 node_types,
                 contract_id,
             } => {
-                let contract = client.contract(contract_id, node_types)?;
+                let contract = client.contract(contract_id, node_types, progress)?;
                 println!("{}", contract);
             }
         }

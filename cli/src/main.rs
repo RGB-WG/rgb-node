@@ -31,8 +31,6 @@ use rgb_rpc::client::Client;
 pub use crate::opts::{Command, Opts};
 
 fn main() {
-    println!("rgb-cli: command-line tool for working with RGB node");
-
     let opts = Opts::parse();
     LogLevel::from_verbosity_flag_count(opts.verbose).apply();
     trace!("Command-line arguments: {:#?}", &opts);
