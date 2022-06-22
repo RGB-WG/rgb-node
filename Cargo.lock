@@ -567,6 +567,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "const_format"
+version = "0.2.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2906f2480cdc015e998deac388331a0f1c1cd88744948c749513020c83c370bc"
+dependencies = [
+ "const_format_proc_macros",
+]
+
+[[package]]
+name = "const_format_proc_macros"
+version = "0.2.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef196d5d972878a48da7decb7686eded338b4858fbabeed513d63a7c98b2b82d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-xid",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2269,9 +2289,10 @@ dependencies = [
 [[package]]
 name = "storm_ext"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#f4b6bfdf737dcc24f13f475dea5e9b280e0aa5dd"
+source = "git+https://github.com/Storm-WG/storm-node#b563d37a5722c632b2d3ac371c3b491e355d9fa8"
 dependencies = [
  "amplify",
+ "const_format",
  "internet2",
  "log",
  "microservices",
@@ -2282,13 +2303,12 @@ dependencies = [
  "storm-core 0.2.0 (git+https://github.com/Storm-WG/storm-core)",
  "storm_rpc",
  "strict_encoding",
- "zmq2",
 ]
 
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.1"
-source = "git+https://github.com/Storm-WG/storm-node#f4b6bfdf737dcc24f13f475dea5e9b280e0aa5dd"
+source = "git+https://github.com/Storm-WG/storm-node#b563d37a5722c632b2d3ac371c3b491e355d9fa8"
 dependencies = [
  "amplify",
  "internet2",

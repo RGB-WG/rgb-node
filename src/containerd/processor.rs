@@ -202,56 +202,108 @@ impl Runtime {
             None
         };
 
-        let mut anchored_bundles: BTreeMap<Txid, (Anchor<lnpbp4::MerkleProof>, TransitionBundle)> =
-            empty!();
-        let mut endpoints: Vec<(BundleId, SealEndpoint)> = vec![];
+        let mut collector = Collector::new(contract_id);
         for transition_type in include {
             let id = Db::index_two_pieces(contract_id, transition_type);
             let node_ids: BTreeSet<NodeId> =
                 self.db.retrieve_h(Db::CONTRACT_TRANSITIONS, id)?.unwrap_or_default();
-            for transition_id in node_ids {
-                let transition: Transition = self
-                    .db
-                    .retrieve(Db::TRANSITIONS, transition_id)?
-                    .ok_or(StashError::TransitionAbsent(transition_id))?;
-
-                let witness_txid: Txid = self
-                    .db
-                    .retrieve(Db::TRANSITION_TXID, transition_id)?
-                    .ok_or(StashError::TransitionTxidAbsent(transition_id))?;
-
-                let bundle = if let Some((_, bundle)) = anchored_bundles.get_mut(&witness_txid) {
-                    bundle
-                } else {
-                    let anchor: Anchor<lnpbp4::MerkleBlock> = self
-                        .db
-                        .retrieve_h(Db::ANCHORS, witness_txid)?
-                        .ok_or(StashError::AnchorAbsent(witness_txid))?;
-                    let mut bundle: TransitionBundle = self
-                        .db
-                        .retrieve_h(Db::BUNDLES, witness_txid)?
-                        .ok_or(StashError::BundleAbsent(witness_txid))?;
-                    let anchor = anchor.to_merkle_proof(contract_id)?;
-                    anchored_bundles.insert(witness_txid, (anchor, bundle));
-                    &mut anchored_bundles.get_mut(&witness_txid).expect("stdlib broken").1
-                };
-
-                for seal in transition.filter_revealed_seals() {
-                    let txid = seal.txid.unwrap_or(witness_txid);
-                    let outpoint = OutPoint::new(txid, seal.vout);
-                    let seal_endpoint = SealEndpoint::from(seal);
-                    if outpoint_selection.includes(outpoint) {
-                        endpoints.push((bundle.bundle_id(), seal_endpoint));
-                    }
-                }
-
-                bundle.reveal_transition(transition)?;
-            }
+            collector.process(&mut self.db, node_ids, &outpoint_selection)?;
         }
 
-        // TODO: Collect all transitions between endpoints and genesis independently from their type
+        collector = collector.iterate(&mut self.db)?;
 
-        let anchored_bundles = anchored_bundles
+        collector.consignment(schema, root_schema, genesis)
+    }
+}
+
+struct Collector {
+    pub contract_id: ContractId,
+    pub anchored_bundles: BTreeMap<Txid, (Anchor<lnpbp4::MerkleProof>, TransitionBundle)>,
+    pub endpoints: Vec<(BundleId, SealEndpoint)>,
+    pub endpoint_inputs: Vec<NodeId>,
+}
+
+impl Collector {
+    pub fn new(contract_id: ContractId) -> Self {
+        Collector {
+            contract_id,
+            anchored_bundles: empty![],
+            endpoints: vec![],
+            endpoint_inputs: vec![],
+        }
+    }
+
+    // TODO: Support state extensions
+    pub fn process(
+        &mut self,
+        db: &mut Db,
+        node_ids: impl IntoIterator<Item = NodeId>,
+        outpoint_selection: &OutpointSelection,
+    ) -> Result<(), DaemonError> {
+        let contract_id = self.contract_id;
+
+        for transition_id in node_ids {
+            let transition: Transition = db
+                .retrieve(Db::TRANSITIONS, transition_id)?
+                .ok_or(StashError::TransitionAbsent(transition_id))?;
+
+            let witness_txid: Txid = db
+                .retrieve(Db::TRANSITION_TXID, transition_id)?
+                .ok_or(StashError::TransitionTxidAbsent(transition_id))?;
+
+            let bundle = if let Some((_, bundle)) = self.anchored_bundles.get_mut(&witness_txid) {
+                bundle
+            } else {
+                let anchor: Anchor<lnpbp4::MerkleBlock> = db
+                    .retrieve_h(Db::ANCHORS, witness_txid)?
+                    .ok_or(StashError::AnchorAbsent(witness_txid))?;
+                let mut bundle: TransitionBundle = db
+                    .retrieve_h(Db::BUNDLES, witness_txid)?
+                    .ok_or(StashError::BundleAbsent(witness_txid))?;
+                let anchor = anchor.to_merkle_proof(contract_id)?;
+                self.anchored_bundles.insert(witness_txid, (anchor, bundle));
+                &mut self.anchored_bundles.get_mut(&witness_txid).expect("stdlib broken").1
+            };
+
+            let bundle_id = bundle.bundle_id();
+            for seal in transition.filter_revealed_seals() {
+                let txid = seal.txid.unwrap_or(witness_txid);
+                let outpoint = OutPoint::new(txid, seal.vout);
+                let seal_endpoint = SealEndpoint::from(seal);
+                if outpoint_selection.includes(outpoint) {
+                    self.endpoints.push((bundle_id, seal_endpoint));
+                    self.endpoint_inputs
+                        .extend(transition.parent_outputs().into_iter().map(|out| out.node_id));
+                }
+            }
+
+            bundle.reveal_transition(transition)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn iterate(mut self, db: &mut Db) -> Result<Self, DaemonError> {
+        // Collect all transitions between endpoints and genesis independently from their type
+        loop {
+            let node_ids = self.endpoint_inputs;
+            self.endpoint_inputs = vec![];
+            self.process(db, node_ids, &OutpointSelection::All)?;
+            if self.endpoint_inputs.is_empty() {
+                break;
+            }
+        }
+        Ok(self)
+    }
+
+    pub fn consignment<T: ConsignmentType>(
+        self,
+        schema: Schema,
+        root_schema: Option<Schema>,
+        genesis: Genesis,
+    ) -> Result<InmemConsignment<T>, DaemonError> {
+        let anchored_bundles = self
+            .anchored_bundles
             .into_values()
             .collect::<Vec<_>>()
             .try_into()
@@ -261,7 +313,7 @@ impl Runtime {
             schema,
             root_schema,
             genesis,
-            endpoints,
+            self.endpoints,
             anchored_bundles,
             empty!(),
         ))

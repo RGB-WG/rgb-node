@@ -51,7 +51,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
         },
         runtime,
     )
-    .map_err(|_| LaunchError::NoLnpdConnection)?;
+    .map_err(|_| LaunchError::BusSetupFailure)?;
 
     controller.run_or_panic("containerd");
 

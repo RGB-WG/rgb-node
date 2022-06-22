@@ -21,8 +21,8 @@ use crate::daemons::Daemon;
 #[derive(Clone, Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub enum LaunchError {
-    /// unable to connect LNP node message bus
-    NoLnpdConnection,
+    /// error setting up ESB controller; can't connect one of message buses
+    BusSetupFailure,
 
     /// can't connect to store service. Details: {0}
     #[from]
