@@ -8,10 +8,13 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::fs;
+
 use colored::Colorize;
 use microservices::cli::LogStyle;
 use microservices::shell::Exec;
 use rgb_rpc::{Client, ContractValidity};
+use strict_encoding::StrictEncode;
 
 use crate::{Command, Opts};
 
@@ -96,14 +99,24 @@ impl Exec for Opts {
                 node_types,
                 contract_id,
                 outpoints,
+                output,
             } => {
-                let contract = client.consign(
+                let transfer = client.consign(
                     contract_id,
                     node_types,
                     outpoints.into_iter().collect(),
                     progress,
                 )?;
-                println!("{}", contract);
+                println!("Saving consignment to {}", output.display());
+                let res = (|| -> Result<(), strict_encoding::Error> {
+                    let file = fs::File::create(output)?;
+                    transfer.strict_encode(file)?;
+                    Ok(())
+                })();
+                match res {
+                    Err(err) => eprintln!("{}: {}", "Error".err(), err),
+                    Ok(_) => println!("{}", "Success".ended()),
+                }
             }
         }
 

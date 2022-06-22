@@ -101,7 +101,8 @@ _arguments "${_arguments_options[@]}" \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
 ':contract-id -- Contract id to read source:' \
-'*::outpoints:' \
+'*::outpoints -- Bitcoin transaction UTXOs which will be spent by the transfer:' \
+':output -- Output file to save consignment prototype to:' \
 && ret=0
 ;;
 (help)

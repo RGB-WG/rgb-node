@@ -67,7 +67,7 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__consign)
-            opts="-t -h -R -n -v --node-type --help --rpc --chain --verbose <CONTRACT_ID> <OUTPOINTS>..."
+            opts="-t -h -R -n -v --node-type --help --rpc --chain --verbose <CONTRACT_ID> <OUTPOINTS>... <OUTPUT>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

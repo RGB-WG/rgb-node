@@ -19,7 +19,7 @@ use lnpbp::chain::Chain;
 use microservices::esb::{self, BusId};
 use microservices::rpc;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractId, ContractState};
+use rgb::{Contract, ContractId, ContractState, StateTransfer};
 
 use crate::messages::HelloReq;
 use crate::{
@@ -185,7 +185,7 @@ impl Client {
         node_types: Vec<TransitionType>,
         outpoints: BTreeSet<OutPoint>,
         progress: impl Fn(String),
-    ) -> Result<Contract, Error> {
+    ) -> Result<StateTransfer, Error> {
         self.request(RpcMsg::ConsignTransfer(ComposeReq {
             contract_id,
             include: node_types.into_iter().collect(),
@@ -193,7 +193,7 @@ impl Client {
         }))?;
         loop {
             match self.response()?.failure_to_error()? {
-                RpcMsg::Contract(contract) => return Ok(contract),
+                RpcMsg::StateTransfer(trasfer) => return Ok(trasfer),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }

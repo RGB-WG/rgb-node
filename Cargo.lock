@@ -1807,6 +1807,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "shellexpand",
+ "strict_encoding",
 ]
 
 [[package]]

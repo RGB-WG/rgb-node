@@ -17,6 +17,7 @@ name = "rgb-cli"
 
 [dependencies]
 amplify = "3.12.0"
+strict_encoding = "1.8.10"
 internet2 = "0.8.0-beta.1"
 microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"], git = "https://github.com/Internet2-WG/rust-microservices" }
 bitcoin = "0.28.1"
@@ -33,6 +34,7 @@ colored = "2"
 
 [build-dependencies]
 amplify = "3.12.0"
+strict_encoding = "1.8.10"
 bitcoin = "0.28.1"
 lnpbp = "0.7.0"
 clap = { version = "~3.1.18", features = ["derive", "env"] }

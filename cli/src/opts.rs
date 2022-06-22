@@ -8,6 +8,8 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::path::PathBuf;
+
 use bitcoin::OutPoint;
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
@@ -100,7 +102,11 @@ pub enum Command {
         /// Contract id to read source
         contract_id: ContractId,
 
+        /// Bitcoin transaction UTXOs which will be spent by the transfer
         #[clap(required = true)]
         outpoints: Vec<OutPoint>,
+
+        /// Output file to save consignment prototype to
+        output: PathBuf,
     },
 }
