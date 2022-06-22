@@ -8,6 +8,8 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::fmt::Debug;
+
 use amplify::Slice32;
 use bitcoin::hashes::{sha256t, Hash};
 use commit_verify::TaggedHash;
@@ -23,6 +25,7 @@ pub(crate) struct Db {
 
 impl Db {
     pub const SCHEMATA: &'static str = "schemata";
+    pub const CONTRACTS: &'static str = "contracts";
     pub const BUNDLES: &'static str = "bundles";
     pub const GENESIS: &'static str = "genesis";
     pub const TRANSITIONS: &'static str = "transitions";
@@ -37,6 +40,7 @@ impl Db {
 
         for table in [
             Db::SCHEMATA,
+            Db::CONTRACTS,
             Db::BUNDLES,
             Db::GENESIS,
             Db::TRANSITIONS,
@@ -55,13 +59,17 @@ impl Db {
     pub fn retrieve<'a, H: 'a + sha256t::Tag, T: StrictDecode>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, H> + 'a,
+        key: impl TaggedHash<'a, H> + Debug + 'a,
     ) -> Result<Option<T>, DaemonError> {
+        debug!("Read object {:?}", key);
         let slice = key.into_inner();
         let slice = slice.into_inner();
         match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
             Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
-            None => Ok(None),
+            None => {
+                warn!("Object {:?} not found", key);
+                Ok(None)
+            }
         }
     }
 
@@ -71,18 +79,23 @@ impl Db {
         key: impl Hash<Inner = [u8; 32]>,
     ) -> Result<Option<T>, DaemonError> {
         let slice = *key.as_inner();
+        debug!("Read object {}", key);
         match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
             Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
-            None => Ok(None),
+            None => {
+                warn!("Object {} not found", key);
+                Ok(None)
+            }
         }
     }
 
     pub fn store<'a, H: 'a + sha256t::Tag>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, H> + 'a,
+        key: impl TaggedHash<'a, H> + Debug + 'a,
         data: &impl StrictEncode,
     ) -> Result<(), DaemonError> {
+        debug!("Store object {:?}", key);
         let slice = key.into_inner();
         let slice = slice.into_inner();
         self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
@@ -95,6 +108,7 @@ impl Db {
         key: impl Hash<Inner = [u8; 32]>,
         data: &impl StrictEncode,
     ) -> Result<(), DaemonError> {
+        debug!("Store object {}", key);
         let slice = *key.as_inner();
         self.store.store(table.to_owned(), Slice32::from(slice), data.strict_serialize()?)?;
         Ok(())
@@ -103,10 +117,15 @@ impl Db {
     pub fn store_merge<'a, H: 'a + sha256t::Tag>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, H> + Copy + 'a,
+        key: impl TaggedHash<'a, H> + Debug + Copy + 'a,
         new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
     ) -> Result<(), DaemonError> {
-        let stored_obj = self.retrieve(table, key)?.unwrap_or_else(|| new_obj.clone());
+        debug!("Store-merging object {:?}", key);
+        // FIXME: Racing conditions are possible
+        let stored_obj = self.retrieve(table, key)?.unwrap_or_else(|| {
+            debug!("Object {:?} is not yet stored in the database", key);
+            new_obj.clone()
+        });
         let obj = new_obj
             .merge_reveal(stored_obj)
             .expect("merge-revealed objects does not match; usually it means hacked database");
@@ -119,7 +138,12 @@ impl Db {
         key: impl Hash<Inner = [u8; 32]>,
         new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
     ) -> Result<(), DaemonError> {
-        let stored_obj = self.retrieve_h(table, key)?.unwrap_or_else(|| new_obj.clone());
+        debug!("Store-merging object {}", key);
+        // FIXME: Racing conditions are possible
+        let stored_obj = self.retrieve_h(table, key)?.unwrap_or_else(|| {
+            debug!("Object {} is not yet stored in the database", key);
+            new_obj.clone()
+        });
         let obj = new_obj
             .merge_reveal(stored_obj)
             .expect("merge-revealed objects does not match; usually it means hacked database");

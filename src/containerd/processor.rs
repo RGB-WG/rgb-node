@@ -19,40 +19,60 @@ impl Runtime {
         consignment: InmemConsignment<C>,
     ) -> Result<validation::Status, DaemonError> {
         let contract_id = consignment.contract_id();
+        let id = consignment.id();
 
-        info!("Registering consignment for contract {}", contract_id);
+        info!("Registering consignment {} for contract {}", id, contract_id);
 
+        debug!("Validating consignment {} for contract {}", id, contract_id);
         let status = Validator::validate(&consignment, &self.electrum);
+        info!("Consignment validation result is {}", status.validity());
         if status.validity() != Validity::Valid {
             // We skip import only for invalid information
+            debug!("Validation status report: {:?}", status);
             return Ok(status);
         }
 
+        info!("Storing consignment {} into database", id);
+        trace!("Schema: {:?}", schema);
         self.db.store(Db::SCHEMATA, consignment.schema.schema_id(), &consignment.schema)?;
         if let Some(root_schema) = &consignment.root_schema {
+            trace!("Root schema: {:?}", root_schema);
             self.db.store(Db::SCHEMATA, root_schema.schema_id(), root_schema)?;
         }
 
+        trace!("Genesis: {:?}", consignment.genesis);
         self.db.store_merge(Db::GENESIS, contract_id, consignment.genesis)?;
 
         for (anchor, bundle) in consignment.anchored_bundles {
             let bundle_id = bundle.bundle_id();
+            debug!("Processing anchored bundle {} for txid {}", bundle_id, anchor.txid);
+            trace!("Anchor: {:?}", anchor);
+            trace!("Bundle: {:?}", bundle);
             let anchor = anchor
                 .into_merkle_block(contract_id, bundle_id.into())
                 .expect("broken anchor data");
+            debug!("Restored anchor id is {}", anchor.anchor_id());
+            trace!("Restored anchor: {:?}", anchor);
             self.db.store_merge_h(Db::ANCHORS, anchor.txid, anchor)?;
             let mut data =
                 bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect::<Vec<_>>();
             for (transition, inputs) in bundle.into_revealed_iter() {
-                data.push((transition.node_id(), inputs.clone()));
-                self.db.store_merge(Db::TRANSITIONS, transition.node_id(), transition)?;
+                let node_id = transition.node_id();
+                debug!("Processing state transition {}", node_id);
+                trace!("State transition: {:?}", transition);
+                data.push((node_id, inputs.clone()));
+                self.db.store_merge(Db::TRANSITIONS, node_id, transition)?;
             }
             self.db.store(Db::BUNDLES, bundle_id, &data)?;
         }
         for extension in consignment.state_extensions {
-            self.db.store_merge(Db::EXTENSIONS, extension.node_id(), extension)?;
+            let node_id = extension.node_id();
+            debug!("Processing state extension {}", node_id);
+            trace!("State transition: {:?}", extension);
+            self.db.store_merge(Db::EXTENSIONS, node_id, extension)?;
         }
 
+        info!("Consignment processing complete for {}", id);
         Ok(status)
     }
 }
