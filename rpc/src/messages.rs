@@ -133,6 +133,15 @@ pub enum OutpointSelection {
     Spending(BTreeSet<OutPoint>),
 }
 
+impl OutpointSelection {
+    pub fn includes(&self, outpoint: OutPoint) -> bool {
+        match self {
+            OutpointSelection::All => true,
+            OutpointSelection::Spending(set) => set.contains(&outpoint),
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
 #[display("accept(force: {force}, ...)")]

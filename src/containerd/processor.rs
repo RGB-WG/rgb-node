@@ -10,13 +10,13 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use bitcoin::Txid;
+use bitcoin::{OutPoint, Txid};
 use commit_verify::lnpbp4;
 use rgb::schema::TransitionType;
 use rgb::{
-    bundle, validation, Anchor, ConsignmentType, ContractId, ContractState, Genesis,
-    InmemConsignment, Node, NodeId, Schema, SchemaId, Transition, TransitionBundle, Validator,
-    Validity,
+    bundle, validation, Anchor, BundleId, ConsignmentType, ContractId, ContractState, Genesis,
+    InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, Transition, TransitionBundle,
+    Validator, Validity,
 };
 use rgb_rpc::OutpointSelection;
 
@@ -181,7 +181,7 @@ impl Runtime {
         &mut self,
         contract_id: ContractId,
         include: BTreeSet<TransitionType>,
-        outpoints: OutpointSelection,
+        outpoint_selection: OutpointSelection,
         _phantom: T,
     ) -> Result<InmemConsignment<T>, DaemonError> {
         let genesis: Genesis =
@@ -204,6 +204,7 @@ impl Runtime {
 
         let mut anchored_bundles: BTreeMap<Txid, (Anchor<lnpbp4::MerkleProof>, TransitionBundle)> =
             empty!();
+        let mut endpoints: Vec<(BundleId, SealEndpoint)> = vec![];
         for transition_type in include {
             let id = Db::index_two_pieces(contract_id, transition_type);
             let node_ids: BTreeSet<NodeId> =
@@ -213,13 +214,14 @@ impl Runtime {
                     .db
                     .retrieve(Db::TRANSITIONS, transition_id)?
                     .ok_or(StashError::TransitionAbsent(transition_id))?;
+
                 let witness_txid: Txid = self
                     .db
                     .retrieve(Db::TRANSITION_TXID, transition_id)?
                     .ok_or(StashError::TransitionTxidAbsent(transition_id))?;
 
-                if let Some((_, bundle)) = anchored_bundles.get_mut(&witness_txid) {
-                    bundle.reveal_transition(transition)?;
+                let bundle = if let Some((_, bundle)) = anchored_bundles.get_mut(&witness_txid) {
+                    bundle
                 } else {
                     let anchor: Anchor<lnpbp4::MerkleBlock> = self
                         .db
@@ -229,17 +231,25 @@ impl Runtime {
                         .db
                         .retrieve_h(Db::BUNDLES, witness_txid)?
                         .ok_or(StashError::BundleAbsent(witness_txid))?;
-                    bundle.reveal_transition(transition)?;
                     let anchor = anchor.to_merkle_proof(contract_id)?;
                     anchored_bundles.insert(witness_txid, (anchor, bundle));
+                    &mut anchored_bundles.get_mut(&witness_txid).expect("stdlib broken").1
+                };
+
+                for seal in transition.filter_revealed_seals() {
+                    let txid = seal.txid.unwrap_or(witness_txid);
+                    let outpoint = OutPoint::new(txid, seal.vout);
+                    let seal_endpoint = SealEndpoint::from(seal);
+                    if outpoint_selection.includes(outpoint) {
+                        endpoints.push((bundle.bundle_id(), seal_endpoint));
+                    }
                 }
+
+                bundle.reveal_transition(transition)?;
             }
         }
 
         // TODO: Collect all transitions between endpoints and genesis independently from their type
-
-        // TODO: Reconstruct list of outpoints
-        let endpoints = empty!();
 
         let anchored_bundles = anchored_bundles
             .into_values()
