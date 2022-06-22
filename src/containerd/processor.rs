@@ -15,10 +15,10 @@ use commit_verify::lnpbp4;
 use rgb::schema::TransitionType;
 use rgb::{
     bundle, validation, Anchor, BundleId, Consignment, ConsignmentType, ContractId, ContractState,
-    Genesis, InmemConsignment, Node, NodeId, NodeOutpoint, Schema, SchemaId, SealEndpoint,
-    Transition, TransitionBundle, Validator, Validity,
+    Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, Transition,
+    TransitionBundle, Validator, Validity,
 };
-use rgb_rpc::OutpointSelection;
+use rgb_rpc::OutpointFilter;
 
 use super::Runtime;
 use crate::{DaemonError, Db};
@@ -181,8 +181,8 @@ impl Runtime {
     pub(super) fn compose_consignment<T: ConsignmentType>(
         &mut self,
         contract_id: ContractId,
-        include: BTreeSet<TransitionType>,
-        outpoint_selection: OutpointSelection,
+        always_include: BTreeSet<TransitionType>,
+        outpoint_filter: OutpointFilter,
         _phantom: T,
     ) -> Result<InmemConsignment<T>, DaemonError> {
         let genesis: Genesis =
@@ -204,9 +204,15 @@ impl Runtime {
         };
 
         let mut collector = Collector::new(contract_id);
-        for transition_type in include {
-            let node_ids = self.db.transitions_by_type(contract_id, transition_type)?;
-            collector.process(&mut self.db, node_ids, &outpoint_selection)?;
+        let outpoints_all = OutpointFilter::All;
+        for transition_type in schema.transitions.keys() {
+            let node_ids = self.db.transitions_by_type(contract_id, *transition_type)?;
+            let filter = if always_include.contains(transition_type) {
+                &outpoints_all
+            } else {
+                &outpoint_filter
+            };
+            collector.process(&mut self.db, node_ids, filter)?;
         }
 
         collector = collector.iterate(&mut self.db)?;
@@ -237,7 +243,7 @@ impl Collector {
         &mut self,
         db: &mut Db,
         node_ids: impl IntoIterator<Item = NodeId>,
-        outpoint_selection: &OutpointSelection,
+        outpoint_filter: &OutpointFilter,
     ) -> Result<(), DaemonError> {
         let contract_id = self.contract_id;
 
@@ -270,7 +276,7 @@ impl Collector {
                     let txid = seal.txid.unwrap_or(witness_txid);
                     let outpoint = OutPoint::new(txid, seal.vout);
                     let seal_endpoint = SealEndpoint::from(seal);
-                    if outpoint_selection.includes(outpoint) {
+                    if outpoint_filter.includes(outpoint) {
                         self.endpoints.push((bundle_id, seal_endpoint));
                         self.endpoint_inputs
                             .extend(transition.parent_outputs().into_iter().map(|out| out.node_id));
@@ -289,7 +295,7 @@ impl Collector {
         loop {
             let node_ids = self.endpoint_inputs;
             self.endpoint_inputs = vec![];
-            self.process(db, node_ids, &OutpointSelection::All)?;
+            self.process(db, node_ids, &OutpointFilter::All)?;
             if self.endpoint_inputs.is_empty() {
                 break;
             }

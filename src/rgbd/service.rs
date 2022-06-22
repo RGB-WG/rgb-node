@@ -21,7 +21,7 @@ use microservices::node::TryService;
 use microservices::{esb, rpc};
 use rgb::schema::TransitionType;
 use rgb::{Contract, ContractConsignment, ContractId, StateTransfer, TransferConsignment};
-use rgb_rpc::{AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointSelection, RpcMsg};
+use rgb_rpc::{AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
@@ -332,7 +332,7 @@ impl Runtime {
         client_id: ClientId,
         contract_id: ContractId,
         include: BTreeSet<TransitionType>,
-        outpoints: OutpointSelection,
+        outpoints: OutpointFilter,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ConsignContract(ConsignReq {
             client_id,
@@ -350,7 +350,7 @@ impl Runtime {
         client_id: ClientId,
         contract_id: ContractId,
         include: BTreeSet<TransitionType>,
-        outpoints: OutpointSelection,
+        outpoints: OutpointFilter,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ConsignTranfer(ConsignReq {
             client_id,

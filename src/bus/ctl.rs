@@ -15,7 +15,7 @@ use rgb::{
     validation, ConsignmentId, ConsignmentType, ContractConsignment, ContractId, InmemConsignment,
     TransferConsignment,
 };
-use rgb_rpc::{ClientId, OutpointSelection};
+use rgb_rpc::{ClientId, OutpointFilter};
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]
@@ -62,7 +62,7 @@ pub struct ConsignReq<T: ConsignmentType> {
     pub client_id: ClientId,
     pub contract_id: ContractId,
     pub include: BTreeSet<TransitionType>,
-    pub outpoints: OutpointSelection,
+    pub outpoints: OutpointFilter,
     #[strict_encoding(skip)]
     pub _phantom: T,
 }

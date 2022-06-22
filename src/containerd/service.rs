@@ -25,7 +25,7 @@ use rgb::{
     ConsignmentType, ContractConsignment, ContractId, InmemConsignment, TransferConsignment,
     Validity,
 };
-use rgb_rpc::{ClientId, OutpointSelection, RpcMsg};
+use rgb_rpc::{ClientId, OutpointFilter, RpcMsg};
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
@@ -246,7 +246,7 @@ impl Runtime {
         client_id: ClientId,
         contract_id: ContractId,
         include: BTreeSet<TransitionType>,
-        outpoints: OutpointSelection,
+        outpoints: OutpointFilter,
     ) -> Result<(), DaemonError> {
         match self.compose_consignment(contract_id, include, outpoints, ContractConsignment) {
             Err(err) => {
@@ -267,7 +267,7 @@ impl Runtime {
         client_id: ClientId,
         contract_id: ContractId,
         include: BTreeSet<TransitionType>,
-        outpoints: OutpointSelection,
+        outpoints: OutpointFilter,
     ) -> Result<(), DaemonError> {
         match self.compose_consignment(contract_id, include, outpoints, TransferConsignment) {
             Err(err) => {

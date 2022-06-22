@@ -23,8 +23,8 @@ use rgb::{Contract, ContractId, ContractState, StateTransfer};
 
 use crate::messages::HelloReq;
 use crate::{
-    AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode,
-    OutpointSelection, RpcMsg, ServiceId,
+    AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter,
+    RpcMsg, ServiceId,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -168,7 +168,7 @@ impl Client {
         self.request(RpcMsg::ConsignContract(ComposeReq {
             contract_id,
             include: node_types.into_iter().collect(),
-            outpoints: OutpointSelection::All,
+            outpoints: OutpointFilter::All,
         }))?;
         loop {
             match self.response()?.failure_to_error()? {
@@ -189,7 +189,7 @@ impl Client {
         self.request(RpcMsg::ConsignTransfer(ComposeReq {
             contract_id,
             include: node_types.into_iter().collect(),
-            outpoints: OutpointSelection::Spending(outpoints),
+            outpoints: OutpointFilter::Only(outpoints),
         }))?;
         loop {
             match self.response()?.failure_to_error()? {

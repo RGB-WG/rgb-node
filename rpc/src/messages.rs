@@ -129,16 +129,16 @@ pub enum ContractValidity {
 
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 #[derive(StrictEncode, StrictDecode)]
-pub enum OutpointSelection {
+pub enum OutpointFilter {
     All,
-    Spending(BTreeSet<OutPoint>),
+    Only(BTreeSet<OutPoint>),
 }
 
-impl OutpointSelection {
+impl OutpointFilter {
     pub fn includes(&self, outpoint: OutPoint) -> bool {
         match self {
-            OutpointSelection::All => true,
-            OutpointSelection::Spending(set) => set.contains(&outpoint),
+            OutpointFilter::All => true,
+            OutpointFilter::Only(set) => set.contains(&outpoint),
         }
     }
 }
@@ -165,7 +165,7 @@ pub struct HelloReq {
 pub struct ComposeReq {
     pub contract_id: ContractId,
     pub include: BTreeSet<TransitionType>,
-    pub outpoints: OutpointSelection,
+    pub outpoints: OutpointFilter,
 }
 
 #[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]
