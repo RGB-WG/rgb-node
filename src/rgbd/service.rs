@@ -13,12 +13,14 @@ use std::collections::{BTreeSet, VecDeque};
 use internet2::ZmqSocketType;
 use microservices::cli::LogStyle;
 use microservices::error::BootstrapError;
-use microservices::esb;
 use microservices::esb::EndpointList;
 use microservices::node::TryService;
-use rgb::{Contract, StateTransfer};
-use rgb_rpc::{ClientId, RpcMsg};
+use microservices::{esb, rpc};
+use rgb::{Contract, ContractId, StateTransfer};
+use rgb_rpc::{ClientId, FailureCode, HelloReq, RpcMsg};
+use storm::Chunk;
 use storm_ext::ExtMsg as StormMsg;
+use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::bus::{
     BusMsg, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
@@ -152,6 +154,18 @@ impl Runtime {
         message: RpcMsg,
     ) -> Result<(), DaemonError> {
         match message {
+            RpcMsg::Hello(hello) => {
+                self.process_hello(endpoints, hello, client_id)?;
+            }
+            RpcMsg::ListContracts => {
+                self.list_contracts(endpoints, client_id)?;
+            }
+            RpcMsg::GetContract(contract_id) => {
+                self.get_contract(endpoints, contract_id, client_id)?;
+            }
+            RpcMsg::GetContractState(contract_id) => {
+                self.get_contract_state(endpoints, contract_id, client_id)?;
+            }
             RpcMsg::AddContract(contract) => {
                 self.process_contract(endpoints, contract, client_id)?;
             }
@@ -269,6 +283,76 @@ impl Runtime {
         );
 
         // TODO: Store daemon handlers
+        Ok(())
+    }
+
+    fn process_hello(
+        &mut self,
+        endpoints: &mut Endpoints,
+        hello: HelloReq,
+        client_id: ClientId,
+    ) -> Result<(), DaemonError> {
+        let msg = match self.config.chain == hello.network {
+            true => RpcMsg::success(),
+            false => rpc::Failure {
+                code: rpc::FailureCode::Other(FailureCode::ChainMismatch),
+                info: s!("wrong network"),
+            }
+            .into(),
+        };
+        let _ = self.send_rpc(endpoints, client_id, msg);
+        Ok(())
+    }
+
+    fn list_contracts(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+    ) -> Result<(), DaemonError> {
+        let msg = match self.db.store.retrieve(Db::CONTRACT_IDS.to_owned(), default!())? {
+            Some(chunk) => {
+                let ids = BTreeSet::<ContractId>::strict_decode(chunk.as_ref())?;
+                RpcMsg::ContractIds(ids)
+            }
+            None => RpcMsg::ContractIds(empty!()),
+        };
+        let _ = self.send_rpc(endpoints, client_id, msg);
+        Ok(())
+    }
+
+    fn get_contract(
+        &mut self,
+        endpoints: &mut Endpoints,
+        contract_id: ContractId,
+        client_id: ClientId,
+    ) -> Result<(), DaemonError> {
+        let msg = match self.db.retrieve(Db::CONTRACT, contract_id)? {
+            Some(contract) => RpcMsg::Contract(contract),
+            None => rpc::Failure {
+                code: rpc::FailureCode::Other(FailureCode::Absent),
+                info: s!("unknown contract"),
+            }
+            .into(),
+        };
+        let _ = self.send_rpc(endpoints, client_id, msg);
+        Ok(())
+    }
+
+    fn get_contract_state(
+        &mut self,
+        endpoints: &mut Endpoints,
+        contract_id: ContractId,
+        client_id: ClientId,
+    ) -> Result<(), DaemonError> {
+        let msg = match self.db.retrieve(Db::STATE, contract_id)? {
+            Some(state) => RpcMsg::ContractState(state),
+            None => rpc::Failure {
+                code: rpc::FailureCode::Other(FailureCode::Absent),
+                info: s!("unknown contract"),
+            }
+            .into(),
+        };
+        let _ = self.send_rpc(endpoints, client_id, msg);
         Ok(())
     }
 

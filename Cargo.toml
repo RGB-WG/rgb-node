@@ -37,6 +37,7 @@ microservices = { version = "0.8.0-rc.6", default-features = false, features = [
 lnpbp = "0.7.0"
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
+storm-core = "0.2"
 storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
 store_rpc = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-stored" }
 bitcoin = "0.28.1"

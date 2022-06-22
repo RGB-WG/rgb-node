@@ -1856,6 +1856,7 @@ dependencies = [
  "rgb_rpc",
  "shellexpand",
  "store_rpc",
+ "storm-core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "storm_ext",
  "strict_encoding",
 ]
@@ -2251,6 +2252,21 @@ dependencies = [
 [[package]]
 name = "storm-core"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35ed7edb33f014d9335ad189f44f0c29bb0e15bfaa56562eda8fd574d4eb0a4d"
+dependencies = [
+ "amplify",
+ "bitcoin_hashes",
+ "commit_verify",
+ "internet2",
+ "once_cell",
+ "stens 0.3.2",
+ "strict_encoding",
+]
+
+[[package]]
+name = "storm-core"
+version = "0.2.0"
 source = "git+https://github.com/Storm-WG/storm-core#88c993ac9e9dc3cb97867b7892e9bfe627f8b69c"
 dependencies = [
  "amplify",
@@ -2275,7 +2291,7 @@ dependencies = [
  "serde 1.0.137",
  "serde_with",
  "serde_yaml",
- "storm-core 0.2.0",
+ "storm-core 0.2.0 (git+https://github.com/Storm-WG/storm-core)",
  "storm_rpc",
  "strict_encoding",
  "zmq2",

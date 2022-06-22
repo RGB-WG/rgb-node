@@ -20,7 +20,7 @@ impl Command {
             Command::Register { contract } => {
                 format!("Registering contract {}", contract.contract_id())
             }
-            Command::Contracts => s!("Listring contracts"),
+            Command::Contracts => s!("Listing contracts"),
             Command::State { contract_id } => format!("Quering state of {}", contract_id),
             Command::Contract { contract_id } => {
                 format!("Retrieving contract source for {}", contract_id)
@@ -34,6 +34,11 @@ impl Exec for Opts {
     type Error = esb::Error<ServiceId>;
 
     fn exec(self, client: &mut Self::Client) -> Result<(), Self::Error> {
+        if !client.hello()? {
+            eprintln!("Network mismatch");
+            return Ok(());
+        }
+
         println!("{}...", self.command.action_string());
         match self.command {
             Command::Register { contract } => {

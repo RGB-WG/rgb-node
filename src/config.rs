@@ -44,6 +44,9 @@ pub struct Config {
     /// URL for the electrum server connection
     pub electrum_url: String,
 
+    /// Chain used by the node.
+    pub chain: Chain,
+
     /// Indicates whether deamons should be spawned as threads (true) or as child processes (false)
     pub threaded: bool,
 }
@@ -76,6 +79,7 @@ impl From<Opts> for Config {
             storm_endpoint: STORM_NODE_EXT_ENDPOINT.parse().expect("error in constant value"),
             store_endpoint: opts.store_endpoint,
             electrum_url,
+            chain: opts.chain,
             threaded: true,
         }
     }

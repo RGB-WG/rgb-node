@@ -28,6 +28,8 @@ pub enum FailureCode {
     Launcher = 0x05,
 
     UnexpectedRequest = 0x06,
+
+    Absent = 0x07,
 }
 
 impl From<u16> for FailureCode {
