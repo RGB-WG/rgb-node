@@ -20,8 +20,8 @@ use microservices::esb::EndpointList;
 use microservices::node::TryService;
 use microservices::{esb, rpc};
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractConsignment, ContractId, StateTransfer};
-use rgb_rpc::{AcceptReq, ClientId, ContractReq, FailureCode, HelloReq, OutpointSelection, RpcMsg};
+use rgb::{Contract, ContractConsignment, ContractId, StateTransfer, TransferConsignment};
+use rgb_rpc::{AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointSelection, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
@@ -166,12 +166,19 @@ impl Runtime {
             RpcMsg::ListContracts => {
                 self.list_contracts(endpoints, client_id)?;
             }
-            RpcMsg::GetContract(ContractReq {
+            RpcMsg::ConsignContract(ComposeReq {
                 contract_id,
                 include,
                 outpoints,
             }) => {
-                self.get_contract(endpoints, client_id, contract_id, include, outpoints)?;
+                self.consign_contract(endpoints, client_id, contract_id, include, outpoints)?;
+            }
+            RpcMsg::ConsignTransfer(ComposeReq {
+                contract_id,
+                include,
+                outpoints,
+            }) => {
+                self.consign_transfer(endpoints, client_id, contract_id, include, outpoints)?;
             }
             RpcMsg::GetContractState(contract_id) => {
                 self.get_contract_state(endpoints, client_id, contract_id)?;
@@ -320,7 +327,7 @@ impl Runtime {
         Ok(())
     }
 
-    fn get_contract(
+    fn consign_contract(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
@@ -334,6 +341,24 @@ impl Runtime {
             include,
             outpoints,
             _phantom: ContractConsignment,
+        }));
+        self.pick_or_start(endpoints, client_id)
+    }
+
+    fn consign_transfer(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        contract_id: ContractId,
+        include: BTreeSet<TransitionType>,
+        outpoints: OutpointSelection,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::ConsignTranfer(ConsignReq {
+            client_id,
+            contract_id,
+            include,
+            outpoints,
+            _phantom: TransferConsignment,
         }));
         self.pick_or_start(endpoints, client_id)
     }

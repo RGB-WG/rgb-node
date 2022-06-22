@@ -8,6 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use bitcoin::OutPoint;
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
 use rgb::schema::TransitionType;
@@ -81,12 +82,25 @@ pub enum Command {
     },
 
     /// Request contract source
-    #[display("contract {contract_id}")]
+    #[display("contract {contract_id} ...")]
     Contract {
         #[clap(short = 't', long = "node-type")]
         node_types: Vec<TransitionType>,
 
         /// Contract id to read source
         contract_id: ContractId,
+    },
+
+    /// Request contract source
+    #[display("consign {contract_id} ...")]
+    Consign {
+        #[clap(short = 't', long = "node-type")]
+        node_types: Vec<TransitionType>,
+
+        /// Contract id to read source
+        contract_id: ContractId,
+
+        #[clap(required = true)]
+        outpoints: Vec<OutPoint>,
     },
 }

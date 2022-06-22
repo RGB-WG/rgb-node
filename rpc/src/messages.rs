@@ -46,14 +46,8 @@ pub enum RpcMsg {
 
     // Contract operations
     // -------------------
-    #[display(inner)]
-    AcceptContract(AcceptReq<ContractConsignment>),
-
     #[display("list_contracts")]
     ListContracts,
-
-    #[display("get_contract({0})")]
-    GetContract(ContractReq),
 
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),
@@ -62,7 +56,14 @@ pub enum RpcMsg {
     // ----------------
     BlindUtxo,
 
-    ConsignTransfer,
+    #[display("consign_contract({0})")]
+    ConsignContract(ComposeReq),
+
+    #[display("consign_transfer({0})")]
+    ConsignTransfer(ComposeReq),
+
+    #[display(inner)]
+    AcceptContract(AcceptReq<ContractConsignment>),
 
     #[display("accept_transfer(...)")]
     AcceptTransfer(AcceptReq<TransferConsignment>),
@@ -160,8 +161,8 @@ pub struct HelloReq {
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
-#[display("get_contract({contract_id}, ...)")]
-pub struct ContractReq {
+#[display("{contract_id}, ...")]
+pub struct ComposeReq {
     pub contract_id: ContractId,
     pub include: BTreeSet<TransitionType>,
     pub outpoints: OutpointSelection,

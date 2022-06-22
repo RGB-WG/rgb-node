@@ -12,6 +12,9 @@ _rgb-cli() {
             "$1")
                 cmd="rgb__cli"
                 ;;
+            consign)
+                cmd+="__consign"
+                ;;
             contract)
                 cmd+="__contract"
                 ;;
@@ -34,12 +37,50 @@ _rgb-cli() {
 
     case "${cmd}" in
         rgb__cli)
-            opts="-h -V -R -n -v --help --version --rpc --chain --verbose register contracts state contract help"
+            opts="-h -V -R -n -v --help --version --rpc --chain --verbose register contracts state contract consign help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
+                --rpc)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -R)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --chain)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -n)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        rgb__cli__consign)
+            opts="-t -h -R -n -v --node-type --help --rpc --chain --verbose <CONTRACT_ID> <OUTPOINTS>..."
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --node-type)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -t)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 --rpc)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0

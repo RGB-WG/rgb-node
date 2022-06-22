@@ -21,7 +21,10 @@ use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
 use rgb::schema::TransitionType;
-use rgb::{ConsignmentType, ContractConsignment, ContractId, InmemConsignment, Validity};
+use rgb::{
+    ConsignmentType, ContractConsignment, ContractId, InmemConsignment, TransferConsignment,
+    Validity,
+};
 use rgb_rpc::{ClientId, OutpointSelection, RpcMsg};
 
 use crate::bus::{
@@ -138,8 +141,6 @@ impl Runtime {
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
             }
         }
-
-        Ok(())
     }
 
     fn handle_ctl(
@@ -172,6 +173,21 @@ impl Runtime {
                 _phantom,
             }) => {
                 self.handle_consign_contract(
+                    endpoints,
+                    client_id,
+                    contract_id,
+                    include,
+                    outpoints,
+                )?;
+            }
+            CtlMsg::ConsignTranfer(ConsignReq {
+                client_id,
+                contract_id,
+                include,
+                outpoints,
+                _phantom,
+            }) => {
+                self.handle_consign_transfer(
                     endpoints,
                     client_id,
                     contract_id,
@@ -239,6 +255,27 @@ impl Runtime {
             }
             Ok(consignment) => {
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::Contract(consignment));
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_consign_transfer(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        contract_id: ContractId,
+        include: BTreeSet<TransitionType>,
+        outpoints: OutpointSelection,
+    ) -> Result<(), DaemonError> {
+        match self.compose_consignment(contract_id, include, outpoints, TransferConsignment) {
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+            }
+            Ok(consignment) => {
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(consignment));
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
             }
         }

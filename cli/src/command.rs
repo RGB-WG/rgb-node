@@ -26,6 +26,9 @@ impl Command {
             Command::Contract { contract_id, .. } => {
                 format!("Retrieving contract source for {}", contract_id)
             }
+            Command::Consign { contract_id, .. } => {
+                format!("Composing consignment for state transfer for contract {}", contract_id)
+            }
         }
     }
 }
@@ -87,6 +90,19 @@ impl Exec for Opts {
                 contract_id,
             } => {
                 let contract = client.contract(contract_id, node_types, progress)?;
+                println!("{}", contract);
+            }
+            Command::Consign {
+                node_types,
+                contract_id,
+                outpoints,
+            } => {
+                let contract = client.consign(
+                    contract_id,
+                    node_types,
+                    outpoints.into_iter().collect(),
+                    progress,
+                )?;
                 println!("{}", contract);
             }
         }

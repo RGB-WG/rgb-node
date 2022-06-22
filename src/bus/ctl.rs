@@ -35,7 +35,7 @@ pub enum CtlMsg {
     ConsignContract(ConsignReq<ContractConsignment>),
 
     #[display("consign_transition({0})")]
-    ConsignTransition(ConsignReq<ContractConsignment>),
+    ConsignTranfer(ConsignReq<TransferConsignment>),
 
     #[display(inner)]
     #[from]

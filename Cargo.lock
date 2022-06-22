@@ -1792,6 +1792,7 @@ name = "rgb-cli"
 version = "0.8.0-alpha.1"
 dependencies = [
  "amplify",
+ "bitcoin",
  "clap",
  "clap_complete",
  "colored",
@@ -1832,7 +1833,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-std#faddf4bbfc1d03a852d8dd78345178d53ec8e0be"
+source = "git+https://github.com/RGB-WG/rgb-std#1cb0f7599da392ed8bc694b6750ba628d0ae2c9b"
 dependencies = [
  "amplify",
  "bitcoin",

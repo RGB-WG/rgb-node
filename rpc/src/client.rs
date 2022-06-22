@@ -12,6 +12,7 @@ use std::collections::BTreeSet;
 use std::thread::sleep;
 use std::time::Duration;
 
+use bitcoin::OutPoint;
 use internet2::addr::ServiceAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
@@ -22,7 +23,7 @@ use rgb::{Contract, ContractId, ContractState};
 
 use crate::messages::HelloReq;
 use crate::{
-    AcceptReq, BusMsg, ClientId, ContractReq, ContractValidity, Error, FailureCode,
+    AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode,
     OutpointSelection, RpcMsg, ServiceId,
 };
 
@@ -164,10 +165,31 @@ impl Client {
         node_types: Vec<TransitionType>,
         progress: impl Fn(String),
     ) -> Result<Contract, Error> {
-        self.request(RpcMsg::GetContract(ContractReq {
+        self.request(RpcMsg::ConsignContract(ComposeReq {
             contract_id,
             include: node_types.into_iter().collect(),
             outpoints: OutpointSelection::All,
+        }))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Contract(contract) => return Ok(contract),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
+        }
+    }
+
+    pub fn consign(
+        &mut self,
+        contract_id: ContractId,
+        node_types: Vec<TransitionType>,
+        outpoints: BTreeSet<OutPoint>,
+        progress: impl Fn(String),
+    ) -> Result<Contract, Error> {
+        self.request(RpcMsg::ConsignTransfer(ComposeReq {
+            contract_id,
+            include: node_types.into_iter().collect(),
+            outpoints: OutpointSelection::Spending(outpoints),
         }))?;
         loop {
             match self.response()?.failure_to_error()? {

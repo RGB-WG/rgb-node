@@ -204,9 +204,7 @@ impl Runtime {
 
         let mut collector = Collector::new(contract_id);
         for transition_type in include {
-            let id = Db::index_two_pieces(contract_id, transition_type);
-            let node_ids: BTreeSet<NodeId> =
-                self.db.retrieve_h(Db::CONTRACT_TRANSITIONS, id)?.unwrap_or_default();
+            let node_ids = self.db.transitions_by_type(contract_id, transition_type)?;
             collector.process(&mut self.db, node_ids, &outpoint_selection)?;
         }
 
@@ -257,7 +255,7 @@ impl Collector {
                 let anchor: Anchor<lnpbp4::MerkleBlock> = db
                     .retrieve_h(Db::ANCHORS, witness_txid)?
                     .ok_or(StashError::AnchorAbsent(witness_txid))?;
-                let mut bundle: TransitionBundle = db
+                let bundle: TransitionBundle = db
                     .retrieve_h(Db::BUNDLES, witness_txid)?
                     .ok_or(StashError::BundleAbsent(witness_txid))?;
                 let anchor = anchor.to_merkle_proof(contract_id)?;

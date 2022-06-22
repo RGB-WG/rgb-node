@@ -75,10 +75,6 @@ pub(crate) enum ServiceBus {
     /// Storm P2P message bus
     #[display("STORM")]
     Storm,
-
-    /// BP node message bus
-    #[display("BP")]
-    Bp,
 }
 
 impl esb::BusId for ServiceBus {
