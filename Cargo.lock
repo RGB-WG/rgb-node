@@ -2221,7 +2221,7 @@ dependencies = [
 [[package]]
 name = "store_rpc"
 version = "0.8.0-beta.2"
-source = "git+https://github.com/Storm-WG/storm-stored#0c858d6a56a454ae9891da2943d132096d47657c"
+source = "git+https://github.com/Storm-WG/storm-stored#5fd8835b3a722ba76dabad298c20880d4e3e7983"
 dependencies = [
  "amplify",
  "colored",

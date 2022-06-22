@@ -10,6 +10,8 @@
 
 use std::collections::{BTreeSet, VecDeque};
 
+use amplify::Wrapper;
+use bitcoin::hashes::Hash;
 use internet2::ZmqSocketType;
 use microservices::cli::LogStyle;
 use microservices::error::BootstrapError;
@@ -307,7 +309,13 @@ impl Runtime {
         endpoints: &mut Endpoints,
         client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        todo!()
+        let ids = self.db.store.ids(Db::CONTRACTS.to_owned())?;
+        let ids = ids
+            .into_iter()
+            .map(|id| ContractId::from_inner(Hash::from_inner(id.into_inner())))
+            .collect();
+        let _ = self.send_rpc(endpoints, client_id, RpcMsg::ContractIds(ids));
+        Ok(())
     }
 
     fn get_contract(
