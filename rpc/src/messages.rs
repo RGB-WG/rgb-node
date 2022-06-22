@@ -17,7 +17,10 @@ use internet2::presentation;
 use lnpbp::chain::Chain;
 use microservices::rpc;
 use rgb::schema::TransitionType;
-use rgb::{validation, Contract, ContractId, ContractState, StateTransfer};
+use rgb::{
+    validation, ConsignmentType, Contract, ContractConsignment, ContractId, ContractState,
+    InmemConsignment, StateTransfer, TransferConsignment,
+};
 
 use crate::FailureCode;
 
@@ -43,8 +46,8 @@ pub enum RpcMsg {
 
     // Contract operations
     // -------------------
-    #[display("add_contract(...)")]
-    AddContract(Contract),
+    #[display(inner)]
+    AcceptContract(AcceptReq<ContractConsignment>),
 
     #[display("list_contracts")]
     ListContracts,
@@ -62,7 +65,7 @@ pub enum RpcMsg {
     ConsignTransfer,
 
     #[display("accept_transfer(...)")]
-    AcceptTransfer(StateTransfer),
+    AcceptTransfer(AcceptReq<TransferConsignment>),
 
     // Responses to CLI
     // ----------------
@@ -128,6 +131,14 @@ pub enum ContractValidity {
 pub enum OutpointSelection {
     All,
     Spending(BTreeSet<OutPoint>),
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("accept(force: {force}, ...)")]
+pub struct AcceptReq<T: ConsignmentType> {
+    pub consignment: InmemConsignment<T>,
+    pub force: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]

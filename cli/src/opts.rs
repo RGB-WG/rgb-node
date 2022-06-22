@@ -60,7 +60,14 @@ pub struct Opts {
 pub enum Command {
     /// Add new contract to the node
     #[display("register ...")]
-    Register { contract: Contract },
+    Register {
+        /// Force importing of valid contract containing non-mined transactions
+        #[clap(long)]
+        force: bool,
+
+        /// Contract source in Bech32m encoding (starting with `rgbc1...`)
+        contract: Contract,
+    },
 
     /// List all known contract ids
     #[display("contracts")]

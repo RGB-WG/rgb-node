@@ -26,7 +26,7 @@ use crate::{DaemonError, Db};
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub enum StashError {
-    /// contract is unknown. Probably you haven't yet imported the contract yet.
+    /// contract is unknown. Probably you haven't imported the contract yet.
     GenesisAbsent,
 
     /// schema {0} is unknown.
@@ -85,6 +85,7 @@ impl Runtime {
     pub(super) fn process_consignment<C: ConsignmentType>(
         &mut self,
         consignment: InmemConsignment<C>,
+        force: bool,
     ) -> Result<validation::Status, DaemonError> {
         let contract_id = consignment.contract_id();
         let id = consignment.id();
@@ -100,10 +101,16 @@ impl Runtime {
         debug!("Validating consignment {} for contract {}", id, contract_id);
         let status = Validator::validate(&consignment, &self.electrum);
         info!("Consignment validation result is {}", status.validity());
-        if status.validity() != Validity::Valid {
-            // We skip import only for invalid information
-            debug!("Validation status report: {:?}", status);
-            return Ok(status);
+
+        match status.validity() {
+            Validity::Valid => {}
+            Validity::UnresolvedTransactions if force => {
+                warn!("Forcing import of consignment with non-mined transactions");
+            }
+            _ => {
+                error!("Invalid consignment: {:?}", status);
+                return Ok(status);
+            }
         }
 
         info!("Storing consignment {} into database", id);

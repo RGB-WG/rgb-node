@@ -8,15 +8,17 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use colored::Colorize;
+use microservices::cli::LogStyle;
 use microservices::shell::Exec;
-use rgb_rpc::Client;
+use rgb_rpc::{Client, ContractValidity};
 
 use crate::{Command, Opts};
 
 impl Command {
     pub fn action_string(&self) -> String {
         match self {
-            Command::Register { contract } => {
+            Command::Register { contract, .. } => {
                 format!("Registering contract {}", contract.contract_id())
             }
             Command::Contracts => s!("Listing contracts"),
@@ -45,8 +47,33 @@ impl Exec for Opts {
         };
 
         match self.command {
-            Command::Register { contract } => {
-                client.register_contract(contract, progress)?;
+            Command::Register { contract, force } => {
+                match client.register_contract(contract, force, progress)? {
+                    ContractValidity::Valid => {
+                        println!("{}: contract is valid and imported", "Success".ended())
+                    }
+                    ContractValidity::Invalid(status) => {
+                        eprintln!("{}: contract is invalid. Detailed report:", "Error".err());
+                        eprintln!("{}", serde_yaml::to_string(&status).unwrap());
+                    }
+                    ContractValidity::UnknownTxids(txids) => {
+                        eprintln!(
+                            "{}: contract is valid, but some of underlying transactions are still \
+                             not mined",
+                            "Warning".bold().bright_yellow()
+                        );
+                        eprintln!("The list of non-mined transaction ids:");
+                        for txid in txids {
+                            println!("- {}", txid);
+                        }
+                        eprintln!(
+                            "{}: contract was not imported. To import the contract, re-run the \
+                             command with {} argument",
+                            "Warning".bold().bright_yellow(),
+                            "--force".bold().bright_white(),
+                        );
+                    }
+                }
             }
             Command::Contracts => {
                 client.list_contracts()?.iter().for_each(|id| println!("{}", id));

@@ -22,8 +22,8 @@ use rgb::{Contract, ContractId, ContractState};
 
 use crate::messages::HelloReq;
 use crate::{
-    BusMsg, ClientId, ContractReq, ContractValidity, Error, FailureCode, OutpointSelection, RpcMsg,
-    ServiceId,
+    AcceptReq, BusMsg, ClientId, ContractReq, ContractValidity, Error, FailureCode,
+    OutpointSelection, RpcMsg, ServiceId,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -124,9 +124,13 @@ impl Client {
     pub fn register_contract(
         &mut self,
         contract: Contract,
+        force: bool,
         progress: impl Fn(String),
     ) -> Result<ContractValidity, Error> {
-        self.request(RpcMsg::AddContract(contract))?;
+        self.request(RpcMsg::AcceptContract(AcceptReq {
+            consignment: contract,
+            force,
+        }))?;
         loop {
             match self.response()?.failure_to_error()? {
                 RpcMsg::Invalid(status) => return Ok(ContractValidity::Invalid(status)),

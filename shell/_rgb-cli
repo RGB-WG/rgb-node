@@ -40,11 +40,12 @@ _arguments "${_arguments_options[@]}" \
 '--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-n+[Blockchain to use]:CHAIN: ' \
 '--chain=[Blockchain to use]:CHAIN: ' \
+'--force[Force importing of valid contract containing non-mined transactions]' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
-':contract:' \
+':contract -- Contract source in Bech32m encoding (starting with `rgbc1...`):' \
 && ret=0
 ;;
 (contracts)

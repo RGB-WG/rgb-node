@@ -152,14 +152,16 @@ impl Runtime {
             CtlMsg::ProcessContract(ProcessReq {
                 client_id,
                 consignment,
+                force,
             }) => {
-                self.handle_consignment(endpoints, client_id, consignment)?;
+                self.handle_consignment(endpoints, client_id, consignment, force)?;
             }
             CtlMsg::ProcessTransfer(ProcessReq {
                 client_id,
                 consignment,
+                force,
             }) => {
-                self.handle_consignment(endpoints, client_id, consignment)?;
+                self.handle_consignment(endpoints, client_id, consignment, force)?;
             }
 
             CtlMsg::ConsignContract(ConsignReq {
@@ -194,9 +196,10 @@ impl Runtime {
         endpoints: &mut Endpoints,
         client_id: ClientId,
         consignment: InmemConsignment<C>,
+        force: bool,
     ) -> Result<(), DaemonError> {
         let id = consignment.consensus_commit();
-        match self.process_consignment(consignment) {
+        match self.process_consignment(consignment, force) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?

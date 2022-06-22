@@ -162,7 +162,7 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__register)
-            opts="-h -R -n -v --help --rpc --chain --verbose <CONTRACT>"
+            opts="-h -R -n -v --force --help --rpc --chain --verbose <CONTRACT>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

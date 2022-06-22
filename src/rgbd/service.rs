@@ -21,12 +21,13 @@ use microservices::node::TryService;
 use microservices::{esb, rpc};
 use rgb::schema::TransitionType;
 use rgb::{Contract, ContractConsignment, ContractId, StateTransfer};
-use rgb_rpc::{ClientId, ContractReq, FailureCode, HelloReq, OutpointSelection, RpcMsg};
+use rgb_rpc::{AcceptReq, ClientId, ContractReq, FailureCode, HelloReq, OutpointSelection, RpcMsg};
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
 };
+use crate::containerd::StashError;
 use crate::daemons::Daemon;
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -175,11 +176,17 @@ impl Runtime {
             RpcMsg::GetContractState(contract_id) => {
                 self.get_contract_state(endpoints, client_id, contract_id)?;
             }
-            RpcMsg::AddContract(contract) => {
-                self.process_contract(endpoints, client_id, contract)?;
+            RpcMsg::AcceptContract(AcceptReq {
+                consignment: contract,
+                force,
+            }) => {
+                self.process_contract(endpoints, client_id, contract, force)?;
             }
-            RpcMsg::AcceptTransfer(transfer) => {
-                self.process_transfer(endpoints, client_id, transfer)?;
+            RpcMsg::AcceptTransfer(AcceptReq {
+                consignment: transfer,
+                force,
+            }) => {
+                self.process_transfer(endpoints, client_id, transfer, force)?;
             }
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
@@ -339,11 +346,7 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         let msg = match self.db.retrieve(Db::CONTRACTS, contract_id)? {
             Some(state) => RpcMsg::ContractState(state),
-            None => rpc::Failure {
-                code: rpc::FailureCode::Other(FailureCode::Absent),
-                info: s!("unknown contract"),
-            }
-            .into(),
+            None => DaemonError::from(StashError::GenesisAbsent).into(),
         };
         let _ = self.send_rpc(endpoints, client_id, msg);
         Ok(())
@@ -354,10 +357,12 @@ impl Runtime {
         endpoints: &mut Endpoints,
         client_id: ClientId,
         contract: Contract,
+        force: bool,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ProcessContract(ProcessReq {
             client_id,
             consignment: contract,
+            force,
         }));
         self.pick_or_start(endpoints, client_id)
     }
@@ -367,10 +372,12 @@ impl Runtime {
         endpoints: &mut Endpoints,
         client_id: ClientId,
         transfer: StateTransfer,
+        force: bool,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ProcessTransfer(ProcessReq {
             client_id,
             consignment: transfer,
+            force,
         }));
         self.pick_or_start(endpoints, client_id)
     }

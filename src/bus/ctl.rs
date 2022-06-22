@@ -49,10 +49,11 @@ pub enum CtlMsg {
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
-#[display("{client_id}, ...")]
+#[display("{client_id}, force = {force}, ...")]
 pub struct ProcessReq<T: ConsignmentType> {
     pub client_id: ClientId,
     pub consignment: InmemConsignment<T>,
+    pub force: bool,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
