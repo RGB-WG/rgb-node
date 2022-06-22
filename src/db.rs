@@ -67,7 +67,7 @@ impl Db {
         match self.store.retrieve(table.to_owned(), Slice32::from(slice))? {
             Some(data) => Ok(Some(T::strict_decode(data.as_ref())?)),
             None => {
-                warn!("Object {:?} not found", key);
+                warn!("Object not found");
                 Ok(None)
             }
         }

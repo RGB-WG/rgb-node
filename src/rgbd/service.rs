@@ -18,9 +18,7 @@ use microservices::node::TryService;
 use microservices::{esb, rpc};
 use rgb::{Contract, ContractId, StateTransfer};
 use rgb_rpc::{ClientId, FailureCode, HelloReq, RpcMsg};
-use storm::Chunk;
 use storm_ext::ExtMsg as StormMsg;
-use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::bus::{
     BusMsg, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
@@ -309,15 +307,7 @@ impl Runtime {
         endpoints: &mut Endpoints,
         client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        let msg = match self.db.store.retrieve(Db::CONTRACT_IDS.to_owned(), default!())? {
-            Some(chunk) => {
-                let ids = BTreeSet::<ContractId>::strict_decode(chunk.as_ref())?;
-                RpcMsg::ContractIds(ids)
-            }
-            None => RpcMsg::ContractIds(empty!()),
-        };
-        let _ = self.send_rpc(endpoints, client_id, msg);
-        Ok(())
+        todo!()
     }
 
     fn get_contract(
@@ -326,16 +316,7 @@ impl Runtime {
         contract_id: ContractId,
         client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        let msg = match self.db.retrieve(Db::CONTRACT, contract_id)? {
-            Some(contract) => RpcMsg::Contract(contract),
-            None => rpc::Failure {
-                code: rpc::FailureCode::Other(FailureCode::Absent),
-                info: s!("unknown contract"),
-            }
-            .into(),
-        };
-        let _ = self.send_rpc(endpoints, client_id, msg);
-        Ok(())
+        todo!()
     }
 
     fn get_contract_state(
@@ -344,7 +325,7 @@ impl Runtime {
         contract_id: ContractId,
         client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        let msg = match self.db.retrieve(Db::STATE, contract_id)? {
+        let msg = match self.db.retrieve(Db::CONTRACTS, contract_id)? {
             Some(state) => RpcMsg::ContractState(state),
             None => rpc::Failure {
                 code: rpc::FailureCode::Other(FailureCode::Absent),

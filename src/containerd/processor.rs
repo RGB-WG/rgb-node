@@ -8,7 +8,9 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use rgb::{validation, ConsignmentType, InmemConsignment, Node, Validator, Validity};
+use rgb::{
+    validation, ConsignmentType, ContractState, InmemConsignment, Node, Validator, Validity,
+};
 
 use super::Runtime;
 use crate::{DaemonError, Db};
@@ -23,6 +25,12 @@ impl Runtime {
 
         info!("Registering consignment {} for contract {}", id, contract_id);
 
+        let mut state = self.db.retrieve(Db::CONTRACTS, contract_id)?.unwrap_or_else(|| {
+            debug!("Contract {} was previously unknown", contract_id);
+            ContractState::with(contract_id, &consignment.genesis)
+        });
+        trace!("Starting with contract state {:?}", state);
+
         debug!("Validating consignment {} for contract {}", id, contract_id);
         let status = Validator::validate(&consignment, &self.electrum);
         info!("Consignment validation result is {}", status.validity());
@@ -33,7 +41,7 @@ impl Runtime {
         }
 
         info!("Storing consignment {} into database", id);
-        trace!("Schema: {:?}", schema);
+        trace!("Schema: {:?}", consignment.schema);
         self.db.store(Db::SCHEMATA, consignment.schema.schema_id(), &consignment.schema)?;
         if let Some(root_schema) = &consignment.root_schema {
             trace!("Root schema: {:?}", root_schema);
@@ -45,7 +53,8 @@ impl Runtime {
 
         for (anchor, bundle) in consignment.anchored_bundles {
             let bundle_id = bundle.bundle_id();
-            debug!("Processing anchored bundle {} for txid {}", bundle_id, anchor.txid);
+            let witness_txid = anchor.txid;
+            debug!("Processing anchored bundle {} for txid {}", bundle_id, witness_txid);
             trace!("Anchor: {:?}", anchor);
             trace!("Bundle: {:?}", bundle);
             let anchor = anchor
@@ -60,6 +69,10 @@ impl Runtime {
                 let node_id = transition.node_id();
                 debug!("Processing state transition {}", node_id);
                 trace!("State transition: {:?}", transition);
+
+                state.add_transition(witness_txid, &transition);
+                trace!("Contract state now is {:?}", state);
+
                 data.push((node_id, inputs.clone()));
                 self.db.store_merge(Db::TRANSITIONS, node_id, transition)?;
             }
@@ -69,8 +82,16 @@ impl Runtime {
             let node_id = extension.node_id();
             debug!("Processing state extension {}", node_id);
             trace!("State transition: {:?}", extension);
+
+            state.add_extension(&extension);
+            trace!("Contract state now is {:?}", state);
+
             self.db.store_merge(Db::EXTENSIONS, node_id, extension)?;
         }
+
+        debug!("Storing contract state for {}", contract_id);
+        trace!("Final contract state is {:?}", state);
+        self.db.store(Db::CONTRACTS, contract_id, &state)?;
 
         info!("Consignment processing complete for {}", id);
         Ok(status)
