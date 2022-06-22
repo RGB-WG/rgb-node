@@ -74,6 +74,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (contract)
 _arguments "${_arguments_options[@]}" \
+'*-t+[]:NODE_TYPES: ' \
+'*--node-type=[]:NODE_TYPES: ' \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-n+[Blockchain to use]:CHAIN: ' \

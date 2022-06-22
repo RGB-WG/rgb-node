@@ -8,12 +8,14 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use commit_verify::lnpbp4;
 use internet2::presentation;
 use microservices::rpc::ServerError;
 use microservices::{esb, rpc, LauncherError};
 use rgb_rpc::{FailureCode, RpcMsg};
 
 use crate::bus::{ServiceBus, ServiceId};
+use crate::containerd::StashError;
 use crate::daemons::Daemon;
 
 #[derive(Clone, Debug, Display, Error, From)]
@@ -56,6 +58,12 @@ pub(crate) enum DaemonError {
     #[from]
     Store(ServerError<store_rpc::FailureCode>),
 
+    /// internal stash inconsistancy; data storage probably compromised. Details: {0}
+    #[from]
+    #[from(lnpbp4::LeafNotKnown)]
+    #[from(rgb::bundle::RevealError)]
+    Stash(StashError),
+
     /// request `{1}` is not supported on {0} message bus
     RequestNotSupported(ServiceBus, String),
 
@@ -79,6 +87,7 @@ impl From<DaemonError> for RpcMsg {
             }
             DaemonError::Store(_) => FailureCode::Store,
             DaemonError::ContainerLauncher(_) => FailureCode::Launcher,
+            DaemonError::Stash(_) => FailureCode::Stash,
         };
         RpcMsg::Failure(rpc::Failure {
             code: code.into(),

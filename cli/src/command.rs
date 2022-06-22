@@ -22,7 +22,7 @@ impl Command {
             }
             Command::Contracts => s!("Listing contracts"),
             Command::State { contract_id } => format!("Quering state of {}", contract_id),
-            Command::Contract { contract_id } => {
+            Command::Contract { contract_id, .. } => {
                 format!("Retrieving contract source for {}", contract_id)
             }
         }

@@ -8,17 +8,54 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
+use bitcoin::Txid;
+use commit_verify::lnpbp4;
 use rgb::schema::TransitionType;
 use rgb::{
-    validation, ConsignmentType, ContractId, ContractState, InmemConsignment, Node, Validator,
+    bundle, validation, Anchor, ConsignmentType, ContractId, ContractState, Genesis,
+    InmemConsignment, Node, NodeId, Schema, SchemaId, Transition, TransitionBundle, Validator,
     Validity,
 };
 use rgb_rpc::OutpointSelection;
 
 use super::Runtime;
 use crate::{DaemonError, Db};
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
+#[display(doc_comments)]
+pub enum StashError {
+    /// contract genesis is unknown
+    GenesisAbsent,
+
+    /// schema {0} is unknown
+    SchemaAbsent(SchemaId),
+
+    /// transition {0} is absent
+    TransitionAbsent(NodeId),
+
+    /// witness Txid is not known for transition {0}
+    TransitionTxidAbsent(NodeId),
+
+    /// anchor for txid {0} is absent
+    AnchorAbsent(Txid),
+
+    /// bundle data for txid {0} is absent
+    BundleAbsent(Txid),
+
+    /// the anchor is not related to the contract
+    #[from(lnpbp4::LeafNotKnown)]
+    UnrelatedAnchor,
+
+    /// bundle reveal error
+    #[from]
+    #[display(inner)]
+    BundleReveal(bundle::RevealError),
+
+    /// the resulting bundle size exceeds consensus restrictions
+    OutsizedBundle,
+}
 
 impl Runtime {
     pub(super) fn process_consignment<C: ConsignmentType>(
@@ -79,14 +116,16 @@ impl Runtime {
                 state.add_transition(witness_txid, &transition);
                 trace!("Contract state now is {:?}", state);
 
+                trace!("Storing state transition data");
                 data.push((node_id, inputs.clone()));
                 self.db.store_merge(Db::TRANSITIONS, node_id, transition)?;
+                self.db.store(Db::TRANSITION_TXID, node_id, &witness_txid)?;
 
                 trace!("Indexing transition");
                 let index_id = Db::index_two_pieces(contract_id, transition_type);
                 self.db.insert_into_set(Db::CONTRACT_TRANSITIONS, index_id, node_id)?;
             }
-            self.db.store(Db::BUNDLES, bundle_id, &data)?;
+            self.db.store_h(Db::BUNDLES, witness_txid, &data)?;
         }
         for extension in consignment.state_extensions {
             let node_id = extension.node_id();
@@ -114,6 +153,76 @@ impl Runtime {
         outpoints: OutpointSelection,
         _phantom: T,
     ) -> Result<InmemConsignment<T>, DaemonError> {
-        todo!()
+        let genesis: Genesis =
+            self.db.retrieve(Db::GENESIS, contract_id)?.ok_or(StashError::GenesisAbsent)?;
+        let schema_id = genesis.schema_id();
+        let schema: Schema = self
+            .db
+            .retrieve(Db::SCHEMATA, schema_id)?
+            .ok_or(StashError::SchemaAbsent(schema_id))?;
+        let root_schema_id = schema.root_id;
+        let root_schema = if root_schema_id != zero!() {
+            Some(
+                self.db
+                    .retrieve(Db::SCHEMATA, root_schema_id)?
+                    .ok_or(StashError::SchemaAbsent(root_schema_id))?,
+            )
+        } else {
+            None
+        };
+
+        let mut anchored_bundles: BTreeMap<Txid, (Anchor<lnpbp4::MerkleProof>, TransitionBundle)> =
+            empty!();
+        for transition_type in include {
+            let id = Db::index_two_pieces(contract_id, transition_type);
+            let node_ids: BTreeSet<NodeId> =
+                self.db.retrieve_h(Db::CONTRACT_TRANSITIONS, id)?.unwrap_or_default();
+            for transition_id in node_ids {
+                let transition: Transition = self
+                    .db
+                    .retrieve(Db::TRANSITIONS, transition_id)?
+                    .ok_or(StashError::TransitionAbsent(transition_id))?;
+                let witness_txid: Txid = self
+                    .db
+                    .retrieve(Db::TRANSITION_TXID, transition_id)?
+                    .ok_or(StashError::TransitionTxidAbsent(transition_id))?;
+
+                if let Some((_, bundle)) = anchored_bundles.get_mut(&witness_txid) {
+                    bundle.reveal_transition(transition)?;
+                } else {
+                    let anchor: Anchor<lnpbp4::MerkleBlock> = self
+                        .db
+                        .retrieve_h(Db::ANCHORS, witness_txid)?
+                        .ok_or(StashError::AnchorAbsent(witness_txid))?;
+                    let mut bundle: TransitionBundle = self
+                        .db
+                        .retrieve_h(Db::BUNDLES, witness_txid)?
+                        .ok_or(StashError::BundleAbsent(witness_txid))?;
+                    bundle.reveal_transition(transition)?;
+                    let anchor = anchor.to_merkle_proof(contract_id)?;
+                    anchored_bundles.insert(witness_txid, (anchor, bundle));
+                }
+            }
+        }
+
+        // TODO: Collect all transitions between endpoints and genesis independently from their type
+
+        // TODO: Reconstruct list of outpoints
+        let endpoints = empty!();
+
+        let anchored_bundles = anchored_bundles
+            .into_values()
+            .collect::<Vec<_>>()
+            .try_into()
+            .map_err(|_| StashError::OutsizedBundle)?;
+
+        Ok(InmemConsignment::<T>::with(
+            schema,
+            root_schema,
+            genesis,
+            endpoints,
+            anchored_bundles,
+            empty!(),
+        ))
     }
 }

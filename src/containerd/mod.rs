@@ -15,4 +15,5 @@ mod processor;
 
 #[cfg(feature = "server")]
 pub use opts::Opts;
+pub use processor::StashError;
 pub use service::{run, Runtime};

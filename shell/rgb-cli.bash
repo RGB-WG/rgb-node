@@ -64,12 +64,20 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__contract)
-            opts="-h -R -n -v --help --rpc --chain --verbose <CONTRACT_ID>"
+            opts="-t -h -R -n -v --node-type --help --rpc --chain --verbose <CONTRACT_ID>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
+                --node-type)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -t)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 --rpc)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0

@@ -18,18 +18,20 @@ pub enum FailureCode {
     ChainMismatch = 0x01,
 
     /// Encoding
-    Encoding = 0x02,
+    Encoding = 0x10,
 
-    Esb = 0x03,
+    Esb = 0x11,
 
-    Store = 0x04,
+    Store = 0x12,
+
+    Stash = 0x13,
+
+    Absent = 0x14,
+
+    UnexpectedRequest = 0x80,
 
     /// Daemon launcher error
-    Launcher = 0x05,
-
-    UnexpectedRequest = 0x06,
-
-    Absent = 0x07,
+    Launcher = 0x81,
 }
 
 impl From<u16> for FailureCode {
