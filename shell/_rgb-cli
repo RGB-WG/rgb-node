@@ -88,7 +88,7 @@ _arguments "${_arguments_options[@]}" \
 ':contract-id -- Contract id to read source:' \
 && ret=0
 ;;
-(consign)
+(compose)
 _arguments "${_arguments_options[@]}" \
 '*-t+[]:NODE_TYPES: ' \
 '*--node-type=[]:NODE_TYPES: ' \
@@ -103,6 +103,39 @@ _arguments "${_arguments_options[@]}" \
 ':contract-id -- Contract id to read source:' \
 '*::outpoints -- Bitcoin transaction UTXOs which will be spent by the transfer:' \
 ':output -- Output file to save consignment prototype to:' \
+&& ret=0
+;;
+(transfer)
+_arguments "${_arguments_options[@]}" \
+'-o+[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
+'--out=[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+':transition:' \
+':psbt-in:' \
+&& ret=0
+;;
+(finalize)
+_arguments "${_arguments_options[@]}" \
+'-o+[Output file to save the final consignment. If not given, the source consignment file is overwritten]:CONSIGNMENT_OUT: ' \
+'--out=[Output file to save the final consignment. If not given, the source consignment file is overwritten]:CONSIGNMENT_OUT: ' \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+':psbt -- The final PSBT (not modified):' \
+':consignment-in:' \
+'::send:' \
 && ret=0
 ;;
 (help)
@@ -128,15 +161,17 @@ _rgb-cli_commands() {
 'contracts:List all known contract ids' \
 'state:Query contract state' \
 'contract:Request contract source' \
-'consign:Request contract source' \
+'compose:Build state transfer consignment draft' \
+'transfer:Add transfer information to PSBT' \
+'finalize:Finalize and (optionally) send consignment to beneficiary' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'rgb-cli commands' commands "$@"
 }
-(( $+functions[_rgb-cli__consign_commands] )) ||
-_rgb-cli__consign_commands() {
+(( $+functions[_rgb-cli__compose_commands] )) ||
+_rgb-cli__compose_commands() {
     local commands; commands=()
-    _describe -t commands 'rgb-cli consign commands' commands "$@"
+    _describe -t commands 'rgb-cli compose commands' commands "$@"
 }
 (( $+functions[_rgb-cli__contract_commands] )) ||
 _rgb-cli__contract_commands() {
@@ -147,6 +182,11 @@ _rgb-cli__contract_commands() {
 _rgb-cli__contracts_commands() {
     local commands; commands=()
     _describe -t commands 'rgb-cli contracts commands' commands "$@"
+}
+(( $+functions[_rgb-cli__finalize_commands] )) ||
+_rgb-cli__finalize_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli finalize commands' commands "$@"
 }
 (( $+functions[_rgb-cli__help_commands] )) ||
 _rgb-cli__help_commands() {
@@ -162,6 +202,11 @@ _rgb-cli__register_commands() {
 _rgb-cli__state_commands() {
     local commands; commands=()
     _describe -t commands 'rgb-cli state commands' commands "$@"
+}
+(( $+functions[_rgb-cli__transfer_commands] )) ||
+_rgb-cli__transfer_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli transfer commands' commands "$@"
 }
 
 _rgb-cli "$@"

@@ -29,9 +29,14 @@ impl Command {
             Command::Contract { contract_id, .. } => {
                 format!("Retrieving contract source for {}", contract_id)
             }
-            Command::Consign { contract_id, .. } => {
+            Command::Compose { contract_id, .. } => {
                 format!("Composing consignment for state transfer for contract {}", contract_id)
             }
+            Command::Transfer { .. } => s!("Preparing PSBT for the state transfer"),
+            Command::Finalize {
+                send: Some(addr), ..
+            } => format!("Finalizing state transfer and sending it to {}", addr),
+            Command::Finalize { send: None, .. } => s!("Finalizing state transfer"),
         }
     }
 }
@@ -95,7 +100,7 @@ impl Exec for Opts {
                 let contract = client.contract(contract_id, node_types, progress)?;
                 println!("{}", contract);
             }
-            Command::Consign {
+            Command::Compose {
                 node_types,
                 contract_id,
                 outpoints,
@@ -118,6 +123,8 @@ impl Exec for Opts {
                     Ok(_) => println!("{}", "Success".ended()),
                 }
             }
+            Command::Transfer { .. } => todo!(),
+            Command::Finalize { .. } => todo!(),
         }
 
         Ok(())

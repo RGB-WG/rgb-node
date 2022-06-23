@@ -10,10 +10,12 @@
 
 use std::collections::BTreeSet;
 
+use internet2::addr::NodeAddr;
+use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
     validation, ConsignmentId, ConsignmentType, ContractConsignment, ContractId, InmemConsignment,
-    TransferConsignment,
+    StateTransfer, TransferConsignment, Transition,
 };
 use rgb_rpc::{ClientId, OutpointFilter};
 
@@ -36,6 +38,12 @@ pub enum CtlMsg {
 
     #[display("consign_transition({0})")]
     ConsignTranfer(ConsignReq<TransferConsignment>),
+
+    #[display(inner)]
+    ProcessPsbt(ProcessPsbtReq),
+
+    #[display(inner)]
+    FinalizeTransfer(FinalizeTransferReq),
 
     #[display(inner)]
     #[from]
@@ -73,4 +81,23 @@ pub struct ValidityResp {
     pub client_id: ClientId,
     pub consignment_id: ConsignmentId,
     pub status: validation::Status,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("process_psbt(...)")]
+pub struct ProcessPsbtReq {
+    pub client_id: ClientId,
+    pub transition: Transition,
+    pub psbt: Psbt,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("finalize_transfer(...)")]
+pub struct FinalizeTransferReq {
+    pub client_id: ClientId,
+    pub consignment: StateTransfer,
+    pub psbt: Psbt,
+    pub beneficiary: Option<NodeAddr>,
 }

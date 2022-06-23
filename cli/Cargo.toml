@@ -21,6 +21,7 @@ strict_encoding = "1.8.10"
 internet2 = "0.8.0-beta.1"
 microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"], git = "https://github.com/Internet2-WG/rust-microservices" }
 bitcoin = "0.28.1"
+psbt = "0.7.1"
 lnpbp = "0.7.0"
 rgb-std = { version = "0.8.0-beta.1", features = ["serde"], git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "../rpc" }

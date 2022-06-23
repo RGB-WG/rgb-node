@@ -13,13 +13,15 @@ use std::fmt::{self, Display, Formatter};
 
 use amplify::Wrapper;
 use bitcoin::{OutPoint, Txid};
+use internet2::addr::NodeAddr;
 use internet2::presentation;
 use lnpbp::chain::Chain;
 use microservices::rpc;
+use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
-    validation, ConsignmentType, Contract, ContractConsignment, ContractId, ContractState,
-    InmemConsignment, StateTransfer, TransferConsignment,
+    seal, validation, ConsignmentType, Contract, ContractConsignment, ContractId, ContractState,
+    InmemConsignment, StateTransfer, TransferConsignment, Transition,
 };
 
 use crate::FailureCode;
@@ -52,10 +54,6 @@ pub enum RpcMsg {
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),
 
-    // Stash operations
-    // ----------------
-    BlindUtxo,
-
     #[display("consign_contract({0})")]
     ConsignContract(ComposeReq),
 
@@ -67,6 +65,15 @@ pub enum RpcMsg {
 
     #[display("accept_transfer(...)")]
     AcceptTransfer(AcceptReq<TransferConsignment>),
+
+    #[display(inner)]
+    PreparePsbt(PreparePsbtReq),
+
+    #[display(inner)]
+    Transfer(TransferReq),
+
+    #[display("memorize_seal({0})")]
+    MemorizeSeal(seal::Revealed),
 
     // Responses to CLI
     // ----------------
@@ -81,6 +88,9 @@ pub enum RpcMsg {
 
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),
+
+    #[display("psbt(...)")]
+    Psbt(Psbt),
 
     #[display("progress(\"{0}\")")]
     #[from]
@@ -166,6 +176,23 @@ pub struct ComposeReq {
     pub contract_id: ContractId,
     pub include: BTreeSet<TransitionType>,
     pub outpoints: OutpointFilter,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("prepare_psbt(...)")]
+pub struct PreparePsbtReq {
+    pub transition: Transition,
+    pub psbt: Psbt,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("transfer(...)")]
+pub struct TransferReq {
+    pub consignment: StateTransfer,
+    pub psbt: Psbt,
+    pub beneficiary: Option<NodeAddr>,
 }
 
 #[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]

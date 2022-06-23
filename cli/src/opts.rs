@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 
 use bitcoin::OutPoint;
-use internet2::addr::ServiceAddr;
+use internet2::addr::{NodeAddr, ServiceAddr};
 use lnpbp::chain::Chain;
 use rgb::schema::TransitionType;
 use rgb::{Contract, ContractId};
@@ -93,9 +93,9 @@ pub enum Command {
         contract_id: ContractId,
     },
 
-    /// Request contract source
-    #[display("consign {contract_id} ...")]
-    Consign {
+    /// Build state transfer consignment draft
+    #[display("compose {contract_id} ...")]
+    Compose {
         #[clap(short = 't', long = "node-type")]
         node_types: Vec<TransitionType>,
 
@@ -108,5 +108,50 @@ pub enum Command {
 
         /// Output file to save consignment prototype to
         output: PathBuf,
+    },
+
+    /// Add transfer information to PSBT.
+    ///
+    /// Generates blank state transitions for all other contracts affected
+    /// by the given PSBT and adds to PSBT information about the state transition.
+    ///
+    /// Prepares disclosure for other affected contracts and stores it
+    /// internally, linked to the PSBT file txid. Once the txid is seen in
+    /// blockchain, the node will enclose the disclosure to the stash
+    /// automatically, updating the state of all smart contracts affected by the
+    /// transfer.
+    ///
+    /// The provided PSBT inputs/outputs should not be modified after this
+    /// operation (such that txid would not change).
+    #[display("transfer ...")]
+    Transfer {
+        transition: PathBuf,
+
+        psbt_in: PathBuf,
+
+        /// Output file to save the PSBT updated with state transition(s)
+        /// information. If not given, the source PSBT file is overwritten.
+        #[clap(short = 'o', long = "out")]
+        psbt_out: Option<PathBuf>,
+    },
+
+    /// Finalize and (optionally) send consignment to beneficiary.
+    ///
+    /// Finalize consignment with the information from the finalized PSBT file,
+    /// and optionally sends final consignment to beneficiary via Storm Bifrost
+    /// (LNP Node).
+    #[display("transfer ...")]
+    Finalize {
+        /// The final PSBT (not modified).
+        psbt: PathBuf,
+
+        consignment_in: PathBuf,
+
+        /// Output file to save the final consignment. If not given, the source
+        /// consignment file is overwritten.
+        #[clap(short = 'o', long = "out")]
+        consignment_out: Option<PathBuf>,
+
+        send: Option<NodeAddr>,
     },
 }

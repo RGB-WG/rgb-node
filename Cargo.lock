@@ -209,6 +209,7 @@ checksum = "1d080f88bdc1827e569d305765bc407a7cc9b5d464d25e1d36fe2294f274507f"
 dependencies = [
  "amplify",
  "bitcoin",
+ "miniscript",
  "serde 1.0.137",
  "serde_with",
  "slip132",
@@ -227,6 +228,7 @@ dependencies = [
  "chrono",
  "descriptors",
  "electrum-client",
+ "miniscript",
  "strict_encoding",
 ]
 
@@ -238,6 +240,7 @@ checksum = "dcfdf7d9a0b3af94a35b92daa2e3f1c5b02b7293b5938a4cd4cc426852e52249"
 dependencies = [
  "amplify",
  "bitcoin",
+ "miniscript",
  "secp256k1",
  "serde 1.0.137",
  "serde_with",
@@ -793,6 +796,7 @@ dependencies = [
  "bitcoin_hd",
  "bitcoin_scripts",
  "chrono",
+ "miniscript",
  "strict_encoding",
 ]
 
@@ -1331,6 +1335,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "miniscript"
+version = "7.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da39fc7a8adea97a677337b0091779dd86349226b869053af496584a9b9e5847"
+dependencies = [
+ "bitcoin",
+]
+
+[[package]]
 name = "nix"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1507,6 +1520,7 @@ dependencies = [
  "bitcoin_onchain",
  "bitcoin_scripts",
  "descriptors",
+ "miniscript",
  "serde 1.0.137",
  "serde_with",
  "strict_encoding",
@@ -1801,6 +1815,7 @@ dependencies = [
  "lnpbp",
  "log",
  "microservices",
+ "psbt",
  "rgb-std",
  "rgb_rpc",
  "serde 1.0.137",
@@ -1874,6 +1889,7 @@ dependencies = [
  "log",
  "microservices",
  "nix",
+ "psbt",
  "rgb-std",
  "rgb_rpc",
  "shellexpand",
@@ -1894,6 +1910,7 @@ dependencies = [
  "lnpbp",
  "log",
  "microservices",
+ "psbt",
  "rgb-std",
  "serde 1.0.137",
  "serde_with",
@@ -2335,6 +2352,7 @@ dependencies = [
  "ed25519-dalek",
  "grin_secp256k1zkp",
  "half",
+ "miniscript",
  "serde 1.0.137",
  "strict_encoding_derive",
 ]
