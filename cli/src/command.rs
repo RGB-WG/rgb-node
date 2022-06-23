@@ -156,11 +156,13 @@ impl Exec for Opts {
                 consignment_in,
                 consignment_out,
                 send,
+                // TODO: Add PSBT out
             } => {
                 let psbt_bytes = fs::read(&psbt_path)?;
                 let psbt = Psbt::deserialize(&psbt_bytes)?;
                 let consignment = StateTransfer::strict_file_load(&consignment_in)?;
                 let transfer = client.transfer(consignment, psbt, send, progress)?;
+                // TODO: Call tapret_finalize on PSBT and save PSBT
                 transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
             }
         }

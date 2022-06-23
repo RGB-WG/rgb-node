@@ -226,6 +226,10 @@ impl Runtime {
         transition: Transition,
         psbt: Psbt,
     ) -> Result<Psbt, DaemonError> {
+        // 1. Put transition into PSBT (with LNPBP4s)
+        // 2. Construct blank transitions for other contracts
+        // 3. Put blank transitions into PSBT (with LNPBP4s)
+
         todo!()
     }
 
@@ -234,6 +238,9 @@ impl Runtime {
         consignment: StateTransfer,
         psbt: Psbt,
     ) -> Result<StateTransfer, DaemonError> {
+        // 1. Extract contract-related state transition from PSBT and put it
+        //    into consignment.
+        // 2. Conceal all the state not related to the transfer
         todo!()
     }
 }
