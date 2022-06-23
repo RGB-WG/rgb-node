@@ -15,7 +15,9 @@ use microservices::rpc;
 use rgb_rpc::RpcMsg;
 use storm_ext::ExtMsg as StormMsg;
 
-pub use self::ctl::{ConsignReq, CtlMsg, ProcessReq, ValidityResp};
+pub use self::ctl::{
+    ConsignReq, CtlMsg, FinalizeTransferReq, ProcessPsbtReq, ProcessReq, ValidityResp,
+};
 pub use self::services::{DaemonId, ServiceId};
 pub(crate) use self::services::{Endpoints, Responder, ServiceBus};
 

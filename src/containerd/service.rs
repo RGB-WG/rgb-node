@@ -15,21 +15,23 @@ use std::time::Duration;
 use bitcoin::secp256k1::rand::random;
 use commit_verify::ConsensusCommit;
 use electrum_client::Client as ElectrumClient;
+use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
 use microservices::esb;
 use microservices::esb::{EndpointList, Error};
 use microservices::node::TryService;
+use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
-    ConsignmentType, ContractConsignment, ContractId, InmemConsignment, TransferConsignment,
-    Validity,
+    ConsignmentType, ContractConsignment, ContractId, InmemConsignment, StateTransfer,
+    TransferConsignment, Transition, Validity,
 };
 use rgb_rpc::{ClientId, OutpointFilter, RpcMsg};
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
-    ValidityResp,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, ProcessPsbtReq,
+    ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -196,6 +198,28 @@ impl Runtime {
                 )?;
             }
 
+            CtlMsg::ProcessPsbt(ProcessPsbtReq {
+                client_id,
+                transition,
+                psbt,
+            }) => {
+                self.handle_finalize_psbt(endpoints, client_id, transition, psbt)?;
+            }
+            CtlMsg::FinalizeTransfer(FinalizeTransferReq {
+                client_id,
+                consignment,
+                psbt,
+                beneficiary,
+            }) => {
+                self.handle_finalize_transfer(
+                    endpoints,
+                    client_id,
+                    consignment,
+                    psbt,
+                    beneficiary,
+                )?;
+            }
+
             wrong_msg => {
                 error!("Request is not supported by the CTL interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Ctl, &wrong_msg));
@@ -276,6 +300,50 @@ impl Runtime {
             }
             Ok(consignment) => {
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(consignment));
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_finalize_psbt(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        transition: Transition,
+        psbt: Psbt,
+    ) -> Result<(), DaemonError> {
+        match self.finalize_psbt(transition, psbt) {
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+            }
+            Ok(psbt) => {
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::Psbt(psbt));
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_finalize_transfer(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        consignment: StateTransfer,
+        psbt: Psbt,
+        beneficiary: Option<NodeAddr>, // TODO: Replace with bool
+    ) -> Result<(), DaemonError> {
+        match self.finalize_transfer(consignment, psbt) {
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+            }
+            Ok(transfer) => {
+                if beneficiary.is_some() {
+                    // TODO: Upload to stored database
+                }
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(transfer));
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
             }
         }

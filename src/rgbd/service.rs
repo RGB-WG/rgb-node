@@ -12,6 +12,7 @@ use std::collections::{BTreeSet, VecDeque};
 
 use amplify::Wrapper;
 use bitcoin::hashes::Hash;
+use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::cli::LogStyle;
@@ -19,13 +20,20 @@ use microservices::error::BootstrapError;
 use microservices::esb::EndpointList;
 use microservices::node::TryService;
 use microservices::{esb, rpc};
+use psbt::Psbt;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractConsignment, ContractId, StateTransfer, TransferConsignment};
-use rgb_rpc::{AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg};
+use rgb::{
+    Contract, ContractConsignment, ContractId, StateTransfer, TransferConsignment, Transition,
+};
+use rgb_rpc::{
+    AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, PreparePsbtReq, RpcMsg,
+    TransferReq,
+};
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, ProcessReq, Responder, ServiceBus, ServiceId,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, ProcessPsbtReq,
+    ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::containerd::StashError;
 use crate::daemons::Daemon;
@@ -186,13 +194,23 @@ impl Runtime {
                 consignment: contract,
                 force,
             }) => {
-                self.process_contract(endpoints, client_id, contract, force)?;
+                self.accept_contract(endpoints, client_id, contract, force)?;
             }
             RpcMsg::AcceptTransfer(AcceptReq {
                 consignment: transfer,
                 force,
             }) => {
-                self.process_transfer(endpoints, client_id, transfer, force)?;
+                self.accept_transfer(endpoints, client_id, transfer, force)?;
+            }
+            RpcMsg::PreparePsbt(PreparePsbtReq { transition, psbt }) => {
+                self.prepare_psbt(endpoints, client_id, transition, psbt)?;
+            }
+            RpcMsg::Transfer(TransferReq {
+                consignment,
+                psbt,
+                beneficiary,
+            }) => {
+                self.complete_transfer(endpoints, client_id, consignment, psbt, beneficiary)?;
             }
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
@@ -376,7 +394,7 @@ impl Runtime {
         Ok(())
     }
 
-    fn process_contract(
+    fn accept_contract(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
@@ -391,7 +409,7 @@ impl Runtime {
         self.pick_or_start(endpoints, client_id)
     }
 
-    fn process_transfer(
+    fn accept_transfer(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
@@ -402,6 +420,38 @@ impl Runtime {
             client_id,
             consignment: transfer,
             force,
+        }));
+        self.pick_or_start(endpoints, client_id)
+    }
+
+    fn prepare_psbt(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        transition: Transition,
+        psbt: Psbt,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::ProcessPsbt(ProcessPsbtReq {
+            client_id,
+            transition,
+            psbt,
+        }));
+        self.pick_or_start(endpoints, client_id)
+    }
+
+    fn complete_transfer(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        consignment: StateTransfer,
+        psbt: Psbt,
+        beneficiary: Option<NodeAddr>,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::FinalizeTransfer(FinalizeTransferReq {
+            client_id,
+            consignment,
+            psbt,
+            beneficiary,
         }));
         self.pick_or_start(endpoints, client_id)
     }

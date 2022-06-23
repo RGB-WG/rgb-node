@@ -12,11 +12,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::{OutPoint, Txid};
 use commit_verify::lnpbp4;
+use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
     bundle, validation, Anchor, BundleId, Consignment, ConsignmentType, ContractId, ContractState,
-    Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, Transition,
-    TransitionBundle, Validator, Validity,
+    Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, StateTransfer,
+    Transition, TransitionBundle, Validator, Validity,
 };
 use rgb_rpc::OutpointFilter;
 
@@ -217,7 +218,23 @@ impl Runtime {
 
         collector = collector.iterate(&mut self.db)?;
 
-        collector.consignment(schema, root_schema, genesis)
+        collector.into_consignment(schema, root_schema, genesis)
+    }
+
+    pub(super) fn finalize_psbt(
+        &mut self,
+        transition: Transition,
+        psbt: Psbt,
+    ) -> Result<Psbt, DaemonError> {
+        todo!()
+    }
+
+    pub(super) fn finalize_transfer(
+        &mut self,
+        consignment: StateTransfer,
+        psbt: Psbt,
+    ) -> Result<StateTransfer, DaemonError> {
+        todo!()
     }
 }
 
@@ -303,7 +320,7 @@ impl Collector {
         Ok(self)
     }
 
-    pub fn consignment<T: ConsignmentType>(
+    pub fn into_consignment<T: ConsignmentType>(
         self,
         schema: Schema,
         root_schema: Option<Schema>,
