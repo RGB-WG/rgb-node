@@ -45,6 +45,5 @@ fn main() {
         .expect("Error initializing client");
 
     trace!("Executing command: {}", opts.command);
-    opts.exec(&mut client)
-        .unwrap_or_else(|err| eprintln!("{} {}\n", "Error:".err(), err.err_details()));
+    opts.exec(&mut client).unwrap_or_else(|err| eprintln!("{}: {}\n", "Error".err(), err));
 }

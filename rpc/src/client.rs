@@ -13,18 +13,19 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use bitcoin::OutPoint;
-use internet2::addr::ServiceAddr;
+use internet2::addr::{NodeAddr, ServiceAddr};
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::esb::{self, BusId};
 use microservices::rpc;
+use psbt::Psbt;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractId, ContractState, StateTransfer};
+use rgb::{Contract, ContractId, ContractState, StateTransfer, Transition};
 
 use crate::messages::HelloReq;
 use crate::{
     AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter,
-    RpcMsg, ServiceId,
+    PreparePsbtReq, RpcMsg, ServiceId, TransferReq,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -194,6 +195,43 @@ impl Client {
         loop {
             match self.response()?.failure_to_error()? {
                 RpcMsg::StateTransfer(trasfer) => return Ok(trasfer),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
+        }
+    }
+
+    pub fn prepare_psbt(
+        &mut self,
+        transition: Transition,
+        psbt: Psbt,
+        progress: impl Fn(String),
+    ) -> Result<Psbt, Error> {
+        self.request(RpcMsg::PreparePsbt(PreparePsbtReq { transition, psbt }))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Psbt(psbt) => return Ok(psbt),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
+        }
+    }
+
+    pub fn transfer(
+        &mut self,
+        consignment: StateTransfer,
+        psbt: Psbt,
+        beneficiary: Option<NodeAddr>,
+        progress: impl Fn(String),
+    ) -> Result<StateTransfer, Error> {
+        self.request(RpcMsg::Transfer(TransferReq {
+            consignment,
+            psbt,
+            beneficiary,
+        }))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::StateTransfer(transfer) => return Ok(transfer),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }
