@@ -20,12 +20,12 @@ use microservices::esb::{self, BusId};
 use microservices::rpc;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractId, ContractState, StateTransfer, Transition};
+use rgb::{Contract, ContractId, ContractState, SealEndpoint, StateTransfer};
 
 use crate::messages::HelloReq;
 use crate::{
     AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter,
-    PreparePsbtReq, RpcMsg, ServiceId, TransferReq, TransitionsInfo,
+    RpcMsg, ServiceId, TransferReq, TransitionsInfo,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -214,31 +214,17 @@ impl Client {
         }
     }
 
-    pub fn prepare_psbt(
-        &mut self,
-        transition: Transition,
-        psbt: Psbt,
-        progress: impl Fn(String),
-    ) -> Result<Psbt, Error> {
-        self.request(RpcMsg::PreparePsbt(PreparePsbtReq { transition, psbt }))?;
-        loop {
-            match self.response()?.failure_to_error()? {
-                RpcMsg::Psbt(psbt) => return Ok(psbt),
-                RpcMsg::Progress(info) => progress(info),
-                _ => return Err(Error::UnexpectedServerResponse),
-            }
-        }
-    }
-
     pub fn transfer(
         &mut self,
         consignment: StateTransfer,
+        endseals: Vec<SealEndpoint>,
         psbt: Psbt,
         beneficiary: Option<NodeAddr>,
         progress: impl Fn(String),
     ) -> Result<StateTransfer, Error> {
         self.request(RpcMsg::Transfer(TransferReq {
             consignment,
+            endseals,
             psbt,
             beneficiary,
         }))?;

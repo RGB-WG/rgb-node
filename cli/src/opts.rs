@@ -14,7 +14,7 @@ use bitcoin::OutPoint;
 use internet2::addr::{NodeAddr, ServiceAddr};
 use lnpbp::chain::Chain;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractId};
+use rgb::{Contract, ContractId, SealEndpoint};
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
 
 /// Command-line tool for working with RGB node
@@ -157,6 +157,10 @@ pub enum Command {
         #[clap(short = 'o', long = "out")]
         consignment_out: Option<PathBuf>,
 
+        #[clap(min_values = 1)]
+        endseals: Vec<SealEndpoint>,
+
+        #[clap(last = true)]
         send: Option<NodeAddr>,
     },
 }

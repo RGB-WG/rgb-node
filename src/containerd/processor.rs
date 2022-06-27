@@ -13,11 +13,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use bitcoin::{OutPoint, Txid};
 use commit_verify::lnpbp4;
 use psbt::Psbt;
+use rgb::psbt::RgbExt;
 use rgb::schema::TransitionType;
 use rgb::{
     bundle, validation, Anchor, BundleId, Consignment, ConsignmentType, ContractId, ContractState,
-    Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, StateTransfer,
-    Transition, TransitionBundle, Validator, Validity,
+    Disclosure, Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint,
+    StateTransfer, Transition, TransitionBundle, Validator, Validity,
 };
 use rgb_rpc::{OutpointFilter, TransitionsInfo};
 
@@ -87,6 +88,21 @@ pub enum StashError {
     /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
     /// stash data storage.
     OutsizedBundle,
+}
+
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Display, Error, From)]
+#[display(doc_comments)]
+pub enum FinalizeError {
+    /// the provided PSBT does not contain transition bundle for the contract.
+    ContractBundleMissed,
+
+    /// the provided PSBT has invalid proprietary key structure. Details: {0}
+    #[from]
+    Psbt(rgb::psbt::KeyError),
+
+    #[display(inner)]
+    #[from]
+    Anchor(bp::dbc::anchor::Error),
 }
 
 impl Runtime {
@@ -271,97 +287,45 @@ impl Runtime {
         Ok(transitions)
     }
 
-    pub(super) fn finalize_psbt(
-        &mut self,
-        transition: Transition,
-        mut psbt: Psbt,
-    ) -> Result<Psbt, DaemonError> {
-        todo!();
-        // 1. Put transition into PSBT (with LNPBP4s)
-        // 2. Construct blank transitions for other contracts
-        // 3. Put blank transitions into PSBT (with LNPBP4s)
-
-        /*
-        psbt.push_rgb_transition(transition)?;
-
-        let outpoint_node_map: BTreeMap<OutPoint, BTreeSet<NodeId>> = psbt
-            .inputs
-            .iter()
-            .map(|input| input.previous_outpoint)
-            .map(|outpoint| {
-                self.db
-                    .retrieve_h(Db::OUTPOINTS, outpoint)
-                    .filter_map(|set: Option<BTreeSet<NodeId>>| set.map(|nodes| (outpoint, nodes)))
-            })
-            .collect::<Result<_, DaemonError>>()?;
-
-        let mut node_contracts: BTreeMap<NodeId, ContractId> = bmap! {};
-        let mut prev_nodes: BTreeMap<NodeId, Box<dyn Node>> = bmap! {};
-        let mut blank_transitions: BTreeMap<ContractId, BTreeSet<Transition>> = bmap! {};
-        for input in &mut psbt.inputs {
-            let outpoint = input.previous_outpoint;
-            let set: BTreeSet<NodeId> =
-                self.db.retrieve(Db::OUTPOINTS, outpoint)?.unwrap_or_default();
-            for node_id in set {
-                let contract_id = match node_contracts.entry(node_id) {
-                    Entry::Vacant(entry) => {
-                        let contract_id = self
-                            .db
-                            .retrieve(Db::NODE_CONTRACTS, node_id)?
-                            .ok_or(StashError::NodeContractAbsent(node_id))?;
-                        entry.insert(contract_id);
-                        contract_id
-                    }
-                    Entry::Occupied(entry) => *entry.get(),
-                };
-                input.set_rgb_consumer(contract_id, node_id)?;
-                let node = match prev_nodes.entry(node_id) {
-                    Entry::Vacant(entry) => {
-                        let node = if let Some(transition) =
-                            self.db.retrieve(Db::TRANSITIONS, node_id)?
-                        {
-                            Box::new(transition)
-                        } else if let Some(genesis) = self.db.retrieve(Db::TRANSITIONS, node_id)? {
-                            Box::new(genesis)
-                        } else if let Some(extension) = self.db.retrieve(Db::EXTENSIONS, node_id)? {
-                            Box::new(extension)
-                        } else {
-                            return Err(StashError::TransitionAbsent(node_id))
-                                .map_err(DaemonError::from);
-                        };
-                        prev_nodes.insert(node_id, node.clone());
-                        node
-                    }
-                    Entry::Occupied(entry) => entry.get(),
-                };
-            }
-        }
-
-        let contract_nodes: BTreeMap<ContractId, BTreeSet<NodeId>> = outpoint_node_map
-            .values()
-            .flatten()
-            .map(|node_id| {
-                self.db
-                    .retrieve(Db::NODE_CONTRACTS, node_id)
-                    .map(|contract_id| (contract_id, node_id))
-            })
-            .collect::<Result<_, DaemonError>>()?;
-
-        for (contract_id, nodes) in contract_nodes {}
-
-        Ok(psbt)
-         */
-    }
-
     pub(super) fn finalize_transfer(
         &mut self,
-        consignment: StateTransfer,
-        psbt: Psbt,
+        mut consignment: StateTransfer,
+        endseals: Vec<SealEndpoint>,
+        mut psbt: Psbt,
     ) -> Result<StateTransfer, DaemonError> {
-        // 1. Extract contract-related state transition from PSBT and put it
+        // 1. Pack LNPBP-4 and anchor information.
+        let mut bundles = psbt.rgb_bundles()?;
+
+        let mut messages: lnpbp4::MessageMap = empty!();
+        for (contract_id, bundle) in &bundles {
+            messages.insert(lnpbp4::ProtocolId::from(*contract_id), bundle.bundle_id().into());
+        }
+        // TODO: Add LNPBP4 and Tapret PSBT proprietary keys for hardware wallets
+
+        let anchor = Anchor::commit(&mut psbt, messages)?;
+
+        // 2. Extract contract-related state transition from PSBT and put it
         //    into consignment.
-        // 2. Conceal all the state not related to the transfer
-        todo!()
+        let contract_id = consignment.contract_id();
+        let bundle = bundles.remove(&contract_id).ok_or(FinalizeError::ContractBundleMissed)?;
+        let bundle_id = bundle.bundle_id();
+        consignment.push_anchored_bundle(anchor.to_merkle_proof(contract_id)?, bundle)?;
+
+        // 3. Add seal endpoints.
+        for endseal in endseals {
+            consignment.push_seal_endpoint(bundle_id, endseal);
+        }
+
+        // 4. Conceal all the state not related to the transfer.
+        // TODO: Conceal all the amounts except the last transition
+        // TODO: Conceal all seals outside of the paths from the endpoint to genesis
+
+        // 5. Construct and store disclosure for the blank transfers.
+        let txid = anchor.txid;
+        let disclosure = Disclosure::with(anchor, bundles, None);
+        self.db.store_h(Db::DISCLOSURES, txid, &disclosure)?;
+
+        Ok(consignment)
     }
 }
 

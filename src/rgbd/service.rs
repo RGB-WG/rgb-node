@@ -24,17 +24,16 @@ use microservices::{esb, rpc};
 use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
-    Contract, ContractConsignment, ContractId, StateTransfer, TransferConsignment, Transition,
+    Contract, ContractConsignment, ContractId, SealEndpoint, StateTransfer, TransferConsignment,
 };
 use rgb_rpc::{
-    AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, PreparePsbtReq, RpcMsg,
-    TransferReq,
+    AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq,
 };
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointTransitionsReq,
-    ProcessPsbtReq, ProcessReq, Responder, ServiceBus, ServiceId,
+    ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::containerd::StashError;
 use crate::daemons::Daemon;
@@ -206,15 +205,21 @@ impl Runtime {
             }) => {
                 self.accept_transfer(endpoints, client_id, transfer, force)?;
             }
-            RpcMsg::PreparePsbt(PreparePsbtReq { transition, psbt }) => {
-                self.prepare_psbt(endpoints, client_id, transition, psbt)?;
-            }
+
             RpcMsg::Transfer(TransferReq {
                 consignment,
+                endseals,
                 psbt,
                 beneficiary,
             }) => {
-                self.complete_transfer(endpoints, client_id, consignment, psbt, beneficiary)?;
+                self.complete_transfer(
+                    endpoints,
+                    client_id,
+                    consignment,
+                    endseals,
+                    psbt,
+                    beneficiary,
+                )?;
             }
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
@@ -441,32 +446,19 @@ impl Runtime {
         self.pick_or_start(endpoints, client_id)
     }
 
-    fn prepare_psbt(
-        &mut self,
-        endpoints: &mut Endpoints,
-        client_id: ClientId,
-        transition: Transition,
-        psbt: Psbt,
-    ) -> Result<(), DaemonError> {
-        self.ctl_queue.push_back(CtlMsg::ProcessPsbt(ProcessPsbtReq {
-            client_id,
-            transition,
-            psbt,
-        }));
-        self.pick_or_start(endpoints, client_id)
-    }
-
     fn complete_transfer(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
         consignment: StateTransfer,
+        endseals: Vec<SealEndpoint>,
         psbt: Psbt,
         beneficiary: Option<NodeAddr>,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::FinalizeTransfer(FinalizeTransferReq {
             client_id,
             consignment,
+            endseals,
             psbt,
             beneficiary,
         }));

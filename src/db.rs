@@ -43,6 +43,8 @@ impl Db {
     pub const TRANSITION_WITNESS: &'static str = "transition_txid";
     pub const CONTRACT_TRANSITIONS: &'static str = "contract_transitions";
 
+    pub const DISCLOSURES: &'static str = "disclosures";
+
     pub fn index_two_pieces(a: impl StrictEncode, b: impl StrictEncode) -> ChunkId {
         let mut engine = ChunkId::engine();
         let _ = a.strict_encode(&mut engine);

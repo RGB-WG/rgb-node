@@ -148,6 +148,7 @@ impl Exec for Opts {
                 transfer.strict_encode(file)?;
                 println!("{}", "Success".ended());
             }
+
             Command::Transfer {
                 contract_id,
                 transition,
@@ -184,19 +185,23 @@ impl Exec for Opts {
                 let psbt_bytes = psbt.serialize();
                 fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
             }
+
             Command::Finalize {
                 psbt: psbt_path,
                 consignment_in,
                 consignment_out,
+                endseals,
                 send,
                 // TODO: Add PSBT out
             } => {
                 let psbt_bytes = fs::read(&psbt_path)?;
                 let psbt = Psbt::deserialize(&psbt_bytes)?;
                 let consignment = StateTransfer::strict_file_load(&consignment_in)?;
-                let transfer = client.transfer(consignment, psbt, send, progress)?;
+                let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
                 // TODO: Call tapret_finalize on PSBT and save PSBT
                 transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+
+                // TODO: Register disclosure with the client
             }
         }
 

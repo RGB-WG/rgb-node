@@ -32,6 +32,8 @@ pub enum FailureCode {
 
     Absent = 0x14,
 
+    Finalize = 0x15,
+
     UnexpectedRequest = 0x80,
 
     /// Daemon launcher error

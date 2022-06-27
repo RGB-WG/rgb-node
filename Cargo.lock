@@ -281,6 +281,7 @@ dependencies = [
  "bp-dbc",
  "bp-seals",
  "commit_verify",
+ "psbt",
  "serde 1.0.137",
  "serde_with",
  "single_use_seals",
@@ -297,6 +298,7 @@ dependencies = [
  "bitcoin",
  "bitcoin_scripts",
  "commit_verify",
+ "psbt",
  "secp256k1",
  "serde 1.0.137",
  "serde_with",
@@ -1849,7 +1851,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-std#928ea5fc6ed89cafb9655b5ceb4c7bbb997c51bc"
+source = "git+https://github.com/RGB-WG/rgb-std#0451895bfee90027854eabcd4c43d38487bac47d"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1873,6 +1875,7 @@ version = "0.8.0-alpha.1"
 dependencies = [
  "amplify",
  "bitcoin",
+ "bp-core",
  "chrono",
  "clap",
  "clap_complete",

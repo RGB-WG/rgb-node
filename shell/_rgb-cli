@@ -136,6 +136,7 @@ _arguments "${_arguments_options[@]}" \
 '*--verbose[Set verbosity level]' \
 ':psbt -- The final PSBT (not modified):' \
 ':consignment-in:' \
+'*::endseals:' \
 '::send:' \
 && ret=0
 ;;

@@ -35,6 +35,7 @@ commit_verify = "0.7.0" # TODO: Update to 0.8
 internet2 = { version = "0.8.0-rc.3", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.0-rc.6", default-features = false, features = ["node"], git = "https://github.com/Internet2-WG/rust-microservices" }
 lnpbp = "0.7.0"
+bp-core = { version = "0.7.0", features = ["psbt"] }
 rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-alpha.1", path = "./rpc" }
 storm-core = "0.2"

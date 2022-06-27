@@ -21,7 +21,7 @@ use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
     seal, validation, ConsignmentType, Contract, ContractConsignment, ContractId, ContractState,
-    InmemConsignment, StateTransfer, TransferConsignment, Transition,
+    InmemConsignment, SealEndpoint, StateTransfer, TransferConsignment, Transition,
 };
 
 use crate::FailureCode;
@@ -71,11 +71,6 @@ pub enum RpcMsg {
     #[display("accept_transfer(...)")]
     AcceptTransfer(AcceptReq<TransferConsignment>),
 
-    // TODO: Remove
-    #[display(inner)]
-    PreparePsbt(PreparePsbtReq),
-
-    // TODO: Remove
     #[display(inner)]
     Transfer(TransferReq),
 
@@ -98,9 +93,6 @@ pub enum RpcMsg {
 
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),
-
-    #[display("psbt(...)")]
-    Psbt(Psbt),
 
     #[display("progress(\"{0}\")")]
     #[from]
@@ -190,17 +182,10 @@ pub struct ComposeReq {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
-#[display("prepare_psbt(...)")]
-pub struct PreparePsbtReq {
-    pub transition: Transition,
-    pub psbt: Psbt,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[derive(NetworkEncode, NetworkDecode)]
 #[display("transfer(...)")]
 pub struct TransferReq {
     pub consignment: StateTransfer,
+    pub endseals: Vec<SealEndpoint>,
     pub psbt: Psbt,
     pub beneficiary: Option<NodeAddr>,
 }

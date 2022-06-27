@@ -25,14 +25,14 @@ use microservices::node::TryService;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
-    ConsignmentType, ContractConsignment, ContractId, InmemConsignment, StateTransfer,
-    TransferConsignment, Transition, Validity,
+    ConsignmentType, ContractConsignment, ContractId, InmemConsignment, SealEndpoint,
+    StateTransfer, TransferConsignment, Validity,
 };
 use rgb_rpc::{ClientId, OutpointFilter, RpcMsg};
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointTransitionsReq,
-    ProcessPsbtReq, ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
+    ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -206,16 +206,10 @@ impl Runtime {
                 self.handle_outpoint_transitions(endpoints, client_id, outpoints)?;
             }
 
-            CtlMsg::ProcessPsbt(ProcessPsbtReq {
-                client_id,
-                transition,
-                psbt,
-            }) => {
-                self.handle_finalize_psbt(endpoints, client_id, transition, psbt)?;
-            }
             CtlMsg::FinalizeTransfer(FinalizeTransferReq {
                 client_id,
                 consignment,
+                endseals,
                 psbt,
                 beneficiary,
             }) => {
@@ -223,6 +217,7 @@ impl Runtime {
                     endpoints,
                     client_id,
                     consignment,
+                    endseals,
                     psbt,
                     beneficiary,
                 )?;
@@ -333,35 +328,16 @@ impl Runtime {
         Ok(())
     }
 
-    fn handle_finalize_psbt(
-        &mut self,
-        endpoints: &mut Endpoints,
-        client_id: ClientId,
-        transition: Transition,
-        psbt: Psbt,
-    ) -> Result<(), DaemonError> {
-        match self.finalize_psbt(transition, psbt) {
-            Err(err) => {
-                let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
-            }
-            Ok(psbt) => {
-                let _ = self.send_rpc(endpoints, client_id, RpcMsg::Psbt(psbt));
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
-            }
-        }
-        Ok(())
-    }
-
     fn handle_finalize_transfer(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
         consignment: StateTransfer,
+        endseals: Vec<SealEndpoint>,
         psbt: Psbt,
         beneficiary: Option<NodeAddr>, // TODO: Replace with bool
     ) -> Result<(), DaemonError> {
-        match self.finalize_transfer(consignment, psbt) {
+        match self.finalize_transfer(consignment, endseals, psbt) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?

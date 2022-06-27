@@ -16,7 +16,7 @@ use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
     validation, ConsignmentId, ConsignmentType, ContractConsignment, ContractId, InmemConsignment,
-    StateTransfer, TransferConsignment, Transition,
+    SealEndpoint, StateTransfer, TransferConsignment,
 };
 use rgb_rpc::{ClientId, OutpointFilter};
 
@@ -42,9 +42,6 @@ pub enum CtlMsg {
 
     #[display(inner)]
     OutpointTransitions(OutpointTransitionsReq),
-
-    #[display(inner)]
-    ProcessPsbt(ProcessPsbtReq),
 
     #[display(inner)]
     FinalizeTransfer(FinalizeTransferReq),
@@ -96,19 +93,11 @@ pub struct OutpointTransitionsReq {
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
-#[display("process_psbt(...)")]
-pub struct ProcessPsbtReq {
-    pub client_id: ClientId,
-    pub transition: Transition,
-    pub psbt: Psbt,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[derive(NetworkEncode, NetworkDecode)]
 #[display("finalize_transfer(...)")]
 pub struct FinalizeTransferReq {
     pub client_id: ClientId,
     pub consignment: StateTransfer,
+    pub endseals: Vec<SealEndpoint>,
     pub psbt: Psbt,
     pub beneficiary: Option<NodeAddr>,
 }

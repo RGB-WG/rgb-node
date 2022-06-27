@@ -15,7 +15,7 @@ use microservices::{esb, rpc, LauncherError};
 use rgb_rpc::{FailureCode, RpcMsg};
 
 use crate::bus::{ServiceBus, ServiceId};
-use crate::containerd::StashError;
+use crate::containerd::{FinalizeError, StashError};
 use crate::daemons::Daemon;
 
 #[derive(Clone, Debug, Display, Error, From)]
@@ -64,6 +64,12 @@ pub(crate) enum DaemonError {
     #[from(rgb::bundle::RevealError)]
     Stash(StashError),
 
+    #[display(inner)]
+    #[from]
+    #[from(rgb::psbt::KeyError)]
+    #[from(bp::dbc::anchor::Error)]
+    Finalize(FinalizeError),
+
     /// request `{1}` is not supported on {0} message bus
     RequestNotSupported(ServiceBus, String),
 
@@ -88,6 +94,7 @@ impl From<DaemonError> for RpcMsg {
             DaemonError::Store(_) => FailureCode::Store,
             DaemonError::ContainerLauncher(_) => FailureCode::Launcher,
             DaemonError::Stash(_) => FailureCode::Stash,
+            DaemonError::Finalize(_) => FailureCode::Finalize,
         };
         RpcMsg::Failure(rpc::Failure {
             code: code.into(),
