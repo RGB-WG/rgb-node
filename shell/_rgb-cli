@@ -124,8 +124,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (finalize)
 _arguments "${_arguments_options[@]}" \
-'-o+[Output file to save the final consignment. If not given, the source consignment file is overwritten]:CONSIGNMENT_OUT: ' \
-'--out=[Output file to save the final consignment. If not given, the source consignment file is overwritten]:CONSIGNMENT_OUT: ' \
+'-s+[Bifrost server to send state transfer to]:SEND: ' \
+'--send=[Bifrost server to send state transfer to]:SEND: ' \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-n+[Blockchain to use]:CHAIN: ' \
@@ -135,9 +135,9 @@ _arguments "${_arguments_options[@]}" \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
 ':psbt -- The final PSBT (not modified):' \
-':consignment-in:' \
-'*::endseals:' \
-'::send:' \
+':consignment-in -- State transfer consignment draft file prepared with `compose` command:' \
+'::consignment-out -- Output file to save the final consignment. If not given, the source consignment file is overwritten:' \
+'*::endseals -- Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary:' \
 && ret=0
 ;;
 (help)

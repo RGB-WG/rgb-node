@@ -115,8 +115,8 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             break
         }
         'rgb-cli;finalize' {
-            [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'Output file to save the final consignment. If not given, the source consignment file is overwritten')
-            [CompletionResult]::new('--out', 'out', [CompletionResultType]::ParameterName, 'Output file to save the final consignment. If not given, the source consignment file is overwritten')
+            [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, 'Bifrost server to send state transfer to')
+            [CompletionResult]::new('--send', 'send', [CompletionResultType]::ParameterName, 'Bifrost server to send state transfer to')
             [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')

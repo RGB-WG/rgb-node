@@ -147,20 +147,23 @@ pub enum Command {
     /// (LNP Node).
     #[display("transfer ...")]
     Finalize {
+        /// Bifrost server to send state transfer to
+        #[clap(short, long)]
+        send: Option<NodeAddr>,
+
         /// The final PSBT (not modified).
         psbt: PathBuf,
 
+        /// State transfer consignment draft file prepared with `compose` command.
         consignment_in: PathBuf,
 
         /// Output file to save the final consignment. If not given, the source
         /// consignment file is overwritten.
-        #[clap(short = 'o', long = "out")]
         consignment_out: Option<PathBuf>,
 
+        /// Beneficiary blinded TXO seal - or witness transaction output numbers
+        /// containing allocations for the beneficiary.
         #[clap(min_values = 1)]
         endseals: Vec<SealEndpoint>,
-
-        #[clap(last = true)]
-        send: Option<NodeAddr>,
     },
 }
