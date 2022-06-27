@@ -8,6 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::{OutPoint, Txid};
@@ -151,11 +152,14 @@ impl Runtime {
                 trace!("Storing state transition data");
                 data.push((node_id, inputs.clone()));
                 self.db.store_merge(Db::TRANSITIONS, node_id, transition.clone())?;
-                self.db.store(Db::TRANSITION_TXID, node_id, &witness_txid)?;
+                self.db.store(Db::TRANSITION_WITNESS, node_id, &witness_txid)?;
 
                 trace!("Indexing transition");
                 let index_id = Db::index_two_pieces(contract_id, transition_type);
                 self.db.insert_into_set(Db::CONTRACT_TRANSITIONS, index_id, node_id)?;
+
+                // TODO: Add outpoint-to-node-id index
+                // TODO: Add node-to-contract index
             }
             self.db.store_h(Db::BUNDLES, witness_txid, &data)?;
         }
@@ -224,13 +228,81 @@ impl Runtime {
     pub(super) fn finalize_psbt(
         &mut self,
         transition: Transition,
-        psbt: Psbt,
+        mut psbt: Psbt,
     ) -> Result<Psbt, DaemonError> {
+        todo!();
         // 1. Put transition into PSBT (with LNPBP4s)
         // 2. Construct blank transitions for other contracts
         // 3. Put blank transitions into PSBT (with LNPBP4s)
 
-        todo!()
+        psbt.push_rgb_transition(transition)?;
+
+        let outpoint_node_map: BTreeMap<OutPoint, BTreeSet<NodeId>> = psbt
+            .inputs
+            .iter()
+            .map(|input| input.previous_outpoint)
+            .map(|outpoint| {
+                self.db
+                    .retrieve(Db::OUTPOINTS, outpoint)
+                    .filter_map(|set: Option<BTreeSet<NodeId>>| set.map(|nodes| (outpoint, nodes)))
+            })
+            .collect::<Result<_, DaemonError>>()?;
+
+        let mut node_contracts: BTreeMap<NodeId, ContractId> = bmap! {};
+        let mut prev_nodes: BTreeMap<NodeId, Box<dyn Node>> = bmap! {};
+        let mut blank_transitions: BTreeMap<ContractId, BTreeSet<Transition>> = bmap! {};
+        for input in &mut psbt.inputs {
+            let outpoint = input.previous_outpoint;
+            let set: BTreeSet<NodeId> =
+                self.db.retrieve(Db::OUTPOINTS, outpoint)?.unwrap_or_default();
+            for node_id in set {
+                let contract_id = match node_contracts.entry(node_id) {
+                    Entry::Vacant(entry) => {
+                        let contract_id = self
+                            .db
+                            .retrieve(Db::NODE_CONTRACTS, node_id)?
+                            .ok_or(StashError::UnknownNodeContract(contract_id, node_id))?;
+                        entry.insert(contract_id);
+                        contract_id
+                    }
+                    Entry::Occupied(entry) => *entry.get(),
+                };
+                input.set_rgb_consumer(contract_id, node_id)?;
+                let node = match prev_nodes.entry(node_id) {
+                    Entry::Vacant(entry) => {
+                        let node = if let Some(transition) =
+                            self.db.retrieve(Db::TRANSITIONS, node_id)?
+                        {
+                            Box::new(transition)
+                        } else if let Some(genesis) = self.db.retrieve(Db::TRANSITIONS, node_id)? {
+                            Box::new(genesis)
+                        } else if let Some(extension) = self.db.retrieve(Db::EXTENSIONS, node_id)? {
+                            Box::new(extension)
+                        } else {
+                            return Err(StashError::TransitionAbsent(node_id))
+                                .map_err(DaemonError::from);
+                        };
+                        prev_nodes.insert(node_id, node.clone());
+                        node
+                    }
+                    Entry::Occupied(entry) => entry.get(),
+                };
+            }
+        }
+
+        let contract_nodes: BTreeMap<ContractId, BTreeSet<NodeId>> = outpoint_node_map
+            .values()
+            .flatten()
+            .map(|node_id| {
+                self.db
+                    .retrieve(Db::NODE_CONTRACTS, node_id)
+                    .map(|contract_id| (contract_id, node_id))
+            })
+            .collect::<Result<_, DaemonError>>()?;
+
+        for (contract_id, nodes) in contract_nodes {}
+
+        Ok(psbt)
     }
 
     pub(super) fn finalize_transfer(
@@ -277,7 +349,7 @@ impl Collector {
                 .ok_or(StashError::TransitionAbsent(transition_id))?;
 
             let witness_txid: Txid = db
-                .retrieve(Db::TRANSITION_TXID, transition_id)?
+                .retrieve(Db::TRANSITION_WITNESS, transition_id)?
                 .ok_or(StashError::TransitionTxidAbsent(transition_id))?;
 
             let bundle = if let Some((_, bundle)) = self.anchored_bundles.get_mut(&witness_txid) {

@@ -38,7 +38,9 @@ impl Db {
     pub const ATTACHMENT_INDEX: &'static str = "attachments";
     pub const ALU_LIBS: &'static str = "alu";
 
-    pub const TRANSITION_TXID: &'static str = "transition_txid";
+    pub const OUTPOINTS: &'static str = "outpoints";
+    pub const NODE_CONTRACTS: &'static str = "node_contracts";
+    pub const TRANSITION_WITNESS: &'static str = "transition_txid";
     pub const CONTRACT_TRANSITIONS: &'static str = "contract_transitions";
 
     pub fn index_two_pieces(a: impl StrictEncode, b: impl StrictEncode) -> ChunkId {
@@ -62,7 +64,7 @@ impl Db {
             Db::ATTACHMENT_CHUNKS,
             Db::ATTACHMENT_INDEX,
             Db::ALU_LIBS,
-            Db::TRANSITION_TXID,
+            Db::TRANSITION_WITNESS,
             Db::CONTRACT_TRANSITIONS,
         ] {
             store.use_table(table.to_owned()).map_err(LaunchError::from)?;
