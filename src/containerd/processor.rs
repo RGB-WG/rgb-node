@@ -164,8 +164,12 @@ impl Runtime {
                 let index_id = Db::index_two_pieces(contract_id, transition_type);
                 self.db.insert_into_set(Db::CONTRACT_TRANSITIONS, index_id, node_id)?;
 
-                // TODO: Add outpoint-to-node-id index
-                // TODO: Add node-to-contract index
+                self.db.store(Db::NODE_CONTRACTS, node_id, &contract_id)?;
+
+                for seal in transition.revealed_seals().unwrap_or_default() {
+                    let index_id = Db::index_two_pieces(seal.txid, seal.vout);
+                    self.db.insert_into_set(Db::OUTPOINTS, index_id, node_id)?;
+                }
             }
             self.db.store_h(Db::BUNDLES, witness_txid, &data)?;
         }
@@ -179,6 +183,9 @@ impl Runtime {
             trace!("Contract state now is {:?}", state);
 
             self.db.store_merge(Db::EXTENSIONS, node_id, extension.clone())?;
+            // We do not store seal outpoint here - or will have to store it into a separate
+            // database Extension rights are always closed seals, since the extension
+            // can get into the history only through closing by a state transition
         }
 
         debug!("Storing contract state for {}", contract_id);
