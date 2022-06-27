@@ -8,7 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{self, Display, Formatter};
 
 use amplify::Wrapper;
@@ -25,6 +25,8 @@ use rgb::{
 };
 
 use crate::FailureCode;
+
+pub type TransitionsInfo = BTreeMap<ContractId, Vec<(Transition, Txid)>>;
 
 /// We need this wrapper type to be compatible with RGB Node having multiple message buses
 #[derive(Clone, Debug, Display, From, Api)]
@@ -54,6 +56,9 @@ pub enum RpcMsg {
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),
 
+    #[display("outpoint_transitions(...)")]
+    OutpointTransitions(BTreeSet<OutPoint>),
+
     #[display("consign_contract({0})")]
     ConsignContract(ComposeReq),
 
@@ -66,9 +71,11 @@ pub enum RpcMsg {
     #[display("accept_transfer(...)")]
     AcceptTransfer(AcceptReq<TransferConsignment>),
 
+    // TODO: Remove
     #[display(inner)]
     PreparePsbt(PreparePsbtReq),
 
+    // TODO: Remove
     #[display(inner)]
     Transfer(TransferReq),
 
@@ -85,6 +92,9 @@ pub enum RpcMsg {
 
     #[display("contract_state(...)")]
     ContractState(ContractState),
+
+    #[display("transitions(...)")]
+    Transitions(TransitionsInfo),
 
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),

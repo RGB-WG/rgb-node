@@ -12,6 +12,7 @@ use std::collections::{BTreeSet, VecDeque};
 
 use amplify::Wrapper;
 use bitcoin::hashes::Hash;
+use bitcoin::OutPoint;
 use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
@@ -32,8 +33,8 @@ use rgb_rpc::{
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, ProcessPsbtReq,
-    ProcessReq, Responder, ServiceBus, ServiceId,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointTransitionsReq,
+    ProcessPsbtReq, ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::containerd::StashError;
 use crate::daemons::Daemon;
@@ -189,6 +190,9 @@ impl Runtime {
             }
             RpcMsg::GetContractState(contract_id) => {
                 self.get_contract_state(endpoints, client_id, contract_id)?;
+            }
+            RpcMsg::OutpointTransitions(outpoints) => {
+                self.outpoint_transitions(endpoints, client_id, outpoints)?;
             }
             RpcMsg::AcceptContract(AcceptReq {
                 consignment: contract,
@@ -392,6 +396,19 @@ impl Runtime {
         };
         let _ = self.send_rpc(endpoints, client_id, msg);
         Ok(())
+    }
+
+    fn outpoint_transitions(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        outpoints: BTreeSet<OutPoint>,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::OutpointTransitions(OutpointTransitionsReq {
+            client_id,
+            outpoints,
+        }));
+        self.pick_or_start(endpoints, client_id)
     }
 
     fn accept_contract(

@@ -10,6 +10,7 @@
 
 use std::collections::BTreeSet;
 
+use bitcoin::OutPoint;
 use internet2::addr::NodeAddr;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
@@ -38,6 +39,9 @@ pub enum CtlMsg {
 
     #[display("consign_transition({0})")]
     ConsignTranfer(ConsignReq<TransferConsignment>),
+
+    #[display(inner)]
+    OutpointTransitions(OutpointTransitionsReq),
 
     #[display(inner)]
     ProcessPsbt(ProcessPsbtReq),
@@ -81,6 +85,13 @@ pub struct ValidityResp {
     pub client_id: ClientId,
     pub consignment_id: ConsignmentId,
     pub status: validation::Status,
+}
+
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Debug, Display, StrictEncode, StrictDecode)]
+#[display("outpoint_transitions({client_id}, ...)")]
+pub struct OutpointTransitionsReq {
+    pub client_id: ClientId,
+    pub outpoints: BTreeSet<OutPoint>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]

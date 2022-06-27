@@ -8,7 +8,6 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::{OutPoint, Txid};
@@ -20,7 +19,7 @@ use rgb::{
     Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint, StateTransfer,
     Transition, TransitionBundle, Validator, Validity,
 };
-use rgb_rpc::OutpointFilter;
+use rgb_rpc::{OutpointFilter, TransitionsInfo};
 
 use super::Runtime;
 use crate::{DaemonError, Db};
@@ -48,6 +47,13 @@ pub enum StashError {
     /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
     /// stash data storage.
     TransitionTxidAbsent(NodeId),
+
+    /// node {0} is not related to any contract - or at least not present in node-to-contract
+    /// index.
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
+    NodeContractAbsent(NodeId),
 
     /// anchor for txid {0} is absent
     ///
@@ -225,6 +231,34 @@ impl Runtime {
         collector.into_consignment(schema, root_schema, genesis)
     }
 
+    pub(super) fn outpoint_transitions(
+        &mut self,
+        outpoints: BTreeSet<OutPoint>,
+    ) -> Result<TransitionsInfo, DaemonError> {
+        let mut transitions: TransitionsInfo = bmap! {};
+        for outpoint in outpoints {
+            let index = Db::index_two_pieces(outpoint.txid, outpoint.vout);
+            let set: BTreeSet<NodeId> =
+                self.db.retrieve_h(Db::OUTPOINTS, index)?.unwrap_or_default();
+            for node_id in set {
+                let transition = self
+                    .db
+                    .retrieve(Db::TRANSITIONS, node_id)?
+                    .ok_or(StashError::TransitionAbsent(node_id))?;
+                let contract_id = self
+                    .db
+                    .retrieve(Db::NODE_CONTRACTS, node_id)?
+                    .ok_or(StashError::NodeContractAbsent(node_id))?;
+                let txid = self
+                    .db
+                    .retrieve(Db::TRANSITION_WITNESS, node_id)?
+                    .ok_or(StashError::TransitionTxidAbsent(node_id))?;
+                transitions.entry(contract_id).or_default().push((transition, txid));
+            }
+        }
+        Ok(transitions)
+    }
+
     pub(super) fn finalize_psbt(
         &mut self,
         transition: Transition,
@@ -235,6 +269,7 @@ impl Runtime {
         // 2. Construct blank transitions for other contracts
         // 3. Put blank transitions into PSBT (with LNPBP4s)
 
+        /*
         psbt.push_rgb_transition(transition)?;
 
         let outpoint_node_map: BTreeMap<OutPoint, BTreeSet<NodeId>> = psbt
@@ -243,7 +278,7 @@ impl Runtime {
             .map(|input| input.previous_outpoint)
             .map(|outpoint| {
                 self.db
-                    .retrieve(Db::OUTPOINTS, outpoint)
+                    .retrieve_h(Db::OUTPOINTS, outpoint)
                     .filter_map(|set: Option<BTreeSet<NodeId>>| set.map(|nodes| (outpoint, nodes)))
             })
             .collect::<Result<_, DaemonError>>()?;
@@ -261,7 +296,7 @@ impl Runtime {
                         let contract_id = self
                             .db
                             .retrieve(Db::NODE_CONTRACTS, node_id)?
-                            .ok_or(StashError::UnknownNodeContract(contract_id, node_id))?;
+                            .ok_or(StashError::NodeContractAbsent(node_id))?;
                         entry.insert(contract_id);
                         contract_id
                     }
@@ -303,6 +338,7 @@ impl Runtime {
         for (contract_id, nodes) in contract_nodes {}
 
         Ok(psbt)
+         */
     }
 
     pub(super) fn finalize_transfer(

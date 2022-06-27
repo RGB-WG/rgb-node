@@ -13,6 +13,7 @@ use std::thread;
 use std::time::Duration;
 
 use bitcoin::secp256k1::rand::random;
+use bitcoin::OutPoint;
 use commit_verify::ConsensusCommit;
 use electrum_client::Client as ElectrumClient;
 use internet2::addr::NodeAddr;
@@ -30,8 +31,8 @@ use rgb::{
 use rgb_rpc::{ClientId, OutpointFilter, RpcMsg};
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, ProcessPsbtReq,
-    ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointTransitionsReq,
+    ProcessPsbtReq, ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -198,6 +199,13 @@ impl Runtime {
                 )?;
             }
 
+            CtlMsg::OutpointTransitions(OutpointTransitionsReq {
+                client_id,
+                outpoints,
+            }) => {
+                self.handle_outpoint_transitions(endpoints, client_id, outpoints)?;
+            }
+
             CtlMsg::ProcessPsbt(ProcessPsbtReq {
                 client_id,
                 transition,
@@ -300,6 +308,25 @@ impl Runtime {
             }
             Ok(consignment) => {
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(consignment));
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_outpoint_transitions(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        outpoints: BTreeSet<OutPoint>,
+    ) -> Result<(), DaemonError> {
+        match self.outpoint_transitions(outpoints) {
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+            }
+            Ok(transitions_info) => {
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::Transitions(transitions_info));
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
             }
         }
