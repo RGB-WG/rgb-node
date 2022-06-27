@@ -8,6 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::collections::BTreeSet;
 use std::{fs, io};
 
 use amplify::IoError;
@@ -17,7 +18,9 @@ use colored::Colorize;
 use microservices::cli::LogStyle;
 use microservices::shell::Exec;
 use psbt::Psbt;
-use rgb::{StateTransfer, Transition};
+use rgb::blank::BlankBundle;
+use rgb::psbt::{RgbExt, RgbInExt};
+use rgb::{Node, StateTransfer, Transition, TransitionBundle};
 use rgb_rpc::{Client, ContractValidity};
 use strict_encoding::{StrictDecode, StrictEncode};
 
@@ -38,6 +41,12 @@ pub enum Error {
 
     #[from]
     ConsensusEncoding(consensus::encode::Error),
+
+    #[from]
+    Psbt(rgb::psbt::KeyError),
+
+    #[from]
+    Reallocation(rgb::blank::Error),
 }
 
 impl Command {
@@ -140,14 +149,38 @@ impl Exec for Opts {
                 println!("{}", "Success".ended());
             }
             Command::Transfer {
+                contract_id,
                 transition,
                 psbt_in,
                 psbt_out,
             } => {
                 let psbt_bytes = fs::read(&psbt_in)?;
-                let psbt = Psbt::deserialize(&psbt_bytes)?;
+                let mut psbt = Psbt::deserialize(&psbt_bytes)?;
                 let transition = Transition::strict_file_load(transition)?;
-                let psbt = client.prepare_psbt(transition, psbt, progress)?;
+                psbt.push_rgb_transition(transition)?;
+
+                let outpoints: BTreeSet<_> =
+                    psbt.inputs.iter().map(|input| input.previous_outpoint).collect();
+                let info = client.outpoint_transitions(outpoints.clone())?;
+                for (cid, set) in info {
+                    if cid == contract_id {
+                        continue;
+                    }
+                    let prev_transitions = set.iter().map(|(ts, txid)| (ts, *txid));
+                    let blank_bundle = TransitionBundle::blank(
+                        prev_transitions,
+                        outpoints.iter().cloned(),
+                        &bmap! {},
+                    )?;
+                    for (transition, indexes) in blank_bundle.revealed_iter() {
+                        psbt.push_rgb_transition(transition.clone())?;
+                        for no in indexes {
+                            psbt.inputs[*no as usize]
+                                .set_rgb_consumer(contract_id, transition.node_id())?;
+                        }
+                    }
+                }
+
                 let psbt_bytes = psbt.serialize();
                 fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
             }

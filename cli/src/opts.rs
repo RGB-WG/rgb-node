@@ -125,8 +125,13 @@ pub enum Command {
     /// operation (such that txid would not change).
     #[display("transfer ...")]
     Transfer {
+        /// Contract id under which the main state transfer is happening.
+        contract_id: ContractId,
+
+        /// File containing main state transition for the transfer.
         transition: PathBuf,
 
+        /// Input file containing PSBT of the transfer witness transaction.
         psbt_in: PathBuf,
 
         /// Output file to save the PSBT updated with state transition(s)

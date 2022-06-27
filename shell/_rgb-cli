@@ -117,8 +117,9 @@ _arguments "${_arguments_options[@]}" \
 '--help[Print help information]' \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
-':transition:' \
-':psbt-in:' \
+':contract-id -- Contract id under which the main state transfer is happening:' \
+':transition -- File containing main state transition for the transfer:' \
+':psbt-in -- Input file containing PSBT of the transfer witness transaction:' \
 && ret=0
 ;;
 (finalize)

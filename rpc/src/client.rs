@@ -25,7 +25,7 @@ use rgb::{Contract, ContractId, ContractState, StateTransfer, Transition};
 use crate::messages::HelloReq;
 use crate::{
     AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter,
-    PreparePsbtReq, RpcMsg, ServiceId, TransferReq,
+    PreparePsbtReq, RpcMsg, ServiceId, TransferReq, TransitionsInfo,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -157,6 +157,19 @@ impl Client {
         match self.response()?.failure_to_error()? {
             RpcMsg::ContractState(state) => Ok(state),
             _ => Err(Error::UnexpectedServerResponse),
+        }
+    }
+
+    pub fn outpoint_transitions(
+        &mut self,
+        outpoints: BTreeSet<OutPoint>,
+    ) -> Result<TransitionsInfo, Error> {
+        self.request(RpcMsg::OutpointTransitions(outpoints))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Transitions(info) => return Ok(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
         }
     }
 

@@ -102,7 +102,12 @@ impl Runtime {
 
         let mut state = self.db.retrieve(Db::CONTRACTS, contract_id)?.unwrap_or_else(|| {
             debug!("Contract {} was previously unknown", contract_id);
-            ContractState::with(contract_id, consignment.genesis())
+            ContractState::with(
+                consignment.schema_id(),
+                consignment.root_schema_id(),
+                contract_id,
+                consignment.genesis(),
+            )
         });
         trace!("Starting with contract state {:?}", state);
 
