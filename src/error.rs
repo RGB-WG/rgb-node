@@ -72,9 +72,8 @@ pub(crate) enum DaemonError {
 
     /// request `{1}` is not supported on {0} message bus
     RequestNotSupported(ServiceBus, String),
-
-    /// request `{1}` is not supported on {0} message bus for service {2}
-    SourceNotSupported(ServiceBus, String, ServiceId),
+    // /// request `{1}` is not supported on {0} message bus for service {2}
+    // SourceNotSupported(ServiceBus, String, ServiceId),
 }
 
 impl microservices::error::Error for DaemonError {}
@@ -88,7 +87,7 @@ impl From<DaemonError> for RpcMsg {
         let code = match err {
             DaemonError::StormEncoding(_) | DaemonError::Encoding(_) => FailureCode::Encoding,
             DaemonError::Esb(_) => FailureCode::Esb,
-            DaemonError::RequestNotSupported(_, _) | DaemonError::SourceNotSupported(_, _, _) => {
+            DaemonError::RequestNotSupported(_, _) /* | DaemonError::SourceNotSupported(_, _, _) */ => {
                 FailureCode::UnexpectedRequest
             }
             DaemonError::Store(_) => FailureCode::Store,
@@ -108,6 +107,7 @@ impl DaemonError {
         DaemonError::RequestNotSupported(bus, message.to_string())
     }
 
+    /*
     pub(crate) fn wrong_esb_msg_source(
         bus: ServiceBus,
         message: &impl ToString,
@@ -115,4 +115,5 @@ impl DaemonError {
     ) -> DaemonError {
         DaemonError::SourceNotSupported(bus, message.to_string(), source)
     }
+     */
 }

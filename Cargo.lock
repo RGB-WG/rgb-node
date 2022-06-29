@@ -485,9 +485,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87eba3c8c7f42ef17f6c659fc7416d0f4758cd3e58861ee63c5fa4a4dde649e4"
+checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
 dependencies = [
  "os_str_bytes",
 ]
@@ -1314,8 +1314,8 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.8.0-rc.8"
-source = "git+https://github.com/Internet2-WG/rust-microservices#8fc95d98401b619bc770d7432a3b88a197ede895"
+version = "0.8.0-rc.9"
+source = "git+https://github.com/Internet2-WG/rust-microservices#4f260d18690694a3283c9b49acc80053471e97dc"
 dependencies = [
  "amplify",
  "clap",
@@ -1805,7 +1805,7 @@ checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "rgb-cli"
-version = "0.8.0-alpha.1"
+version = "0.8.0-beta.2"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1829,8 +1829,8 @@ dependencies = [
 
 [[package]]
 name = "rgb-core"
-version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-core#f2f47d462f9ae33154875d4c6f2626f5c11b6baa"
+version = "0.8.0-beta.2"
+source = "git+https://github.com/RGB-WG/rgb-core#b9da100e5688f02e051aa565a523340de30b5361"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1850,8 +1850,8 @@ dependencies = [
 
 [[package]]
 name = "rgb-std"
-version = "0.8.0-beta.1"
-source = "git+https://github.com/RGB-WG/rgb-std#0451895bfee90027854eabcd4c43d38487bac47d"
+version = "0.8.0-beta.2"
+source = "git+https://github.com/RGB-WG/rgb-std#82d9d25b624825ee166b4cca741a4fa78416000f"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1871,7 +1871,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.8.0-alpha.1"
+version = "0.8.0-beta.2"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1904,7 +1904,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_rpc"
-version = "0.8.0-alpha.1"
+version = "0.8.0-beta.2"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2028,9 +2028,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.10"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a41d061efea015927ac527063765e73601444cdc344ba855bc7bd44578b25e1c"
+checksum = "3d92beeab217753479be2f74e54187a6aed4c125ff0703a866c3147a02f0c6dd"
 
 [[package]]
 name = "serde"
@@ -2262,8 +2262,8 @@ dependencies = [
 
 [[package]]
 name = "store_rpc"
-version = "0.8.0-beta.2"
-source = "git+https://github.com/Storm-WG/storm-stored#6c30e009276415b8906df533a3d4d8212a5050cf"
+version = "0.8.0-beta.3"
+source = "git+https://github.com/Storm-WG/storm-stored#eac87284eb8fa6e08bab4fa35a4d39d49fc350bf"
 dependencies = [
  "amplify",
  "colored",
