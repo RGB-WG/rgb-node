@@ -1,7 +1,7 @@
 [package]
 name = "rgb-cli"
 description = "RGB node command-line interface"
-version = "0.8.0-beta.2"
+version = "0.8.0-rc.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -16,15 +16,15 @@ path = "src/main.rs"
 name = "rgb-cli"
 
 [dependencies]
-amplify = "3.12.0"
-strict_encoding = "1.8.10"
-internet2 = "0.8.0-beta.1"
-microservices = { version = "0.8.0-rc.4", default-features = false, features = ["cli"], git = "https://github.com/Internet2-WG/rust-microservices" }
+amplify = "3.12.1"
+strict_encoding = "~0.8.0"
+internet2 = "0.8.0"
+microservices = { version = "0.8.0", default-features = false, features = ["cli"] }
 bitcoin = "0.28.1"
-psbt = "0.7.1"
-lnpbp = "0.7.0"
-rgb-std = { version = "0.8.0-beta.2", features = ["serde"], git = "https://github.com/RGB-WG/rgb-std" }
-rgb_rpc = { version = "0.8.0-alpha.2", path = "../rpc" }
+psbt = "0.8.0"
+lnpbp = "0.8.0"
+rgb-std = { version = "0.8.0-rc.1", features = ["serde"] }
+rgb_rpc = { version = "0.8.0-rc.1", path = "../rpc" }
 clap = { version = "~3.1.18", features = ["derive", "env"] }
 serde = "1"
 serde_json = "1"
@@ -34,13 +34,13 @@ shellexpand = "2.1"
 colored = "2"
 
 [build-dependencies]
-amplify = "3.12.0"
-strict_encoding = "1.8.10"
+amplify = "3.12.1"
+strict_encoding = "~0.8.0"
 bitcoin = "0.28.1"
-lnpbp = "0.7.0"
+lnpbp = "0.8.0"
 clap = { version = "~3.1.18", features = ["derive", "env"] }
 clap_complete = "~3.1.4"
-internet2 = "0.8.0-beta.1"
-rgb-std = { version = "0.8.0-beta.1", git = "https://github.com/RGB-WG/rgb-std" }
-rgb_rpc = { version = "0.8.0-beta.1", path = "../rpc" }
+internet2 = "0.8.0"
+rgb-std = { version = "0.8.0-rc.1" }
+rgb_rpc = { version = "0.8.0-rc.1", path = "../rpc" }
 configure_me_codegen = "0.4"

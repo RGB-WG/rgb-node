@@ -100,10 +100,10 @@ impl Db {
         Ok(())
     }
 
-    pub fn retrieve<'a, H: 'a + sha256t::Tag, T: StrictDecode>(
+    pub fn retrieve<Tag: sha256t::Tag + 'static, T: StrictDecode>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, H> + Debug + 'a,
+        key: impl TaggedHash<Tag> + Debug,
     ) -> Result<Option<T>, DaemonError> {
         debug!("Read object {:?}", key);
         let slice = key.into_inner();
@@ -133,10 +133,10 @@ impl Db {
         }
     }
 
-    pub fn store<'a, H: 'a + sha256t::Tag>(
+    pub fn store<Tag: sha256t::Tag + 'static>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, H> + Debug + 'a,
+        key: impl TaggedHash<Tag> + Debug,
         data: &impl StrictEncode,
     ) -> Result<(), DaemonError> {
         debug!("Store object {:?}", key);
@@ -158,10 +158,10 @@ impl Db {
         Ok(())
     }
 
-    pub fn store_merge<'a, H: 'a + sha256t::Tag>(
+    pub fn store_merge<Tag: sha256t::Tag + 'static>(
         &mut self,
         table: &'static str,
-        key: impl TaggedHash<'a, H> + Debug + Copy + 'a,
+        key: impl TaggedHash<Tag> + Debug + Copy,
         new_obj: impl StrictEncode + StrictDecode + MergeReveal + Clone,
     ) -> Result<(), DaemonError> {
         debug!("Store-merging object {:?}", key);

@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.8.0-beta.2"
+version = "0.8.0-rc.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -29,20 +29,20 @@ required-features = ["server"]
 
 [dependencies]
 # LNP/BP crates
-amplify = "3.12.0"
-strict_encoding = "1.8.8"
-commit_verify = "0.7.0" # TODO: Update to 0.8
-internet2 = { version = "0.8.0-rc.3", features = ["keygen", "zmq"] }
-microservices = { version = "0.8.0-rc.6", default-features = false, features = ["node"], git = "https://github.com/Internet2-WG/rust-microservices" }
-lnpbp = "0.7.0"
-bp-core = { version = "0.7.0", features = ["psbt"] }
-rgb-std = { version = "0.8.0-beta.2", git = "https://github.com/RGB-WG/rgb-std" }
-rgb_rpc = { version = "0.8.0-beta.2", path = "./rpc" }
-storm-core = "0.2"
-storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
-store_rpc = { version = "0.8.0-beta.3", git = "https://github.com/Storm-WG/storm-stored" }
+amplify = "3.12.1"
+strict_encoding = "~0.8.0"
+commit_verify = "0.8.0"
+internet2 = { version = "0.8.0", features = ["keygen", "zmq"] }
+microservices = { version = "0.8.0", default-features = false, features = ["node"] }
+lnpbp = "0.8.0"
+bp-core = { version = "0.8.0-beta.1", features = ["psbt"] }
+rgb-std = "0.8.0-rc.1"
+rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }
+storm-core = "0.3.0"
+storm_ext = { version = "0.8.0-alpha.2", git = "https://github.com/Storm-WG/storm-node" }
+store_rpc = "0.8.0-rc.1"
 bitcoin = "0.28.1"
-psbt = "0.7.1"
+psbt = "0.8.0"
 electrum-client = "0.10.1"
 # OS
 chrono = "0.4"
@@ -57,15 +57,15 @@ colored = "2.0.0"
 shellexpand = { version = "2.1", optional = true }
 
 [build-dependencies]
-amplify = "3.12.0"
-internet2 = "0.8.0-rc.3"
-microservices = { version = "0.8.0-rc.9", default-features = false, git = "https://github.com/Internet2-WG/rust-microservices" }
-lnpbp = "0.7.0"
-psbt = "0.7.1"
-rgb-std = { version = "0.8.0-beta.2", git = "https://github.com/RGB-WG/rgb-std" }
-rgb_rpc = { version = "0.8.0-beta.2", path = "./rpc" }
-storm_ext = { version = "0.8.0-alpha.1", git = "https://github.com/Storm-WG/storm-node" }
-store_rpc = { version = "0.8.0-beta.3", git = "https://github.com/Storm-WG/storm-stored" }
+amplify = "3.12.1"
+internet2 = "0.8.0"
+microservices = { version = "0.8.0", default-features = false }
+lnpbp = "0.8.0"
+psbt = "0.8.0"
+rgb-std = "0.8.0-rc.1"
+rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }
+storm_ext = { version = "0.8.0-alpha.2", git = "https://github.com/Storm-WG/storm-node" }
+store_rpc = "0.8.0-rc.1"
 clap = { version = "~3.1.18", features = ["env"] }
 clap_complete = "~3.1.4"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }

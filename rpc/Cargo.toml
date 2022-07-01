@@ -1,7 +1,7 @@
 [package]
 name = "rgb_rpc"
 description = "RGB node RPC API"
-version = "0.8.0-beta.2"
+version = "0.8.0-rc.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -14,14 +14,14 @@ readme = "../README.md"
 name = "rgb_rpc"
 
 [dependencies]
-amplify = "3.12.0"
-strict_encoding = "1.8.1"
-rgb-std = { version = "0.8.0-beta.2", git = "https://github.com/RGB-WG/rgb-std" }
-lnpbp = "0.7.0"
+amplify = "3.12.1"
+strict_encoding = "~0.8.0"
+rgb-std = "0.8.0-rc.1"
+lnpbp = "0.8.0"
 bitcoin = "0.28.1"
-psbt = "0.7.1"
-internet2 = "0.8.0-rc.3"
-microservices = { version = "0.8.0-rc.9", default-features = false, features = ["client"], git = "https://github.com/Internet2-WG/rust-microservices" }
+psbt = "0.8.0"
+internet2 = "0.8.0"
+microservices = { version = "0.8.0", default-features = false, features = ["client"] }
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", optional = true }
 serde_yaml = { version = "0.8.23", optional = true }
