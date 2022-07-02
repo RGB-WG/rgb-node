@@ -94,6 +94,7 @@ impl Client {
     fn response(&mut self) -> Result<RpcMsg, Error> {
         loop {
             if let Some(resp) = self.response_queue.pop() {
+                trace!("Got response {:?}", resp);
                 return Ok(resp);
             } else {
                 for poll in self.esb.recv_poll()? {
@@ -163,11 +164,13 @@ impl Client {
     pub fn outpoint_transitions(
         &mut self,
         outpoints: BTreeSet<OutPoint>,
+        progress: impl Fn(String),
     ) -> Result<TransitionsInfo, Error> {
         self.request(RpcMsg::OutpointTransitions(outpoints))?;
         loop {
             match self.response()?.failure_to_error()? {
                 RpcMsg::Transitions(info) => return Ok(info),
+                RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }
         }

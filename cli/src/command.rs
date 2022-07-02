@@ -155,14 +155,17 @@ impl Exec for Opts {
                 psbt_in,
                 psbt_out,
             } => {
+                // TODO: Add contracts
+
                 let psbt_bytes = fs::read(&psbt_in)?;
                 let mut psbt = Psbt::deserialize(&psbt_bytes)?;
                 let transition = Transition::strict_file_load(transition)?;
                 psbt.push_rgb_transition(transition)?;
+                // TODO: Set consumers
 
                 let outpoints: BTreeSet<_> =
                     psbt.inputs.iter().map(|input| input.previous_outpoint).collect();
-                let info = client.outpoint_transitions(outpoints.clone())?;
+                let info = client.outpoint_transitions(outpoints.clone(), progress)?;
                 for (cid, set) in info {
                     if cid == contract_id {
                         continue;
