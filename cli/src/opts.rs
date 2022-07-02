@@ -155,6 +155,11 @@ pub enum TransferCommand {
         #[clap(short, long)]
         send: Option<NodeAddr>,
 
+        /// Beneficiary blinded TXO seal - or witness transaction output numbers
+        /// containing allocations for the beneficiary.
+        #[clap(short, long = "endseal", required = true)]
+        endseals: Vec<SealEndpoint>,
+
         /// The final PSBT (not modified).
         psbt: PathBuf,
 
@@ -164,11 +169,6 @@ pub enum TransferCommand {
         /// Output file to save the final consignment. If not given, the source
         /// consignment file is overwritten.
         consignment_out: Option<PathBuf>,
-
-        /// Beneficiary blinded TXO seal - or witness transaction output numbers
-        /// containing allocations for the beneficiary.
-        #[clap(min_values = 1)]
-        endseals: Vec<SealEndpoint>,
     },
 }
 

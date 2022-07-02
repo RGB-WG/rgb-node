@@ -553,7 +553,7 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__transfer__finalize)
-            opts="-s -h -R -n -v --send --help --rpc --chain --verbose <PSBT> <CONSIGNMENT_IN> <CONSIGNMENT_OUT> <ENDSEALS>..."
+            opts="-s -e -h -R -n -v --send --endseal --help --rpc --chain --verbose <PSBT> <CONSIGNMENT_IN> <CONSIGNMENT_OUT>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -564,6 +564,14 @@ _rgb-cli() {
                     return 0
                     ;;
                 -s)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --endseal)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -e)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
