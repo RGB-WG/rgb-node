@@ -257,8 +257,6 @@ impl Exec for Opts {
                     let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
                     // TODO: Call tapret_finalize on PSBT and save PSBT
                     transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
-
-                    // TODO: Register disclosure with the client
                 }
             },
         }

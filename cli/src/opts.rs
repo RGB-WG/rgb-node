@@ -95,7 +95,7 @@ pub enum TransferCommand {
     /// Build state transfer consignment draft
     #[display("compose {contract_id} ...")]
     Compose {
-        /// Filter specific transition types
+        /// Transition types to be always included into the state transfer
         #[clap(short = 't', long = "node-type")]
         node_types: Vec<TransitionType>,
 
@@ -200,6 +200,7 @@ pub enum ContractCommand {
     /// Request contract consignment
     #[display("consignment {contract_id} ...")]
     Consignment {
+        /// Transition types to be always included into the consignment.
         #[clap(short = 't', long = "node-type")]
         node_types: Vec<TransitionType>,
 

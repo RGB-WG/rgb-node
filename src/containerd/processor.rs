@@ -325,6 +325,7 @@ impl Runtime {
         for (contract_id, bundle) in &bundles {
             messages.insert(lnpbp4::ProtocolId::from(*contract_id), bundle.bundle_id().into());
         }
+        // TODO: Use other LNPBP-4 messages
         // TODO: Add LNPBP4 and Tapret PSBT proprietary keys for hardware wallets
 
         let anchor = Anchor::commit(&mut psbt, messages)?;
