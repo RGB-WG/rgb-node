@@ -195,17 +195,32 @@ impl Exec for Opts {
 
                 TransferCommand::Combine {
                     contract_id,
+                    outpoints,
                     transition,
                     psbt_in,
                     psbt_out,
                 } => {
-                    // TODO: Add contracts
-
                     let psbt_bytes = fs::read(&psbt_in)?;
                     let mut psbt = Psbt::deserialize(&psbt_bytes)?;
+
+                    /*
+                    // TODO: Fill-in contract info with a special command
+                    if !psbt.has_rgb_contract(contract_id) {
+                        // TODO: Support correct node type filtering
+                        let contract = client.contract(contract_id, empty!(), progress)?;
+                        psbt.set_rgb_contract(contract)?;
+                    }
+                     */
+
                     let transition = Transition::strict_file_load(transition)?;
+                    let node_id = transition.node_id();
                     psbt.push_rgb_transition(transition)?;
-                    // TODO: Set consumers
+
+                    for input in &mut psbt.inputs {
+                        if outpoints.contains(&input.previous_outpoint) {
+                            input.set_rgb_consumer(contract_id, node_id)?;
+                        }
+                    }
 
                     let outpoints: BTreeSet<_> =
                         psbt.inputs.iter().map(|input| input.previous_outpoint).collect();

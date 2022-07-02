@@ -138,6 +138,10 @@ pub enum TransferCommand {
         /// information. If not given, the source PSBT file is overwritten.
         #[clap(short = 'o', long = "out")]
         psbt_out: Option<PathBuf>,
+
+        /// Bitcoin transaction UTXOs which will be spent by the transfer
+        #[clap(required = true)]
+        outpoints: Vec<OutPoint>,
     },
 
     /// Finalize and (optionally) send state transfer consignment to beneficiary.

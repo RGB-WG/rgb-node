@@ -428,7 +428,7 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__transfer__combine)
-            opts="-o -h -R -n -v --out --help --rpc --chain --verbose <CONTRACT_ID> <TRANSITION> <PSBT_IN>"
+            opts="-o -h -R -n -v --out --help --rpc --chain --verbose <CONTRACT_ID> <TRANSITION> <PSBT_IN> <OUTPOINTS>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
