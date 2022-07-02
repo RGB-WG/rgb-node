@@ -154,14 +154,15 @@ impl Runtime {
         }
 
         let genesis = consignment.genesis();
+        debug!("Indexing genesis");
         trace!("Genesis: {:?}", genesis);
         self.db.store_merge(Db::GENESIS, contract_id, genesis.clone())?;
-
-        trace!("Indexing genesis");
         for seal in genesis.revealed_seals().unwrap_or_default() {
+            debug!("Adding outpoint for seal {}", seal);
             let index_id = Db::index_two_pieces(seal.txid, seal.vout);
             self.db.insert_into_set(Db::OUTPOINTS, index_id, contract_id)?;
         }
+        self.db.store(Db::NODE_CONTRACTS, contract_id, &contract_id)?;
 
         for (anchor, bundle) in consignment.anchored_bundles() {
             let bundle_id = bundle.bundle_id();
@@ -182,7 +183,6 @@ impl Runtime {
                 debug!("Processing state transition {}", node_id);
                 trace!("State transition: {:?}", transition);
 
-                // TODO: For owned state, use only state which is a part of state tips
                 state.add_transition(witness_txid, transition);
                 trace!("Contract state now is {:?}", state);
 
@@ -209,9 +209,10 @@ impl Runtime {
             debug!("Processing state extension {}", node_id);
             trace!("State transition: {:?}", extension);
 
-            // TODO: For owned state, use only state which is a part of state tips
             state.add_extension(&extension);
             trace!("Contract state now is {:?}", state);
+
+            self.db.store(Db::NODE_CONTRACTS, node_id, &contract_id)?;
 
             self.db.store_merge(Db::EXTENSIONS, node_id, extension.clone())?;
             // We do not store seal outpoint here - or will have to store it into a separate
@@ -274,10 +275,19 @@ impl Runtime {
         outpoints: BTreeSet<OutPoint>,
     ) -> Result<ContractStateMap, DaemonError> {
         let mut res: ContractStateMap = bmap! {};
-        for outpoint in &outpoints {
-            let index = Db::index_two_pieces(outpoint.txid, outpoint.vout);
+
+        let indexes = if outpoints.is_empty() {
+            self.db.ids(Db::OUTPOINTS)?
+        } else {
+            outpoints
+                .iter()
+                .map(|outpoint| Db::index_two_pieces(outpoint.txid, outpoint.vout))
+                .collect()
+        };
+
+        for index in &indexes {
             let set: BTreeSet<NodeId> =
-                self.db.retrieve_h(Db::OUTPOINTS, index)?.unwrap_or_default();
+                self.db.retrieve_h(Db::OUTPOINTS, *index)?.unwrap_or_default();
             for node_id in set {
                 let contract_id: ContractId = self
                     .db
@@ -289,9 +299,16 @@ impl Runtime {
                     .retrieve(Db::CONTRACTS, contract_id)?
                     .ok_or(StashError::StateAbsent(contract_id))?;
 
-                res.insert(contract_id, state.filter_outpoint_state(&outpoints));
+                let map = if outpoints.is_empty() {
+                    state.all_outpoint_state()
+                } else {
+                    state.filter_outpoint_state(&outpoints)
+                };
+
+                res.insert(contract_id, map);
             }
         }
+
         Ok(res)
     }
 

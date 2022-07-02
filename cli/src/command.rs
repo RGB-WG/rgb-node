@@ -24,7 +24,7 @@ use rgb::{Node, StateTransfer, Transition, TransitionBundle};
 use rgb_rpc::{Client, ContractValidity};
 use strict_encoding::{StrictDecode, StrictEncode};
 
-use crate::opts::{ContractCommand, TransferCommand};
+use crate::opts::{ContractCommand, OutpointCommand, TransferCommand};
 use crate::{Command, Opts};
 
 #[derive(Debug, Display, Error, From)]
@@ -55,6 +55,15 @@ impl Command {
         match self {
             Command::Contract(subcommand) => subcommand.action_string(),
             Command::Transfer(subcommand) => subcommand.action_string(),
+            Command::Outpoint(subcommand) => subcommand.action_string(),
+        }
+    }
+}
+
+impl OutpointCommand {
+    pub fn action_string(&self) -> String {
+        match self {
+            Self::State { .. } => s!("Listing outpoints"),
         }
     }
 }
@@ -140,7 +149,10 @@ impl Exec for Opts {
                 }
                 ContractCommand::State { contract_id } => {
                     let state = client.contract_state(contract_id)?;
-                    println!("{}", serde_yaml::to_string(&state).unwrap());
+                    println!(
+                        "{}",
+                        serde_yaml::to_string(&state).expect("broken contract state serde")
+                    );
                 }
                 ContractCommand::Consignment {
                     node_types,
@@ -150,6 +162,18 @@ impl Exec for Opts {
                     println!("{}", contract);
                 }
             },
+
+            Command::Outpoint(subcommand) => match subcommand {
+                OutpointCommand::State { outpoints } => {
+                    let state_map =
+                        client.outpoint_state(outpoints.into_iter().collect(), progress)?;
+                    println!(
+                        "{}",
+                        serde_yaml::to_string(&state_map).expect("broken outpoint state serde")
+                    );
+                }
+            },
+
             Command::Transfer(subcommand) => match subcommand {
                 TransferCommand::Compose {
                     node_types,

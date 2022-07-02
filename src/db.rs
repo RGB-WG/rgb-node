@@ -103,6 +103,10 @@ impl Db {
         Ok(())
     }
 
+    pub fn ids(&mut self, table: &'static str) -> Result<BTreeSet<ChunkId>, DaemonError> {
+        self.store.ids(table.to_owned()).map_err(DaemonError::from)
+    }
+
     pub fn retrieve<Tag: sha256t::Tag + 'static, T: StrictDecode>(
         &mut self,
         table: &'static str,

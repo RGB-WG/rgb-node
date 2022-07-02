@@ -66,10 +66,27 @@ pub enum Command {
     #[display("contract {0}")]
     Contract(ContractCommand),
 
+    /// Information on outpoints
+    #[clap(subcommand)]
+    #[display("outpoint {0}")]
+    Outpoint(OutpointCommand),
+
     /// Work with state transfers
     #[clap(subcommand)]
     #[display("transfer {0}")]
     Transfer(TransferCommand),
+}
+
+/// Command-line OUTPOINT subcommands:
+#[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
+pub enum OutpointCommand {
+    /// Return known outpoint state
+    #[display("state ...")]
+    State {
+        /// Outpoints to return the state for
+        #[clap(short, long = "outpoint")]
+        outpoints: Vec<OutPoint>,
+    },
 }
 
 /// Command-line transfer subcommands:
@@ -78,6 +95,7 @@ pub enum TransferCommand {
     /// Build state transfer consignment draft
     #[display("compose {contract_id} ...")]
     Compose {
+        /// Filter specific transition types
         #[clap(short = 't', long = "node-type")]
         node_types: Vec<TransitionType>,
 
