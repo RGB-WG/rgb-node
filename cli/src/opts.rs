@@ -207,4 +207,23 @@ pub enum ContractCommand {
         /// Contract id to read source
         contract_id: ContractId,
     },
+
+    /// Embed contract information into PSBT file
+    #[display("embed {contract_id}")]
+    Embed {
+        /// Transition types to be always included into the consignment.
+        #[clap(short = 't', long = "node-type")]
+        node_types: Vec<TransitionType>,
+
+        /// Contract id to read state
+        contract_id: ContractId,
+
+        /// Input file containing PSBT of the transfer witness transaction.
+        psbt_in: PathBuf,
+
+        /// Output file to save the PSBT updated with state transition(s)
+        /// information. If not given, the source PSBT file is overwritten.
+        #[clap(short = 'o', long = "out")]
+        psbt_out: Option<PathBuf>,
+    },
 }

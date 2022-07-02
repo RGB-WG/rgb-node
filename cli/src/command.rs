@@ -79,6 +79,9 @@ impl ContractCommand {
             Self::Consignment { contract_id, .. } => {
                 format!("Retrieving contract source for {}", contract_id)
             }
+            ContractCommand::Embed { contract_id, .. } => {
+                format!("Embedding {} into PSBT", contract_id)
+            }
         }
     }
 }
@@ -160,6 +163,23 @@ impl Exec for Opts {
                 } => {
                     let contract = client.contract(contract_id, node_types, progress)?;
                     println!("{}", contract);
+                }
+                ContractCommand::Embed {
+                    node_types,
+                    contract_id,
+                    psbt_in,
+                    psbt_out,
+                } => {
+                    let contract = client.contract(contract_id, node_types, progress)?;
+                    let psbt_bytes = fs::read(&psbt_in)?;
+                    let mut psbt = Psbt::deserialize(&psbt_bytes)?;
+                    if psbt.has_rgb_contract(contract_id) {
+                        eprintln!("Contract {} is already present in the PSBT", contract_id);
+                        return Ok(());
+                    }
+                    psbt.set_rgb_contract(contract)?;
+                    let psbt_bytes = psbt.serialize();
+                    fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
                 }
             },
 

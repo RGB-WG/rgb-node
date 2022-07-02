@@ -95,8 +95,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (consignment)
 _arguments "${_arguments_options[@]}" \
-'*-t+[]:NODE_TYPES: ' \
-'*--node-type=[]:NODE_TYPES: ' \
+'*-t+[Transition types to be always included into the consignment]:NODE_TYPES: ' \
+'*--node-type=[Transition types to be always included into the consignment]:NODE_TYPES: ' \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-n+[Blockchain to use]:CHAIN: ' \
@@ -106,6 +106,24 @@ _arguments "${_arguments_options[@]}" \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
 ':contract-id -- Contract id to read source:' \
+&& ret=0
+;;
+(embed)
+_arguments "${_arguments_options[@]}" \
+'*-t+[Transition types to be always included into the consignment]:NODE_TYPES: ' \
+'*--node-type=[Transition types to be always included into the consignment]:NODE_TYPES: ' \
+'-o+[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
+'--out=[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
+'-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
+'-n+[Blockchain to use]:CHAIN: ' \
+'--chain=[Blockchain to use]:CHAIN: ' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'*-v[Set verbosity level]' \
+'*--verbose[Set verbosity level]' \
+':contract-id -- Contract id to read state:' \
+':psbt-in -- Input file containing PSBT of the transfer witness transaction:' \
 && ret=0
 ;;
 (help)
@@ -194,8 +212,8 @@ _arguments "${_arguments_options[@]}" \
         case $line[1] in
             (compose)
 _arguments "${_arguments_options[@]}" \
-'*-t+[Filter specific transition types]:NODE_TYPES: ' \
-'*--node-type=[Filter specific transition types]:NODE_TYPES: ' \
+'*-t+[Transition types to be always included into the state transfer]:NODE_TYPES: ' \
+'*--node-type=[Transition types to be always included into the state transfer]:NODE_TYPES: ' \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-n+[Blockchain to use]:CHAIN: ' \
@@ -308,9 +326,15 @@ _rgb-cli__contract_commands() {
 'register:Add new contract to the node' \
 'state:Query contract state' \
 'consignment:Request contract consignment' \
+'embed:Embed contract information into PSBT file' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'rgb-cli contract commands' commands "$@"
+}
+(( $+functions[_rgb-cli__contract__embed_commands] )) ||
+_rgb-cli__contract__embed_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-cli contract embed commands' commands "$@"
 }
 (( $+functions[_rgb-cli__transfer__finalize_commands] )) ||
 _rgb-cli__transfer__finalize_commands() {

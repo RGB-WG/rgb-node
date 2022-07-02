@@ -50,6 +50,7 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             [CompletionResult]::new('register', 'register', [CompletionResultType]::ParameterValue, 'Add new contract to the node')
             [CompletionResult]::new('state', 'state', [CompletionResultType]::ParameterValue, 'Query contract state')
             [CompletionResult]::new('consignment', 'consignment', [CompletionResultType]::ParameterValue, 'Request contract consignment')
+            [CompletionResult]::new('embed', 'embed', [CompletionResultType]::ParameterValue, 'Embed contract information into PSBT file')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
             break
         }
@@ -88,8 +89,23 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             break
         }
         'rgb-cli;contract;consignment' {
-            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 't')
-            [CompletionResult]::new('--node-type', 'node-type', [CompletionResultType]::ParameterName, 'node-type')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Transition types to be always included into the consignment')
+            [CompletionResult]::new('--node-type', 'node-type', [CompletionResultType]::ParameterName, 'Transition types to be always included into the consignment')
+            [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
+            [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')
+            [CompletionResult]::new('--chain', 'chain', [CompletionResultType]::ParameterName, 'Blockchain to use')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help information')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help information')
+            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'Set verbosity level')
+            [CompletionResult]::new('--verbose', 'verbose', [CompletionResultType]::ParameterName, 'Set verbosity level')
+            break
+        }
+        'rgb-cli;contract;embed' {
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Transition types to be always included into the consignment')
+            [CompletionResult]::new('--node-type', 'node-type', [CompletionResultType]::ParameterName, 'Transition types to be always included into the consignment')
+            [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten')
+            [CompletionResult]::new('--out', 'out', [CompletionResultType]::ParameterName, 'Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten')
             [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')
@@ -160,8 +176,8 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             break
         }
         'rgb-cli;transfer;compose' {
-            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Filter specific transition types')
-            [CompletionResult]::new('--node-type', 'node-type', [CompletionResultType]::ParameterName, 'Filter specific transition types')
+            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'Transition types to be always included into the state transfer')
+            [CompletionResult]::new('--node-type', 'node-type', [CompletionResultType]::ParameterName, 'Transition types to be always included into the state transfer')
             [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')
