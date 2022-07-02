@@ -61,38 +61,20 @@ pub struct Opts {
 /// Command-line commands:
 #[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
 pub enum Command {
-    /// Add new contract to the node
-    #[display("register ...")]
-    Register {
-        /// Force importing of valid contract containing non-mined transactions
-        #[clap(long)]
-        force: bool,
+    /// Contract management
+    #[clap(subcommand)]
+    #[display("contract {0}")]
+    Contract(ContractCommand),
 
-        /// Contract source in Bech32m encoding (starting with `rgbc1...`)
-        contract: Contract,
-    },
+    /// Work with state transfers
+    #[clap(subcommand)]
+    #[display("transfer {0}")]
+    Transfer(TransferCommand),
+}
 
-    /// List all known contract ids
-    #[display("contracts")]
-    Contracts,
-
-    /// Query contract state
-    #[display("state {contract_id}")]
-    State {
-        /// Contract id to read state
-        contract_id: ContractId,
-    },
-
-    /// Request contract source
-    #[display("contract {contract_id} ...")]
-    Contract {
-        #[clap(short = 't', long = "node-type")]
-        node_types: Vec<TransitionType>,
-
-        /// Contract id to read source
-        contract_id: ContractId,
-    },
-
+/// Command-line transfer subcommands:
+#[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
+pub enum TransferCommand {
     /// Build state transfer consignment draft
     #[display("compose {contract_id} ...")]
     Compose {
@@ -110,7 +92,7 @@ pub enum Command {
         output: PathBuf,
     },
 
-    /// Add transfer information to PSBT.
+    /// Update PSBT with the information from the state transition.
     ///
     /// Generates blank state transitions for all other contracts affected
     /// by the given PSBT and adds to PSBT information about the state transition.
@@ -123,8 +105,8 @@ pub enum Command {
     ///
     /// The provided PSBT inputs/outputs should not be modified after this
     /// operation (such that txid would not change).
-    #[display("transfer ...")]
-    Transfer {
+    #[display("combine ...")]
+    Combine {
         /// Contract id under which the main state transfer is happening.
         contract_id: ContractId,
 
@@ -140,12 +122,12 @@ pub enum Command {
         psbt_out: Option<PathBuf>,
     },
 
-    /// Finalize and (optionally) send consignment to beneficiary.
+    /// Finalize and (optionally) send state transfer consignment to beneficiary.
     ///
     /// Finalize consignment with the information from the finalized PSBT file,
     /// and optionally sends final consignment to beneficiary via Storm Bifrost
     /// (LNP Node).
-    #[display("transfer ...")]
+    #[display("finalize ...")]
     Finalize {
         /// Bifrost server to send state transfer to
         #[clap(short, long)]
@@ -165,5 +147,41 @@ pub enum Command {
         /// containing allocations for the beneficiary.
         #[clap(min_values = 1)]
         endseals: Vec<SealEndpoint>,
+    },
+}
+
+/// Command-line constract subcommands:
+#[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
+pub enum ContractCommand {
+    /// List all known contract ids
+    #[display("list")]
+    List,
+
+    /// Add new contract to the node
+    #[display("register ...")]
+    Register {
+        /// Force importing of valid contract containing non-mined transactions
+        #[clap(long)]
+        force: bool,
+
+        /// Contract source in Bech32m encoding (starting with `rgbc1...`)
+        contract: Contract,
+    },
+
+    /// Query contract state
+    #[display("state {contract_id}")]
+    State {
+        /// Contract id to read state
+        contract_id: ContractId,
+    },
+
+    /// Request contract consignment
+    #[display("consignment {contract_id} ...")]
+    Consignment {
+        #[clap(short = 't', long = "node-type")]
+        node_types: Vec<TransitionType>,
+
+        /// Contract id to read source
+        contract_id: ContractId,
     },
 }

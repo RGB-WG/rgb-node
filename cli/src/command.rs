@@ -24,6 +24,7 @@ use rgb::{Node, StateTransfer, Transition, TransitionBundle};
 use rgb_rpc::{Client, ContractValidity};
 use strict_encoding::{StrictDecode, StrictEncode};
 
+use crate::opts::{ContractCommand, TransferCommand};
 use crate::{Command, Opts};
 
 #[derive(Debug, Display, Error, From)]
@@ -52,22 +53,38 @@ pub enum Error {
 impl Command {
     pub fn action_string(&self) -> String {
         match self {
-            Command::Register { contract, .. } => {
+            Command::Contract(subcommand) => subcommand.action_string(),
+            Command::Transfer(subcommand) => subcommand.action_string(),
+        }
+    }
+}
+
+impl ContractCommand {
+    pub fn action_string(&self) -> String {
+        match self {
+            Self::Register { contract, .. } => {
                 format!("Registering contract {}", contract.contract_id())
             }
-            Command::Contracts => s!("Listing contracts"),
-            Command::State { contract_id } => format!("Quering state of {}", contract_id),
-            Command::Contract { contract_id, .. } => {
+            Self::List => s!("Listing contracts"),
+            Self::State { contract_id } => format!("Querying state of {}", contract_id),
+            Self::Consignment { contract_id, .. } => {
                 format!("Retrieving contract source for {}", contract_id)
             }
-            Command::Compose { contract_id, .. } => {
+        }
+    }
+}
+
+impl TransferCommand {
+    pub fn action_string(&self) -> String {
+        match self {
+            Self::Compose { contract_id, .. } => {
                 format!("Composing consignment for state transfer for contract {}", contract_id)
             }
-            Command::Transfer { .. } => s!("Preparing PSBT for the state transfer"),
-            Command::Finalize {
+            Self::Combine { .. } => s!("Preparing PSBT for the state transfer"),
+            Self::Finalize {
                 send: Some(addr), ..
             } => format!("Finalizing state transfer and sending it to {}", addr),
-            Command::Finalize { send: None, .. } => s!("Finalizing state transfer"),
+            Self::Finalize { send: None, .. } => s!("Finalizing state transfer"),
         }
     }
 }
@@ -89,118 +106,122 @@ impl Exec for Opts {
         };
 
         match self.command {
-            Command::Register { contract, force } => {
-                match client.register_contract(contract, force, progress)? {
-                    ContractValidity::Valid => {
-                        println!("{}: contract is valid and imported", "Success".ended())
-                    }
-                    ContractValidity::Invalid(status) => {
-                        eprintln!("{}: contract is invalid. Detailed report:", "Error".err());
-                        eprintln!("{}", serde_yaml::to_string(&status).unwrap());
-                    }
-                    ContractValidity::UnknownTxids(txids) => {
-                        eprintln!(
-                            "{}: contract is valid, but some of underlying transactions are still \
-                             not mined",
-                            "Warning".bold().bright_yellow()
-                        );
-                        eprintln!("The list of non-mined transaction ids:");
-                        for txid in txids {
-                            println!("- {}", txid);
+            Command::Contract(subcommand) => match subcommand {
+                ContractCommand::Register { contract, force } => {
+                    match client.register_contract(contract, force, progress)? {
+                        ContractValidity::Valid => {
+                            println!("{}: contract is valid and imported", "Success".ended())
                         }
-                        eprintln!(
-                            "{}: contract was not imported. To import the contract, re-run the \
-                             command with {} argument",
-                            "Warning".bold().bright_yellow(),
-                            "--force".bold().bright_white(),
-                        );
+                        ContractValidity::Invalid(status) => {
+                            eprintln!("{}: contract is invalid. Detailed report:", "Error".err());
+                            eprintln!("{}", serde_yaml::to_string(&status).unwrap());
+                        }
+                        ContractValidity::UnknownTxids(txids) => {
+                            eprintln!(
+                                "{}: contract is valid, but some of underlying transactions are \
+                                 still not mined",
+                                "Warning".bold().bright_yellow()
+                            );
+                            eprintln!("The list of non-mined transaction ids:");
+                            for txid in txids {
+                                println!("- {}", txid);
+                            }
+                            eprintln!(
+                                "{}: contract was not imported. To import the contract, re-run \
+                                 the command with {} argument",
+                                "Warning".bold().bright_yellow(),
+                                "--force".bold().bright_white(),
+                            );
+                        }
                     }
                 }
-            }
-            Command::Contracts => {
-                client.list_contracts()?.iter().for_each(|id| println!("{}", id));
-            }
-            Command::State { contract_id } => {
-                let state = client.contract_state(contract_id)?;
-                println!("{}", serde_yaml::to_string(&state).unwrap());
-            }
-            Command::Contract {
-                node_types,
-                contract_id,
-            } => {
-                let contract = client.contract(contract_id, node_types, progress)?;
-                println!("{}", contract);
-            }
-            Command::Compose {
-                node_types,
-                contract_id,
-                outpoints,
-                output,
-            } => {
-                let transfer = client.consign(
-                    contract_id,
+                ContractCommand::List => {
+                    client.list_contracts()?.iter().for_each(|id| println!("{}", id));
+                }
+                ContractCommand::State { contract_id } => {
+                    let state = client.contract_state(contract_id)?;
+                    println!("{}", serde_yaml::to_string(&state).unwrap());
+                }
+                ContractCommand::Consignment {
                     node_types,
-                    outpoints.into_iter().collect(),
-                    progress,
-                )?;
-                println!("Saving consignment to {}", output.display());
-                let file = fs::File::create(output)?;
-                transfer.strict_encode(file)?;
-                println!("{}", "Success".ended());
-            }
-
-            Command::Transfer {
-                contract_id,
-                transition,
-                psbt_in,
-                psbt_out,
-            } => {
-                // TODO: Add contracts
-
-                let psbt_bytes = fs::read(&psbt_in)?;
-                let mut psbt = Psbt::deserialize(&psbt_bytes)?;
-                let transition = Transition::strict_file_load(transition)?;
-                psbt.push_rgb_transition(transition)?;
-                // TODO: Set consumers
-
-                let outpoints: BTreeSet<_> =
-                    psbt.inputs.iter().map(|input| input.previous_outpoint).collect();
-                let state_map = client.outpoint_state(outpoints.clone(), progress)?;
-                for (cid, outpoint_map) in state_map {
-                    if cid == contract_id {
-                        continue;
-                    }
-                    let blank_bundle = TransitionBundle::blank(&outpoint_map, &bmap! {})?;
-                    for (transition, indexes) in blank_bundle.revealed_iter() {
-                        psbt.push_rgb_transition(transition.clone())?;
-                        for no in indexes {
-                            psbt.inputs[*no as usize]
-                                .set_rgb_consumer(contract_id, transition.node_id())?;
-                        }
-                    }
+                    contract_id,
+                } => {
+                    let contract = client.contract(contract_id, node_types, progress)?;
+                    println!("{}", contract);
+                }
+            },
+            Command::Transfer(subcommand) => match subcommand {
+                TransferCommand::Compose {
+                    node_types,
+                    contract_id,
+                    outpoints,
+                    output,
+                } => {
+                    let transfer = client.consign(
+                        contract_id,
+                        node_types,
+                        outpoints.into_iter().collect(),
+                        progress,
+                    )?;
+                    println!("Saving consignment to {}", output.display());
+                    let file = fs::File::create(output)?;
+                    transfer.strict_encode(file)?;
+                    println!("{}", "Success".ended());
                 }
 
-                let psbt_bytes = psbt.serialize();
-                fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
-            }
+                TransferCommand::Combine {
+                    contract_id,
+                    transition,
+                    psbt_in,
+                    psbt_out,
+                } => {
+                    // TODO: Add contracts
 
-            Command::Finalize {
-                psbt: psbt_path,
-                consignment_in,
-                consignment_out,
-                endseals,
-                send,
-                // TODO: Add PSBT out
-            } => {
-                let psbt_bytes = fs::read(&psbt_path)?;
-                let psbt = Psbt::deserialize(&psbt_bytes)?;
-                let consignment = StateTransfer::strict_file_load(&consignment_in)?;
-                let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
-                // TODO: Call tapret_finalize on PSBT and save PSBT
-                transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+                    let psbt_bytes = fs::read(&psbt_in)?;
+                    let mut psbt = Psbt::deserialize(&psbt_bytes)?;
+                    let transition = Transition::strict_file_load(transition)?;
+                    psbt.push_rgb_transition(transition)?;
+                    // TODO: Set consumers
 
-                // TODO: Register disclosure with the client
-            }
+                    let outpoints: BTreeSet<_> =
+                        psbt.inputs.iter().map(|input| input.previous_outpoint).collect();
+                    let state_map = client.outpoint_state(outpoints.clone(), progress)?;
+                    for (cid, outpoint_map) in state_map {
+                        if cid == contract_id {
+                            continue;
+                        }
+                        let blank_bundle = TransitionBundle::blank(&outpoint_map, &bmap! {})?;
+                        for (transition, indexes) in blank_bundle.revealed_iter() {
+                            psbt.push_rgb_transition(transition.clone())?;
+                            for no in indexes {
+                                psbt.inputs[*no as usize]
+                                    .set_rgb_consumer(contract_id, transition.node_id())?;
+                            }
+                        }
+                    }
+
+                    let psbt_bytes = psbt.serialize();
+                    fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
+                }
+
+                TransferCommand::Finalize {
+                    psbt: psbt_path,
+                    consignment_in,
+                    consignment_out,
+                    endseals,
+                    send,
+                    // TODO: Add PSBT out
+                } => {
+                    let psbt_bytes = fs::read(&psbt_path)?;
+                    let psbt = Psbt::deserialize(&psbt_bytes)?;
+                    let consignment = StateTransfer::strict_file_load(&consignment_in)?;
+                    let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
+                    // TODO: Call tapret_finalize on PSBT and save PSBT
+                    transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+
+                    // TODO: Register disclosure with the client
+                }
+            },
         }
 
         Ok(())
