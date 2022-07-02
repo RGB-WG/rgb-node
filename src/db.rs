@@ -66,8 +66,11 @@ impl Db {
             Db::ATTACHMENT_CHUNKS,
             Db::ATTACHMENT_INDEX,
             Db::ALU_LIBS,
+            Db::OUTPOINTS,
+            Db::NODE_CONTRACTS,
             Db::TRANSITION_WITNESS,
             Db::CONTRACT_TRANSITIONS,
+            Db::DISCLOSURES,
         ] {
             store.use_table(table.to_owned()).map_err(LaunchError::from)?;
         }
