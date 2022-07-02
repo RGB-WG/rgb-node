@@ -79,7 +79,7 @@ impl ContractCommand {
             Self::Consignment { contract_id, .. } => {
                 format!("Retrieving contract source for {}", contract_id)
             }
-            ContractCommand::Embed { contract_id, .. } => {
+            Self::Embed { contract_id, .. } => {
                 format!("Embedding {} into PSBT", contract_id)
             }
         }
@@ -222,15 +222,6 @@ impl Exec for Opts {
                 } => {
                     let psbt_bytes = fs::read(&psbt_in)?;
                     let mut psbt = Psbt::deserialize(&psbt_bytes)?;
-
-                    /*
-                    // TODO: Fill-in contract info with a special command
-                    if !psbt.has_rgb_contract(contract_id) {
-                        // TODO: Support correct node type filtering
-                        let contract = client.contract(contract_id, empty!(), progress)?;
-                        psbt.set_rgb_contract(contract)?;
-                    }
-                     */
 
                     let transition = Transition::strict_file_load(transition)?;
                     let node_id = transition.node_id();

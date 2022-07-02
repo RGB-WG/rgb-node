@@ -273,9 +273,9 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bp-core"
-version = "0.8.0-beta.1"
+version = "0.8.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8d6f0c002f4d4c5c61ee24ef4d1a8f5da62cbc6cba8ef8b548b005c9b392bbb"
+checksum = "b37606d0f9b2c13cc1ac5bf81dbe4dc57479edc86d891be62235ca415b21600b"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -291,9 +291,9 @@ dependencies = [
 
 [[package]]
 name = "bp-dbc"
-version = "0.8.0-alpha.1"
+version = "0.8.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b996214a85599017d3836caf624fe730d900a6aba88508d74884bbd8a3ae932"
+checksum = "12cad35fd1f038ab75f078b3d51a005162905fe0f915b3efd14eb89a5c26dae5"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -308,9 +308,9 @@ dependencies = [
 
 [[package]]
 name = "bp-seals"
-version = "0.8.0-alpha.1"
+version = "0.8.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fbd026d609efb33e6af6aa5cf5d42b63a2fe8047ae440c70dfae74f05a02e26"
+checksum = "6c06a238a7121b96522c327148e26d176e87ef0f10e5d9ad09945df9bb3c44d6"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -770,9 +770,9 @@ dependencies = [
 
 [[package]]
 name = "descriptor-wallet"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a5712fee424fc1d817969ca31208ffb5c364ee47a192574bd7b5f6fa514629b"
+checksum = "c2ca925ccf1ac313aa1289d60ba54864073dc8694bee11d74bc4b7ff99580669"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1516,15 +1516,16 @@ dependencies = [
 
 [[package]]
 name = "psbt"
-version = "0.8.0"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44d284502e21e6e016ef61100d0e6e8de8acf9140780afbbaeb1cb9cdf159c1d"
+checksum = "f7ff2cb41f19427dfb60bac4f50a2b3383aaf7ae7016c612e2d8dbd877026bbc"
 dependencies = [
  "amplify",
  "bitcoin",
  "bitcoin_hd",
  "bitcoin_onchain",
  "bitcoin_scripts",
+ "commit_verify",
  "descriptors",
  "miniscript",
  "serde 1.0.138",
@@ -1834,7 +1835,7 @@ dependencies = [
 [[package]]
 name = "rgb-core"
 version = "0.8.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-core#267052b0d0fcb7af42cfa98333bc70642eaef5ff"
+source = "git+https://github.com/RGB-WG/rgb-core#4a333f022b980974cd548daa3814db1e446378b1"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1855,7 +1856,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-std#2ab861f93577550c875e24e9571b280614d49b03"
+source = "git+https://github.com/RGB-WG/rgb-std#e3c679465ead089bf8dd73f7c99e8f8274bb05c4"
 dependencies = [
  "amplify",
  "bitcoin",
