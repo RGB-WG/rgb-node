@@ -17,10 +17,10 @@ use rgb::psbt::RgbExt;
 use rgb::schema::TransitionType;
 use rgb::{
     bundle, validation, Anchor, BundleId, Consignment, ConsignmentType, ContractId, ContractState,
-    Disclosure, Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId, SealEndpoint,
-    StateTransfer, Transition, TransitionBundle, Validator, Validity,
+    ContractStateMap, Disclosure, Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId,
+    SealEndpoint, StateTransfer, Transition, TransitionBundle, Validator, Validity,
 };
-use rgb_rpc::{OutpointFilter, TransitionsInfo};
+use rgb_rpc::OutpointFilter;
 
 use super::Runtime;
 use crate::{DaemonError, Db};
@@ -28,6 +28,9 @@ use crate::{DaemonError, Db};
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub enum StashError {
+    /// state for contract {0} is not known or absent in the database.
+    StateAbsent(ContractId),
+
     /// contract is unknown. Probably you haven't imported the contract yet.
     GenesisAbsent,
 
@@ -266,32 +269,30 @@ impl Runtime {
         collector.into_consignment(schema, root_schema, genesis)
     }
 
-    pub(super) fn outpoint_transitions(
+    pub(super) fn outpoint_state(
         &mut self,
         outpoints: BTreeSet<OutPoint>,
-    ) -> Result<TransitionsInfo, DaemonError> {
-        let mut transitions: TransitionsInfo = bmap! {};
-        for outpoint in outpoints {
+    ) -> Result<ContractStateMap, DaemonError> {
+        let mut res: ContractStateMap = bmap! {};
+        for outpoint in &outpoints {
             let index = Db::index_two_pieces(outpoint.txid, outpoint.vout);
             let set: BTreeSet<NodeId> =
                 self.db.retrieve_h(Db::OUTPOINTS, index)?.unwrap_or_default();
             for node_id in set {
-                let transition = self
-                    .db
-                    .retrieve(Db::TRANSITIONS, node_id)?
-                    .ok_or(StashError::TransitionAbsent(node_id))?;
-                let contract_id = self
+                let contract_id: ContractId = self
                     .db
                     .retrieve(Db::NODE_CONTRACTS, node_id)?
                     .ok_or(StashError::NodeContractAbsent(node_id))?;
-                let txid = self
+
+                let state: ContractState = self
                     .db
-                    .retrieve(Db::TRANSITION_WITNESS, node_id)?
-                    .ok_or(StashError::TransitionTxidAbsent(node_id))?;
-                transitions.entry(contract_id).or_default().push((transition, txid));
+                    .retrieve(Db::CONTRACTS, contract_id)?
+                    .ok_or(StashError::StateAbsent(contract_id))?;
+
+                res.insert(contract_id, state.filter_outpoint_state(&outpoints));
             }
         }
-        Ok(transitions)
+        Ok(res)
     }
 
     pub(super) fn finalize_transfer(

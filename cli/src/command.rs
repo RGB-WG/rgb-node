@@ -165,17 +165,12 @@ impl Exec for Opts {
 
                 let outpoints: BTreeSet<_> =
                     psbt.inputs.iter().map(|input| input.previous_outpoint).collect();
-                let info = client.outpoint_transitions(outpoints.clone(), progress)?;
-                for (cid, set) in info {
+                let state_map = client.outpoint_state(outpoints.clone(), progress)?;
+                for (cid, outpoint_map) in state_map {
                     if cid == contract_id {
                         continue;
                     }
-                    let prev_transitions = set.iter().map(|(ts, txid)| (ts, *txid));
-                    let blank_bundle = TransitionBundle::blank(
-                        prev_transitions,
-                        outpoints.iter().cloned(),
-                        &bmap! {},
-                    )?;
+                    let blank_bundle = TransitionBundle::blank(&outpoint_map, &bmap! {})?;
                     for (transition, indexes) in blank_bundle.revealed_iter() {
                         psbt.push_rgb_transition(transition.clone())?;
                         for no in indexes {

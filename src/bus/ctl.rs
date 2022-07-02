@@ -41,7 +41,7 @@ pub enum CtlMsg {
     ConsignTranfer(ConsignReq<TransferConsignment>),
 
     #[display(inner)]
-    OutpointTransitions(OutpointTransitionsReq),
+    OutpointState(OutpointStateReq),
 
     #[display(inner)]
     FinalizeTransfer(FinalizeTransferReq),
@@ -85,15 +85,15 @@ pub struct ValidityResp {
 }
 
 #[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Debug, Display, StrictEncode, StrictDecode)]
-#[display("outpoint_transitions({client_id}, ...)")]
-pub struct OutpointTransitionsReq {
+#[display("outpoint_state({client_id}, ...)")]
+pub struct OutpointStateReq {
     pub client_id: ClientId,
     pub outpoints: BTreeSet<OutPoint>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
-#[display("finalize_transfer(...)")]
+#[display("finalize_transfer({client_id}, ...)")]
 pub struct FinalizeTransferReq {
     pub client_id: ClientId,
     pub consignment: StateTransfer,

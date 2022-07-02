@@ -31,7 +31,7 @@ use rgb::{
 use rgb_rpc::{ClientId, OutpointFilter, RpcMsg};
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointTransitionsReq,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
     ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
 use crate::{Config, DaemonError, Db, LaunchError};
@@ -199,11 +199,11 @@ impl Runtime {
                 )?;
             }
 
-            CtlMsg::OutpointTransitions(OutpointTransitionsReq {
+            CtlMsg::OutpointState(OutpointStateReq {
                 client_id,
                 outpoints,
             }) => {
-                self.handle_outpoint_transitions(endpoints, client_id, outpoints)?;
+                self.handle_outpoint_state(endpoints, client_id, outpoints)?;
             }
 
             CtlMsg::FinalizeTransfer(FinalizeTransferReq {
@@ -309,19 +309,20 @@ impl Runtime {
         Ok(())
     }
 
-    fn handle_outpoint_transitions(
+    fn handle_outpoint_state(
         &mut self,
         endpoints: &mut Endpoints,
         client_id: ClientId,
         outpoints: BTreeSet<OutPoint>,
     ) -> Result<(), DaemonError> {
-        match self.outpoint_transitions(outpoints) {
+        match self.outpoint_state(outpoints) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
             }
             Ok(transitions_info) => {
-                let _ = self.send_rpc(endpoints, client_id, RpcMsg::Transitions(transitions_info));
+                let _ =
+                    self.send_rpc(endpoints, client_id, RpcMsg::OutpointState(transitions_info));
                 self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
             }
         }

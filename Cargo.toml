@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.8.0-rc.1"
+version = "0.8.0-rc.2"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -36,7 +36,7 @@ internet2 = { version = "0.8.0", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.0", default-features = false, features = ["node"] }
 lnpbp = "0.8.0"
 bp-core = { version = "0.8.0-beta.1", features = ["psbt"] }
-rgb-std = "0.8.0-rc.1"
+rgb-std = { version = "0.8.0-rc.2", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }
 storm-core = "0.3.0"
 storm_ext = { version = "0.8.0-alpha.2", git = "https://github.com/Storm-WG/storm-node" }
@@ -62,7 +62,7 @@ internet2 = "0.8.0"
 microservices = { version = "0.8.0", default-features = false }
 lnpbp = "0.8.0"
 psbt = "0.8.0"
-rgb-std = "0.8.0-rc.1"
+rgb-std = { version = "0.8.0-rc.2", git = "https://github.com/RGB-WG/rgb-std" }
 rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }
 storm_ext = { version = "0.8.0-alpha.2", git = "https://github.com/Storm-WG/storm-node" }
 store_rpc = "0.8.0-rc.1"

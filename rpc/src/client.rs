@@ -20,12 +20,12 @@ use microservices::esb::{self, BusId};
 use microservices::rpc;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractId, ContractState, SealEndpoint, StateTransfer};
+use rgb::{Contract, ContractId, ContractState, ContractStateMap, SealEndpoint, StateTransfer};
 
 use crate::messages::HelloReq;
 use crate::{
     AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter,
-    RpcMsg, ServiceId, TransferReq, TransitionsInfo,
+    RpcMsg, ServiceId, TransferReq,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -161,15 +161,15 @@ impl Client {
         }
     }
 
-    pub fn outpoint_transitions(
+    pub fn outpoint_state(
         &mut self,
         outpoints: BTreeSet<OutPoint>,
         progress: impl Fn(String),
-    ) -> Result<TransitionsInfo, Error> {
-        self.request(RpcMsg::OutpointTransitions(outpoints))?;
+    ) -> Result<ContractStateMap, Error> {
+        self.request(RpcMsg::GetOutpointState(outpoints))?;
         loop {
             match self.response()?.failure_to_error()? {
-                RpcMsg::Transitions(info) => return Ok(info),
+                RpcMsg::OutpointState(outpoint_state) => return Ok(outpoint_state),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }

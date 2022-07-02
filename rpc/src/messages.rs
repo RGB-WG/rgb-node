@@ -8,7 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 
 use amplify::Wrapper;
@@ -21,12 +21,10 @@ use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
     seal, validation, ConsignmentType, Contract, ContractConsignment, ContractId, ContractState,
-    InmemConsignment, SealEndpoint, StateTransfer, TransferConsignment, Transition,
+    ContractStateMap, InmemConsignment, SealEndpoint, StateTransfer, TransferConsignment,
 };
 
 use crate::FailureCode;
-
-pub type TransitionsInfo = BTreeMap<ContractId, Vec<(Transition, Txid)>>;
 
 /// We need this wrapper type to be compatible with RGB Node having multiple message buses
 #[derive(Clone, Debug, Display, From, Api)]
@@ -56,8 +54,8 @@ pub enum RpcMsg {
     #[display("get_contract_state({0})")]
     GetContractState(ContractId),
 
-    #[display("outpoint_transitions(...)")]
-    OutpointTransitions(BTreeSet<OutPoint>),
+    #[display("get_outpoint_state(...)")]
+    GetOutpointState(BTreeSet<OutPoint>),
 
     #[display("consign_contract({0})")]
     ConsignContract(ComposeReq),
@@ -88,8 +86,8 @@ pub enum RpcMsg {
     #[display("contract_state(...)")]
     ContractState(ContractState),
 
-    #[display("transitions(...)")]
-    Transitions(TransitionsInfo),
+    #[display("outpoint_state(...)")]
+    OutpointState(ContractStateMap),
 
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),

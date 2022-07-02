@@ -16,7 +16,7 @@ use rgb_rpc::RpcMsg;
 use storm_ext::ExtMsg as StormMsg;
 
 pub use self::ctl::{
-    ConsignReq, CtlMsg, FinalizeTransferReq, OutpointTransitionsReq, ProcessReq, ValidityResp,
+    ConsignReq, CtlMsg, FinalizeTransferReq, OutpointStateReq, ProcessReq, ValidityResp,
 };
 pub use self::services::{DaemonId, ServiceId};
 pub(crate) use self::services::{Endpoints, Responder, ServiceBus};

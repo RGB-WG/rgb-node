@@ -32,7 +32,7 @@ pub use error::{Error, FailureCode};
 pub(crate) use messages::BusMsg;
 pub use messages::{
     AcceptReq, ComposeReq, ContractValidity, HelloReq, OptionDetails, OutpointFilter, RpcMsg,
-    TransferReq, TransitionsInfo,
+    TransferReq,
 };
 pub use service_id::{ClientId, ServiceId, ServiceName};
 

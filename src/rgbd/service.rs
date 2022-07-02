@@ -32,7 +32,7 @@ use rgb_rpc::{
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointTransitionsReq,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
     ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::containerd::StashError;
@@ -190,7 +190,7 @@ impl Runtime {
             RpcMsg::GetContractState(contract_id) => {
                 self.get_contract_state(endpoints, client_id, contract_id)?;
             }
-            RpcMsg::OutpointTransitions(outpoints) => {
+            RpcMsg::GetOutpointState(outpoints) => {
                 self.outpoint_transitions(endpoints, client_id, outpoints)?;
             }
             RpcMsg::AcceptContract(AcceptReq {
@@ -397,7 +397,7 @@ impl Runtime {
     ) -> Result<(), DaemonError> {
         let msg = match self.db.retrieve(Db::CONTRACTS, contract_id)? {
             Some(state) => RpcMsg::ContractState(state),
-            None => DaemonError::from(StashError::GenesisAbsent).into(),
+            None => DaemonError::from(StashError::StateAbsent(contract_id)).into(),
         };
         let _ = self.send_rpc(endpoints, client_id, msg);
         Ok(())
@@ -409,7 +409,7 @@ impl Runtime {
         client_id: ClientId,
         outpoints: BTreeSet<OutPoint>,
     ) -> Result<(), DaemonError> {
-        self.ctl_queue.push_back(CtlMsg::OutpointTransitions(OutpointTransitionsReq {
+        self.ctl_queue.push_back(CtlMsg::OutpointState(OutpointStateReq {
             client_id,
             outpoints,
         }));
