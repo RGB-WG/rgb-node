@@ -150,8 +150,15 @@ impl Runtime {
             self.db.store(Db::SCHEMATA, root_schema.schema_id(), root_schema)?;
         }
 
-        trace!("Genesis: {:?}", consignment.genesis());
-        self.db.store_merge(Db::GENESIS, contract_id, consignment.genesis().clone())?;
+        let genesis = consignment.genesis();
+        trace!("Genesis: {:?}", genesis);
+        self.db.store_merge(Db::GENESIS, contract_id, genesis.clone())?;
+
+        trace!("Indexing genesis");
+        for seal in genesis.revealed_seals().unwrap_or_default() {
+            let index_id = Db::index_two_pieces(seal.txid, seal.vout);
+            self.db.insert_into_set(Db::OUTPOINTS, index_id, contract_id)?;
+        }
 
         for (anchor, bundle) in consignment.anchored_bundles() {
             let bundle_id = bundle.bundle_id();
