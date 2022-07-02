@@ -318,8 +318,12 @@ impl Runtime {
         endseals: Vec<SealEndpoint>,
         mut psbt: Psbt,
     ) -> Result<StateTransfer, DaemonError> {
+        let contract_id = consignment.contract_id();
+        info!("Finalizing transfer for {}", contract_id);
+
         // 1. Pack LNPBP-4 and anchor information.
         let mut bundles = psbt.rgb_bundles()?;
+        trace!("Bundles: {:?}", bundles);
 
         let mut messages: lnpbp4::MessageMap = empty!();
         for (contract_id, bundle) in &bundles {
@@ -329,10 +333,10 @@ impl Runtime {
         // TODO: Add LNPBP4 and Tapret PSBT proprietary keys for hardware wallets
 
         let anchor = Anchor::commit(&mut psbt, messages)?;
+        trace!("Anchor: {:?}", anchor);
 
         // 2. Extract contract-related state transition from PSBT and put it
         //    into consignment.
-        let contract_id = consignment.contract_id();
         let bundle = bundles.remove(&contract_id).ok_or(FinalizeError::ContractBundleMissed)?;
         let bundle_id = bundle.bundle_id();
         consignment.push_anchored_bundle(anchor.to_merkle_proof(contract_id)?, bundle)?;
