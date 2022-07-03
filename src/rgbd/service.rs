@@ -29,7 +29,7 @@ use rgb::{
 use rgb_rpc::{
     AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq,
 };
-use storm_ext::ExtMsg as StormMsg;
+use storm_ext::{ExtMsg as StormMsg, MesgPush};
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
@@ -150,11 +150,14 @@ impl Runtime {
         message: StormMsg,
     ) -> Result<(), DaemonError> {
         match message {
+            StormMsg::Post(MesgPush { message, container }) => {}
             wrong_msg => {
                 error!("Request is not supported by the Storm interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
             }
         }
+
+        Ok(())
     }
 
     fn handle_rpc(
