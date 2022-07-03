@@ -203,9 +203,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hd"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31fd1653c42b55f0535c1ab1b0ccaf32ed9d1b37c29e13bc123f93da6851a6b2"
+checksum = "d8f7f5997addace47b60c5db763bead9dabe4153e43fe8803ba67a0eec035d80"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -219,9 +219,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_onchain"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39bf31c5b646d17e4c1b92e962174f2eae7ea8b137aeccac04b301ceb9b2134d"
+checksum = "83934c2077a420678ec8aa0272c9412bb1ed9a7c592b8021a47b319a4e89faae"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -230,6 +230,8 @@ dependencies = [
  "descriptors",
  "electrum-client",
  "miniscript",
+ "serde 1.0.138",
+ "serde_with",
  "strict_encoding",
 ]
 
@@ -679,9 +681,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-common"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57952ca27b5e3606ff4dd79b0020231aaf9d6aa76dc05fd30137538c50bd3ce8"
+checksum = "5999502d32b9c48d492abe66392408144895020ec4709e549e840799f3bb74c0"
 dependencies = [
  "generic-array",
  "typenum",
@@ -770,9 +772,9 @@ dependencies = [
 
 [[package]]
 name = "descriptor-wallet"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2ca925ccf1ac313aa1289d60ba54864073dc8694bee11d74bc4b7ff99580669"
+checksum = "50e1760da2b3d0962b4532f0cf0653a7d06c72b51d2408ad4e81f83d4bbc2132"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1347,6 +1349,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da39fc7a8adea97a677337b0091779dd86349226b869053af496584a9b9e5847"
 dependencies = [
  "bitcoin",
+ "serde 1.0.138",
 ]
 
 [[package]]
@@ -1835,7 +1838,7 @@ dependencies = [
 [[package]]
 name = "rgb-core"
 version = "0.8.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-core#01ae2d6e05ddb3bbf2bb12bf25d6e0b0f255a75b"
+source = "git+https://github.com/RGB-WG/rgb-core#bac9bf1296a5c8a8eaa3557434be9a089a51f070"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1856,7 +1859,7 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-std#1bb05784cb33d1ae53279b9f867e5856e32fa9e9"
+source = "git+https://github.com/RGB-WG/rgb-std#68c8702a59fdf08e251a9c8725bc57c47b110430"
 dependencies = [
  "amplify",
  "bitcoin",

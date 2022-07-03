@@ -97,6 +97,7 @@ impl TransferCommand {
                 send: Some(addr), ..
             } => format!("Finalizing state transfer and sending it to {}", addr),
             Self::Finalize { send: None, .. } => s!("Finalizing state transfer"),
+            Self::Consume { .. } => s!("Verifying and consuming state transfer"),
         }
     }
 }
@@ -117,35 +118,38 @@ impl Exec for Opts {
             println!("{}", info);
         };
 
+        let report_validation = |status| match status {
+            ContractValidity::Valid => {
+                println!("{}: contract is valid and imported", "Success".ended())
+            }
+            ContractValidity::Invalid(status) => {
+                eprintln!("{}: contract is invalid. Detailed report:", "Error".err());
+                eprintln!("{}", serde_yaml::to_string(&status).unwrap());
+            }
+            ContractValidity::UnknownTxids(txids) => {
+                eprintln!(
+                    "{}: contract is valid, but some of underlying transactions are still not \
+                     mined",
+                    "Warning".bold().bright_yellow()
+                );
+                eprintln!("The list of non-mined transaction ids:");
+                for txid in txids {
+                    println!("- {}", txid);
+                }
+                eprintln!(
+                    "{}: contract was not imported. To import the contract, re-run the command \
+                     with {} argument",
+                    "Warning".bold().bright_yellow(),
+                    "--force".bold().bright_white(),
+                );
+            }
+        };
+
         match self.command {
             Command::Contract(subcommand) => match subcommand {
                 ContractCommand::Register { contract, force } => {
-                    match client.register_contract(contract, force, progress)? {
-                        ContractValidity::Valid => {
-                            println!("{}: contract is valid and imported", "Success".ended())
-                        }
-                        ContractValidity::Invalid(status) => {
-                            eprintln!("{}: contract is invalid. Detailed report:", "Error".err());
-                            eprintln!("{}", serde_yaml::to_string(&status).unwrap());
-                        }
-                        ContractValidity::UnknownTxids(txids) => {
-                            eprintln!(
-                                "{}: contract is valid, but some of underlying transactions are \
-                                 still not mined",
-                                "Warning".bold().bright_yellow()
-                            );
-                            eprintln!("The list of non-mined transaction ids:");
-                            for txid in txids {
-                                println!("- {}", txid);
-                            }
-                            eprintln!(
-                                "{}: contract was not imported. To import the contract, re-run \
-                                 the command with {} argument",
-                                "Warning".bold().bright_yellow(),
-                                "--force".bold().bright_white(),
-                            );
-                        }
-                    }
+                    let status = client.register_contract(contract, force, progress)?;
+                    report_validation(status);
                 }
                 ContractCommand::List => {
                     client.list_contracts()?.iter().for_each(|id| println!("{}", id));
@@ -268,6 +272,12 @@ impl Exec for Opts {
                     let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
                     // TODO: Call tapret_finalize on PSBT and save PSBT
                     transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+                }
+
+                TransferCommand::Consume { force, consignment } => {
+                    let consignment = StateTransfer::strict_file_load(&consignment)?;
+                    let status = client.consume_transfer(consignment, force, progress)?;
+                    report_validation(status);
                 }
             },
         }

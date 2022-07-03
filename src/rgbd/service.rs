@@ -193,13 +193,13 @@ impl Runtime {
             RpcMsg::GetOutpointState(outpoints) => {
                 self.outpoint_transitions(endpoints, client_id, outpoints)?;
             }
-            RpcMsg::AcceptContract(AcceptReq {
+            RpcMsg::ConsumeContract(AcceptReq {
                 consignment: contract,
                 force,
             }) => {
                 self.accept_contract(endpoints, client_id, contract, force)?;
             }
-            RpcMsg::AcceptTransfer(AcceptReq {
+            RpcMsg::ConsumeTransfer(AcceptReq {
                 consignment: transfer,
                 force,
             }) => {

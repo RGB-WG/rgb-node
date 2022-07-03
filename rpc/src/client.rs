@@ -130,7 +130,7 @@ impl Client {
         force: bool,
         progress: impl Fn(String),
     ) -> Result<ContractValidity, Error> {
-        self.request(RpcMsg::AcceptContract(AcceptReq {
+        self.request(RpcMsg::ConsumeContract(AcceptReq {
             consignment: contract,
             force,
         }))?;
@@ -234,6 +234,27 @@ impl Client {
         loop {
             match self.response()?.failure_to_error()? {
                 RpcMsg::StateTransfer(transfer) => return Ok(transfer),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
+        }
+    }
+
+    pub fn consume_transfer(
+        &mut self,
+        transfer: StateTransfer,
+        force: bool,
+        progress: impl Fn(String),
+    ) -> Result<ContractValidity, Error> {
+        self.request(RpcMsg::ConsumeTransfer(AcceptReq {
+            consignment: transfer,
+            force,
+        }))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Invalid(status) => return Ok(ContractValidity::Invalid(status)),
+                RpcMsg::UnresolvedTxids(txids) => return Ok(ContractValidity::UnknownTxids(txids)),
+                RpcMsg::Success(_) => return Ok(ContractValidity::Valid),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }

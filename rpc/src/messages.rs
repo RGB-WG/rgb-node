@@ -64,10 +64,10 @@ pub enum RpcMsg {
     ConsignTransfer(ComposeReq),
 
     #[display(inner)]
-    AcceptContract(AcceptReq<ContractConsignment>),
+    ConsumeContract(AcceptReq<ContractConsignment>),
 
     #[display("accept_transfer(...)")]
-    AcceptTransfer(AcceptReq<TransferConsignment>),
+    ConsumeTransfer(AcceptReq<TransferConsignment>),
 
     #[display(inner)]
     Transfer(TransferReq),

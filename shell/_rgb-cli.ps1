@@ -172,6 +172,7 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             [CompletionResult]::new('compose', 'compose', [CompletionResultType]::ParameterValue, 'Build state transfer consignment draft')
             [CompletionResult]::new('combine', 'combine', [CompletionResultType]::ParameterValue, 'Update PSBT with the information from the state transition')
             [CompletionResult]::new('finalize', 'finalize', [CompletionResultType]::ParameterValue, 'Finalize and (optionally) send state transfer consignment to beneficiary')
+            [CompletionResult]::new('consume', 'consume', [CompletionResultType]::ParameterValue, 'Validate incoming transfer consignment and consume it into the stash')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
             break
         }
@@ -210,6 +211,19 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')
             [CompletionResult]::new('--chain', 'chain', [CompletionResultType]::ParameterName, 'Blockchain to use')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help information')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help information')
+            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'Set verbosity level')
+            [CompletionResult]::new('--verbose', 'verbose', [CompletionResultType]::ParameterName, 'Set verbosity level')
+            break
+        }
+        'rgb-cli;transfer;consume' {
+            [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
+            [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')
+            [CompletionResult]::new('--chain', 'chain', [CompletionResultType]::ParameterName, 'Blockchain to use')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'Consume even if the endpoint witness transaction is not yet mined')
+            [CompletionResult]::new('--force', 'force', [CompletionResultType]::ParameterName, 'Consume even if the endpoint witness transaction is not yet mined')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help information')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help information')
             [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'Set verbosity level')

@@ -170,6 +170,17 @@ pub enum TransferCommand {
         /// consignment file is overwritten.
         consignment_out: Option<PathBuf>,
     },
+
+    /// Validate incoming transfer consignment and consume it into the stash.
+    #[display("consume ...")]
+    Consume {
+        /// Consume even if the endpoint witness transaction is not yet mined.
+        #[clap(short, long)]
+        force: bool,
+
+        /// State transfer consignment send by the payee.
+        consignment: PathBuf,
+    },
 }
 
 /// Command-line constract subcommands:

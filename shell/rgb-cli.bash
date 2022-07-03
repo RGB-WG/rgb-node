@@ -21,6 +21,9 @@ _rgb-cli() {
             consignment)
                 cmd+="__consignment"
                 ;;
+            consume)
+                cmd+="__consume"
+                ;;
             contract)
                 cmd+="__contract"
                 ;;
@@ -447,7 +450,7 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__transfer)
-            opts="-h -R -n -v --help --rpc --chain --verbose compose combine finalize help"
+            opts="-h -R -n -v --help --rpc --chain --verbose compose combine finalize consume help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -529,6 +532,36 @@ _rgb-cli() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                --rpc)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -R)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --chain)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -n)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        rgb__cli__transfer__consume)
+            opts="-f -h -R -n -v --force --help --rpc --chain --verbose <CONSIGNMENT>"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
                 --rpc)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
