@@ -250,11 +250,17 @@ impl Runtime {
             Ok(status) => {
                 // We ignore client reporting if it fails
                 let msg = match status.validity() {
-                    Validity::Valid => RpcMsg::success(),
                     Validity::UnresolvedTransactions => {
                         RpcMsg::UnresolvedTxids(status.unresolved_txids.clone())
                     }
                     Validity::Invalid => RpcMsg::Invalid(status.clone()),
+                    Validity::ValidExceptEndpoints if force => RpcMsg::Success(
+                        s!("consumed notwithstanding non-mined endpoint transactions").into(),
+                    ),
+                    Validity::ValidExceptEndpoints => {
+                        RpcMsg::UnresolvedTxids(status.unmined_endpoint_txids.clone())
+                    }
+                    Validity::Valid => RpcMsg::success(),
                 };
                 let _ = self.send_rpc(endpoints, client_id, msg);
                 self.send_ctl(endpoints, ServiceId::Rgb, ValidityResp {

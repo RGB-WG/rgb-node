@@ -135,11 +135,17 @@ impl Runtime {
         info!("Consignment validation result is {}", status.validity());
 
         match status.validity() {
-            Validity::Valid => {}
-            Validity::UnresolvedTransactions if force => {
+            Validity::Valid => {
+                info!("Consignment is fully valid");
+            }
+            Validity::ValidExceptEndpoints if force => {
                 warn!("Forcing import of consignment with non-mined transactions");
             }
-            _ => {
+            Validity::UnresolvedTransactions | Validity::ValidExceptEndpoints => {
+                error!("Some of consignment-related transactions were not found: {:?}", status);
+                return Ok(status);
+            }
+            Validity::Invalid => {
                 error!("Invalid consignment: {:?}", status);
                 return Ok(status);
             }
