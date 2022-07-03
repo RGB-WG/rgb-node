@@ -16,7 +16,7 @@ name = "rgb_rpc"
 [dependencies]
 amplify = "3.12.1"
 strict_encoding = "~0.8.0"
-rgb-std = { version = "0.8.0-rc.2", git = "https://github.com/RGB-WG/rgb-std" }
+rgb-std = "0.8.0-rc.2"
 lnpbp = "0.8.0"
 bitcoin = "0.28.1"
 psbt = "0.8.0"

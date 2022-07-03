@@ -23,7 +23,7 @@ microservices = { version = "0.8.0", default-features = false, features = ["cli"
 bitcoin = "0.28.1"
 psbt = "0.8.0"
 lnpbp = "0.8.0"
-rgb-std = { version = "0.8.0-rc.2", git = "https://github.com/RGB-WG/rgb-std", features = ["serde"] }
+rgb-std = { version = "0.8.0-rc.2", features = ["serde"] }
 rgb_rpc = { version = "0.8.0-rc.1", path = "../rpc" }
 clap = { version = "~3.1.18", features = ["derive", "env"] }
 serde = "1"
@@ -41,6 +41,6 @@ lnpbp = "0.8.0"
 clap = { version = "~3.1.18", features = ["derive", "env"] }
 clap_complete = "~3.1.4"
 internet2 = "0.8.0"
-rgb-std = { version = "0.8.0-rc.2", git = "https://github.com/RGB-WG/rgb-std" }
+rgb-std = "0.8.0-rc.2"
 rgb_rpc = { version = "0.8.0-rc.1", path = "../rpc" }
 configure_me_codegen = "0.4"

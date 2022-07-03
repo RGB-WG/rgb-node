@@ -1838,7 +1838,8 @@ dependencies = [
 [[package]]
 name = "rgb-core"
 version = "0.8.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-core#bac9bf1296a5c8a8eaa3557434be9a089a51f070"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ba54d26545b77f15d484e9854145bfb41c6428fd209241933d4237704c4eb77"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1859,7 +1860,8 @@ dependencies = [
 [[package]]
 name = "rgb-std"
 version = "0.8.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-std#68c8702a59fdf08e251a9c8725bc57c47b110430"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5329834b6ee93097d0eaa3559796fda51754d247c60bfe95eb0d72ead5d34047"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1905,7 +1907,7 @@ dependencies = [
  "rgb_rpc",
  "shellexpand",
  "store_rpc",
- "storm-core",
+ "storm-core 0.3.0",
  "storm_ext",
  "strict_encoding",
 ]
@@ -2274,7 +2276,7 @@ dependencies = [
  "serde 1.0.138",
  "serde_with",
  "serde_yaml",
- "storm-core",
+ "storm-core 0.3.0",
  "strict_encoding",
 ]
 
@@ -2294,9 +2296,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "storm-core"
+version = "0.4.0"
+source = "git+https://github.com/Storm-WG/storm-core#465aacf18c7810c56d89468a85686e54318802f5"
+dependencies = [
+ "amplify",
+ "bitcoin_hashes",
+ "commit_verify",
+ "internet2",
+ "once_cell",
+ "stens",
+ "strict_encoding",
+]
+
+[[package]]
 name = "storm_ext"
 version = "0.8.0-alpha.2"
-source = "git+https://github.com/Storm-WG/storm-node#1bd80e86ea3c61e6c11c83ce9fe6f2f7fb4632f6"
+source = "git+https://github.com/Storm-WG/storm-node#e53b067151551789c94f6107f5be23a2d934cacc"
 dependencies = [
  "amplify",
  "const_format",
@@ -2307,7 +2323,7 @@ dependencies = [
  "serde 1.0.138",
  "serde_with",
  "serde_yaml",
- "storm-core",
+ "storm-core 0.4.0",
  "storm_rpc",
  "strict_encoding",
 ]
@@ -2315,7 +2331,7 @@ dependencies = [
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.2"
-source = "git+https://github.com/Storm-WG/storm-node#1bd80e86ea3c61e6c11c83ce9fe6f2f7fb4632f6"
+source = "git+https://github.com/Storm-WG/storm-node#e53b067151551789c94f6107f5be23a2d934cacc"
 dependencies = [
  "amplify",
  "internet2",
