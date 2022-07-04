@@ -14,8 +14,8 @@ use microservices::rpc::ServerError;
 use microservices::{esb, rpc, LauncherError};
 use rgb_rpc::{FailureCode, RpcMsg};
 
+use crate::bucketd::{FinalizeError, StashError};
 use crate::bus::{ServiceBus, ServiceId};
-use crate::containerd::{FinalizeError, StashError};
 use crate::daemons::Daemon;
 
 #[derive(Clone, Debug, Display, Error, From)]
@@ -50,9 +50,9 @@ pub(crate) enum DaemonError {
     #[from]
     StormEncoding(presentation::Error),
 
-    /// launching container daemon. Details: {0}
+    /// launching bucket daemon. Details: {0}
     #[from]
-    ContainerLauncher(LauncherError<Daemon>),
+    BucketLauncher(LauncherError<Daemon>),
 
     /// storage error. Details: {0}
     #[from]
@@ -91,7 +91,7 @@ impl From<DaemonError> for RpcMsg {
                 FailureCode::UnexpectedRequest
             }
             DaemonError::Store(_) => FailureCode::Store,
-            DaemonError::ContainerLauncher(_) => FailureCode::Launcher,
+            DaemonError::BucketLauncher(_) => FailureCode::Launcher,
             DaemonError::Stash(_) => FailureCode::Stash,
             DaemonError::Finalize(_) => FailureCode::Finalize,
         };

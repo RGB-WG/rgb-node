@@ -1,4 +1,4 @@
-_containerd() {
+_bucketd() {
     local i cur prev opts cmds
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -10,7 +10,7 @@ _containerd() {
     do
         case "${i}" in
             "$1")
-                cmd="containerd"
+                cmd="bucketd"
                 ;;
             *)
                 ;;
@@ -18,7 +18,7 @@ _containerd() {
     done
 
     case "${cmd}" in
-        containerd)
+        bucketd)
             opts="-h -V -v -d -S -X -n --help --version --verbose --data-dir --store --ctl --chain --electrum-server --electrum-port"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -75,4 +75,4 @@ _containerd() {
     esac
 }
 
-complete -F _containerd -o bashdefault -o default containerd
+complete -F _bucketd -o bashdefault -o default bucketd

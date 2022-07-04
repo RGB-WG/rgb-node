@@ -23,16 +23,16 @@ pub mod rgbd {
     pub use super::opts;
     include!("src/rgbd/opts.rs");
 }
-pub mod containerd {
+pub mod bucketd {
     pub use super::opts;
-    include!("src/containerd/opts.rs");
+    include!("src/bucketd/opts.rs");
 }
 
 fn main() -> Result<(), configure_me_codegen::Error> {
     let outdir = "./shell";
 
     fs::create_dir_all(outdir).expect("failed to create shell dir");
-    for app in [rgbd::Opts::command(), containerd::Opts::command()].iter_mut() {
+    for app in [rgbd::Opts::command(), bucketd::Opts::command()].iter_mut() {
         let name = app.get_name().to_string();
         generate_to(Bash, app, &name, &outdir)?;
         generate_to(PowerShell, app, &name, &outdir)?;

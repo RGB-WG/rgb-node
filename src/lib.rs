@@ -21,7 +21,7 @@ mod config;
 mod error;
 pub mod rgbd;
 pub mod bus;
-pub mod containerd;
+pub mod bucketd;
 #[cfg(feature = "server")]
 pub mod opts;
 mod db;

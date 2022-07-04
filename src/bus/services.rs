@@ -39,9 +39,9 @@ pub enum ServiceId {
     #[strict_encoding(value = 0x10)]
     Bp,
 
-    #[display("contained<{0}>")]
+    #[display("bucketd<{0}>")]
     #[strict_encoding(value = 0x31)]
-    Container(DaemonId),
+    Bucket(DaemonId),
 
     #[display("peerd<{0}>")]
     #[from]

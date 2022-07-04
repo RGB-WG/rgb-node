@@ -59,7 +59,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     )
     .map_err(|_| LaunchError::BusSetupFailure)?;
 
-    controller.run_or_panic("containerd");
+    controller.run_or_panic("bucketd");
 
     unreachable!()
 }
@@ -83,7 +83,7 @@ impl Runtime {
         let electrum = ElectrumClient::new(&config.electrum_url)
             .map_err(|_| LaunchError::ElectrumConnectivity)?;
 
-        info!("Containerd runtime started successfully");
+        info!("Bucket runtime started successfully");
 
         Ok(Self { id, db, electrum })
     }
@@ -95,7 +95,7 @@ impl esb::Handler<ServiceBus> for Runtime {
     type Request = BusMsg;
     type Error = DaemonError;
 
-    fn identity(&self) -> ServiceId { ServiceId::Container(self.id) }
+    fn identity(&self) -> ServiceId { ServiceId::Bucket(self.id) }
 
     fn on_ready(&mut self, endpoints: &mut EndpointList<ServiceBus>) -> Result<(), Self::Error> {
         thread::sleep(Duration::from_millis(100));

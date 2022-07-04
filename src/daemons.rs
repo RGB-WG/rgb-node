@@ -14,13 +14,13 @@ use microservices::error::BootstrapError;
 use microservices::{DaemonHandle, Launcher, LauncherError};
 
 use crate::rgbd::Runtime;
-use crate::{containerd, Config, LaunchError};
+use crate::{bucketd, Config, LaunchError};
 
-/// Daemons that can be launched by lnpd
+/// Daemons that can be launched by rgbd
 #[derive(Clone, Eq, PartialEq, Debug, Display)]
 pub enum Daemon {
-    #[display("containerd")]
-    Containerd,
+    #[display("bucketd")]
+    Bucketd,
 }
 
 impl Launcher for Daemon {
@@ -29,7 +29,7 @@ impl Launcher for Daemon {
 
     fn bin_name(&self) -> &'static str {
         match self {
-            Daemon::Containerd => "containerd",
+            Daemon::Bucketd => "bucketd",
         }
     }
 
@@ -41,7 +41,7 @@ impl Launcher for Daemon {
 
     fn run_impl(self, config: Config) -> Result<(), BootstrapError<LaunchError>> {
         match self {
-            Daemon::Containerd => containerd::run(config),
+            Daemon::Bucketd => bucketd::run(config),
         }
     }
 }

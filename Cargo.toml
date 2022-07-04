@@ -24,7 +24,7 @@ name = "rgbd"
 required-features = ["server"]
 
 [[bin]]
-name = "containerd"
+name = "bucketd"
 required-features = ["server"]
 
 [dependencies]

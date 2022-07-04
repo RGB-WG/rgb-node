@@ -18,7 +18,7 @@ use storm_ext::STORM_NODE_EXT_ENDPOINT;
 #[cfg(feature = "server")]
 use crate::opts::Opts;
 #[cfg(feature = "server")]
-use crate::{containerd, rgbd};
+use crate::{bucketd, rgbd};
 
 /// Final configuration resulting from data contained in config file environment
 /// variables and command-line options. For security reasons node key is kept
@@ -95,8 +95,8 @@ impl From<rgbd::Opts> for Config {
     }
 }
 
-impl From<containerd::Opts> for Config {
-    fn from(opts: containerd::Opts) -> Config { Config::from(opts.shared) }
+impl From<bucketd::Opts> for Config {
+    fn from(opts: bucketd::Opts) -> Config { Config::from(opts.shared) }
 }
 
 impl Config {

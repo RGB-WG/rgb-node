@@ -1,8 +1,8 @@
-#compdef containerd
+#compdef bucketd
 
 autoload -U is-at-least
 
-_containerd() {
+_bucketd() {
     typeset -A opt_args
     typeset -a _arguments_options
     local ret=1
@@ -34,10 +34,10 @@ _containerd() {
 && ret=0
 }
 
-(( $+functions[_containerd_commands] )) ||
-_containerd_commands() {
+(( $+functions[_bucketd_commands] )) ||
+_bucketd_commands() {
     local commands; commands=()
-    _describe -t commands 'containerd commands' commands "$@"
+    _describe -t commands 'bucketd commands' commands "$@"
 }
 
-_containerd "$@"
+_bucketd "$@"

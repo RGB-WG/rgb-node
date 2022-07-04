@@ -15,7 +15,7 @@ use crate::opts::Opts as SharedOpts;
 /// Command-line arguments
 #[derive(Parser)]
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[clap(author, version, name = "containerd", about = "RGB node container processor")]
+#[clap(author, version, name = "bucketd", about = "RGB node bucket processor")]
 pub struct Opts {
     /// These params can be read also from the configuration file, not just
     /// command-line args or environment variables

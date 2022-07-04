@@ -31,11 +31,11 @@ use rgb_rpc::{
 };
 use storm_ext::{ExtMsg as StormMsg, MesgPush};
 
+use crate::bucketd::StashError;
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
     ProcessReq, Responder, ServiceBus, ServiceId,
 };
-use crate::containerd::StashError;
 use crate::daemons::Daemon;
 use crate::{Config, DaemonError, Db, LaunchError};
 
@@ -79,8 +79,8 @@ pub struct Runtime {
 
     pub(crate) db: Db,
 
-    pub(crate) containerd_free: VecDeque<DaemonId>,
-    pub(crate) containerd_busy: BTreeSet<DaemonId>,
+    pub(crate) bucketd_free: VecDeque<DaemonId>,
+    pub(crate) bucketd_busy: BTreeSet<DaemonId>,
     pub(crate) ctl_queue: VecDeque<CtlMsg>,
 }
 
@@ -95,8 +95,8 @@ impl Runtime {
         Ok(Self {
             config,
             db,
-            containerd_free: empty!(),
-            containerd_busy: empty!(),
+            bucketd_free: empty!(),
+            bucketd_busy: empty!(),
             ctl_queue: empty!(),
         })
     }
@@ -268,12 +268,12 @@ impl Runtime {
             service_id if service_id == ServiceId::rgbd() => {
                 error!("{}", "Unexpected another RGBd instance connection".err());
             }
-            ServiceId::Container(daemon_id) => {
-                self.containerd_free.push_back(daemon_id);
+            ServiceId::Bucket(daemon_id) => {
+                self.bucketd_free.push_back(daemon_id);
                 info!(
-                    "Container daemon {} is registered; total {} container processors are known",
+                    "Bucket daemon {} is registered; total {} container processors are known",
                     daemon_id,
-                    self.containerd_free.len() + self.containerd_busy.len()
+                    self.bucketd_free.len() + self.bucketd_busy.len()
                 );
             }
             _ => {
@@ -285,8 +285,8 @@ impl Runtime {
     }
 
     fn pick_task(&mut self, endpoints: &mut Endpoints) -> Result<bool, esb::Error<ServiceId>> {
-        let service = match self.containerd_free.pop_front() {
-            Some(damon_id) => ServiceId::Container(damon_id),
+        let service = match self.bucketd_free.pop_front() {
+            Some(damon_id) => ServiceId::Bucket(damon_id),
             None => return Ok(false),
         };
 
@@ -308,16 +308,16 @@ impl Runtime {
             let _ = self.send_rpc(
                 endpoints,
                 client_id,
-                RpcMsg::Progress(s!("Consignment forwarded to container daemon")),
+                RpcMsg::Progress(s!("Consignment forwarded to bucket daemon")),
             );
             return Ok(());
         }
 
-        let _handle = self.launch_daemon(Daemon::Containerd, self.config.clone())?;
+        let _handle = self.launch_daemon(Daemon::Bucketd, self.config.clone())?;
         let _ = self.send_rpc(
             endpoints,
             client_id,
-            RpcMsg::Progress(s!("A new container daemon instance is started")),
+            RpcMsg::Progress(s!("A new bucket daemon instance is started")),
         );
 
         // TODO: Store daemon handlers

@@ -17,11 +17,11 @@ extern crate log;
 
 use clap::Parser;
 use microservices::error::BootstrapError;
-use rgb_node::containerd::Opts;
-use rgb_node::{containerd, Config, LaunchError};
+use rgb_node::bucketd::Opts;
+use rgb_node::{bucketd, Config, LaunchError};
 
 fn main() -> Result<(), BootstrapError<LaunchError>> {
-    println!("containerd: RGB container microservice");
+    println!("bucketd: RGB bucket microservice");
 
     let mut opts = Opts::parse();
     trace!("Command-line arguments: {:?}", opts);
@@ -45,7 +45,7 @@ fn main() -> Result<(), BootstrapError<LaunchError>> {
      */
 
     debug!("Starting runtime ...");
-    containerd::run(config).expect("running containerd runtime");
+    bucketd::run(config).expect("running bucketd runtime");
 
     unreachable!()
 }
