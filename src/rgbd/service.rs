@@ -51,7 +51,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
             ServiceBus::Storm => esb::BusConfig::with_addr(
                 storm_endpoint,
                 ZmqSocketType::RouterConnect,
-                Some(ServiceId::Storm)
+                Some(ServiceId::stormd())
             ),
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,
@@ -108,7 +108,7 @@ impl esb::Handler<ServiceBus> for Runtime {
     type Request = BusMsg;
     type Error = DaemonError;
 
-    fn identity(&self) -> ServiceId { ServiceId::Rgb }
+    fn identity(&self) -> ServiceId { ServiceId::rgbd() }
 
     fn handle(
         &mut self,
@@ -118,7 +118,9 @@ impl esb::Handler<ServiceBus> for Runtime {
         request: Self::Request,
     ) -> Result<(), Self::Error> {
         match (bus_id, request, source) {
-            (ServiceBus::Storm, BusMsg::Storm(msg), ServiceId::Storm) => {
+            (ServiceBus::Storm, BusMsg::Storm(msg), service_id)
+                if service_id == ServiceId::stormd() =>
+            {
                 // TODO: Add remote peers to Strom message protocol
                 self.handle_storm(endpoints, /* remote_peer, */ msg)
             }
@@ -263,7 +265,7 @@ impl Runtime {
         info!("{} daemon is {}", source.ended(), "connected".ended());
 
         match source {
-            ServiceId::Rgb => {
+            service_id if service_id == ServiceId::rgbd() => {
                 error!("{}", "Unexpected another RGBd instance connection".err());
             }
             ServiceId::Container(daemon_id) => {

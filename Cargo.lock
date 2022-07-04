@@ -55,6 +55,7 @@ dependencies = [
  "amplify_num",
  "amplify_syn",
  "parse_arg",
+ "rand 0.8.5",
  "serde 1.0.138",
  "serde_json",
  "serde_yaml",
@@ -1198,6 +1199,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 
 [[package]]
+name = "lightning"
+version = "0.0.108"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d885bf509066af86ae85354c8959028ad6192c22a2657ef8271e94029d30f9d0"
+dependencies = [
+ "bitcoin",
+]
+
+[[package]]
+name = "lightning-invoice"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eaafc1cebaf9ea8d2a57e60aae9fe6095554b8305714f8452cd8a20a3aa5b7ba"
+dependencies = [
+ "bech32 0.8.1",
+ "bitcoin_hashes",
+ "lightning",
+ "num-traits 0.2.15",
+ "secp256k1",
+]
+
+[[package]]
 name = "lightning_encoding"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1239,6 +1262,71 @@ name = "linked-hash-map"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
+
+[[package]]
+name = "lnp-core"
+version = "0.8.0-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93e8673691c190267e526af06f5d0efa70629b0a728cacfac229c008243155cd"
+dependencies = [
+ "amplify",
+ "bitcoin",
+ "descriptor-wallet",
+ "internet2",
+ "lightning_encoding",
+ "lnp2p",
+ "lnpbp",
+ "secp256k1",
+ "serde 1.0.138",
+ "serde_with",
+ "strict_encoding",
+]
+
+[[package]]
+name = "lnp2p"
+version = "0.8.0-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7cebd08c9e476bd8bc626dd0bb13e20c2228f988a9cc8cc859e99de6b9c4aa9"
+dependencies = [
+ "amplify",
+ "bitcoin",
+ "bitcoin_scripts",
+ "bp-core",
+ "chrono",
+ "internet2",
+ "lightning_encoding",
+ "lnpbp",
+ "miniscript",
+ "once_cell",
+ "psbt",
+ "secp256k1",
+ "serde 1.0.138",
+ "serde_with",
+ "strict_encoding",
+]
+
+[[package]]
+name = "lnp_rpc"
+version = "0.8.0-beta.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae3f738800d868a3f4e8b9e6a3c568001f31543f5726c00f4f29fbb8e8b220b1"
+dependencies = [
+ "amplify",
+ "bitcoin",
+ "colored",
+ "descriptor-wallet",
+ "internet2",
+ "lightning-invoice",
+ "lnp-core",
+ "lnpbp",
+ "log",
+ "microservices",
+ "serde 1.0.138",
+ "serde_with",
+ "serde_yaml",
+ "strict_encoding",
+ "zmq2",
+]
 
 [[package]]
 name = "lnpbp"
@@ -1898,6 +1986,8 @@ dependencies = [
  "electrum-client",
  "env_logger",
  "internet2",
+ "lnp-core",
+ "lnp_rpc",
  "lnpbp",
  "log",
  "microservices",

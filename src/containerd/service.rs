@@ -47,12 +47,12 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,
                 ZmqSocketType::RouterConnect,
-                Some(ServiceId::Rgb)
+                Some(ServiceId::rgbd())
             ),
             ServiceBus::Ctl => esb::BusConfig::with_addr(
                 ctl_endpoint,
                 ZmqSocketType::RouterConnect,
-                Some(ServiceId::Rgb)
+                Some(ServiceId::rgbd())
             )
         },
         runtime,
@@ -99,7 +99,7 @@ impl esb::Handler<ServiceBus> for Runtime {
 
     fn on_ready(&mut self, endpoints: &mut EndpointList<ServiceBus>) -> Result<(), Self::Error> {
         thread::sleep(Duration::from_millis(100));
-        self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::Hello)?;
+        self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::Hello)?;
         Ok(())
     }
 
@@ -245,7 +245,7 @@ impl Runtime {
         match self.process_consignment(consignment, force) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
             }
             Ok(status) => {
                 // We ignore client reporting if it fails
@@ -263,7 +263,7 @@ impl Runtime {
                     Validity::Valid => RpcMsg::success(),
                 };
                 let _ = self.send_rpc(endpoints, client_id, msg);
-                self.send_ctl(endpoints, ServiceId::Rgb, ValidityResp {
+                self.send_ctl(endpoints, ServiceId::rgbd(), ValidityResp {
                     client_id,
                     consignment_id: id,
                     status,
@@ -284,11 +284,11 @@ impl Runtime {
         match self.compose_consignment(contract_id, include, outpoints, ContractConsignment) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
             }
             Ok(consignment) => {
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::Contract(consignment));
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
             }
         }
         Ok(())
@@ -305,11 +305,11 @@ impl Runtime {
         match self.compose_consignment(contract_id, include, outpoints, TransferConsignment) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
             }
             Ok(consignment) => {
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(consignment));
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
             }
         }
         Ok(())
@@ -324,12 +324,12 @@ impl Runtime {
         match self.outpoint_state(outpoints) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
             }
             Ok(transitions_info) => {
                 let _ =
                     self.send_rpc(endpoints, client_id, RpcMsg::OutpointState(transitions_info));
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
             }
         }
         Ok(())
@@ -347,14 +347,14 @@ impl Runtime {
         match self.finalize_transfer(consignment, endseals, psbt) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingFailed)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
             }
             Ok(transfer) => {
                 if beneficiary.is_some() {
                     // TODO: Upload to stored database
                 }
                 let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(transfer));
-                self.send_ctl(endpoints, ServiceId::Rgb, CtlMsg::ProcessingComplete)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
             }
         }
         Ok(())
