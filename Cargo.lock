@@ -382,9 +382,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chacha20"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01b72a433d0cf2aef113ba70f62634c56fddb0f244e6377185c56a7cadbd8f91"
+checksum = "5c80e5460aa66fe3b91d40bcbdab953a597b60053e34d684ac6903f863b680a6"
 dependencies = [
  "cfg-if",
  "cipher 0.3.0",
@@ -405,12 +405,12 @@ dependencies = [
 
 [[package]]
 name = "chacha20poly1305"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b84ed6d1d5f7aa9bdde921a5090e0ca4d934d250ea3b402a5fab3a994e28a2a"
+checksum = "a18446b09be63d457bbec447509e85f662f32952b035ce892290396bc0b0cff5"
 dependencies = [
  "aead",
- "chacha20 0.8.1",
+ "chacha20 0.8.2",
  "cipher 0.3.0",
  "poly1305",
  "zeroize",
@@ -578,9 +578,9 @@ dependencies = [
 
 [[package]]
 name = "const_format"
-version = "0.2.25"
+version = "0.2.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2906f2480cdc015e998deac388331a0f1c1cd88744948c749513020c83c370bc"
+checksum = "939dc9e2eb9077e0679d2ce32de1ded8531779360b003b4a972a7a39ec263495"
 dependencies = [
  "const_format_proc_macros",
 ]
@@ -1284,9 +1284,9 @@ dependencies = [
 
 [[package]]
 name = "lnp2p"
-version = "0.8.0-beta.1"
+version = "0.8.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7cebd08c9e476bd8bc626dd0bb13e20c2228f988a9cc8cc859e99de6b9c4aa9"
+checksum = "d778fbd45371753b2744972fa026f909f78b27a53edc75dba226745db2baaa2c"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1515,9 +1515,9 @@ checksum = "4eae0151b9dacf24fcc170d9995e511669a082856a91f958a2fe380bfab3fb22"
 
 [[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "opaque-debug"
@@ -1884,9 +1884,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.5.6"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d83f127d94bdbcda4c8cc2e50f6f84f4b611f69c902699ca385a39c3a75f9ff1"
+checksum = "4c4eb3267174b8c6c2f654116623910a0fef09c4753f8dd83db29c48a0df988b"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1895,9 +1895,9 @@ dependencies = [
 
 [[package]]
 name = "regex-syntax"
-version = "0.6.26"
+version = "0.6.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
+checksum = "a3f87b73ce11b1619a3c6332f45341e0047173771e8b8b73f87bfeefb7b56244"
 
 [[package]]
 name = "rgb-cli"
@@ -1925,9 +1925,9 @@ dependencies = [
 
 [[package]]
 name = "rgb-core"
-version = "0.8.0-rc.3"
+version = "0.8.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c4fbff3747be35f00d4a68a876edb8fdf1b78c3577d6ad1884699d6ea6f8ff0"
+checksum = "dadf2d16b63126690c60d70ede6e2456ff86226a03938d9f36fcb13006b511e5"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1997,7 +1997,7 @@ dependencies = [
  "rgb_rpc",
  "shellexpand",
  "store_rpc",
- "storm-core 0.3.0",
+ "storm-core",
  "storm_ext",
  "strict_encoding",
 ]
@@ -2352,9 +2352,9 @@ dependencies = [
 
 [[package]]
 name = "store_rpc"
-version = "0.8.0-rc.1"
+version = "0.8.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4fbf96f6770e9e2577a7364a0993e6373bb946faf78dee3ca8d8e72f8a19655"
+checksum = "7760e213178dc34f9dc05a1c91ee805bb50e81b46d8776a2f2b92b988a26cc17"
 dependencies = [
  "amplify",
  "colored",
@@ -2366,29 +2366,15 @@ dependencies = [
  "serde 1.0.138",
  "serde_with",
  "serde_yaml",
- "storm-core 0.3.0",
+ "storm-core",
  "strict_encoding",
 ]
 
 [[package]]
 name = "storm-core"
-version = "0.3.0"
+version = "0.8.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "827a0c554999be2cfc202f9179c6a7da3b9aa4671593d6c1a5f1c501af75b402"
-dependencies = [
- "amplify",
- "bitcoin_hashes",
- "commit_verify",
- "internet2",
- "once_cell",
- "stens",
- "strict_encoding",
-]
-
-[[package]]
-name = "storm-core"
-version = "0.4.0"
-source = "git+https://github.com/Storm-WG/storm-core#465aacf18c7810c56d89468a85686e54318802f5"
+checksum = "40a08e0d389e300415db5520682b10c8cb6c897f740f24c5bcb9a9a96e1d4343"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -2402,7 +2388,7 @@ dependencies = [
 [[package]]
 name = "storm_ext"
 version = "0.8.0-alpha.2"
-source = "git+https://github.com/Storm-WG/storm-node#e53b067151551789c94f6107f5be23a2d934cacc"
+source = "git+https://github.com/Storm-WG/storm-node#829b2f609eb9895cec10ffe360128794cd857bbc"
 dependencies = [
  "amplify",
  "const_format",
@@ -2413,7 +2399,7 @@ dependencies = [
  "serde 1.0.138",
  "serde_with",
  "serde_yaml",
- "storm-core 0.4.0",
+ "storm-core",
  "storm_rpc",
  "strict_encoding",
 ]
@@ -2421,7 +2407,7 @@ dependencies = [
 [[package]]
 name = "storm_rpc"
 version = "0.8.0-alpha.2"
-source = "git+https://github.com/Storm-WG/storm-node#e53b067151551789c94f6107f5be23a2d934cacc"
+source = "git+https://github.com/Storm-WG/storm-node#829b2f609eb9895cec10ffe360128794cd857bbc"
 dependencies = [
  "amplify",
  "internet2",

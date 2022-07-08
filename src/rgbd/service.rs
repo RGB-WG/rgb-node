@@ -29,7 +29,7 @@ use rgb::{
 use rgb_rpc::{
     AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq,
 };
-use storm_ext::{ExtMsg as StormMsg, MesgPush};
+use storm_ext::ExtMsg as StormMsg;
 
 use crate::bucketd::StashError;
 use crate::bus::{
@@ -37,7 +37,8 @@ use crate::bus::{
     ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::daemons::Daemon;
-use crate::{Config, DaemonError, Db, LaunchError};
+use crate::db::ChunkHolder;
+use crate::{db, Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let storm_endpoint = config.storm_endpoint.clone();
@@ -77,7 +78,7 @@ pub struct Runtime {
     /// Original configuration object
     pub(crate) config: Config,
 
-    pub(crate) db: Db,
+    pub(crate) store: store_rpc::Client,
 
     pub(crate) bucketd_free: VecDeque<DaemonId>,
     pub(crate) bucketd_busy: BTreeSet<DaemonId>,
@@ -88,13 +89,34 @@ impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError<LaunchError>> {
         debug!("Connecting to store service at {}", config.store_endpoint);
 
-        let db = Db::with(&config.store_endpoint)?;
+        let mut store =
+            store_rpc::Client::with(&config.store_endpoint).map_err(LaunchError::from)?;
+
+        for table in [
+            db::SCHEMATA,
+            db::CONTRACTS,
+            db::BUNDLES,
+            db::GENESIS,
+            db::TRANSITIONS,
+            db::ANCHORS,
+            db::EXTENSIONS,
+            db::ATTACHMENT_CHUNKS,
+            db::ATTACHMENT_INDEX,
+            db::ALU_LIBS,
+            db::OUTPOINTS,
+            db::NODE_CONTRACTS,
+            db::TRANSITION_WITNESS,
+            db::CONTRACT_TRANSITIONS,
+            db::DISCLOSURES,
+        ] {
+            store.use_table(table.to_owned()).map_err(LaunchError::from)?;
+        }
 
         info!("RGBd runtime started successfully");
 
         Ok(Self {
             config,
-            db,
+            store,
             bucketd_free: empty!(),
             bucketd_busy: empty!(),
             ctl_queue: empty!(),
@@ -152,7 +174,7 @@ impl Runtime {
         message: StormMsg,
     ) -> Result<(), DaemonError> {
         match message {
-            StormMsg::Post(MesgPush { message, container }) => {}
+            StormMsg::Post(_) => {}
             wrong_msg => {
                 error!("Request is not supported by the Storm interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
@@ -349,7 +371,7 @@ impl Runtime {
         endpoints: &mut Endpoints,
         client_id: ClientId,
     ) -> Result<(), DaemonError> {
-        let ids = self.db.store.ids(Db::CONTRACTS.to_owned())?;
+        let ids = self.store.ids(db::CONTRACTS)?;
         let ids = ids
             .into_iter()
             .map(|id| ContractId::from_inner(Hash::from_inner(id.into_inner())))
@@ -400,8 +422,8 @@ impl Runtime {
         client_id: ClientId,
         contract_id: ContractId,
     ) -> Result<(), DaemonError> {
-        let msg = match self.db.retrieve(Db::CONTRACTS, contract_id)? {
-            Some(state) => RpcMsg::ContractState(state),
+        let msg = match self.store.retrieve(db::CONTRACTS, contract_id)? {
+            Some(state) => RpcMsg::ContractState(ChunkHolder::unbox(state)),
             None => DaemonError::from(StashError::StateAbsent(contract_id)).into(),
         };
         let _ = self.send_rpc(endpoints, client_id, msg);

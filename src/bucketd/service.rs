@@ -34,7 +34,7 @@ use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
     ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
-use crate::{Config, DaemonError, Db, LaunchError};
+use crate::{Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let rpc_endpoint = config.rpc_endpoint.clone();
@@ -69,14 +69,14 @@ pub struct Runtime {
 
     pub(crate) electrum: ElectrumClient,
 
-    pub(crate) db: Db,
+    pub(crate) store: store_rpc::Client,
 }
 
 impl Runtime {
     pub fn init(config: Config) -> Result<Self, BootstrapError<LaunchError>> {
         debug!("Connecting to store service at {}", config.store_endpoint);
 
-        let db = Db::with(&config.store_endpoint)?;
+        let store = store_rpc::Client::with(&config.store_endpoint).map_err(LaunchError::from)?;
 
         let id = random();
 
@@ -85,7 +85,11 @@ impl Runtime {
 
         info!("Bucket runtime started successfully");
 
-        Ok(Self { id, db, electrum })
+        Ok(Self {
+            id,
+            store,
+            electrum,
+        })
     }
 }
 

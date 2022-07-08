@@ -40,7 +40,7 @@ lnp-core = "0.8.0-beta.1"
 lnp_rpc = "0.8.0-beta.1"
 rgb-std = "0.8.0-rc.2"
 rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }
-storm-core = "0.3.0"
+storm-core = "0.8.0-alpha.1"
 storm_ext = { version = "0.8.0-alpha.2", git = "https://github.com/Storm-WG/storm-node" }
 store_rpc = "0.8.0-rc.1"
 bitcoin = "0.28.1"
@@ -67,7 +67,7 @@ psbt = "0.8.0"
 rgb-std = "0.8.0-rc.2"
 rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }
 storm_ext = { version = "0.8.0-alpha.2", git = "https://github.com/Storm-WG/storm-node" }
-store_rpc = "0.8.0-rc.1"
+store_rpc = "0.8.0-rc.4"
 clap = { version = "~3.1.18", features = ["env"] }
 clap_complete = "~3.1.4"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }

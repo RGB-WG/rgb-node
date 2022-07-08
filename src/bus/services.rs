@@ -67,7 +67,7 @@ pub enum ServiceId {
 }
 
 impl ServiceId {
-    pub fn rgbd() -> ServiceId { ServiceId::StormApp(StormApp::Rgb) }
+    pub fn rgbd() -> ServiceId { ServiceId::StormApp(StormApp::RgbTransfers) }
     pub fn stormd() -> ServiceId { ServiceId::MsgApp(BifrostApp::Storm) }
 }
 

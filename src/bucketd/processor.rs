@@ -11,7 +11,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use bitcoin::{OutPoint, Txid};
-use commit_verify::lnpbp4;
+use commit_verify::{lnpbp4, TaggedHash};
 use psbt::Psbt;
 use rgb::psbt::RgbExt;
 use rgb::schema::TransitionType;
@@ -21,9 +21,12 @@ use rgb::{
     SealEndpoint, StateTransfer, Transition, TransitionBundle, Validator, Validity,
 };
 use rgb_rpc::OutpointFilter;
+use storm::chunk::ChunkIdExt;
+use storm::ChunkId;
 
 use super::Runtime;
-use crate::{DaemonError, Db};
+use crate::db::{self, StoreRpcExt};
+use crate::DaemonError;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(doc_comments)]
@@ -90,7 +93,7 @@ pub enum StashError {
     ///
     /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
     /// stash data storage.
-    OutsizedBundle,
+    Outsizedbundle,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, Error, From)]
@@ -119,15 +122,16 @@ impl Runtime {
 
         info!("Registering consignment {} for contract {}", id, contract_id);
 
-        let mut state = self.db.retrieve(Db::CONTRACTS, contract_id)?.unwrap_or_else(|| {
-            debug!("Contract {} was previously unknown", contract_id);
-            ContractState::with(
-                consignment.schema_id(),
-                consignment.root_schema_id(),
-                contract_id,
-                consignment.genesis(),
-            )
-        });
+        let mut state =
+            self.store.retrieve_sten(db::CONTRACTS, contract_id)?.unwrap_or_else(|| {
+                debug!("Contract {} was previously unknown", contract_id);
+                ContractState::with(
+                    consignment.schema_id(),
+                    consignment.root_schema_id(),
+                    contract_id,
+                    consignment.genesis(),
+                )
+            });
         trace!("Starting with contract state {:?}", state);
 
         debug!("Validating consignment {} for contract {}", id, contract_id);
@@ -153,22 +157,22 @@ impl Runtime {
 
         info!("Storing consignment {} into database", id);
         trace!("Schema: {:?}", consignment.schema());
-        self.db.store(Db::SCHEMATA, consignment.schema_id(), consignment.schema())?;
+        self.store.store_sten(db::SCHEMATA, consignment.schema_id(), consignment.schema())?;
         if let Some(root_schema) = consignment.root_schema() {
             trace!("Root schema: {:?}", root_schema);
-            self.db.store(Db::SCHEMATA, root_schema.schema_id(), root_schema)?;
+            self.store.store_sten(db::SCHEMATA, root_schema.schema_id(), root_schema)?;
         }
 
         let genesis = consignment.genesis();
         debug!("Indexing genesis");
         trace!("Genesis: {:?}", genesis);
-        self.db.store_merge(Db::GENESIS, contract_id, genesis.clone())?;
+        self.store.store_merge(db::GENESIS, contract_id, genesis.clone())?;
         for seal in genesis.revealed_seals().unwrap_or_default() {
             debug!("Adding outpoint for seal {}", seal);
-            let index_id = Db::index_two_pieces(seal.txid, seal.vout);
-            self.db.insert_into_set(Db::OUTPOINTS, index_id, contract_id)?;
+            let index_id = ChunkId::with_fixed_fragments(seal.txid, seal.vout);
+            self.store.insert_into_set(db::OUTPOINTS, index_id, contract_id)?;
         }
-        self.db.store(Db::NODE_CONTRACTS, contract_id, &contract_id)?;
+        self.store.store_sten(db::NODE_CONTRACTS, contract_id, &contract_id)?;
 
         for (anchor, bundle) in consignment.anchored_bundles() {
             let bundle_id = bundle.bundle_id();
@@ -180,7 +184,7 @@ impl Runtime {
                 anchor.to_merkle_block(contract_id, bundle_id.into()).expect("broken anchor data");
             debug!("Restored anchor id is {}", anchor.anchor_id());
             trace!("Restored anchor: {:?}", anchor);
-            self.db.store_merge_h(Db::ANCHORS, anchor.txid, anchor)?;
+            self.store.store_merge(db::ANCHORS, anchor.txid, anchor)?;
             let mut data =
                 bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect::<Vec<_>>();
             for (transition, inputs) in bundle.revealed_iter() {
@@ -194,21 +198,25 @@ impl Runtime {
 
                 trace!("Storing state transition data");
                 data.push((node_id, inputs.clone()));
-                self.db.store_merge(Db::TRANSITIONS, node_id, transition.clone())?;
-                self.db.store(Db::TRANSITION_WITNESS, node_id, &witness_txid)?;
+                self.store.store_merge(db::TRANSITIONS, node_id, transition.clone())?;
+                self.store.store_sten(db::TRANSITION_WITNESS, node_id, &witness_txid)?;
 
                 trace!("Indexing transition");
-                let index_id = Db::index_two_pieces(contract_id, transition_type);
-                self.db.insert_into_set(Db::CONTRACT_TRANSITIONS, index_id, node_id)?;
+                let index_id = ChunkId::with_fixed_fragments(contract_id, transition_type);
+                self.store.insert_into_set(
+                    db::CONTRACT_TRANSITIONS,
+                    index_id,
+                    node_id.into_array(),
+                )?;
 
-                self.db.store(Db::NODE_CONTRACTS, node_id, &contract_id)?;
+                self.store.store_sten(db::NODE_CONTRACTS, node_id, &contract_id)?;
 
                 for seal in transition.revealed_seals().unwrap_or_default() {
-                    let index_id = Db::index_two_pieces(seal.txid, seal.vout);
-                    self.db.insert_into_set(Db::OUTPOINTS, index_id, node_id)?;
+                    let index_id = ChunkId::with_fixed_fragments(seal.txid, seal.vout);
+                    self.store.insert_into_set(db::OUTPOINTS, index_id, node_id.into_array())?;
                 }
             }
-            self.db.store_h(Db::BUNDLES, witness_txid, &data)?;
+            self.store.store_sten(db::BUNDLES, witness_txid, &data)?;
         }
         for extension in consignment.state_extensions() {
             let node_id = extension.node_id();
@@ -218,9 +226,9 @@ impl Runtime {
             state.add_extension(&extension);
             trace!("Contract state now is {:?}", state);
 
-            self.db.store(Db::NODE_CONTRACTS, node_id, &contract_id)?;
+            self.store.store_sten(db::NODE_CONTRACTS, node_id, &contract_id)?;
 
-            self.db.store_merge(Db::EXTENSIONS, node_id, extension.clone())?;
+            self.store.store_merge(db::EXTENSIONS, node_id, extension.clone())?;
             // We do not store seal outpoint here - or will have to store it into a separate
             // database Extension rights are always closed seals, since the extension
             // can get into the history only through closing by a state transition
@@ -228,7 +236,7 @@ impl Runtime {
 
         debug!("Storing contract state for {}", contract_id);
         trace!("Final contract state is {:?}", state);
-        self.db.store(Db::CONTRACTS, contract_id, &state)?;
+        self.store.store_sten(db::CONTRACTS, contract_id, &state)?;
 
         info!("Consignment processing complete for {}", id);
         Ok(status)
@@ -242,17 +250,17 @@ impl Runtime {
         _phantom: T,
     ) -> Result<InmemConsignment<T>, DaemonError> {
         let genesis: Genesis =
-            self.db.retrieve(Db::GENESIS, contract_id)?.ok_or(StashError::GenesisAbsent)?;
+            self.store.retrieve_sten(db::GENESIS, contract_id)?.ok_or(StashError::GenesisAbsent)?;
         let schema_id = genesis.schema_id();
         let schema: Schema = self
-            .db
-            .retrieve(Db::SCHEMATA, schema_id)?
+            .store
+            .retrieve_sten(db::SCHEMATA, schema_id)?
             .ok_or(StashError::SchemaAbsent(schema_id))?;
         let root_schema_id = schema.root_id;
         let root_schema = if root_schema_id != zero!() {
             Some(
-                self.db
-                    .retrieve(Db::SCHEMATA, root_schema_id)?
+                self.store
+                    .retrieve_sten(db::SCHEMATA, root_schema_id)?
                     .ok_or(StashError::SchemaAbsent(root_schema_id))?,
             )
         } else {
@@ -262,16 +270,18 @@ impl Runtime {
         let mut collector = Collector::new(contract_id);
         let outpoints_all = OutpointFilter::All;
         for transition_type in schema.transitions.keys() {
-            let node_ids = self.db.transitions_by_type(contract_id, *transition_type)?;
+            let chunk_id = ChunkId::with_fixed_fragments(contract_id, *transition_type);
+            let node_ids: BTreeSet<NodeId> =
+                self.store.retrieve_sten(db::CONTRACT_TRANSITIONS, chunk_id)?.unwrap_or_default();
             let filter = if always_include.contains(transition_type) {
                 &outpoints_all
             } else {
                 &outpoint_filter
             };
-            collector.process(&mut self.db, node_ids, filter)?;
+            collector.process(&mut self.store, node_ids, filter)?;
         }
 
-        collector = collector.iterate(&mut self.db)?;
+        collector = collector.iterate(&mut self.store)?;
 
         collector.into_consignment(schema, root_schema, genesis)
     }
@@ -283,26 +293,26 @@ impl Runtime {
         let mut res: ContractStateMap = bmap! {};
 
         let indexes = if outpoints.is_empty() {
-            self.db.ids(Db::OUTPOINTS)?
+            self.store.ids(db::OUTPOINTS)?
         } else {
             outpoints
                 .iter()
-                .map(|outpoint| Db::index_two_pieces(outpoint.txid, outpoint.vout))
+                .map(|outpoint| ChunkId::with_fixed_fragments(outpoint.txid, outpoint.vout))
                 .collect()
         };
 
         for index in &indexes {
             let set: BTreeSet<NodeId> =
-                self.db.retrieve_h(Db::OUTPOINTS, *index)?.unwrap_or_default();
+                self.store.retrieve_sten(db::OUTPOINTS, *index)?.unwrap_or_default();
             for node_id in set {
                 let contract_id: ContractId = self
-                    .db
-                    .retrieve(Db::NODE_CONTRACTS, node_id)?
+                    .store
+                    .retrieve_sten(db::NODE_CONTRACTS, node_id)?
                     .ok_or(StashError::NodeContractAbsent(node_id))?;
 
                 let state: ContractState = self
-                    .db
-                    .retrieve(Db::CONTRACTS, contract_id)?
+                    .store
+                    .retrieve_sten(db::CONTRACTS, contract_id)?
                     .ok_or(StashError::StateAbsent(contract_id))?;
 
                 let map = if outpoints.is_empty() {
@@ -353,7 +363,7 @@ impl Runtime {
         // 5. Construct and store disclosure for the blank transfers.
         let txid = anchor.txid;
         let disclosure = Disclosure::with(anchor, bundles, None);
-        self.db.store_h(Db::DISCLOSURES, txid, &disclosure)?;
+        self.store.store_sten(db::DISCLOSURES, txid, &disclosure)?;
 
         Ok(consignment)
     }
@@ -379,29 +389,29 @@ impl Collector {
     // TODO: Support state extensions
     pub fn process(
         &mut self,
-        db: &mut Db,
+        store: &mut store_rpc::Client,
         node_ids: impl IntoIterator<Item = NodeId>,
         outpoint_filter: &OutpointFilter,
     ) -> Result<(), DaemonError> {
         let contract_id = self.contract_id;
 
         for transition_id in node_ids {
-            let transition: Transition = db
-                .retrieve(Db::TRANSITIONS, transition_id)?
+            let transition: Transition = store
+                .retrieve_sten(db::TRANSITIONS, transition_id)?
                 .ok_or(StashError::TransitionAbsent(transition_id))?;
 
-            let witness_txid: Txid = db
-                .retrieve(Db::TRANSITION_WITNESS, transition_id)?
+            let witness_txid: Txid = store
+                .retrieve_sten(db::TRANSITION_WITNESS, transition_id)?
                 .ok_or(StashError::TransitionTxidAbsent(transition_id))?;
 
             let bundle = if let Some((_, bundle)) = self.anchored_bundles.get_mut(&witness_txid) {
                 bundle
             } else {
-                let anchor: Anchor<lnpbp4::MerkleBlock> = db
-                    .retrieve_h(Db::ANCHORS, witness_txid)?
+                let anchor: Anchor<lnpbp4::MerkleBlock> = store
+                    .retrieve_sten(db::ANCHORS, witness_txid)?
                     .ok_or(StashError::AnchorAbsent(witness_txid))?;
-                let bundle: TransitionBundle = db
-                    .retrieve_h(Db::BUNDLES, witness_txid)?
+                let bundle: TransitionBundle = store
+                    .retrieve_sten(db::BUNDLES, witness_txid)?
                     .ok_or(StashError::BundleAbsent(witness_txid))?;
                 let anchor = anchor.to_merkle_proof(contract_id)?;
                 self.anchored_bundles.insert(witness_txid, (anchor, bundle));
@@ -428,12 +438,12 @@ impl Collector {
         Ok(())
     }
 
-    pub fn iterate(mut self, db: &mut Db) -> Result<Self, DaemonError> {
+    pub fn iterate(mut self, store: &mut store_rpc::Client) -> Result<Self, DaemonError> {
         // Collect all transitions between endpoints and genesis independently from their type
         loop {
             let node_ids = self.endpoint_inputs;
             self.endpoint_inputs = vec![];
-            self.process(db, node_ids, &OutpointFilter::All)?;
+            self.process(store, node_ids, &OutpointFilter::All)?;
             if self.endpoint_inputs.is_empty() {
                 break;
             }
@@ -452,7 +462,7 @@ impl Collector {
             .into_values()
             .collect::<Vec<_>>()
             .try_into()
-            .map_err(|_| StashError::OutsizedBundle)?;
+            .map_err(|_| StashError::Outsizedbundle)?;
 
         Ok(InmemConsignment::<T>::with(
             schema,

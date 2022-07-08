@@ -24,10 +24,9 @@ pub mod bus;
 pub mod bucketd;
 #[cfg(feature = "server")]
 pub mod opts;
-mod db;
-pub(self) mod daemons;
+pub(crate) mod db;
+pub(crate) mod daemons;
 
 pub use config::Config;
-pub(crate) use db::Db;
 pub(crate) use error::DaemonError;
 pub use error::LaunchError;
