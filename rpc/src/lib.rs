@@ -31,8 +31,7 @@ pub use client::Client;
 pub use error::{Error, FailureCode};
 pub(crate) use messages::BusMsg;
 pub use messages::{
-    AcceptReq, ComposeReq, ContractValidity, HelloReq, OptionDetails, OutpointFilter, RpcMsg,
-    TransferReq,
+    AcceptReq, ComposeReq, ContractValidity, HelloReq, OutpointFilter, RpcMsg, TransferReq,
 };
 pub use service_id::{ClientId, ServiceId, ServiceName};
 

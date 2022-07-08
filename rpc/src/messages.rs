@@ -9,14 +9,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::collections::BTreeSet;
-use std::fmt::{self, Display, Formatter};
 
-use amplify::Wrapper;
 use bitcoin::{OutPoint, Txid};
 use internet2::addr::NodeAddr;
 use internet2::presentation;
 use lnpbp::chain::Chain;
 use microservices::rpc;
+use microservices::util::OptionDetails;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
@@ -186,33 +185,6 @@ pub struct TransferReq {
     pub endseals: Vec<SealEndpoint>,
     pub psbt: Psbt,
     pub beneficiary: Option<NodeAddr>,
-}
-
-#[derive(Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, From, Default)]
-#[derive(NetworkEncode, NetworkDecode)]
-pub struct OptionDetails(pub Option<String>);
-
-impl Display for OptionDetails {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.as_inner() {
-            None => Ok(()),
-            Some(msg) => write!(f, "; \"{}\"", msg),
-        }
-    }
-}
-
-impl OptionDetails {
-    pub fn with(s: impl ToString) -> Self { Self(Some(s.to_string())) }
-
-    pub fn new() -> Self { Self(None) }
-}
-
-impl From<String> for OptionDetails {
-    fn from(s: String) -> Self { OptionDetails(Some(s)) }
-}
-
-impl From<&str> for OptionDetails {
-    fn from(s: &str) -> Self { OptionDetails(Some(s.to_string())) }
 }
 
 impl From<&str> for RpcMsg {
