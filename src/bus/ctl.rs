@@ -12,13 +12,14 @@ use std::collections::BTreeSet;
 
 use bitcoin::OutPoint;
 use internet2::addr::NodeAddr;
+use microservices::esb::ClientId;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{
     validation, ConsignmentId, ConsignmentType, ContractConsignment, ContractId, InmemConsignment,
     SealEndpoint, StateTransfer, TransferConsignment,
 };
-use rgb_rpc::{ClientId, OutpointFilter};
+use rgb_rpc::OutpointFilter;
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]

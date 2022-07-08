@@ -21,7 +21,7 @@ lnpbp = "0.8.0"
 bitcoin = "0.28.1"
 psbt = "0.8.0"
 internet2 = "0.8.0"
-microservices = { version = "0.8.1", default-features = false, features = ["client"] }
+microservices = { version = "0.8.2", default-features = false, features = ["client"] }
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", optional = true }
 serde_yaml = { version = "0.8.23", optional = true }

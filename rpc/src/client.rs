@@ -16,7 +16,7 @@ use bitcoin::OutPoint;
 use internet2::addr::{NodeAddr, ServiceAddr};
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
-use microservices::esb::{self, BusId};
+use microservices::esb::{self, BusId, ClientId};
 use microservices::rpc;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
@@ -24,8 +24,8 @@ use rgb::{Contract, ContractId, ContractState, ContractStateMap, SealEndpoint, S
 
 use crate::messages::HelloReq;
 use crate::{
-    AcceptReq, BusMsg, ClientId, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter,
-    RpcMsg, ServiceId, TransferReq,
+    AcceptReq, BusMsg, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter, RpcMsg,
+    ServiceId, TransferReq,
 };
 
 // We have just a single service bus (RPC), so we can use any id

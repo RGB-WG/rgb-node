@@ -18,7 +18,7 @@ use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::cli::LogStyle;
 use microservices::error::BootstrapError;
-use microservices::esb::EndpointList;
+use microservices::esb::{ClientId, EndpointList};
 use microservices::node::TryService;
 use microservices::{esb, rpc};
 use psbt::Psbt;
@@ -26,9 +26,7 @@ use rgb::schema::TransitionType;
 use rgb::{
     Contract, ContractConsignment, ContractId, SealEndpoint, StateTransfer, TransferConsignment,
 };
-use rgb_rpc::{
-    AcceptReq, ClientId, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq,
-};
+use rgb_rpc::{AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq};
 use storm_ext::ExtMsg as StormMsg;
 
 use crate::bucketd::StashError;

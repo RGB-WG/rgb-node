@@ -33,6 +33,6 @@ pub(crate) use messages::BusMsg;
 pub use messages::{
     AcceptReq, ComposeReq, ContractValidity, HelloReq, OutpointFilter, RpcMsg, TransferReq,
 };
-pub use service_id::{ClientId, ServiceId, ServiceName};
+pub use service_id::ServiceId;
 
 pub const RGB_NODE_RPC_ENDPOINT: &str = "0.0.0.0:63963";

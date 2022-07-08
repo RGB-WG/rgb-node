@@ -20,7 +20,7 @@ use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
 use microservices::esb;
-use microservices::esb::{EndpointList, Error};
+use microservices::esb::{ClientId, EndpointList, Error};
 use microservices::node::TryService;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
@@ -28,7 +28,7 @@ use rgb::{
     ConsignmentType, ContractConsignment, ContractId, InmemConsignment, SealEndpoint,
     StateTransfer, TransferConsignment, Validity,
 };
-use rgb_rpc::{ClientId, OutpointFilter, RpcMsg};
+use rgb_rpc::{OutpointFilter, RpcMsg};
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
