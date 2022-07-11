@@ -36,7 +36,7 @@ internet2 = { version = "0.8.0", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.0", default-features = false, features = ["node"] }
 lnpbp = "0.8.0"
 bp-core = { version = "0.8.0-rc.1", features = ["psbt"] }
-lnp-core = "0.8.0-beta.1"
+lnp-core = { version = "0.8.0-beta.2", features = ["bifrost"] }
 lnp_rpc = "0.8.0-beta.1"
 rgb-std = "0.8.0-rc.2"
 rgb_rpc = { version = "0.8.0-rc.1", path = "./rpc" }

@@ -141,8 +141,7 @@ impl esb::Handler<ServiceBus> for Runtime {
             (ServiceBus::Storm, BusMsg::Storm(msg), service_id)
                 if service_id == ServiceId::stormd() =>
             {
-                // TODO: Add remote peers to Strom message protocol
-                self.handle_storm(endpoints, /* remote_peer, */ msg)
+                self.handle_storm(endpoints, msg)
             }
             (ServiceBus::Rpc, BusMsg::Rpc(msg), ServiceId::Client(client_id)) => {
                 self.handle_rpc(endpoints, client_id, msg)
