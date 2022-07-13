@@ -28,6 +28,7 @@ use rgb::{
 };
 use rgb_rpc::{AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq};
 use storm_ext::ExtMsg as StormMsg;
+use storm_rpc::AddressedMsg;
 
 use crate::bucketd::StashError;
 use crate::bus::{
@@ -166,12 +167,27 @@ impl esb::Handler<ServiceBus> for Runtime {
 impl Runtime {
     fn handle_storm(
         &mut self,
-        _endpoints: &mut Endpoints,
-        // remote_peer: NodeAddr,
+        endpoints: &mut Endpoints,
         message: StormMsg,
     ) -> Result<(), DaemonError> {
         match message {
-            StormMsg::Post(_) => {}
+            StormMsg::ContainerAnnouncement(AddressedMsg { remote_id, data }) => {
+                self.send_storm(
+                    endpoints,
+                    StormMsg::RetrieveContainer(AddressedMsg {
+                        remote_id,
+                        data: data.id,
+                    }),
+                )?;
+            }
+
+            StormMsg::RetrieveContainer(AddressedMsg { remote_id, data }) => {
+                self.send_storm(
+                    endpoints,
+                    StormMsg::SendContainer(AddressedMsg { remote_id, data }),
+                )?;
+            }
+
             wrong_msg => {
                 error!("Request is not supported by the Storm interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
