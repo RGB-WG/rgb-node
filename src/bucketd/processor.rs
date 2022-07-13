@@ -172,6 +172,7 @@ impl Runtime {
             let index_id = ChunkId::with_fixed_fragments(seal.txid, seal.vout);
             self.store.insert_into_set(db::OUTPOINTS, index_id, contract_id)?;
         }
+        debug!("Storing contract self-reference");
         self.store.store_sten(db::NODE_CONTRACTS, contract_id, &contract_id)?;
 
         for (anchor, bundle) in consignment.anchored_bundles() {

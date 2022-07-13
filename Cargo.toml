@@ -29,7 +29,7 @@ required-features = ["server"]
 
 [dependencies]
 # LNP/BP crates
-amplify = "3.12.1"
+amplify = "3.13.0"
 strict_encoding = "~0.8.0"
 commit_verify = "0.8.0"
 internet2 = { version = "0.8.0", features = ["keygen", "zmq"] }
@@ -60,7 +60,7 @@ colored = "2.0.0"
 shellexpand = { version = "2.1", optional = true }
 
 [build-dependencies]
-amplify = "3.12.1"
+amplify = "3.13.0"
 internet2 = "0.8.0"
 microservices = { version = "0.8.0", default-features = false }
 lnpbp = "0.8.0"

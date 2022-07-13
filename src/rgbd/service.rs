@@ -355,7 +355,7 @@ impl Runtime {
             let _ = self.send_rpc(
                 endpoints,
                 client_id,
-                RpcMsg::Progress(s!("Consignment forwarded to bucket daemon")),
+                RpcMsg::Progress(s!("Task forwarded to bucket daemon")),
             );
             return Ok(());
         }
