@@ -87,7 +87,7 @@ impl Client {
     fn request(&mut self, req: impl Into<RpcMsg>) -> Result<(), Error> {
         let req = req.into();
         debug!("Executing {}", req);
-        self.esb.send_to(RpcBus, ServiceId::Rgb, BusMsg::Rpc(req))?;
+        self.esb.send_to(RpcBus, ServiceId::rgbd(), BusMsg::Rpc(req))?;
         Ok(())
     }
 

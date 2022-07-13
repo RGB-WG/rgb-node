@@ -12,19 +12,27 @@ use std::str::FromStr;
 
 use microservices::esb;
 use microservices::esb::{ClientId, ServiceName};
+use storm::StormApp;
 use strict_encoding::{strict_deserialize, strict_serialize};
 
 /// Identifiers of daemons participating in RGB Node
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display, From, StrictEncode, StrictDecode)]
 pub enum ServiceId {
     #[display("rgbd")]
-    Rgb,
+    #[strict_encoding(value = 0x41)]
+    StormApp(StormApp),
 
     #[display("client<{0}>")]
+    #[strict_encoding(value = 2)]
     Client(ClientId),
 
     #[display("other<{0}>")]
+    #[strict_encoding(value = 0xFF)]
     Other(ServiceName),
+}
+
+impl ServiceId {
+    pub fn rgbd() -> ServiceId { ServiceId::StormApp(StormApp::RgbTransfers) }
 }
 
 impl esb::ServiceAddress for ServiceId {}
@@ -47,5 +55,5 @@ impl From<Vec<u8>> for ServiceId {
 }
 
 impl ServiceId {
-    pub fn router() -> Self { ServiceId::Rgb }
+    pub fn router() -> Self { ServiceId::rgbd() }
 }
