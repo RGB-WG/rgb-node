@@ -266,7 +266,11 @@ impl Runtime {
                 self.pick_task(endpoints)?;
             }
             CtlMsg::Validity(_) | CtlMsg::ProcessingFailed | CtlMsg::ProcessingComplete => {
-                self.pick_task(endpoints)?;
+                if let ServiceId::Bucket(daemon_id) = source {
+                    self.bucketd_busy.remove(&daemon_id);
+                    self.bucketd_free.push_back(daemon_id);
+                    self.pick_task(endpoints)?;
+                }
             }
 
             wrong_msg => {
@@ -304,8 +308,12 @@ impl Runtime {
     }
 
     fn pick_task(&mut self, endpoints: &mut Endpoints) -> Result<bool, esb::Error<ServiceId>> {
-        let service = match self.bucketd_free.pop_front() {
-            Some(damon_id) => ServiceId::Bucket(damon_id),
+        if self.ctl_queue.is_empty() {
+            return Ok(true);
+        }
+
+        let (service, daemon_id) = match self.bucketd_free.front() {
+            Some(damon_id) => (ServiceId::Bucket(*damon_id), *damon_id),
             None => return Ok(false),
         };
 
@@ -314,7 +322,11 @@ impl Runtime {
             Some(req) => req,
         };
 
+        debug!("Assigning task {} to {}", msg, service);
+
         self.send_ctl(endpoints, service, msg)?;
+        self.bucketd_free.pop_front();
+        self.bucketd_busy.insert(daemon_id);
         Ok(true)
     }
 
