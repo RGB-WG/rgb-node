@@ -276,9 +276,9 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bp-core"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b37606d0f9b2c13cc1ac5bf81dbe4dc57479edc86d891be62235ca415b21600b"
+checksum = "a21c38adb69d890aa90c175240e3f5b1784cf6626486e7fd5138e3e6f6168101"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -294,9 +294,9 @@ dependencies = [
 
 [[package]]
 name = "bp-dbc"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12cad35fd1f038ab75f078b3d51a005162905fe0f915b3efd14eb89a5c26dae5"
+checksum = "2b579033858923b066ad644f2628f20472694723e3aad6da1f678c9e9ff029db"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -311,9 +311,9 @@ dependencies = [
 
 [[package]]
 name = "bp-seals"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c06a238a7121b96522c327148e26d176e87ef0f10e5d9ad09945df9bb3c44d6"
+checksum = "014b7cddf7739a960b504db916041e7605ee60aa56c885673948c55b634bdc96"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1265,9 +1265,9 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "lnp-core"
-version = "0.8.0-beta.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d3b7da4f3057b8e11a8464f4cf9ad601d48eb65a0c488c9e56c5e93fe7cc65b"
+checksum = "d8f1f4c14c6b4d0a2039a81dc558c96f9cbda040023e0ee6c6a275f68629358c"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1284,9 +1284,9 @@ dependencies = [
 
 [[package]]
 name = "lnp2p"
-version = "0.8.0-beta.6"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddd42c74043d3b457331cbc6d1cc98f17d25da8a9ef1961ffa439416426b2940"
+checksum = "314350443009c2257a51cb1890c3eaf00efb124cc6764eca70090be427f841d4"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1307,9 +1307,9 @@ dependencies = [
 
 [[package]]
 name = "lnp_rpc"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d2eccecd7769dbad344182f6fa293568957c0f6d803b1363e15fc26db39f6e3"
+checksum = "f39eccd18dddb45e3a947f2e0fa0b92a8aaf8be1ac0f39284f4f987e68815db4"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1901,7 +1901,7 @@ checksum = "a3f87b73ce11b1619a3c6332f45341e0047173771e8b8b73f87bfeefb7b56244"
 
 [[package]]
 name = "rgb-cli"
-version = "0.8.0-rc.2"
+version = "0.8.0-rc.1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1925,9 +1925,9 @@ dependencies = [
 
 [[package]]
 name = "rgb-core"
-version = "0.8.0-rc.6"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "088f1be5a3cd638416ee4fe8da51c5fc1fa99c665b1baaead19a42daefe1c96f"
+checksum = "71a0efaa4a4c85acf6159148d92af402f37821eb197c66018723f605b6cfc0be"
 dependencies = [
  "aluvm",
  "amplify",
@@ -1947,9 +1947,9 @@ dependencies = [
 
 [[package]]
 name = "rgb-std"
-version = "0.8.0-rc.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5329834b6ee93097d0eaa3559796fda51754d247c60bfe95eb0d72ead5d34047"
+checksum = "adbe479e9a292db860b6db8d0ac0f6e66245f20875b3afa31ca680a39e806217"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1969,7 +1969,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.8.0-rc.2"
+version = "0.8.0-rc.1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2005,7 +2005,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_rpc"
-version = "0.8.0-rc.2"
+version = "0.8.0-rc.1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2374,9 +2374,9 @@ dependencies = [
 
 [[package]]
 name = "storm-core"
-version = "0.8.0-beta.4"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f748a74164692335f05d129feaada75d54d605d42bab542fdc732078cea86e24"
+checksum = "f8c86eb19d8639c31589447f2a7c3488b51b9b4ff254286ab6705bf348abb204"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
