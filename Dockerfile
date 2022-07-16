@@ -5,12 +5,13 @@
 #
 # https://github.com/LukeMathWalker/cargo-chef
 
+ARG SRC_DIR=/usr/local/src/rgb
 ARG BUILDER_DIR=/srv/rgb
 
 # Base image
 FROM rust:1.59.0-slim-bullseye as chef
 
-ARG SRC_DIR=/usr/local/src/rgb
+ARG SRC_DIR
 ARG BUILDER_DIR
 
 RUN apt-get update && apt-get install -y build-essential
@@ -31,7 +32,10 @@ RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 
-COPY --from=planner $SRC_DIR/recipe.json recipe.json
+ARG SRC_DIR
+ARG BUILDER_DIR
+
+COPY --from=planner "${SRC_DIR}/recipe.json" recipe.json
 
 # Build dependencies - this is the caching Docker layer
 RUN cargo chef cook --release --recipe-path recipe.json --target-dir "${BUILDER_DIR}"
@@ -45,7 +49,7 @@ FROM debian:bullseye-slim as final
 
 ARG BUILDER_DIR
 ARG BIN_DIR=/usr/local/bin
-ARG DATA_DIR=/var/lib/rgb
+ARG DATA_DIR=/var/lib/rgbd
 ARG USER=rgb
 
 RUN adduser --home "${DATA_DIR}" --shell /bin/bash --disabled-login \
@@ -57,7 +61,7 @@ COPY --from=builder --chown=${USER}:${USER} \
 WORKDIR "${BIN_DIR}"
 
 # Remove build artifacts in order to keep only the binaries
-RUN rm -rf */ *.d
+RUN rm -rf */ *.d .[^.] .??*
 
 USER ${USER}
 
