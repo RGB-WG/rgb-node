@@ -19,7 +19,7 @@ _bucketd() {
 
     case "${cmd}" in
         bucketd)
-            opts="-h -V -v -d -S -X -n --help --version --verbose --data-dir --store --ctl --chain --electrum-server --electrum-port"
+            opts="-h -V -v -d -S -X -n -R -E --help --version --verbose --data-dir --store --ctl --chain --electrum-server --electrum-port --rpc --storm"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -62,6 +62,22 @@ _bucketd() {
                     return 0
                     ;;
                 --electrum-port)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --rpc)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -R)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --storm)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -E)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

@@ -34,7 +34,11 @@ impl Launcher for Daemon {
     }
 
     fn cmd_args(&self, cmd: &mut Command) -> Result<(), LauncherError<Self>> {
-        cmd.args(std::env::args().skip(1));
+        cmd.args(
+            std::env::args()
+                .skip(1)
+                .filter(|arg| !["--threaded"].iter().any(|pat| arg.starts_with(pat))),
+        );
 
         Ok(())
     }

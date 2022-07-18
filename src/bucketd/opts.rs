@@ -21,6 +21,14 @@ pub struct Opts {
     /// command-line args or environment variables
     #[clap(flatten)]
     pub shared: SharedOpts,
+
+    #[doc(hidden)]
+    #[clap(short = 'R', long = "rpc", hide = true)]
+    pub rpc_endpoint: Option<String>,
+
+    #[doc(hidden)]
+    #[clap(short = 'E', long = "storm", hide = true)]
+    pub storm_endpoint: Option<String>,
 }
 
 impl Opts {
