@@ -25,7 +25,6 @@ pub mod bucketd;
 #[cfg(feature = "server")]
 pub mod opts;
 pub(crate) mod db;
-pub(crate) mod daemons;
 
 pub use config::Config;
 pub(crate) use error::DaemonError;

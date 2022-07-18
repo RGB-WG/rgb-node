@@ -16,7 +16,7 @@ use rgb_rpc::{FailureCode, RpcMsg};
 
 use crate::bucketd::{FinalizeError, StashError};
 use crate::bus::{ServiceBus, ServiceId};
-use crate::daemons::Daemon;
+use crate::rgbd::Daemon;
 
 #[derive(Clone, Debug, Display, Error, From)]
 #[display(doc_comments)]

@@ -11,7 +11,9 @@
 mod service;
 #[cfg(feature = "server")]
 mod opts;
+pub(self) mod daemons;
 
+pub(crate) use daemons::Daemon;
 #[cfg(feature = "server")]
 pub use opts::Opts;
 pub use service::{run, Runtime};

@@ -35,8 +35,8 @@ use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
     ProcessReq, Responder, ServiceBus, ServiceId,
 };
-use crate::daemons::Daemon;
 use crate::db::ChunkHolder;
+use crate::rgbd::daemons::Daemon;
 use crate::{db, Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
