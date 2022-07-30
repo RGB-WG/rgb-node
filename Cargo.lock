@@ -1996,6 +1996,7 @@ dependencies = [
  "rgb-std",
  "rgb_rpc",
  "shellexpand",
+ "stens",
  "store_rpc",
  "storm-core",
  "storm_ext",
