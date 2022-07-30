@@ -13,7 +13,6 @@ use std::path::PathBuf;
 use clap::{Parser, ValueHint};
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
-use microservices::shell::shell_setup;
 use store_rpc::STORED_RPC_ENDPOINT;
 
 #[cfg(any(target_os = "linux"))]
@@ -116,11 +115,12 @@ pub struct Opts {
     pub electrum_port: Option<u16>,
 }
 
+#[cfg(feature = "server")]
 impl Opts {
     pub fn process<'s>(&'s mut self, other: impl IntoIterator<Item = &'s mut ServiceAddr>) {
         let mut services = vec![&mut self.ctl_endpoint, &mut self.store_endpoint];
         services.extend(other);
-        shell_setup(self.verbose, services, &mut self.data_dir, &[(
+        microservices::shell::shell_setup(self.verbose, services, &mut self.data_dir, &[(
             "{chain}",
             self.chain.to_string(),
         )]);

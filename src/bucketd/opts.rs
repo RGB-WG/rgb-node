@@ -31,6 +31,7 @@ pub struct Opts {
     pub storm_endpoint: Option<String>,
 }
 
+#[cfg(feature = "server")]
 impl Opts {
     pub fn process(&mut self) { self.shared.process([]); }
 }

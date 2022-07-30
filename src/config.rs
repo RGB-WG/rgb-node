@@ -12,7 +12,9 @@ use std::path::PathBuf;
 
 use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
+#[cfg(feature = "server")]
 use rgb_rpc::RGB_NODE_RPC_ENDPOINT;
+#[cfg(feature = "server")]
 use storm_ext::STORM_NODE_EXT_ENDPOINT;
 
 #[cfg(feature = "server")]
@@ -52,6 +54,7 @@ pub struct Config {
 }
 
 // TODO: Move to descriptor wallet
+#[cfg(feature = "server")]
 fn default_electrum_port(chain: &Chain) -> u16 {
     match chain {
         Chain::Mainnet => 50001,
@@ -85,6 +88,7 @@ impl From<Opts> for Config {
     }
 }
 
+#[cfg(feature = "server")]
 impl From<rgbd::Opts> for Config {
     fn from(opts: rgbd::Opts) -> Config {
         let mut config = Config::from(opts.shared);
@@ -95,6 +99,7 @@ impl From<rgbd::Opts> for Config {
     }
 }
 
+#[cfg(feature = "server")]
 impl From<bucketd::Opts> for Config {
     fn from(opts: bucketd::Opts) -> Config { Config::from(opts.shared) }
 }

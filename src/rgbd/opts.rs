@@ -52,6 +52,7 @@ pub struct Opts {
     pub threaded_daemons: bool,
 }
 
+#[cfg(feature = "server")]
 impl Opts {
     pub fn process(&mut self) {
         self.shared.process([&mut self.rpc_endpoint, &mut self.storm_endpoint]);
