@@ -1901,7 +1901,7 @@ checksum = "a3f87b73ce11b1619a3c6332f45341e0047173771e8b8b73f87bfeefb7b56244"
 
 [[package]]
 name = "rgb-cli"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1969,7 +1969,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2006,7 +2006,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_rpc"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2391,9 +2391,9 @@ dependencies = [
 
 [[package]]
 name = "storm_ext"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31744227f63019e4bdbae02936564912d7a2df0223d0709e037e29f277d489e6"
+checksum = "7be4a61f1c8cf775a41058b32de100ed3af99c2bcbe2e411517e44836264eeee"
 dependencies = [
  "amplify",
  "const_format",
@@ -2411,9 +2411,9 @@ dependencies = [
 
 [[package]]
 name = "storm_rpc"
-version = "0.8.0-rc.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7384ce1e181e58e82ea18c6b785b26c3ad48ab609fd22422314aad8bf2428fd1"
+checksum = "d0382c2c2bed27a23d30ef477b0282c804ed4b14ae34c0f318e6b062a58dc81a"
 dependencies = [
  "amplify",
  "internet2",
