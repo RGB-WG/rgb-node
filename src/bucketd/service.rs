@@ -32,7 +32,7 @@ use rgb::{
 };
 use rgb_rpc::{OutpointFilter, RpcMsg};
 use stens::AsciiString;
-use storm::{Chunk, Container, ContainerFullId, ContainerHeader, MesgId};
+use storm::{Chunk, Container, ContainerFullId, ContainerHeader, ContainerId, MesgId};
 use storm_ext::ExtMsg as StormMsg;
 use storm_rpc::AddressedMsg;
 use strict_encoding::{MediumVec, StrictEncode};
@@ -178,6 +178,9 @@ impl Runtime {
             }) => {
                 self.handle_consignment(endpoints, client_id, consignment, force)?;
             }
+            CtlMsg::ProcessTransferContainer(container_id) => {
+                self.handle_container(endpoints, container_id)?;
+            }
 
             CtlMsg::ConsignContract(ConsignReq {
                 client_id,
@@ -245,6 +248,29 @@ impl Runtime {
 }
 
 impl Runtime {
+    fn handle_container(
+        &mut self,
+        endpoints: &mut Endpoints,
+        container_id: ContainerId,
+    ) -> Result<(), DaemonError> {
+        match self.process_container(container_id) {
+            Err(err) => {
+                error!("Invalid consignment in the container {}: {}", container_id, err);
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
+            }
+            Ok(status) => {
+                info!(
+                    "Consignment from container {} is processed with status {}",
+                    container_id,
+                    status.validity()
+                );
+                debug!("Validation report: {}", status);
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
+            }
+        }
+        Ok(())
+    }
+
     fn handle_consignment<C: ConsignmentType>(
         &mut self,
         endpoints: &mut Endpoints,

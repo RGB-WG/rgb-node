@@ -13,6 +13,7 @@ use internet2::presentation;
 use microservices::rpc::ServerError;
 use microservices::{esb, rpc, LauncherError};
 use rgb_rpc::{FailureCode, RpcMsg};
+use storm::ContainerId;
 
 use crate::bucketd::{FinalizeError, StashError};
 use crate::bus::{ServiceBus, ServiceId};
@@ -70,6 +71,9 @@ pub(crate) enum DaemonError {
     #[from(bp::dbc::anchor::Error)]
     Finalize(FinalizeError),
 
+    /// the container which was requested to be processed is absent in sthe store
+    NoContainer(ContainerId),
+
     /// request `{1}` is not supported on {0} message bus
     RequestNotSupported(ServiceBus, String),
     // /// request `{1}` is not supported on {0} message bus for service {2}
@@ -94,6 +98,7 @@ impl From<DaemonError> for RpcMsg {
             DaemonError::BucketLauncher(_) => FailureCode::Launcher,
             DaemonError::Stash(_) => FailureCode::Stash,
             DaemonError::Finalize(_) => FailureCode::Finalize,
+            DaemonError::NoContainer(_) => FailureCode::Store,
         };
         RpcMsg::Failure(rpc::Failure {
             code: code.into(),

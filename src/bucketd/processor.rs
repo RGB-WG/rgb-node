@@ -9,6 +9,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::io;
+use std::io::Write;
 
 use bitcoin::{OutPoint, Txid};
 use commit_verify::{lnpbp4, TaggedHash};
@@ -22,7 +24,8 @@ use rgb::{
 };
 use rgb_rpc::OutpointFilter;
 use storm::chunk::ChunkIdExt;
-use storm::ChunkId;
+use storm::{ChunkId, Container, ContainerId};
+use strict_encoding::StrictDecode;
 
 use super::Runtime;
 use crate::db::{self, StoreRpcExt};
@@ -112,6 +115,32 @@ pub enum FinalizeError {
 }
 
 impl Runtime {
+    /// Processes incoming transfer downloaded as a container locally
+    pub(super) fn process_container(
+        &mut self,
+        container_id: ContainerId,
+    ) -> Result<validation::Status, DaemonError> {
+        // Assemble consignment
+        // TODO: Make this procedure part of Storm Core (assembling data from a container)
+        let container_chunk = self
+            .store
+            .retrieve_chunk(storm_rpc::DB_TABLE_CONTAINERS, container_id)?
+            .ok_or(DaemonError::NoContainer(container_id))?;
+        let container = Container::strict_deserialize(container_chunk)?;
+        let data = Vec::with_capacity(container.header.size as usize);
+        let mut writer = io::Cursor::new(data);
+        for chunk_id in container.chunks {
+            let chunk = self
+                .store
+                .retrieve_chunk(storm_rpc::DB_TABLE_CHUNKS, chunk_id)?
+                .expect(&format!("Chunk {} is absent", chunk_id));
+            writer.write_all(chunk.as_slice()).expect("memory writers do not error");
+        }
+
+        let consignment = StateTransfer::strict_deserialize(writer.into_inner())?;
+        self.process_consignment(consignment, true)
+    }
+
     pub(super) fn process_consignment<C: ConsignmentType>(
         &mut self,
         consignment: InmemConsignment<C>,

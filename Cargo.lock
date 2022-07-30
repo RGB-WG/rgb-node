@@ -2355,9 +2355,9 @@ dependencies = [
 
 [[package]]
 name = "store_rpc"
-version = "0.8.0-rc.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16f35e11387b81a05f80161ab876088274c5b859e314ddaf461e979befc3d0a3"
+checksum = "3f72f900eadc810e0e00cddc633590e93bda23d1e219ca82c6f98fe163e46427"
 dependencies = [
  "amplify",
  "colored",
@@ -2391,9 +2391,9 @@ dependencies = [
 
 [[package]]
 name = "storm_ext"
-version = "0.8.0-beta.1"
+version = "0.8.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec51c6236947e5f0b9911cdb121284c49a39e49741d176ab74cb7c865dfe158d"
+checksum = "31744227f63019e4bdbae02936564912d7a2df0223d0709e037e29f277d489e6"
 dependencies = [
  "amplify",
  "const_format",
@@ -2411,9 +2411,9 @@ dependencies = [
 
 [[package]]
 name = "storm_rpc"
-version = "0.8.0-beta.1"
+version = "0.8.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dac3f5de9fcb38be05c043e1d2f664e5335b2ec0f118aeda0a4dda7e700e00d4"
+checksum = "7384ce1e181e58e82ea18c6b785b26c3ad48ab609fd22422314aad8bf2428fd1"
 dependencies = [
  "amplify",
  "internet2",

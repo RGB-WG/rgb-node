@@ -20,6 +20,7 @@ use rgb::{
     SealEndpoint, StateTransfer, TransferConsignment,
 };
 use rgb_rpc::OutpointFilter;
+use storm::ContainerId;
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
 #[derive(Clone, Debug, Display, From)]
@@ -34,6 +35,9 @@ pub enum CtlMsg {
 
     #[display("process_transfer({0})")]
     ProcessTransfer(ProcessReq<TransferConsignment>),
+
+    #[display("process_transfer_container({0})")]
+    ProcessTransferContainer(ContainerId),
 
     #[display("consign_contract({0})")]
     ConsignContract(ConsignReq<ContractConsignment>),

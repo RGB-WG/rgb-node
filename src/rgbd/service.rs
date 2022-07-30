@@ -27,6 +27,7 @@ use rgb::{
     Contract, ContractConsignment, ContractId, SealEndpoint, StateTransfer, TransferConsignment,
 };
 use rgb_rpc::{AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq};
+use storm::ContainerId;
 use storm_ext::ExtMsg as StormMsg;
 use storm_rpc::AddressedMsg;
 
@@ -186,6 +187,12 @@ impl Runtime {
                     endpoints,
                     StormMsg::SendContainer(AddressedMsg { remote_id, data }),
                 )?;
+            }
+
+            // We receive this message when we asked storm daemon to download announced container
+            // and the container got downloaded
+            StormMsg::ContainerRetrieved(container_id) => {
+                self.process_transfer(endpoints, container_id)?;
             }
 
             wrong_msg => {
@@ -496,6 +503,18 @@ impl Runtime {
             force,
         }));
         self.pick_or_start(endpoints, client_id)
+    }
+
+    fn process_transfer(
+        &mut self,
+        endpoints: &mut Endpoints,
+        container_id: ContainerId,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::ProcessTransferContainer(container_id));
+        if !self.pick_task(endpoints)? {
+            self.launch_daemon(Daemon::Bucketd, self.config.clone())?;
+        }
+        Ok(())
     }
 
     fn complete_transfer(
