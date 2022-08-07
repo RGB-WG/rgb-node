@@ -22,7 +22,7 @@ use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{Contract, ContractId, ContractState, ContractStateMap, SealEndpoint, StateTransfer};
 
-use crate::messages::HelloReq;
+use crate::messages::{HelloReq, TransferFinalize};
 use crate::{
     AcceptReq, BusMsg, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter, RpcMsg,
     ServiceId, TransferReq,
@@ -224,7 +224,7 @@ impl Client {
         psbt: Psbt,
         beneficiary: Option<NodeAddr>,
         progress: impl Fn(String),
-    ) -> Result<StateTransfer, Error> {
+    ) -> Result<TransferFinalize, Error> {
         self.request(RpcMsg::Transfer(TransferReq {
             consignment,
             endseals,
@@ -233,7 +233,7 @@ impl Client {
         }))?;
         loop {
             match self.response()?.failure_to_error()? {
-                RpcMsg::StateTransfer(transfer) => return Ok(transfer),
+                RpcMsg::StateTransferFinalize(transfer) => return Ok(transfer),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }

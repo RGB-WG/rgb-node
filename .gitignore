@@ -4,6 +4,7 @@
 **/*.rs.bk
 
 .idea
+.vscode
 
 # Temporary directory for debug data storage
 /data
