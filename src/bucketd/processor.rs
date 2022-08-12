@@ -198,7 +198,10 @@ impl Runtime {
         self.store.store_merge(db::GENESIS, contract_id, genesis.clone())?;
         for seal in genesis.revealed_seals().unwrap_or_default() {
             debug!("Adding outpoint for seal {}", seal);
-            let index_id = ChunkId::with_fixed_fragments(seal.txid, seal.vout);
+            let index_id = ChunkId::with_fixed_fragments(
+                seal.txid.expect("genesis with vout-based seal which passed schema validation"),
+                seal.vout,
+            );
             self.store.insert_into_set(db::OUTPOINTS, index_id, contract_id)?;
         }
         debug!("Storing contract self-reference");
