@@ -91,6 +91,9 @@ pub enum RpcMsg {
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),
 
+    #[display("state_transfer_finalize(...)")]
+    StateTransferFinalize(TransferFinalize),
+
     #[display("progress(\"{0}\")")]
     #[from]
     Progress(String),
@@ -189,4 +192,12 @@ pub struct TransferReq {
 
 impl From<&str> for RpcMsg {
     fn from(s: &str) -> Self { RpcMsg::Progress(s.to_owned()) }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("transfer_complete(...)")]
+pub struct TransferFinalize {
+    pub consignment: StateTransfer,
+    pub psbt: Psbt,
 }

@@ -391,7 +391,7 @@ impl Runtime {
                     // 1. Containerize consignment
                     // TODO: Make consignment containerization part of the RGB stdlib; use logical,
                     //       not a size-chunking
-                    let data = transfer.strict_serialize()?;
+                    let data = transfer.consignment.strict_serialize()?;
                     let mut chunk_ids = MediumVec::new();
                     let size = data.len() as u64;
                     for piece in data.chunks(u24::MAX.into_usize()) {
@@ -441,7 +441,8 @@ impl Runtime {
                     };
                     self.send_storm(endpoints, StormMsg::SendContainer(addressed_msg))?;
                 }
-                let _ = self.send_rpc(endpoints, client_id, RpcMsg::StateTransfer(transfer));
+                let _ =
+                    self.send_rpc(endpoints, client_id, RpcMsg::StateTransferFinalize(transfer));
                 self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
             }
         }

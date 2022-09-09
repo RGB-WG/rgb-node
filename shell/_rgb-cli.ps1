@@ -207,6 +207,8 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             [CompletionResult]::new('--send', 'send', [CompletionResultType]::ParameterName, 'Bifrost server to send state transfer to')
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary')
             [CompletionResult]::new('--endseal', 'endseal', [CompletionResultType]::ParameterName, 'Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary')
+            [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten')
+            [CompletionResult]::new('--out', 'out', [CompletionResultType]::ParameterName, 'Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten')
             [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')

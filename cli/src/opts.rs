@@ -163,6 +163,11 @@ pub enum TransferCommand {
         /// The final PSBT (not modified).
         psbt: PathBuf,
 
+        /// Output file to save the PSBT updated with state transition(s)
+        /// information. If not given, the source PSBT file is overwritten.
+        #[clap(short = 'o', long = "out")]
+        psbt_out: Option<PathBuf>,
+
         /// State transfer consignment draft file prepared with `compose` command.
         consignment_in: PathBuf,
 

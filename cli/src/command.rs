@@ -259,18 +259,24 @@ impl Exec for Opts {
                 }
 
                 TransferCommand::Finalize {
-                    psbt: psbt_path,
+                    psbt: psbt_in,
                     consignment_in,
                     consignment_out,
                     endseals,
                     send,
-                    // TODO: Add PSBT out
+                    psbt_out,
                 } => {
-                    let psbt_bytes = fs::read(&psbt_path)?;
+                    let psbt_bytes = fs::read(&psbt_in)?;
                     let psbt = Psbt::deserialize(&psbt_bytes)?;
                     let consignment = StateTransfer::strict_file_load(&consignment_in)?;
                     let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
-                    transfer.strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+
+                    transfer
+                        .consignment
+                        .strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+
+                    let psbt_bytes = transfer.psbt.serialize();
+                    fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
                 }
 
                 TransferCommand::Consume { force, consignment } => {

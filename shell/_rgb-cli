@@ -251,6 +251,8 @@ _arguments "${_arguments_options[@]}" \
 '--send=[Bifrost server to send state transfer to]:SEND: ' \
 '*-e+[Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary]:ENDSEALS: ' \
 '*--endseal=[Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary]:ENDSEALS: ' \
+'-o+[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
+'--out=[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '--rpc=[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
 '-n+[Blockchain to use]:CHAIN: ' \

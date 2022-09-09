@@ -22,7 +22,7 @@ use rgb::{
     ContractStateMap, Disclosure, Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId,
     SealEndpoint, StateTransfer, Transition, TransitionBundle, Validator, Validity,
 };
-use rgb_rpc::OutpointFilter;
+use rgb_rpc::{OutpointFilter, TransferFinalize};
 use storm::chunk::ChunkIdExt;
 use storm::{ChunkId, Container, ContainerId};
 use strict_encoding::StrictDecode;
@@ -366,7 +366,7 @@ impl Runtime {
         mut consignment: StateTransfer,
         endseals: Vec<SealEndpoint>,
         mut psbt: Psbt,
-    ) -> Result<StateTransfer, DaemonError> {
+    ) -> Result<TransferFinalize, DaemonError> {
         let contract_id = consignment.contract_id();
         info!("Finalizing transfer for {}", contract_id);
 
@@ -398,7 +398,7 @@ impl Runtime {
         let disclosure = Disclosure::with(anchor, bundles, None);
         self.store.store_sten(db::DISCLOSURES, txid, &disclosure)?;
 
-        Ok(consignment)
+        Ok(TransferFinalize { consignment, psbt })
     }
 }
 
