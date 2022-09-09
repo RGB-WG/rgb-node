@@ -249,7 +249,7 @@ impl Exec for Opts {
                             psbt.push_rgb_transition(transition.clone())?;
                             for no in indexes {
                                 psbt.inputs[*no as usize]
-                                    .set_rgb_consumer(contract_id, transition.node_id())?;
+                                    .set_rgb_consumer(cid, transition.node_id())?;
                             }
                         }
                     }
