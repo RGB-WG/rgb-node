@@ -28,6 +28,7 @@ use storm::{ChunkId, Container, ContainerId};
 use strict_encoding::StrictDecode;
 
 use super::Runtime;
+use crate::amplify::Wrapper;
 use crate::db::{self, StoreRpcExt};
 use crate::DaemonError;
 
@@ -218,8 +219,9 @@ impl Runtime {
             debug!("Restored anchor id is {}", anchor.anchor_id());
             trace!("Restored anchor: {:?}", anchor);
             self.store.store_merge(db::ANCHORS, anchor.txid, anchor)?;
-            let mut data =
-                bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect::<Vec<_>>();
+            let concealed: BTreeMap<NodeId, BTreeSet<u16>> =
+                bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect();
+            let mut revealed: BTreeMap<Transition, BTreeSet<u16>> = bmap!();
             for (transition, inputs) in bundle.revealed_iter() {
                 let node_id = transition.node_id();
                 let transition_type = transition.transition_type();
@@ -230,7 +232,7 @@ impl Runtime {
                 trace!("Contract state now is {:?}", state);
 
                 trace!("Storing state transition data");
-                data.push((node_id, inputs.clone()));
+                revealed.insert(transition.clone(), inputs.clone());
                 self.store.store_merge(db::TRANSITIONS, node_id, transition.clone())?;
                 self.store.store_sten(db::TRANSITION_WITNESS, node_id, &witness_txid)?;
 
@@ -244,11 +246,16 @@ impl Runtime {
 
                 self.store.store_sten(db::NODE_CONTRACTS, node_id, &contract_id)?;
 
-                for seal in transition.revealed_seals().unwrap_or_default() {
-                    let index_id = ChunkId::with_fixed_fragments(seal.txid, seal.vout);
+                for seal in transition.filter_revealed_seals() {
+                    let index_id = ChunkId::with_fixed_fragments(
+                        seal.txid.expect("seal should contain revealed txid"),
+                        seal.vout,
+                    );
                     self.store.insert_into_set(db::OUTPOINTS, index_id, node_id.into_array())?;
                 }
             }
+            let data = TransitionBundle::with(revealed, concealed)
+                .expect("enough data should be available to create bundle");
             self.store.store_sten(db::BUNDLES, witness_txid, &data)?;
         }
         for extension in consignment.state_extensions() {
@@ -429,6 +436,9 @@ impl Collector {
         let contract_id = self.contract_id;
 
         for transition_id in node_ids {
+            if transition_id.as_inner() == contract_id.as_inner() {
+                continue;
+            }
             let transition: Transition = store
                 .retrieve_sten(db::TRANSITIONS, transition_id)?
                 .ok_or(StashError::TransitionAbsent(transition_id))?;
