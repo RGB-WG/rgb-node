@@ -15,8 +15,6 @@ pub const GENESIS: &'static str = "genesis";
 pub const TRANSITIONS: &'static str = "transitions";
 pub const ANCHORS: &'static str = "anchors";
 pub const EXTENSIONS: &'static str = "extensions";
-pub const ATTACHMENT_CHUNKS: &'static str = "chunks";
-pub const ATTACHMENT_INDEX: &'static str = "attachments";
 pub const ALU_LIBS: &'static str = "alu";
 
 pub const OUTPOINTS: &'static str = "outpoints";
@@ -25,6 +23,12 @@ pub const TRANSITION_WITNESS: &'static str = "transition_txid";
 pub const CONTRACT_TRANSITIONS: &'static str = "contract_transitions";
 
 pub const DISCLOSURES: &'static str = "disclosures";
+
+// Storm intgration
+pub const ATTACHMENT_CHUNKS: &'static str = "chunks";
+pub const ATTACHMENT_INDEX: &'static str = "attachments";
+pub const ATTACHMENT_CONTAINER_HEADERS: &'static str = "container_headers";
+pub const ATTACHMENT_CONTAINERS: &'static str = "containers";
 
 pub(crate) trait StoreRpcExt {
     fn retrieve_sten<T>(

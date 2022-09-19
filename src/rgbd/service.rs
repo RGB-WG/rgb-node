@@ -108,6 +108,8 @@ impl Runtime {
             db::TRANSITION_WITNESS,
             db::CONTRACT_TRANSITIONS,
             db::DISCLOSURES,
+            db::ATTACHMENT_CONTAINER_HEADERS,
+            db::ATTACHMENT_CONTAINERS,
         ] {
             store.use_table(table.to_owned()).map_err(LaunchError::from)?;
         }
