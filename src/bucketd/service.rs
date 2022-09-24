@@ -32,7 +32,9 @@ use rgb::{
 };
 use rgb_rpc::{OutpointFilter, RpcMsg};
 use stens::AsciiString;
-use storm::{Chunk, Container, ContainerFullId, ContainerHeader, ContainerId, MesgId};
+use storm::{
+    Chunk, Container, ContainerFullId, ContainerHeader, ContainerId, ContainerInfo, MesgId,
+};
 use storm_ext::ExtMsg as StormMsg;
 use storm_rpc::AddressedMsg;
 use strict_encoding::{MediumVec, StrictEncode};
@@ -44,6 +46,7 @@ use crate::bus::{
 use crate::{Config, DaemonError, LaunchError};
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
+    let storm_endpoint = config.storm_endpoint.clone();
     let rpc_endpoint = config.rpc_endpoint.clone();
     let ctl_endpoint = config.ctl_endpoint.clone();
     let runtime = Runtime::init(config)?;
@@ -51,6 +54,11 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     debug!("Connecting to service buses {}, {}", rpc_endpoint, ctl_endpoint);
     let controller = esb::Controller::with(
         map! {
+            ServiceBus::Storm => esb::BusConfig::with_addr(
+                storm_endpoint,
+                ZmqSocketType::RouterConnect,
+                Some(ServiceId::stormd())
+            ),
             ServiceBus::Rpc => esb::BusConfig::with_addr(
                 rpc_endpoint,
                 ZmqSocketType::RouterConnect,
@@ -410,7 +418,7 @@ impl Runtime {
                     };
                     let header_chunk = Chunk::try_from(header.strict_serialize()?)?;
                     let container = Container {
-                        header,
+                        header: header.clone(),
                         chunks: chunk_ids,
                     };
                     let container_chunk = Chunk::try_from(container.strict_serialize()?)?;
@@ -437,13 +445,17 @@ impl Runtime {
                     };
                     let addressed_msg = AddressedMsg {
                         remote_id: beneficiary.id,
-                        data: container_full_id,
+                        data: ContainerInfo {
+                            id: container_full_id,
+                            header,
+                        },
                     };
-                    self.send_storm(endpoints, StormMsg::SendContainer(addressed_msg))?;
+
+                    self.send_storm(endpoints, StormMsg::ContainerAnnouncement(addressed_msg))?;
                 }
                 let _ =
                     self.send_rpc(endpoints, client_id, RpcMsg::StateTransferFinalize(transfer));
-                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?;
             }
         }
         Ok(())
