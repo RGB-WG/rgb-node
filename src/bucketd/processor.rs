@@ -72,11 +72,11 @@ pub enum StashError {
     /// stash data storage.
     AnchorAbsent(Txid),
 
-    /// bundle data for txid {0} is absent
+    /// bundle data for contract {0} txid {1} is absent
     ///
     /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
     /// stash data storage.
-    BundleAbsent(Txid),
+    BundleAbsent(ContractId, Txid),
 
     /// the anchor is not related to the contract
     ///
@@ -256,7 +256,8 @@ impl Runtime {
             }
             let data = TransitionBundle::with(revealed, concealed)
                 .expect("enough data should be available to create bundle");
-            self.store.store_sten(db::BUNDLES, witness_txid, &data)?;
+            let chunk_id = ChunkId::with_fixed_fragments(contract_id, witness_txid);
+            self.store.store_sten(db::BUNDLES, chunk_id, &data)?;
         }
         for extension in consignment.state_extensions() {
             let node_id = extension.node_id();
@@ -453,9 +454,10 @@ impl Collector {
                 let anchor: Anchor<lnpbp4::MerkleBlock> = store
                     .retrieve_sten(db::ANCHORS, witness_txid)?
                     .ok_or(StashError::AnchorAbsent(witness_txid))?;
+                let chunk_id = ChunkId::with_fixed_fragments(contract_id, witness_txid);
                 let bundle: TransitionBundle = store
-                    .retrieve_sten(db::BUNDLES, witness_txid)?
-                    .ok_or(StashError::BundleAbsent(witness_txid))?;
+                    .retrieve_sten(db::BUNDLES, chunk_id)?
+                    .ok_or(StashError::BundleAbsent(contract_id, witness_txid))?;
                 let anchor = anchor.to_merkle_proof(contract_id)?;
                 self.anchored_bundles.insert(witness_txid, (anchor, bundle));
                 &mut self.anchored_bundles.get_mut(&witness_txid).expect("stdlib is broken").1
