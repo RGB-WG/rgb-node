@@ -10,7 +10,7 @@
 
 use std::collections::BTreeSet;
 
-use bitcoin::OutPoint;
+use bitcoin::{OutPoint, Txid};
 use internet2::addr::NodeAddr;
 use microservices::esb::ClientId;
 use psbt::Psbt;
@@ -35,6 +35,9 @@ pub enum CtlMsg {
 
     #[display("process_transfer({0})")]
     ProcessTransfer(ProcessReq<TransferConsignment>),
+
+    #[display("process_disclosure({0})")]
+    ProcessDisclosure(ProcessDisclosureReq),
 
     #[display("process_transfer_container({0})")]
     ProcessTransferContainer(ContainerId),
@@ -68,6 +71,13 @@ pub struct ProcessReq<T: ConsignmentType> {
     pub client_id: ClientId,
     pub consignment: InmemConsignment<T>,
     pub force: bool,
+}
+
+#[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
+#[display("{client_id}, txid = {txid}, ...")]
+pub struct ProcessDisclosureReq {
+    pub client_id: ClientId,
+    pub txid: Txid,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
