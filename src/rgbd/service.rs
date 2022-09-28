@@ -26,7 +26,9 @@ use rgb::schema::TransitionType;
 use rgb::{
     Contract, ContractConsignment, ContractId, SealEndpoint, StateTransfer, TransferConsignment,
 };
-use rgb_rpc::{AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, RpcMsg, TransferReq};
+use rgb_rpc::{
+    AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, Reveal, RpcMsg, TransferReq,
+};
 use storm::ContainerId;
 use storm_ext::ExtMsg as StormMsg;
 use storm_rpc::AddressedMsg;
@@ -245,14 +247,16 @@ impl Runtime {
             RpcMsg::ConsumeContract(AcceptReq {
                 consignment: contract,
                 force,
+                ..
             }) => {
                 self.accept_contract(endpoints, client_id, contract, force)?;
             }
             RpcMsg::ConsumeTransfer(AcceptReq {
                 consignment: transfer,
                 force,
+                reveal,
             }) => {
-                self.accept_transfer(endpoints, client_id, transfer, force)?;
+                self.accept_transfer(endpoints, client_id, transfer, force, reveal)?;
             }
 
             RpcMsg::Transfer(TransferReq {
@@ -488,6 +492,7 @@ impl Runtime {
             client_id,
             consignment: contract,
             force,
+            reveal: None,
         }));
         self.pick_or_start(endpoints, client_id)
     }
@@ -498,11 +503,13 @@ impl Runtime {
         client_id: ClientId,
         transfer: StateTransfer,
         force: bool,
+        reveal: Option<Reveal>,
     ) -> Result<(), DaemonError> {
         self.ctl_queue.push_back(CtlMsg::ProcessTransfer(ProcessReq {
             client_id,
             consignment: transfer,
             force,
+            reveal,
         }));
         self.pick_or_start(endpoints, client_id)
     }
