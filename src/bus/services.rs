@@ -46,20 +46,20 @@ pub enum ServiceId {
 
     #[display("peerd<{0}>")]
     #[from]
-    #[strict_encoding(value = 0x21)]
+    #[strict_encoding(value = 0x22)]
     Peer(NodeAddr),
 
     #[display("channel<{0:#x}>")]
     #[from]
-    #[strict_encoding(value = 0x22)]
+    #[strict_encoding(value = 0x23)]
     Channel(ChannelId),
 
     #[display("msgapp<{0}>")]
-    #[strict_encoding(value = 0x24)]
+    #[strict_encoding(value = 0x25)]
     MsgApp(BifrostApp),
 
     #[display("chapp<{0}>")]
-    #[strict_encoding(value = 0x23)]
+    #[strict_encoding(value = 0x24)]
     ChannelApp(BifrostApp),
 
     #[display("other<{0}>")]
