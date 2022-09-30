@@ -220,6 +220,8 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             break
         }
         'rgb-cli;transfer;consume' {
+            [CompletionResult]::new('-r', 'r', [CompletionResultType]::ParameterName, 'Try reveal the conceal seal')
+            [CompletionResult]::new('--reveal', 'reveal', [CompletionResultType]::ParameterName, 'Try reveal the conceal seal')
             [CompletionResult]::new('-R', 'R', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('--rpc', 'rpc', [CompletionResultType]::ParameterName, 'ZMQ socket for connecting daemon RPC interface')
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'Blockchain to use')

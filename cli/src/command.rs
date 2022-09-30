@@ -279,9 +279,13 @@ impl Exec for Opts {
                     fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
                 }
 
-                TransferCommand::Consume { force, consignment } => {
+                TransferCommand::Consume {
+                    force,
+                    consignment,
+                    reveal,
+                } => {
                     let consignment = StateTransfer::strict_file_load(&consignment)?;
-                    let status = client.consume_transfer(consignment, force, progress)?;
+                    let status = client.consume_transfer(consignment, force, reveal, progress)?;
                     report_validation(status);
                 }
             },

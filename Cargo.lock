@@ -2010,6 +2010,7 @@ version = "0.8.0"
 dependencies = [
  "amplify",
  "bitcoin",
+ "bp-core",
  "colored",
  "internet2",
  "lnpbp",

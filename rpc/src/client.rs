@@ -24,8 +24,8 @@ use rgb::{Contract, ContractId, ContractState, ContractStateMap, SealEndpoint, S
 
 use crate::messages::{HelloReq, TransferFinalize};
 use crate::{
-    AcceptReq, BusMsg, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter, RpcMsg,
-    ServiceId, TransferReq,
+    AcceptReq, BusMsg, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter, Reveal,
+    RpcMsg, ServiceId, TransferReq,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -133,6 +133,7 @@ impl Client {
         self.request(RpcMsg::ConsumeContract(AcceptReq {
             consignment: contract,
             force,
+            reveal: None,
         }))?;
         loop {
             match self.response()?.failure_to_error()? {
@@ -244,10 +245,12 @@ impl Client {
         &mut self,
         transfer: StateTransfer,
         force: bool,
+        reveal: Option<Reveal>,
         progress: impl Fn(String),
     ) -> Result<ContractValidity, Error> {
         self.request(RpcMsg::ConsumeTransfer(AcceptReq {
             consignment: transfer,
+            reveal,
             force,
         }))?;
         loop {

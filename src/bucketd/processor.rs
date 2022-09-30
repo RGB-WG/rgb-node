@@ -13,16 +13,18 @@ use std::io;
 use std::io::Write;
 
 use bitcoin::{OutPoint, Txid};
-use commit_verify::{lnpbp4, TaggedHash};
+use commit_verify::{lnpbp4, CommitConceal, TaggedHash};
 use psbt::Psbt;
 use rgb::psbt::RgbExt;
-use rgb::schema::TransitionType;
+use rgb::schema::{OwnedRightType, TransitionType};
+use rgb::seal::Revealed;
 use rgb::{
-    bundle, validation, Anchor, BundleId, Consignment, ConsignmentType, ContractId, ContractState,
-    ContractStateMap, Disclosure, Genesis, InmemConsignment, Node, NodeId, Schema, SchemaId,
-    SealEndpoint, StateTransfer, Transition, TransitionBundle, Validator, Validity,
+    bundle, validation, Anchor, Assignment, BundleId, Consignment, ConsignmentType, ContractId,
+    ContractState, ContractStateMap, Disclosure, Genesis, InmemConsignment, Node, NodeId,
+    OwnedRights, PedersenStrategy, Schema, SchemaId, SealEndpoint, StateTransfer, Transition,
+    TransitionBundle, TypedAssignments, Validator, Validity,
 };
-use rgb_rpc::{OutpointFilter, TransferFinalize};
+use rgb_rpc::{OutpointFilter, Reveal, TransferFinalize};
 use storm::chunk::ChunkIdExt;
 use storm::{ChunkId, Container, ContainerId};
 use strict_encoding::StrictDecode;
@@ -113,6 +115,9 @@ pub enum FinalizeError {
     #[display(inner)]
     #[from]
     Anchor(bp::dbc::anchor::Error),
+
+    #[display(inner)]
+    Conceal,
 }
 
 impl Runtime {
@@ -139,13 +144,14 @@ impl Runtime {
         }
 
         let consignment = StateTransfer::strict_deserialize(writer.into_inner())?;
-        self.process_consignment(consignment, true)
+        self.process_consignment(consignment, true, None)
     }
 
     pub(super) fn process_consignment<C: ConsignmentType>(
         &mut self,
         consignment: InmemConsignment<C>,
         force: bool,
+        reveal: Option<Reveal>,
     ) -> Result<validation::Status, DaemonError> {
         let contract_id = consignment.contract_id();
         let id = consignment.id();
@@ -193,6 +199,33 @@ impl Runtime {
             self.store.store_sten(db::SCHEMATA, root_schema.schema_id(), root_schema)?;
         }
 
+        if let Some(Reveal {
+            blinding_factor,
+            outpoint,
+            close_method,
+        }) = reveal
+        {
+            let reveal_outpoint = Revealed {
+                method: close_method,
+                blinding: blinding_factor,
+                txid: Some(outpoint.txid),
+                vout: outpoint.vout as u32,
+            };
+
+            let concealed_seals = consignment
+                .endpoints()
+                .filter(|&&(_, seal)| reveal_outpoint.to_concealed_seal() == seal.commit_conceal())
+                .clone();
+
+            if concealed_seals.count() == 0 {
+                error!(
+                    "The provided outpoint and blinding factors does not match with outpoint from \
+                     the consignment"
+                );
+                Err(DaemonError::Finalize(FinalizeError::Conceal))?
+            }
+        };
+
         let genesis = consignment.genesis();
         debug!("Indexing genesis");
         trace!("Genesis: {:?}", genesis);
@@ -226,14 +259,70 @@ impl Runtime {
                 let node_id = transition.node_id();
                 let transition_type = transition.transition_type();
                 debug!("Processing state transition {}", node_id);
-                trace!("State transition: {:?}", transition);
 
-                state.add_transition(witness_txid, transition);
+                // TODO: refactoring this and move to rgb-core
+                let new_transition = match reveal {
+                    Some(Reveal {
+                        blinding_factor,
+                        outpoint,
+                        close_method,
+                    }) => {
+                        let reveal_outpoint = Revealed {
+                            method: close_method,
+                            blinding: blinding_factor,
+                            txid: Some(outpoint.txid),
+                            vout: outpoint.vout as u32,
+                        };
+
+                        let mut owned_rights: BTreeMap<OwnedRightType, TypedAssignments> = bmap! {};
+                        for (owned_type, assignments) in transition.owned_rights().iter() {
+                            let outpoints = assignments.to_value_assignments();
+
+                            let mut revealed_assignment: Vec<Assignment<PedersenStrategy>> =
+                                empty!();
+
+                            for out in outpoints {
+                                if out.commit_conceal().to_confidential_seal()
+                                    != reveal_outpoint.to_concealed_seal()
+                                {
+                                    revealed_assignment.push(out);
+                                } else {
+                                    let accept = match out.as_revealed_state() {
+                                        Some(seal) => Assignment::Revealed {
+                                            seal: reveal_outpoint,
+                                            state: *seal,
+                                        },
+                                        _ => out,
+                                    };
+                                    revealed_assignment.push(accept);
+                                }
+                            }
+
+                            owned_rights
+                                .insert(*owned_type, TypedAssignments::Value(revealed_assignment));
+                        }
+
+                        let tmp: Transition = Transition::with(
+                            transition.transition_type(),
+                            transition.metadata().clone(),
+                            transition.parent_public_rights().clone(),
+                            OwnedRights::from(owned_rights),
+                            transition.public_rights().clone(),
+                            transition.parent_owned_rights().clone(),
+                        );
+
+                        tmp
+                    }
+                    _ => transition.to_owned(),
+                };
+
+                trace!("State transition: {:?}", new_transition);
+                state.add_transition(witness_txid, &new_transition);
                 trace!("Contract state now is {:?}", state);
 
                 trace!("Storing state transition data");
-                revealed.insert(transition.clone(), inputs.clone());
-                self.store.store_merge(db::TRANSITIONS, node_id, transition.clone())?;
+                revealed.insert(new_transition.clone(), inputs.clone());
+                self.store.store_merge(db::TRANSITIONS, node_id, new_transition.clone())?;
                 self.store.store_sten(db::TRANSITION_WITNESS, node_id, &witness_txid)?;
 
                 trace!("Indexing transition");
@@ -246,7 +335,7 @@ impl Runtime {
 
                 self.store.store_sten(db::NODE_CONTRACTS, node_id, &contract_id)?;
 
-                for seal in transition.filter_revealed_seals() {
+                for seal in new_transition.filter_revealed_seals() {
                     let index_id = ChunkId::with_fixed_fragments(
                         seal.txid.expect("seal should contain revealed txid"),
                         seal.vout,

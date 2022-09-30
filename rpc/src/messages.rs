@@ -23,7 +23,7 @@ use rgb::{
     ContractStateMap, InmemConsignment, SealEndpoint, StateTransfer, TransferConsignment,
 };
 
-use crate::FailureCode;
+use crate::{FailureCode, Reveal};
 
 /// We need this wrapper type to be compatible with RGB Node having multiple message buses
 #[derive(Clone, Debug, Display, From, Api)]
@@ -161,6 +161,7 @@ impl OutpointFilter {
 pub struct AcceptReq<T: ConsignmentType> {
     pub consignment: InmemConsignment<T>,
     pub force: bool,
+    pub reveal: Option<Reveal>,
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display)]

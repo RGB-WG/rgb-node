@@ -30,7 +30,7 @@ use rgb::{
     ConsignmentType, ContractConsignment, ContractId, InmemConsignment, SealEndpoint,
     StateTransfer, TransferConsignment, Validity,
 };
-use rgb_rpc::{OutpointFilter, RpcMsg};
+use rgb_rpc::{OutpointFilter, Reveal, RpcMsg};
 use stens::AsciiString;
 use storm::{
     Chunk, Container, ContainerFullId, ContainerHeader, ContainerId, ContainerInfo, MesgId,
@@ -176,15 +176,17 @@ impl Runtime {
                 client_id,
                 consignment,
                 force,
+                ..
             }) => {
-                self.handle_consignment(endpoints, client_id, consignment, force)?;
+                self.handle_consignment(endpoints, client_id, consignment, force, None)?;
             }
             CtlMsg::ProcessTransfer(ProcessReq {
                 client_id,
                 consignment,
                 force,
+                reveal,
             }) => {
-                self.handle_consignment(endpoints, client_id, consignment, force)?;
+                self.handle_consignment(endpoints, client_id, consignment, force, reveal)?;
             }
             CtlMsg::ProcessTransferContainer(container_id) => {
                 self.handle_container(endpoints, container_id)?;
@@ -285,9 +287,10 @@ impl Runtime {
         client_id: ClientId,
         consignment: InmemConsignment<C>,
         force: bool,
+        reveal: Option<Reveal>,
     ) -> Result<(), DaemonError> {
         let id = consignment.consensus_commit();
-        match self.process_consignment(consignment, force) {
+        match self.process_consignment(consignment, force, reveal) {
             Err(err) => {
                 let _ = self.send_rpc(endpoints, client_id, err);
                 self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?

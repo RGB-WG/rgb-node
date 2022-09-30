@@ -19,7 +19,7 @@ use rgb::{
     validation, ConsignmentId, ConsignmentType, ContractConsignment, ContractId, InmemConsignment,
     SealEndpoint, StateTransfer, TransferConsignment,
 };
-use rgb_rpc::OutpointFilter;
+use rgb_rpc::{OutpointFilter, Reveal};
 use storm::ContainerId;
 
 /// RPC API requests over CTL message bus between RGB Node daemons.
@@ -68,6 +68,7 @@ pub struct ProcessReq<T: ConsignmentType> {
     pub client_id: ClientId,
     pub consignment: InmemConsignment<T>,
     pub force: bool,
+    pub reveal: Option<Reveal>,
 }
 
 #[derive(Clone, Debug, Display, StrictEncode, StrictDecode)]
