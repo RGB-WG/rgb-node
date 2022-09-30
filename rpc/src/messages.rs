@@ -68,6 +68,9 @@ pub enum RpcMsg {
     #[display("accept_transfer(...)")]
     ConsumeTransfer(AcceptReq<TransferConsignment>),
 
+    #[display("process_disclosure({0})")]
+    ProcessDisclosure(Txid),
+
     #[display(inner)]
     Transfer(TransferReq),
 

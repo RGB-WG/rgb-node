@@ -12,7 +12,7 @@ use std::collections::BTreeSet;
 use std::thread::sleep;
 use std::time::Duration;
 
-use bitcoin::OutPoint;
+use bitcoin::{OutPoint, Txid};
 use internet2::addr::{NodeAddr, ServiceAddr};
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
@@ -258,6 +258,21 @@ impl Client {
                 RpcMsg::Invalid(status) => return Ok(ContractValidity::Invalid(status)),
                 RpcMsg::UnresolvedTxids(txids) => return Ok(ContractValidity::UnknownTxids(txids)),
                 RpcMsg::Success(_) => return Ok(ContractValidity::Valid),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
+        }
+    }
+
+    pub fn process_disclosure(
+        &mut self,
+        txid: Txid,
+        progress: impl Fn(String),
+    ) -> Result<bool, Error> {
+        self.request(RpcMsg::ProcessDisclosure(txid))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::Success(_) => return Ok(true),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }

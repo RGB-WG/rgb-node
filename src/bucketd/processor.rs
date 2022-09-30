@@ -74,11 +74,17 @@ pub enum StashError {
     /// stash data storage.
     AnchorAbsent(Txid),
 
-    /// bundle data for txid {0} is absent
+    /// bundle data for contract {0} txid {1} is absent
     ///
     /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
     /// stash data storage.
-    BundleAbsent(Txid),
+    BundleAbsent(ContractId, Txid),
+
+    /// disclosure for txid {0} is absent
+    ///
+    /// It may happen due to RGB Node bug, or indicate internal stash inconsistency and compromised
+    /// stash data storage.
+    DisclosureAbsent(Txid),
 
     /// the anchor is not related to the contract
     ///
@@ -345,7 +351,8 @@ impl Runtime {
             }
             let data = TransitionBundle::with(revealed, concealed)
                 .expect("enough data should be available to create bundle");
-            self.store.store_sten(db::BUNDLES, witness_txid, &data)?;
+            let chunk_id = ChunkId::with_fixed_fragments(contract_id, witness_txid);
+            self.store.store_sten(db::BUNDLES, chunk_id, &data)?;
         }
         for extension in consignment.state_extensions() {
             let node_id = extension.node_id();
@@ -369,6 +376,77 @@ impl Runtime {
 
         info!("Consignment processing complete for {}", id);
         Ok(status)
+    }
+
+    pub(super) fn process_disclosure(&mut self, txid: Txid) -> Result<(), DaemonError> {
+        let disclosure: Disclosure = self
+            .store
+            .retrieve_sten(db::DISCLOSURES, txid)?
+            .ok_or(StashError::DisclosureAbsent(txid))?;
+
+        for (_anchor_id, (anchor, bundle_map)) in disclosure.anchored_bundles() {
+            for (contract_id, bundle) in bundle_map {
+                let mut state: ContractState = self
+                    .store
+                    .retrieve_sten(db::CONTRACTS, *contract_id)?
+                    .ok_or(StashError::StateAbsent(*contract_id))?;
+                trace!("Starting with contract state {:?}", state);
+
+                let bundle_id = bundle.bundle_id();
+                let witness_txid = anchor.txid;
+                debug!("Processing anchored bundle {} for txid {}", bundle_id, witness_txid);
+                trace!("Anchor: {:?}", anchor);
+                trace!("Bundle: {:?}", bundle);
+                self.store.store_sten(db::ANCHORS, anchor.txid, anchor)?;
+                let concealed: BTreeMap<NodeId, BTreeSet<u16>> =
+                    bundle.concealed_iter().map(|(id, set)| (*id, set.clone())).collect();
+                let mut revealed: BTreeMap<Transition, BTreeSet<u16>> = bmap!();
+                for (transition, inputs) in bundle.revealed_iter() {
+                    let node_id = transition.node_id();
+                    let transition_type = transition.transition_type();
+                    debug!("Processing state transition {}", node_id);
+                    trace!("State transition: {:?}", transition);
+
+                    state.add_transition(witness_txid, transition);
+                    trace!("Contract state now is {:?}", state);
+
+                    trace!("Storing state transition data");
+                    revealed.insert(transition.clone(), inputs.clone());
+                    self.store.store_merge(db::TRANSITIONS, node_id, transition.clone())?;
+                    self.store.store_sten(db::TRANSITION_WITNESS, node_id, &witness_txid)?;
+
+                    trace!("Indexing transition");
+                    let index_id = ChunkId::with_fixed_fragments(*contract_id, transition_type);
+                    self.store.insert_into_set(
+                        db::CONTRACT_TRANSITIONS,
+                        index_id,
+                        node_id.into_array(),
+                    )?;
+
+                    self.store.store_sten(db::NODE_CONTRACTS, node_id, contract_id)?;
+
+                    for seal in transition.filter_revealed_seals() {
+                        let index_id = ChunkId::with_fixed_fragments(
+                            seal.txid.expect("seal should contain revealed txid"),
+                            seal.vout,
+                        );
+                        self.store.insert_into_set(
+                            db::OUTPOINTS,
+                            index_id,
+                            node_id.into_array(),
+                        )?;
+                    }
+                }
+                let data = TransitionBundle::with(revealed, concealed)
+                    .expect("enough data should be available to create bundle");
+                let chunk_id = ChunkId::with_fixed_fragments(*contract_id, witness_txid);
+                self.store.store_sten(db::BUNDLES, chunk_id, &data)?;
+
+                self.store.store_sten(db::CONTRACTS, *contract_id, &state)?;
+            }
+        }
+
+        Ok(())
     }
 
     pub(super) fn compose_consignment<T: ConsignmentType>(
@@ -542,9 +620,10 @@ impl Collector {
                 let anchor: Anchor<lnpbp4::MerkleBlock> = store
                     .retrieve_sten(db::ANCHORS, witness_txid)?
                     .ok_or(StashError::AnchorAbsent(witness_txid))?;
+                let chunk_id = ChunkId::with_fixed_fragments(contract_id, witness_txid);
                 let bundle: TransitionBundle = store
-                    .retrieve_sten(db::BUNDLES, witness_txid)?
-                    .ok_or(StashError::BundleAbsent(witness_txid))?;
+                    .retrieve_sten(db::BUNDLES, chunk_id)?
+                    .ok_or(StashError::BundleAbsent(contract_id, witness_txid))?;
                 let anchor = anchor.to_merkle_proof(contract_id)?;
                 self.anchored_bundles.insert(witness_txid, (anchor, bundle));
                 &mut self.anchored_bundles.get_mut(&witness_txid).expect("stdlib is broken").1

@@ -15,7 +15,7 @@ use std::time::Duration;
 
 use amplify::num::u24;
 use bitcoin::secp256k1::rand::random;
-use bitcoin::OutPoint;
+use bitcoin::{OutPoint, Txid};
 use commit_verify::ConsensusCommit;
 use electrum_client::Client as ElectrumClient;
 use internet2::addr::NodeAddr;
@@ -41,7 +41,7 @@ use strict_encoding::{MediumVec, StrictEncode};
 
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
-    ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
+    ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
 use crate::{Config, DaemonError, LaunchError};
 
@@ -188,6 +188,9 @@ impl Runtime {
             }) => {
                 self.handle_consignment(endpoints, client_id, consignment, force, reveal)?;
             }
+            CtlMsg::ProcessDisclosure(ProcessDisclosureReq { client_id, txid }) => {
+                self.handle_disclosure(endpoints, client_id, txid)?;
+            }
             CtlMsg::ProcessTransferContainer(container_id) => {
                 self.handle_container(endpoints, container_id)?;
             }
@@ -316,6 +319,25 @@ impl Runtime {
                     consignment_id: id,
                     status,
                 })?
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_disclosure(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        txid: Txid,
+    ) -> Result<(), DaemonError> {
+        match self.process_disclosure(txid) {
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
+            }
+            Ok(_) => {
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::success());
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
             }
         }
         Ok(())

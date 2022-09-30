@@ -12,7 +12,7 @@ use std::collections::{BTreeSet, VecDeque};
 
 use amplify::Wrapper;
 use bitcoin::hashes::Hash;
-use bitcoin::OutPoint;
+use bitcoin::{OutPoint, Txid};
 use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
@@ -36,7 +36,7 @@ use storm_rpc::AddressedMsg;
 use crate::bucketd::StashError;
 use crate::bus::{
     BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
-    ProcessReq, Responder, ServiceBus, ServiceId,
+    ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::db::ChunkHolder;
 use crate::rgbd::daemons::Daemon;
@@ -257,6 +257,9 @@ impl Runtime {
                 reveal,
             }) => {
                 self.accept_transfer(endpoints, client_id, transfer, force, reveal)?;
+            }
+            RpcMsg::ProcessDisclosure(txid) => {
+                self.process_disclosure(endpoints, client_id, txid)?;
             }
 
             RpcMsg::Transfer(TransferReq {
@@ -511,6 +514,17 @@ impl Runtime {
             force,
             reveal,
         }));
+        self.pick_or_start(endpoints, client_id)
+    }
+
+    fn process_disclosure(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        txid: Txid,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue
+            .push_back(CtlMsg::ProcessDisclosure(ProcessDisclosureReq { client_id, txid }));
         self.pick_or_start(endpoints, client_id)
     }
 
