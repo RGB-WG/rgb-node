@@ -244,6 +244,8 @@ impl Exec for Opts {
                         if cid == contract_id {
                             continue;
                         }
+                        let contract = client.contract(cid, vec![], progress)?;
+                        psbt.set_rgb_contract(contract)?;
                         let blank_bundle = TransitionBundle::blank(&outpoint_map, &bmap! {})?;
                         for (transition, indexes) in blank_bundle.revealed_iter() {
                             psbt.push_rgb_transition(transition.clone())?;
