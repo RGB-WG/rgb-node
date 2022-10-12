@@ -24,7 +24,7 @@ use rgb::{
     OwnedRights, PedersenStrategy, Schema, SchemaId, SealEndpoint, StateTransfer, Transition,
     TransitionBundle, TypedAssignments, Validator, Validity,
 };
-use rgb_rpc::{OutpointFilter, Reveal, TransferFinalize};
+use rgb_rpc::{FinalizeTransfersRes, OutpointFilter, Reveal, TransferFinalize};
 use storm::chunk::ChunkIdExt;
 use storm::{ChunkId, Container, ContainerId};
 use strict_encoding::StrictDecode;
@@ -573,6 +573,52 @@ impl Runtime {
         self.store.store_sten(db::DISCLOSURES, txid, &disclosure)?;
 
         Ok(TransferFinalize { consignment, psbt })
+    }
+
+    pub(super) fn finalize_transfers(
+        &mut self,
+        transfers: Vec<(StateTransfer, Vec<SealEndpoint>)>,
+        mut psbt: Psbt,
+    ) -> Result<FinalizeTransfersRes, DaemonError> {
+        // 1. Pack LNPBP-4 and anchor information.
+        let mut bundles = psbt.rgb_bundles()?;
+        debug!("Found {} bundles", bundles.len());
+        trace!("Bundles: {:?}", bundles);
+
+        let anchor = Anchor::commit(&mut psbt)?;
+        trace!("Anchor: {:?}", anchor);
+
+        let mut consignments = vec![];
+        for (state_transfer, seal_endpoints) in &transfers {
+            let mut consignment = state_transfer.clone();
+            let contract_id = consignment.contract_id();
+            info!("Finalizing transfer for {}", contract_id);
+
+            // 2. Extract contract-related state transition from PSBT and put it
+            //    into consignment.
+            let bundle = bundles.remove(&contract_id).ok_or(FinalizeError::ContractBundleMissed)?;
+            let bundle_id = bundle.bundle_id();
+            consignment.push_anchored_bundle(anchor.to_merkle_proof(contract_id)?, bundle)?;
+
+            // 3. Add seal endpoints.
+            let endseals = seal_endpoints.clone();
+            for endseal in endseals {
+                consignment.push_seal_endpoint(bundle_id, endseal);
+            }
+
+            consignments.push(consignment);
+        }
+
+        // 4. Conceal all the state not related to the transfer.
+        // TODO: Conceal all the amounts except the last transition
+        // TODO: Conceal all seals outside of the paths from the endpoint to genesis
+
+        // 5. Construct and store disclosure for the blank transfers.
+        let txid = anchor.txid;
+        let disclosure = Disclosure::with(anchor, bundles, None);
+        self.store.store_sten(db::DISCLOSURES, txid, &disclosure)?;
+
+        Ok(FinalizeTransfersRes { consignments, psbt })
     }
 }
 

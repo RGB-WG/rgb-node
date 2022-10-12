@@ -22,7 +22,7 @@ use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{Contract, ContractId, ContractState, ContractStateMap, SealEndpoint, StateTransfer};
 
-use crate::messages::{HelloReq, TransferFinalize};
+use crate::messages::{FinalizeTransfersRes, HelloReq, TransferFinalize, TransfersReq};
 use crate::{
     AcceptReq, BusMsg, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter, Reveal,
     RpcMsg, ServiceId, TransferReq,
@@ -235,6 +235,22 @@ impl Client {
         loop {
             match self.response()?.failure_to_error()? {
                 RpcMsg::StateTransferFinalize(transfer) => return Ok(transfer),
+                RpcMsg::Progress(info) => progress(info),
+                _ => return Err(Error::UnexpectedServerResponse),
+            }
+        }
+    }
+
+    pub fn finalize_transfers(
+        &mut self,
+        transfers: Vec<(StateTransfer, Vec<SealEndpoint>)>,
+        psbt: Psbt,
+        progress: impl Fn(String),
+    ) -> Result<FinalizeTransfersRes, Error> {
+        self.request(RpcMsg::FinalizeTransfers(TransfersReq { transfers, psbt }))?;
+        loop {
+            match self.response()?.failure_to_error()? {
+                RpcMsg::FinalizedTransfers(transfers) => return Ok(transfers),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }

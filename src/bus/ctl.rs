@@ -55,6 +55,9 @@ pub enum CtlMsg {
     FinalizeTransfer(FinalizeTransferReq),
 
     #[display(inner)]
+    FinalizeTransfers(FinalizeTransfersReq),
+
+    #[display(inner)]
     #[from]
     Validity(ValidityResp),
 
@@ -116,4 +119,13 @@ pub struct FinalizeTransferReq {
     pub endseals: Vec<SealEndpoint>,
     pub psbt: Psbt,
     pub beneficiary: Option<NodeAddr>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("finalize_transfers({client_id}, ...)")]
+pub struct FinalizeTransfersReq {
+    pub client_id: ClientId,
+    pub transfers: Vec<(StateTransfer, Vec<SealEndpoint>)>,
+    pub psbt: Psbt,
 }
