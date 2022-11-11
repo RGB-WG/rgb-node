@@ -40,8 +40,9 @@ use storm_rpc::AddressedMsg;
 use strict_encoding::{MediumVec, StrictEncode};
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
-    ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, FinalizeTransfersReq,
+    OutpointStateReq, ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
+    ValidityResp,
 };
 use crate::{Config, DaemonError, LaunchError};
 
@@ -248,6 +249,14 @@ impl Runtime {
                     psbt,
                     beneficiary,
                 )?;
+            }
+
+            CtlMsg::FinalizeTransfers(FinalizeTransfersReq {
+                client_id,
+                transfers,
+                psbt,
+            }) => {
+                self.handle_finalize_transfers(endpoints, client_id, transfers, psbt)?;
             }
 
             wrong_msg => {
@@ -480,6 +489,26 @@ impl Runtime {
                 }
                 let _ =
                     self.send_rpc(endpoints, client_id, RpcMsg::StateTransferFinalize(transfer));
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_finalize_transfers(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        transfers: Vec<(StateTransfer, Vec<SealEndpoint>)>,
+        psbt: Psbt,
+    ) -> Result<(), DaemonError> {
+        match self.finalize_transfers(transfers, psbt) {
+            Err(err) => {
+                let _ = self.send_rpc(endpoints, client_id, err);
+                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
+            }
+            Ok(transfers) => {
+                let _ = self.send_rpc(endpoints, client_id, RpcMsg::FinalizedTransfers(transfers));
                 self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?;
             }
         }

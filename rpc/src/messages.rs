@@ -74,6 +74,9 @@ pub enum RpcMsg {
     #[display(inner)]
     Transfer(TransferReq),
 
+    #[display(inner)]
+    FinalizeTransfers(TransfersReq),
+
     #[display("memorize_seal({0})")]
     MemorizeSeal(seal::Revealed),
 
@@ -96,6 +99,9 @@ pub enum RpcMsg {
 
     #[display("state_transfer_finalize(...)")]
     StateTransferFinalize(TransferFinalize),
+
+    #[display("state_transfer_finalize(...)")]
+    FinalizedTransfers(FinalizeTransfersRes),
 
     #[display("progress(\"{0}\")")]
     #[from]
@@ -194,14 +200,30 @@ pub struct TransferReq {
     pub beneficiary: Option<NodeAddr>,
 }
 
-impl From<&str> for RpcMsg {
-    fn from(s: &str) -> Self { RpcMsg::Progress(s.to_owned()) }
-}
-
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[derive(NetworkEncode, NetworkDecode)]
 #[display("transfer_complete(...)")]
 pub struct TransferFinalize {
     pub consignment: StateTransfer,
     pub psbt: Psbt,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("transfers_req(...)")]
+pub struct TransfersReq {
+    pub transfers: Vec<(StateTransfer, Vec<SealEndpoint>)>,
+    pub psbt: Psbt,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(NetworkEncode, NetworkDecode)]
+#[display("finalize_transfers_res(...)")]
+pub struct FinalizeTransfersRes {
+    pub consignments: Vec<StateTransfer>,
+    pub psbt: Psbt,
+}
+
+impl From<&str> for RpcMsg {
+    fn from(s: &str) -> Self { RpcMsg::Progress(s.to_owned()) }
 }

@@ -28,6 +28,7 @@ use rgb::{
 };
 use rgb_rpc::{
     AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, Reveal, RpcMsg, TransferReq,
+    TransfersReq,
 };
 use storm::ContainerId;
 use storm_ext::ExtMsg as StormMsg;
@@ -35,8 +36,8 @@ use storm_rpc::AddressedMsg;
 
 use crate::bucketd::StashError;
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, OutpointStateReq,
-    ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, FinalizeTransfersReq,
+    OutpointStateReq, ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::db::ChunkHolder;
 use crate::rgbd::daemons::Daemon;
@@ -277,6 +278,11 @@ impl Runtime {
                     beneficiary,
                 )?;
             }
+
+            RpcMsg::FinalizeTransfers(TransfersReq { transfers, psbt }) => {
+                self.complete_transfers(endpoints, client_id, transfers, psbt)?;
+            }
+
             wrong_msg => {
                 error!("Request is not supported by the RPC interface");
                 return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
@@ -555,6 +561,21 @@ impl Runtime {
             endseals,
             psbt,
             beneficiary,
+        }));
+        self.pick_or_start(endpoints, client_id)
+    }
+
+    fn complete_transfers(
+        &mut self,
+        endpoints: &mut Endpoints,
+        client_id: ClientId,
+        transfers: Vec<(StateTransfer, Vec<SealEndpoint>)>,
+        psbt: Psbt,
+    ) -> Result<(), DaemonError> {
+        self.ctl_queue.push_back(CtlMsg::FinalizeTransfers(FinalizeTransfersReq {
+            client_id,
+            transfers,
+            psbt,
         }));
         self.pick_or_start(endpoints, client_id)
     }
