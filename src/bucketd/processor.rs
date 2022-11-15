@@ -19,10 +19,10 @@ use rgb::psbt::RgbExt;
 use rgb::schema::{OwnedRightType, TransitionType};
 use rgb::seal::Revealed;
 use rgb::{
-    bundle, validation, Anchor, Assignment, BundleId, Consignment, ConsignmentType, ContractId,
-    ContractState, ContractStateMap, Disclosure, Genesis, InmemConsignment, Node, NodeId,
-    OwnedRights, PedersenStrategy, Schema, SchemaId, SealEndpoint, StateTransfer, Transition,
-    TransitionBundle, TypedAssignments, Validator, Validity,
+    bundle, validation, Anchor, Assignment, AttachmentStrategy, BundleId, Consignment,
+    ConsignmentType, ContractId, ContractState, ContractStateMap, Disclosure, Genesis,
+    InmemConsignment, Node, NodeId, OwnedRights, PedersenStrategy, Schema, SchemaId, SealEndpoint,
+    StateTransfer, Transition, TransitionBundle, TypedAssignments, Validator, Validity,
 };
 use rgb_rpc::{FinalizeTransfersRes, OutpointFilter, Reveal, TransferFinalize};
 use storm::chunk::ChunkIdExt;
@@ -282,30 +282,59 @@ impl Runtime {
 
                         let mut owned_rights: BTreeMap<OwnedRightType, TypedAssignments> = bmap! {};
                         for (owned_type, assignments) in transition.owned_rights().iter() {
-                            let outpoints = assignments.to_value_assignments();
+                            match assignments {
+                                TypedAssignments::Value(outpoints) => {
+                                    let mut assignment: Vec<Assignment<PedersenStrategy>> =
+                                        empty!();
 
-                            let mut revealed_assignment: Vec<Assignment<PedersenStrategy>> =
-                                empty!();
+                                    for out in outpoints.clone() {
+                                        if out.commit_conceal().to_confidential_seal()
+                                            != reveal_outpoint.to_concealed_seal()
+                                        {
+                                            assignment.push(out);
+                                        } else {
+                                            let accept = match out.as_revealed_state() {
+                                                Some(seal) => Assignment::Revealed {
+                                                    seal: reveal_outpoint,
+                                                    state: *seal,
+                                                },
+                                                _ => out,
+                                            };
+                                            assignment.push(accept);
+                                        }
+                                    }
 
-                            for out in outpoints {
-                                if out.commit_conceal().to_confidential_seal()
-                                    != reveal_outpoint.to_concealed_seal()
-                                {
-                                    revealed_assignment.push(out);
-                                } else {
-                                    let accept = match out.as_revealed_state() {
-                                        Some(seal) => Assignment::Revealed {
-                                            seal: reveal_outpoint,
-                                            state: *seal,
-                                        },
-                                        _ => out,
-                                    };
-                                    revealed_assignment.push(accept);
+                                    owned_rights
+                                        .insert(*owned_type, TypedAssignments::Value(assignment));
                                 }
-                            }
+                                TypedAssignments::Attachment(outpoints) => {
+                                    let mut assignment: Vec<Assignment<AttachmentStrategy>> =
+                                        empty!();
 
-                            owned_rights
-                                .insert(*owned_type, TypedAssignments::Value(revealed_assignment));
+                                    for out in outpoints.clone() {
+                                        if out.commit_conceal().to_confidential_seal()
+                                            != reveal_outpoint.to_concealed_seal()
+                                        {
+                                            assignment.push(out);
+                                        } else {
+                                            let accept = match out.as_revealed_state() {
+                                                Some(seal) => Assignment::Revealed {
+                                                    seal: reveal_outpoint,
+                                                    state: seal.clone(),
+                                                },
+                                                _ => out,
+                                            };
+                                            assignment.push(accept);
+                                        }
+                                    }
+
+                                    owned_rights.insert(
+                                        *owned_type,
+                                        TypedAssignments::Attachment(assignment),
+                                    );
+                                }
+                                _ => {}
+                            }
                         }
 
                         let tmp: Transition = Transition::with(
