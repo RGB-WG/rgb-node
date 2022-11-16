@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -30,17 +30,17 @@ required-features = ["server"]
 [dependencies]
 # LNP/BP crates
 amplify = "3.13.0"
-strict_encoding = "~0.8.1"
+strict_encoding = "~0.8.2"
 stens = "0.7.1"
 commit_verify = "0.8.0"
 internet2 = { version = "0.8.3", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.10", default-features = false, features = ["node"] }
 lnpbp = "0.8.0"
-bp-core = { version = "0.8.0", features = ["psbt"] }
+bp-core = { version = "0.8.1", features = ["psbt"] }
 lnp-core = { version = "0.8.0", features = ["bifrost"] }
 lnp_rpc = "0.8.0"
-rgb-std = "0.8.0"
-rgb_rpc = { version = "0.8.0", path = "./rpc" }
+rgb-std = "0.8.1"
+rgb_rpc = { version = "0.8.1", path = "./rpc" }
 storm-core = "0.8.0"
 storm_ext = "0.8.0"
 storm_rpc = "0.8.0"
@@ -66,8 +66,8 @@ internet2 = "0.8.0"
 microservices = { version = "0.8.0", default-features = false }
 lnpbp = "0.8.0"
 psbt = "0.8.0"
-rgb-std = "0.8.0"
-rgb_rpc = { version = "0.8.0", path = "./rpc" }
+rgb-std = "0.8.1"
+rgb_rpc = { version = "0.8.1", path = "./rpc" }
 storm_ext = "0.8.0"
 store_rpc = "0.8.0"
 clap = { version = "~3.1.18", features = ["env"] }
