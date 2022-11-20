@@ -32,7 +32,7 @@ required-features = ["server"]
 amplify = "3.13.0"
 strict_encoding = "~0.8.2"
 stens = "0.7.1"
-commit_verify = "0.8.0"
+commit_verify = "0.8.1"
 internet2 = { version = "0.8.3", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.10", default-features = false, features = ["node"] }
 lnpbp = "0.8.0"
