@@ -540,9 +540,9 @@ dependencies = [
 
 [[package]]
 name = "commit_verify"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02e435fa675ad24cb6cf205ec9269e5ca7b650a27c39c0d0b7a20e05218a4cfa"
+checksum = "1153d1e17f820e7214a10625a019cf6e5543397925306d1e071ea37bddad49d3"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -1369,9 +1369,9 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "lnp-core"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8f1f4c14c6b4d0a2039a81dc558c96f9cbda040023e0ee6c6a275f68629358c"
+checksum = "c8448f27315517d2e48bdbfa216377f22d696a8fdd46d118d4da7d76bdcaa96e"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1388,9 +1388,9 @@ dependencies = [
 
 [[package]]
 name = "lnp2p"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "314350443009c2257a51cb1890c3eaf00efb124cc6764eca70090be427f841d4"
+checksum = "7a1318cf5d767b342329ae56013d17e061b037bf4baa018332fa783d7108327f"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2025,7 +2025,7 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "rgb-cli"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2093,7 +2093,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2130,7 +2130,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_rpc"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "amplify",
  "bitcoin",
