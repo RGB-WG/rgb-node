@@ -44,3 +44,7 @@ internet2 = "0.8.0"
 rgb-std = "0.8.1"
 rgb_rpc = { version = "0.8.1", path = "../rpc" }
 configure_me_codegen = "0.4"
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]

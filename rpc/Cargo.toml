@@ -37,3 +37,7 @@ serde = [
     "serde_crate", "serde_with", "serde_yaml", "rgb-std/serde",
     "amplify/serde", "internet2/serde", "microservices/serde",
 ]
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]

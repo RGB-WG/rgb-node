@@ -90,3 +90,7 @@ embedded = ["microservices/embedded"]
 
 [package.metadata.configure_me]
 spec = "config_spec.toml"
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "docsrs"]
