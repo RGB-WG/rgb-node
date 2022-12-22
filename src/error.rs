@@ -71,6 +71,9 @@ pub(crate) enum DaemonError {
     #[from(bp::dbc::anchor::Error)]
     Finalize(FinalizeError),
 
+    /// electrum connectivity error. Details: {0}
+    ElectrumConnectivity(String),
+
     /// the container which was requested to be processed is absent in sthe store
     NoContainer(ContainerId),
 
@@ -98,6 +101,7 @@ impl From<DaemonError> for RpcMsg {
             DaemonError::BucketLauncher(_) => FailureCode::Launcher,
             DaemonError::Stash(_) => FailureCode::Stash,
             DaemonError::Finalize(_) => FailureCode::Finalize,
+            DaemonError::ElectrumConnectivity(_) => FailureCode::ElectrumConnectivity,
             DaemonError::NoContainer(_) => FailureCode::Store,
         };
         RpcMsg::Failure(rpc::Failure {
