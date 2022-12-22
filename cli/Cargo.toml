@@ -1,7 +1,7 @@
 [package]
 name = "rgb-cli"
 description = "RGB node command-line interface"
-version = "0.8.2"
+version = "0.8.3"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -24,7 +24,7 @@ bitcoin = "0.28.1"
 psbt = "0.8.0"
 lnpbp = "0.8.0"
 rgb-std = { version = "0.8.1", features = ["serde"] }
-rgb_rpc = { version = "0.8.2", path = "../rpc" }
+rgb_rpc = { version = "0.8.3", path = "../rpc" }
 clap = { version = "~3.1.18", features = ["derive", "env"] }
 serde = "1"
 serde_json = "1"

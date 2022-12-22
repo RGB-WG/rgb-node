@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.8.2"
+version = "0.8.3"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -40,7 +40,7 @@ bp-core = { version = "0.8.1", features = ["psbt"] }
 lnp-core = { version = "0.8.1", features = ["bifrost"] }
 lnp_rpc = "0.8.0"
 rgb-std = "0.8.1"
-rgb_rpc = { version = "0.8.2", path = "./rpc" }
+rgb_rpc = { version = "0.8.3", path = "./rpc" }
 storm-core = "0.8.0"
 storm_ext = "0.8.0"
 storm_rpc = "0.8.0"

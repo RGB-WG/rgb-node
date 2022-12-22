@@ -2093,7 +2093,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.8.2"
+version = "0.8.3"
 dependencies = [
  "amplify",
  "bitcoin",
