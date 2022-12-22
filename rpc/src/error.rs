@@ -34,6 +34,8 @@ pub enum FailureCode {
 
     Finalize = 0x15,
 
+    ElectrumConnectivity = 0x16,
+
     UnexpectedRequest = 0x80,
 
     /// Daemon launcher error

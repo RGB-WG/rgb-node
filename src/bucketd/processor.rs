@@ -14,6 +14,7 @@ use std::io::Write;
 
 use bitcoin::{OutPoint, Txid};
 use commit_verify::{lnpbp4, CommitConceal, TaggedHash};
+use electrum_client::{Client as ElectrumClient, ConfigBuilder};
 use psbt::Psbt;
 use rgb::psbt::RgbExt;
 use rgb::schema::{OwnedRightType, TransitionType};
@@ -33,6 +34,8 @@ use super::Runtime;
 use crate::amplify::Wrapper;
 use crate::db::{self, StoreRpcExt};
 use crate::DaemonError;
+
+const ELECTRUM_TIMEOUT: u8 = 4;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From)]
 #[display(doc_comments)]
@@ -127,6 +130,15 @@ pub enum FinalizeError {
 }
 
 impl Runtime {
+    fn _new_electrum_client(&self) -> Result<ElectrumClient, DaemonError> {
+        let electrum_config = ConfigBuilder::new()
+            .timeout(Some(ELECTRUM_TIMEOUT))
+            .expect("cannot fail since socks5 is unset")
+            .build();
+        ElectrumClient::from_config(&self.electrum_url, electrum_config)
+            .map_err(|e| DaemonError::ElectrumConnectivity(e.to_string()))
+    }
+
     /// Processes incoming transfer downloaded as a container locally
     pub(super) fn process_container(
         &mut self,
@@ -177,7 +189,7 @@ impl Runtime {
         trace!("Starting with contract state {:?}", state);
 
         debug!("Validating consignment {} for contract {}", id, contract_id);
-        let status = Validator::validate(&consignment, &self.electrum);
+        let status = Validator::validate(&consignment, &self._new_electrum_client()?);
         info!("Consignment validation result is {}", status.validity());
 
         match status.validity() {
