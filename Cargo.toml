@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.8.3"
+version = "0.8.4"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -32,15 +32,15 @@ required-features = ["server"]
 amplify = "3.13.0"
 strict_encoding = "~0.8.2"
 stens = "0.7.1"
-commit_verify = "0.8.2"
+commit_verify = "~0.8.3"
 internet2 = { version = "0.8.3", features = ["keygen", "zmq"] }
 microservices = { version = "0.8.10", default-features = false, features = ["node"] }
 lnpbp = "0.8.0"
 bp-core = { version = "0.8.1", features = ["psbt"] }
-lnp-core = { version = "0.8.1", features = ["bifrost"] }
+lnp-core = { version = "0.8.2", features = ["bifrost"] }
 lnp_rpc = "0.8.0"
-rgb-std = "0.8.1"
-rgb_rpc = { version = "0.8.3", path = "./rpc" }
+rgb-std = "0.8.2"
+rgb_rpc = { version = "0.8.4", path = "./rpc" }
 storm-core = "0.8.0"
 storm_ext = "0.8.0"
 storm_rpc = "0.8.0"
@@ -53,7 +53,7 @@ chrono = "0.4"
 nix = "0.24"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 env_logger = "0.7"
-clap = { version = "~3.1.18", optional = true, features = ["env", "derive"] }
+clap = { version = "~3.2.23", optional = true, features = ["env", "derive"] }
 settings = { version = "0.10", package = "config", optional = true }
 configure_me = { version = "0.4", optional = true }
 dotenv = { version = "0.15", optional = true }
@@ -66,12 +66,12 @@ internet2 = "0.8.0"
 microservices = { version = "0.8.0", default-features = false }
 lnpbp = "0.8.0"
 psbt = "0.8.0"
-rgb-std = "0.8.1"
-rgb_rpc = { version = "0.8.2", path = "./rpc" }
+rgb-std = "0.8.2"
+rgb_rpc = { version = "0.8.4", path = "./rpc" }
 storm_ext = "0.8.0"
 store_rpc = "0.8.0"
-clap = { version = "~3.1.18", features = ["env"] }
-clap_complete = "~3.1.4"
+clap = { version = "~3.2.23", features = ["env"] }
+clap_complete = "~3.2.5"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 shellexpand = "2.1"
 configure_me_codegen = "0.4"

@@ -58,7 +58,7 @@ dependencies = [
  "rand 0.8.5",
  "serde 1.0.147",
  "serde_json",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "stringly_conversions",
  "toml",
 ]
@@ -462,16 +462,16 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.18"
+version = "3.2.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
+checksum = "71655c45cb9845d3270c9d6df84ebe72b4dad3c2ba3f7023ad47c144e4e473a5"
 dependencies = [
  "atty",
  "bitflags",
  "clap_derive",
  "clap_lex",
  "indexmap",
- "lazy_static",
+ "once_cell",
  "strsim",
  "termcolor",
  "textwrap",
@@ -479,18 +479,18 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "3.1.4"
+version = "3.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da92e6facd8d73c22745a5d3cbb59bdf8e46e3235c923e516527d8e81eec14a4"
+checksum = "3f7a2e0a962c45ce25afce14220bc24f9dade0a1787f185cecf96bfba7847cd8"
 dependencies = [
  "clap",
 ]
 
 [[package]]
 name = "clap_derive"
-version = "3.1.18"
+version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
+checksum = "ea0c8bce528c4be4da13ea6fead8965e95b6073585a2f05204bd8f4119f82a65"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -540,9 +540,9 @@ dependencies = [
 
 [[package]]
 name = "commit_verify"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1153d1e17f820e7214a10625a019cf6e5543397925306d1e071ea37bddad49d3"
+checksum = "3becf28181780bcd77a2a0f844aa11d07aa24ad2df68b43d7715c0218b2f0465"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -1168,7 +1168,7 @@ dependencies = [
  "secp256k1",
  "serde 1.0.147",
  "serde_json",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "strict_encoding",
  "stringly_conversions",
  "toml",
@@ -1427,7 +1427,7 @@ dependencies = [
  "microservices",
  "serde 1.0.147",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "strict_encoding",
  "zmq2",
 ]
@@ -2025,7 +2025,7 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "rgb-cli"
-version = "0.8.2"
+version = "0.8.4"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2042,7 +2042,7 @@ dependencies = [
  "rgb_rpc",
  "serde 1.0.147",
  "serde_json",
- "serde_yaml",
+ "serde_yaml 0.9.16",
  "shellexpand",
  "strict_encoding",
 ]
@@ -2071,9 +2071,9 @@ dependencies = [
 
 [[package]]
 name = "rgb-std"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9ef288e370c16a6f2880974ece7e8a58c8a77f59124263bd852cb8693cc8996"
+checksum = "c6dda2072b1ec5eb89d34b42c1ff5b5f62eb51fe8008e3a41879915c0f8cc96b"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2087,13 +2087,13 @@ dependencies = [
  "serde 1.0.147",
  "serde_json",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.9.16",
  "strict_encoding",
 ]
 
 [[package]]
 name = "rgb_node"
-version = "0.8.3"
+version = "0.8.4"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2130,7 +2130,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_rpc"
-version = "0.8.2"
+version = "0.8.4"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2144,7 +2144,7 @@ dependencies = [
  "rgb-std",
  "serde 1.0.147",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.9.16",
  "storm-core",
  "strict_encoding",
 ]
@@ -2371,6 +2371,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_yaml"
+version = "0.9.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92b5b431e8907b50339b51223b97d102db8d987ced36f6e4d03621db9316c834"
+dependencies = [
+ "indexmap",
+ "itoa",
+ "ryu",
+ "serde 1.0.147",
+ "unsafe-libyaml",
+]
+
+[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2480,7 +2493,7 @@ dependencies = [
  "amplify",
  "serde 1.0.147",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "strict_encoding",
 ]
 
@@ -2499,7 +2512,7 @@ dependencies = [
  "rand 0.8.5",
  "serde 1.0.147",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "storm-core",
  "strict_encoding",
 ]
@@ -2534,7 +2547,7 @@ dependencies = [
  "once_cell",
  "serde 1.0.147",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "storm-core",
  "storm_rpc",
  "strict_encoding",
@@ -2554,7 +2567,7 @@ dependencies = [
  "rand 0.8.5",
  "serde 1.0.147",
  "serde_with",
- "serde_yaml",
+ "serde_yaml 0.8.26",
  "storm-core",
  "strict_encoding",
 ]
@@ -2658,9 +2671,9 @@ dependencies = [
 
 [[package]]
 name = "textwrap"
-version = "0.15.2"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7b3e525a49ec206798b40326a44121291b530c963cfb01018f63e135bac543d"
+checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 
 [[package]]
 name = "thiserror"
@@ -2773,6 +2786,12 @@ dependencies = [
  "generic-array",
  "subtle",
 ]
+
+[[package]]
+name = "unsafe-libyaml"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc7ed8ba44ca06be78ea1ad2c3682a43349126c8818054231ee6f4748012aed2"
 
 [[package]]
 name = "untrusted"
