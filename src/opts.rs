@@ -103,7 +103,7 @@ pub struct Opts {
     #[clap(
         long,
         global = true,
-        default_value("pandora.network"),
+        default_value("blockstream.info"),
         env = "RGB_NODE_ELECTRUM_SERVER",
         value_hint = ValueHint::Hostname
     )]
