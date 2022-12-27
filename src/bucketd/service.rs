@@ -17,7 +17,6 @@ use amplify::num::u24;
 use bitcoin::secp256k1::rand::random;
 use bitcoin::{OutPoint, Txid};
 use commit_verify::ConsensusCommit;
-use electrum_client::Client as ElectrumClient;
 use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
@@ -83,7 +82,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
 pub struct Runtime {
     id: DaemonId,
 
-    pub(crate) electrum: ElectrumClient,
+    pub(crate) electrum_url: String,
 
     pub(crate) store: store_rpc::Client,
 }
@@ -96,15 +95,12 @@ impl Runtime {
 
         let id = random();
 
-        let electrum = ElectrumClient::new(&config.electrum_url)
-            .map_err(|_| LaunchError::ElectrumConnectivity)?;
-
         info!("Bucket runtime started successfully");
 
         Ok(Self {
             id,
             store,
-            electrum,
+            electrum_url: config.electrum_url,
         })
     }
 }

@@ -8,6 +8,18 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+// Coding conventions
+#![deny(
+    non_upper_case_globals,
+    non_camel_case_types,
+    non_snake_case,
+    unused_mut,
+    unused_imports,
+    dead_code,
+    //missing_docs
+)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+
 #[macro_use]
 extern crate amplify;
 #[macro_use]
