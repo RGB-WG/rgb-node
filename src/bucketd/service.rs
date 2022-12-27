@@ -154,12 +154,8 @@ impl Runtime {
         _client_id: ClientId,
         message: RpcMsg,
     ) -> Result<(), DaemonError> {
-        match message {
-            wrong_msg => {
-                error!("Request is not supported by the RPC interface");
-                return Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &wrong_msg));
-            }
-        }
+        error!("Request is not supported by the RPC interface");
+        Err(DaemonError::wrong_esb_msg(ServiceBus::Rpc, &message))
     }
 
     fn handle_ctl(

@@ -320,6 +320,6 @@ impl esb::Handler<RpcBus> for Handler {
 
     fn handle_err(&mut self, _: &mut Bus, err: esb::Error<ServiceId>) -> Result<(), Self::Error> {
         // We simply propagate the error since it already has been reported
-        Err(err.into())
+        Err(err)
     }
 }

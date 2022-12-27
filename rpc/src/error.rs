@@ -52,6 +52,16 @@ impl Display for FailureCode {
 impl From<u16> for FailureCode {
     fn from(value: u16) -> Self {
         match value {
+            x if x == FailureCode::ChainMismatch as u16 => FailureCode::ChainMismatch,
+            x if x == FailureCode::Encoding as u16 => FailureCode::Encoding,
+            x if x == FailureCode::Esb as u16 => FailureCode::Esb,
+            x if x == FailureCode::Store as u16 => FailureCode::Store,
+            x if x == FailureCode::Stash as u16 => FailureCode::Stash,
+            x if x == FailureCode::Absent as u16 => FailureCode::Absent,
+            x if x == FailureCode::Finalize as u16 => FailureCode::Finalize,
+            x if x == FailureCode::ElectrumConnectivity as u16 => FailureCode::ElectrumConnectivity,
+            x if x == FailureCode::UnexpectedRequest as u16 => FailureCode::UnexpectedRequest,
+            x if x == FailureCode::Launcher as u16 => FailureCode::Launcher,
             _ => FailureCode::Unknown,
         }
     }

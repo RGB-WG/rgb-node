@@ -18,6 +18,7 @@
     dead_code,
     //missing_docs
 )]
+#![allow(clippy::result_large_err)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 #[macro_use]

@@ -43,7 +43,7 @@ impl ::core::str::FromStr for Reveal {
             return Err(ParseRevealError::TooLong);
         }
         let find_method = s.find('@');
-        if find_method == None {
+        if find_method.is_none() {
             return Err(ParseRevealError::Format);
         }
 
@@ -53,7 +53,7 @@ impl ::core::str::FromStr for Reveal {
         }
 
         let find_blind = s.find('#');
-        if find_blind == None {
+        if find_blind.is_none() {
             return Err(ParseRevealError::Format);
         }
 

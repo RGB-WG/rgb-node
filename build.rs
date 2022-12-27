@@ -9,8 +9,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::env;
-use std::fs;
+use std::{env, fs};
 
 use clap::IntoApp;
 use clap_complete::generate_to;
@@ -35,9 +34,9 @@ fn main() -> Result<(), configure_me_codegen::Error> {
         fs::create_dir_all(outdir).expect("failed to create shell dir");
         for app in [rgbd::Opts::command(), bucketd::Opts::command()].iter_mut() {
             let name = app.get_name().to_string();
-            generate_to(Bash, app, &name, &outdir)?;
-            generate_to(PowerShell, app, &name, &outdir)?;
-            generate_to(Zsh, app, &name, &outdir)?;
+            generate_to(Bash, app, &name, outdir)?;
+            generate_to(PowerShell, app, &name, outdir)?;
+            generate_to(Zsh, app, &name, outdir)?;
         }
         // configure_me_codegen::build_script_auto()
     }

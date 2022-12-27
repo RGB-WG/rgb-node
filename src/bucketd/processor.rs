@@ -157,7 +157,7 @@ impl Runtime {
             let chunk = self
                 .store
                 .retrieve_chunk(storm_rpc::DB_TABLE_CHUNKS, chunk_id)?
-                .expect(&format!("Chunk {} is absent", chunk_id));
+                .unwrap_or_else(|| panic!("Chunk {} is absent", chunk_id));
             writer.write_all(chunk.as_slice()).expect("memory writers do not error");
         }
 
@@ -227,7 +227,7 @@ impl Runtime {
                 method: close_method,
                 blinding: blinding_factor,
                 txid: Some(outpoint.txid),
-                vout: outpoint.vout as u32,
+                vout: outpoint.vout,
             };
 
             let concealed_seals = consignment
@@ -289,7 +289,7 @@ impl Runtime {
                             method: close_method,
                             blinding: blinding_factor,
                             txid: Some(outpoint.txid),
-                            vout: outpoint.vout as u32,
+                            vout: outpoint.vout,
                         };
 
                         let mut owned_rights: BTreeMap<OwnedRightType, TypedAssignments> = bmap! {};
@@ -400,7 +400,7 @@ impl Runtime {
             debug!("Processing state extension {}", node_id);
             trace!("State transition: {:?}", extension);
 
-            state.add_extension(&extension);
+            state.add_extension(extension);
             trace!("Contract state now is {:?}", state);
 
             self.store.store_sten(db::NODE_CONTRACTS, node_id, &contract_id)?;
@@ -425,7 +425,7 @@ impl Runtime {
             .retrieve_sten(db::DISCLOSURES, txid)?
             .ok_or(StashError::DisclosureAbsent(txid))?;
 
-        for (_anchor_id, (anchor, bundle_map)) in disclosure.anchored_bundles() {
+        for (anchor, bundle_map) in disclosure.anchored_bundles().values() {
             for (contract_id, bundle) in bundle_map {
                 let mut state: ContractState = self
                     .store

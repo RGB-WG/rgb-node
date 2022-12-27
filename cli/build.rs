@@ -27,12 +27,11 @@ fn main() -> Result<(), configure_me_codegen::Error> {
     if env::var("DOCS_RS").is_err() {
         let outdir = "../shell";
         fs::create_dir_all(outdir).expect("failed to create shell dir");
-        for app in [cli::Opts::command()].iter_mut() {
-            let name = app.get_name().to_string();
-            generate_to(Bash, app, &name, &outdir)?;
-            generate_to(PowerShell, app, &name, &outdir)?;
-            generate_to(Zsh, app, &name, &outdir)?;
-        }
+        let mut app = cli::Opts::command();
+        let name = app.get_name().to_string();
+        generate_to(Bash, &mut app, &name, outdir)?;
+        generate_to(PowerShell, &mut app, &name, outdir)?;
+        generate_to(Zsh, &mut app, &name, outdir)?;
     }
     // configure_me_codegen::build_script_auto()
     Ok(())

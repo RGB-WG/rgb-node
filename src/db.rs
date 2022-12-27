@@ -8,27 +8,27 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-pub const SCHEMATA: &'static str = "schemata";
-pub const CONTRACTS: &'static str = "contracts";
-pub const BUNDLES: &'static str = "bundles";
-pub const GENESIS: &'static str = "genesis";
-pub const TRANSITIONS: &'static str = "transitions";
-pub const ANCHORS: &'static str = "anchors";
-pub const EXTENSIONS: &'static str = "extensions";
-pub const ALU_LIBS: &'static str = "alu";
+pub const SCHEMATA: &str = "schemata";
+pub const CONTRACTS: &str = "contracts";
+pub const BUNDLES: &str = "bundles";
+pub const GENESIS: &str = "genesis";
+pub const TRANSITIONS: &str = "transitions";
+pub const ANCHORS: &str = "anchors";
+pub const EXTENSIONS: &str = "extensions";
+pub const ALU_LIBS: &str = "alu";
 
-pub const OUTPOINTS: &'static str = "outpoints";
-pub const NODE_CONTRACTS: &'static str = "node_contracts";
-pub const TRANSITION_WITNESS: &'static str = "transition_txid";
-pub const CONTRACT_TRANSITIONS: &'static str = "contract_transitions";
+pub const OUTPOINTS: &str = "outpoints";
+pub const NODE_CONTRACTS: &str = "node_contracts";
+pub const TRANSITION_WITNESS: &str = "transition_txid";
+pub const CONTRACT_TRANSITIONS: &str = "contract_transitions";
 
-pub const DISCLOSURES: &'static str = "disclosures";
+pub const DISCLOSURES: &str = "disclosures";
 
 // Storm intgration
-pub const ATTACHMENT_CHUNKS: &'static str = "chunks";
-pub const ATTACHMENT_INDEX: &'static str = "attachments";
-pub const ATTACHMENT_CONTAINER_HEADERS: &'static str = "container_headers";
-pub const ATTACHMENT_CONTAINERS: &'static str = "containers";
+pub const ATTACHMENT_CHUNKS: &str = "chunks";
+pub const ATTACHMENT_INDEX: &str = "attachments";
+pub const ATTACHMENT_CONTAINER_HEADERS: &str = "container_headers";
+pub const ATTACHMENT_CONTAINERS: &str = "containers";
 
 pub(crate) trait StoreRpcExt {
     fn retrieve_sten<T>(

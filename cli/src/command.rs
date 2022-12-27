@@ -239,7 +239,7 @@ impl Exec for Opts {
 
                     let outpoints: BTreeSet<_> =
                         psbt.inputs.iter().map(|input| input.previous_outpoint).collect();
-                    let state_map = client.outpoint_state(outpoints.clone(), progress)?;
+                    let state_map = client.outpoint_state(outpoints, progress)?;
                     for (cid, outpoint_map) in state_map {
                         if cid == contract_id {
                             continue;
@@ -286,7 +286,7 @@ impl Exec for Opts {
                     consignment,
                     reveal,
                 } => {
-                    let consignment = StateTransfer::strict_file_load(&consignment)?;
+                    let consignment = StateTransfer::strict_file_load(consignment)?;
                     let status = client.consume_transfer(consignment, force, reveal, progress)?;
                     report_validation(status);
                 }
