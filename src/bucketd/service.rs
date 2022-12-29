@@ -17,6 +17,7 @@ use amplify::num::u24;
 use bitcoin::secp256k1::rand::random;
 use bitcoin::{OutPoint, Txid};
 use commit_verify::ConsensusCommit;
+use electrum_client::{Client as ElectrumClient, ConfigBuilder};
 use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
@@ -44,6 +45,8 @@ use crate::bus::{
     ValidityResp,
 };
 use crate::{Config, DaemonError, LaunchError};
+
+const ELECTRUM_TIMEOUT: u8 = 4;
 
 pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
     let storm_endpoint = config.storm_endpoint.clone();
@@ -82,7 +85,7 @@ pub fn run(config: Config) -> Result<(), BootstrapError<LaunchError>> {
 pub struct Runtime {
     id: DaemonId,
 
-    pub(crate) electrum_url: String,
+    pub(crate) electrum: ElectrumClient,
 
     pub(crate) store: store_rpc::Client,
 }
@@ -95,12 +98,19 @@ impl Runtime {
 
         let id = random();
 
+        let electrum_config = ConfigBuilder::new()
+            .timeout(Some(ELECTRUM_TIMEOUT))
+            .expect("cannot fail since socks5 is unset")
+            .build();
+        let electrum = ElectrumClient::from_config(&config.electrum_url, electrum_config)
+            .map_err(|e| LaunchError::ElectrumConnectivity(e.to_string()))?;
+
         info!("Bucket runtime started successfully");
 
         Ok(Self {
             id,
             store,
-            electrum_url: config.electrum_url,
+            electrum,
         })
     }
 }
