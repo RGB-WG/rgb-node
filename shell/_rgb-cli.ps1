@@ -203,8 +203,6 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             break
         }
         'rgb-cli;transfer;finalize' {
-            [CompletionResult]::new('-s', 's', [CompletionResultType]::ParameterName, 'Bifrost server to send state transfer to')
-            [CompletionResult]::new('--send', 'send', [CompletionResultType]::ParameterName, 'Bifrost server to send state transfer to')
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary')
             [CompletionResult]::new('--endseal', 'endseal', [CompletionResultType]::ParameterName, 'Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary')
             [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten')

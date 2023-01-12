@@ -247,10 +247,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (finalize)
 _arguments "${_arguments_options[@]}" \
-'-s+[Bifrost server to send state transfer to]:SEND: ' \
-'--send=[Bifrost server to send state transfer to]:SEND: ' \
-'*-e+[Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary]:ENDSEALS: ' \
-'*--endseal=[Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary]:ENDSEALS: ' \
+'*-e+[Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary]:ENDSEAL: ' \
+'*--endseal=[Beneficiary blinded TXO seal - or witness transaction output numbers containing allocations for the beneficiary]:ENDSEAL: ' \
 '-o+[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
 '--out=[Output file to save the PSBT updated with state transition(s) information. If not given, the source PSBT file is overwritten]:PSBT_OUT: ' \
 '-R+[ZMQ socket for connecting daemon RPC interface]:CONNECT: ' \
@@ -262,8 +260,6 @@ _arguments "${_arguments_options[@]}" \
 '*-v[Set verbosity level]' \
 '*--verbose[Set verbosity level]' \
 ':psbt -- The final PSBT (not modified):' \
-':consignment-in -- State transfer consignment draft file prepared with `compose` command:' \
-'::consignment-out -- Output file to save the final consignment. If not given, the source consignment file is overwritten:' \
 && ret=0
 ;;
 (consume)

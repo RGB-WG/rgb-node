@@ -11,11 +11,11 @@
 use std::path::PathBuf;
 
 use bitcoin::OutPoint;
-use internet2::addr::{NodeAddr, ServiceAddr};
+use internet2::addr::ServiceAddr;
 use lnpbp::chain::Chain;
 use rgb::schema::TransitionType;
-use rgb::{Contract, ContractId, SealEndpoint};
-use rgb_rpc::{Reveal, RGB_NODE_RPC_ENDPOINT};
+use rgb::{Contract, ContractId};
+use rgb_rpc::{NewTransfer, Reveal, RGB_NODE_RPC_ENDPOINT};
 
 /// Command-line tool for working with RGB node
 #[derive(Parser, Clone, PartialEq, Eq, Debug)]
@@ -151,14 +151,10 @@ pub enum TransferCommand {
     /// (LNP Node).
     #[display("finalize ...")]
     Finalize {
-        /// Bifrost server to send state transfer to
-        #[clap(short, long)]
-        send: Option<NodeAddr>,
-
         /// Beneficiary blinded TXO seal - or witness transaction output numbers
         /// containing allocations for the beneficiary.
         #[clap(short, long = "endseal", required = true)]
-        endseals: Vec<SealEndpoint>,
+        endseal: Vec<NewTransfer>,
 
         /// The final PSBT (not modified).
         psbt: PathBuf,
@@ -167,13 +163,12 @@ pub enum TransferCommand {
         /// information. If not given, the source PSBT file is overwritten.
         #[clap(short = 'o', long = "out")]
         psbt_out: Option<PathBuf>,
+        // /// State transfer consignment draft file prepared with `compose` command.
+        // consignment_in: PathBuf,
 
-        /// State transfer consignment draft file prepared with `compose` command.
-        consignment_in: PathBuf,
-
-        /// Output file to save the final consignment. If not given, the source
-        /// consignment file is overwritten.
-        consignment_out: Option<PathBuf>,
+        // /// Output file to save the final consignment. If not given, the source
+        // /// consignment file is overwritten.
+        // consignment_out: Option<PathBuf>,
     },
 
     /// Validate incoming transfer consignment and consume it into the stash.
@@ -194,7 +189,7 @@ pub enum TransferCommand {
         /// Examples:
         ///
         /// tapret1st@<outpoint>#<blinding_factor>
-        /// opret1st@<outpoint>#<blinding_factor>  
+        /// opret1st@<outpoint>#<blinding_factor>
         #[clap(short, long)]
         reveal: Option<Reveal>,
     },

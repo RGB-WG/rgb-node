@@ -13,7 +13,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use bitcoin::{OutPoint, Txid};
-use internet2::addr::{NodeAddr, ServiceAddr};
+use internet2::addr::ServiceAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::esb::{self, BusId, ClientId};
@@ -22,10 +22,10 @@ use psbt::Psbt;
 use rgb::schema::TransitionType;
 use rgb::{Contract, ContractId, ContractState, ContractStateMap, SealEndpoint, StateTransfer};
 
-use crate::messages::{FinalizeTransfersRes, HelloReq, TransferFinalize, TransfersReq};
+use crate::messages::{FinalizeTransfersRes, HelloReq, TransfersReq};
 use crate::{
     AcceptReq, BusMsg, ComposeReq, ContractValidity, Error, FailureCode, OutpointFilter, Reveal,
-    RpcMsg, ServiceId, TransferReq,
+    RpcMsg, ServiceId,
 };
 
 // We have just a single service bus (RPC), so we can use any id
@@ -212,29 +212,6 @@ impl Client {
         loop {
             match self.response()?.failure_to_error()? {
                 RpcMsg::StateTransfer(trasfer) => return Ok(trasfer),
-                RpcMsg::Progress(info) => progress(info),
-                _ => return Err(Error::UnexpectedServerResponse),
-            }
-        }
-    }
-
-    pub fn transfer(
-        &mut self,
-        consignment: StateTransfer,
-        endseals: Vec<SealEndpoint>,
-        psbt: Psbt,
-        beneficiary: Option<NodeAddr>,
-        progress: impl Fn(String),
-    ) -> Result<TransferFinalize, Error> {
-        self.request(RpcMsg::Transfer(TransferReq {
-            consignment,
-            endseals,
-            psbt,
-            beneficiary,
-        }))?;
-        loop {
-            match self.response()?.failure_to_error()? {
-                RpcMsg::StateTransferFinalize(transfer) => return Ok(transfer),
                 RpcMsg::Progress(info) => progress(info),
                 _ => return Err(Error::UnexpectedServerResponse),
             }
