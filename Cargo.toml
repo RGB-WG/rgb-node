@@ -49,14 +49,10 @@ bitcoin = "0.29.2"
 psbt = "0.9.0-rc.1"
 electrum-client = "0.12.0"
 # OS
-chrono = "0.4"
-nix = "0.24"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 env_logger = "0.7"
 clap = { version = "~3.2.23", optional = true, features = ["env", "derive"] }
-settings = { version = "0.10", package = "config", optional = true }
 configure_me = { version = "0.4", optional = true }
-dotenv = { version = "0.15", optional = true }
 colored = "2.0.0"
 shellexpand = { version = "2.1", optional = true }
 
@@ -82,7 +78,7 @@ default = ["server"]
 # Server is a standalone application that runs daemons.
 # Required for all apps that can be launched from command-line shell as binaries
 # (i.e. both servers and cli)
-server = ["microservices/server", "microservices/cli", "dotenv", "clap", "settings", "configure_me",
+server = ["microservices/server", "microservices/cli", "clap", "configure_me",
           "amplify/parse_arg", "shellexpand"]
 # Embedded is an app that contains embedded node and that talks to it through
 # integration layer
