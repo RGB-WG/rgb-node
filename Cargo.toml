@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -30,23 +30,23 @@ required-features = ["server"]
 [dependencies]
 # LNP/BP crates
 amplify = "3.13.0"
-strict_encoding = "~0.9.0-rc.2"
-stens = "0.9.0-rc.1"
-commit_verify = "~0.9.0-rc.1"
+strict_encoding = "~0.9.0"
+stens = "0.9.0"
+commit_verify = "~0.9.0"
 internet2 = { version = "0.9.0-rc.1", features = ["keygen", "zmq"] }
 microservices = { version = "0.9.0-rc.1", default-features = false, features = ["node"] }
-lnpbp = "0.9.0-rc.1"
-bp-core = { version = "0.9.0-rc.1", features = ["psbt"] }
-lnp-core = { version = "0.9.0-rc.1", features = ["bifrost"] }
+lnpbp = "0.9.0"
+bp-core = { version = "0.9.0", features = ["psbt"] }
+lnp-core = { version = "0.9.0", features = ["bifrost"] }
 lnp_rpc = "0.9.0-rc.1"
-rgb-std = "0.9.0-rc.1"
-rgb_rpc = { version = "0.9.0-rc.1", path = "./rpc" }
+rgb-std = "0.9.0"
+rgb_rpc = { version = "0.9.0", path = "./rpc" }
 storm-core = "0.9.0-rc.1"
 storm_ext = "0.9.0-rc.1"
 storm_rpc = "0.9.0-rc.1"
 store_rpc = "0.9.0-rc.1"
 bitcoin = "0.29.2"
-psbt = "0.9.0-rc.1"
+psbt = "0.9.0"
 electrum-client = "0.12.0"
 # OS
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
@@ -60,10 +60,10 @@ shellexpand = { version = "2.1", optional = true }
 amplify = "3.13.0"
 internet2 = "0.9.0-rc.1"
 microservices = { version = "0.9.0-rc.1", default-features = false }
-lnpbp = "0.9.0-rc.1"
-psbt = "0.9.0-rc.1"
-rgb-std = "0.9.0-rc.1"
-rgb_rpc = { version = "0.9.0-rc.1", path = "./rpc" }
+lnpbp = "0.9.0"
+psbt = "0.9.0"
+rgb-std = "0.9.0"
+rgb_rpc = { version = "0.9.0", path = "./rpc" }
 storm_ext = "0.9.0-rc.1"
 store_rpc = "0.9.0-rc.1"
 clap = { version = "~3.2.23", features = ["env"] }
