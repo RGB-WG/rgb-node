@@ -1,7 +1,7 @@
 [package]
 name = "rgb-cli"
 description = "RGB node command-line interface"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -18,13 +18,13 @@ name = "rgb-cli"
 [dependencies]
 amplify = "3.13.0"
 strict_encoding = "~0.9.0"
-internet2 = "0.9.0-rc.1"
-microservices = { version = "0.9.0-rc.1", default-features = false, features = ["cli"] }
+internet2 = "0.9.0"
+microservices = { version = "0.9.0", default-features = false, features = ["cli"] }
 bitcoin = "0.29.2"
 psbt = "0.9.0"
 lnpbp = "0.9.0"
 rgb-std = { version = "0.9.0", features = ["serde"] }
-rgb_rpc = { version = "0.9.0", path = "../rpc" }
+rgb_rpc = { version = "0.9.1", path = "../rpc" }
 clap = { version = "~3.2.23", features = ["derive", "env"] }
 serde = "1"
 serde_json = "1"
@@ -40,9 +40,9 @@ bitcoin = "0.29.2"
 lnpbp = "0.9.0"
 clap = { version = "~3.2.23", features = ["derive", "env"] }
 clap_complete = "~3.2.5"
-internet2 = "0.9.0-rc.1"
+internet2 = "0.9.0"
 rgb-std = "0.9.0"
-rgb_rpc = { version = "0.9.0", path = "../rpc" }
+rgb_rpc = { version = "0.9.1", path = "../rpc" }
 configure_me_codegen = "0.4"
 
 [package.metadata.docs.rs]

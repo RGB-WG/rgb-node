@@ -1,7 +1,7 @@
 [package]
 name = "rgb_rpc"
 description = "RGB node RPC API"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
@@ -17,13 +17,13 @@ name = "rgb_rpc"
 amplify = "3.13.0"
 strict_encoding = "~0.9.0"
 rgb-std = "0.9.0"
-storm-core = "0.9.0-rc.1"
+storm-core = "0.9.0"
 lnpbp = "0.9.0"
 bitcoin = "0.29.2"
 psbt = "0.9.0"
-internet2 = "0.9.0-rc.1"
+internet2 = "0.9.0"
 bp-core = { version = "0.9.0", features = ["psbt"] }
-microservices = { version = "0.9.0-rc.1", default-features = false, features = ["client"] }
+microservices = { version = "0.9.0", default-features = false, features = ["client"] }
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.14", optional = true }
 serde_yaml = { version = "0.9.16", optional = true }

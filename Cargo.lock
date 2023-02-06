@@ -1113,9 +1113,9 @@ dependencies = [
 
 [[package]]
 name = "inet2_addr"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fee84136eb3deacdbdd7618e3b4cce4a3fc922103eb91c2d2811aa3a16df2d8"
+checksum = "f598ff3f1d304119896e65d1d2c8e422ea09fb9d24f68582e636aacecf18a969"
 dependencies = [
  "amplify",
  "lightning_encoding",
@@ -1132,9 +1132,9 @@ dependencies = [
 
 [[package]]
 name = "inet2_derive"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2058efb9e12c8c8b7807b5a233575062defc81953a3b91823b4a557c9bc59ea8"
+checksum = "61f3d87919e38693a04e95fbc65cfce0da5a0a094fde4a40f19ca7455f602739"
 dependencies = [
  "amplify",
  "proc-macro2",
@@ -1162,9 +1162,9 @@ dependencies = [
 
 [[package]]
 name = "internet2"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0afb751e9427eb26c527a3176570d0bba847fecfa31600695cb406c09180a1ef"
+checksum = "c7b39dd3f6f8003a69a4778afae0bcc3865c3da5e3329cc045d3725145ea62e4"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -1368,12 +1368,13 @@ dependencies = [
 
 [[package]]
 name = "lnp_rpc"
-version = "0.9.0-rc.1"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cee39ce1ae83c2705fa1123bb22ce4bbbe86984a815cc0025110c15452caa76"
+checksum = "8c77ff359f54aac8674258cba4b7be28f8d88c4f5923cd00b2e8ee4756d99831"
 dependencies = [
  "amplify",
  "bitcoin",
+ "bitcoin_scripts",
  "colored",
  "descriptor-wallet",
  "internet2",
@@ -1483,9 +1484,9 @@ dependencies = [
 
 [[package]]
 name = "microservices"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33f89fc3ff96408a9309d66c2301e6a1a94d294c89a31975f83eb60d3e67ebb0"
+checksum = "910f98fe7bad020ca7221beab2f4605068f9f64079f8a3c0c302373a1797c15c"
 dependencies = [
  "amplify",
  "colored",
@@ -1840,7 +1841,7 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "rgb-cli"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1909,7 +1910,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_node"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -1942,7 +1943,7 @@ dependencies = [
 
 [[package]]
 name = "rgb_rpc"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -2295,9 +2296,9 @@ dependencies = [
 
 [[package]]
 name = "store_rpc"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf50d318d4284cee052d33465593b71de252536bf4eeb14ba11da2b706484e81"
+checksum = "bbe368152639ecac74567b2fc5868dcba3447f5b27477776ad7b34a03c450cb0"
 dependencies = [
  "amplify",
  "colored",
@@ -2315,9 +2316,9 @@ dependencies = [
 
 [[package]]
 name = "storm-core"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9364720123890b600411034fb07659cac9ce5a8a8df6d9b0f172c803a37d9d29"
+checksum = "77f494c04887df82adecb3ee01cd25a2b57902efa95811fcf2c6b2dc4b1c5890"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -2331,9 +2332,9 @@ dependencies = [
 
 [[package]]
 name = "storm_ext"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "824938441eafefacd9812fbf8e9213b82025d5ee2faf88dbcf7f7ff84c2a15f1"
+checksum = "78cd9016a1fc3a37457381aaee1ef38e9a4cbc1a262a467c75c25429e17b1625"
 dependencies = [
  "amplify",
  "const_format",
@@ -2351,9 +2352,9 @@ dependencies = [
 
 [[package]]
 name = "storm_rpc"
-version = "0.9.0-rc.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da52a4a45075e21f5398ef76a4214ea4613d41445ed4c69f6e3893fb945e4c91"
+checksum = "d94ef4b4c5a5e9bf0b456c826d734eda7040b698a3e2162661a570c236425625"
 dependencies = [
  "amplify",
  "internet2",
