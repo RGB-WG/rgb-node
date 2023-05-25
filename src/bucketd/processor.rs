@@ -371,10 +371,8 @@ impl Runtime {
                 self.store.store_sten(db::NODE_CONTRACTS, node_id, &contract_id)?;
 
                 for seal in new_transition.filter_revealed_seals() {
-                    let index_id = ChunkId::with_fixed_fragments(
-                        seal.txid.expect("seal should contain revealed txid"),
-                        seal.vout,
-                    );
+                    let index_id =
+                        ChunkId::with_fixed_fragments(seal.txid.unwrap_or(witness_txid), seal.vout);
                     self.store.insert_into_set(db::OUTPOINTS, index_id, node_id.into_array())?;
                 }
             }
