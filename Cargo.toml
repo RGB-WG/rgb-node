@@ -5,7 +5,7 @@ members = [".", "rpc", "cli"]
 [package]
 name = "rgb_node"
 description = "RGB node"
-version = "0.9.1"
+version = "0.9.2"
 authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
 license = "MIT"
 keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
