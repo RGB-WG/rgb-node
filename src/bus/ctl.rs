@@ -11,7 +11,6 @@
 use std::collections::BTreeSet;
 
 use bitcoin::{OutPoint, Txid};
-use internet2::addr::NodeAddr;
 use microservices::esb::ClientId;
 use psbt::Psbt;
 use rgb::schema::TransitionType;
@@ -50,9 +49,6 @@ pub enum CtlMsg {
 
     #[display(inner)]
     OutpointState(OutpointStateReq),
-
-    #[display(inner)]
-    FinalizeTransfer(FinalizeTransferReq),
 
     #[display(inner)]
     FinalizeTransfers(FinalizeTransfersReq),
@@ -108,17 +104,6 @@ pub struct ValidityResp {
 pub struct OutpointStateReq {
     pub client_id: ClientId,
     pub outpoints: BTreeSet<OutPoint>,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[derive(NetworkEncode, NetworkDecode)]
-#[display("finalize_transfer({client_id}, ...)")]
-pub struct FinalizeTransferReq {
-    pub client_id: ClientId,
-    pub consignment: StateTransfer,
-    pub endseals: Vec<SealEndpoint>,
-    pub psbt: Psbt,
-    pub beneficiary: Option<NodeAddr>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]

@@ -10,6 +10,7 @@
 
 use bitcoin::OutPoint;
 use bp::seals::txout::CloseMethod;
+use rgb::SealEndpoint;
 
 #[derive(From, PartialEq, Eq, Debug, Clone, StrictEncode, StrictDecode)]
 pub struct Reveal {
@@ -114,4 +115,85 @@ impl ::std::error::Error for ParseRevealError {
             _ => None,
         }
     }
+}
+
+#[derive(From, PartialEq, Eq, Debug, Clone, StrictEncode, StrictDecode)]
+pub struct NewTransfer {
+    /// Beneficiary blinded TXO seal - or witness transaction output numbers
+    /// containing allocations for the beneficiary.
+    pub endseals: Vec<SealEndpoint>,
+
+    /// State transfer consignment draft file prepared with `compose` command.
+    pub consignment: String,
+}
+
+/// An error in parsing an OutPoint.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum ParseNewTransferError {
+    /// Error in seal endpoint part.
+    SealEndpoint,
+    /// Error in consignment part.
+    Consignment,
+    /// Error in general format.
+    Format,
+}
+
+impl std::fmt::Display for ParseNewTransferError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            ParseNewTransferError::SealEndpoint => write!(f, "error parsing SealEndpoint"),
+            ParseNewTransferError::Consignment => write!(f, "error parsing Consignment"),
+            ParseNewTransferError::Format => todo!(),
+        }
+    }
+}
+
+impl std::fmt::Display for NewTransfer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let endseals: Vec<String> =
+            self.endseals.clone().into_iter().map(|e| e.to_string()).collect();
+        let endseals = endseals.join(",");
+        write!(f, "{}:{}", endseals, self.consignment)
+    }
+}
+
+impl ::core::str::FromStr for NewTransfer {
+    type Err = ParseNewTransferError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let find_consig = s.find(':');
+        let index_consig = match find_consig {
+            Some(index) => index,
+            _ => return Err(ParseNewTransferError::Format),
+        };
+
+        println!("{}", "passou aqui");
+        if index_consig == 0 || index_consig == s.len() - 1 {
+            return Err(ParseNewTransferError::Format);
+        }
+
+        let find_endseals = s.find(',');
+        let endseals = match find_endseals {
+            Some(_) => s[..index_consig]
+                .split(',')
+                .into_iter()
+                .map(|e| SealEndpoint::from_str(e).expect("Error in SealEndpoint part"))
+                .collect(),
+            _ => {
+                vec![SealEndpoint::from_str(&s[..index_consig]).expect("Error in SealEndpoint part")]
+            }
+        };
+
+        Ok(NewTransfer {
+            endseals,
+            consignment: match String::try_from(&s[index_consig + 1..]) {
+                Ok(it) => it,
+                Err(_) => return Err(ParseNewTransferError::Consignment),
+            },
+        })
+    }
+}
+
+impl ::std::error::Error for ParseNewTransferError {
+    fn cause(&self) -> Option<&dyn ::std::error::Error> { None }
 }

@@ -11,7 +11,6 @@
 use std::collections::BTreeSet;
 
 use bitcoin::{OutPoint, Txid};
-use internet2::addr::NodeAddr;
 use internet2::presentation;
 use lnpbp::chain::Chain;
 use microservices::rpc;
@@ -72,9 +71,6 @@ pub enum RpcMsg {
     ProcessDisclosure(Txid),
 
     #[display(inner)]
-    Transfer(TransferReq),
-
-    #[display(inner)]
     FinalizeTransfers(TransfersReq),
 
     #[display("memorize_seal({0})")]
@@ -96,9 +92,6 @@ pub enum RpcMsg {
 
     #[display("state_transfer(...)")]
     StateTransfer(StateTransfer),
-
-    #[display("state_transfer_finalize(...)")]
-    StateTransferFinalize(TransferFinalize),
 
     #[display("state_transfer_finalize(...)")]
     FinalizedTransfers(FinalizeTransfersRes),
@@ -188,24 +181,6 @@ pub struct ComposeReq {
     pub contract_id: ContractId,
     pub include: BTreeSet<TransitionType>,
     pub outpoints: OutpointFilter,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[derive(NetworkEncode, NetworkDecode)]
-#[display("transfer(...)")]
-pub struct TransferReq {
-    pub consignment: StateTransfer,
-    pub endseals: Vec<SealEndpoint>,
-    pub psbt: Psbt,
-    pub beneficiary: Option<NodeAddr>,
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[derive(NetworkEncode, NetworkDecode)]
-#[display("transfer_complete(...)")]
-pub struct TransferFinalize {
-    pub consignment: StateTransfer,
-    pub psbt: Psbt,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]

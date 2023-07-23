@@ -8,7 +8,7 @@
 // You should have received a copy of the MIT License along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::{fs, io};
 
 use amplify::IoError;
@@ -20,7 +20,7 @@ use microservices::shell::Exec;
 use psbt::Psbt;
 use rgb::blank::BlankBundle;
 use rgb::psbt::{RgbExt, RgbInExt};
-use rgb::{Node, StateTransfer, Transition, TransitionBundle};
+use rgb::{Node, SealEndpoint, StateTransfer, Transition, TransitionBundle};
 use rgb_rpc::{Client, ContractValidity};
 use strict_encoding::{StrictDecode, StrictEncode};
 
@@ -93,10 +93,7 @@ impl TransferCommand {
                 format!("Composing consignment for state transfer for contract {}", contract_id)
             }
             Self::Combine { .. } => s!("Preparing PSBT for the state transfer"),
-            Self::Finalize {
-                send: Some(addr), ..
-            } => format!("Finalizing state transfer and sending it to {}", addr),
-            Self::Finalize { send: None, .. } => s!("Finalizing state transfer"),
+            Self::Finalize { .. } => s!("Finalizing state transfers"),
             Self::Consume { .. } => s!("Verifying and consuming state transfer"),
         }
     }
@@ -261,23 +258,36 @@ impl Exec for Opts {
                 }
 
                 TransferCommand::Finalize {
+                    endseal,
                     psbt: psbt_in,
-                    consignment_in,
-                    consignment_out,
-                    endseals,
-                    send,
                     psbt_out,
                 } => {
                     let psbt_bytes = fs::read(&psbt_in)?;
                     let psbt = Psbt::deserialize(&psbt_bytes)?;
-                    let consignment = StateTransfer::strict_file_load(&consignment_in)?;
-                    let transfer = client.transfer(consignment, endseals, psbt, send, progress)?;
 
-                    transfer
-                        .consignment
-                        .strict_file_save(consignment_out.unwrap_or(consignment_in))?;
+                    let mut consig_paths = BTreeMap::new();
+                    let transfers: Vec<(StateTransfer, Vec<SealEndpoint>)> = endseal
+                        .into_iter()
+                        .map(|b| -> (StateTransfer, Vec<SealEndpoint>) {
+                            let consignment =
+                                StateTransfer::strict_file_load(b.consignment.clone())
+                                    .expect("Valid consignment file");
+                            consig_paths.insert(consignment.contract_id(), b.consignment);
+                            (consignment, b.endseals)
+                        })
+                        .collect();
 
-                    let psbt_bytes = transfer.psbt.serialize();
+                    let transfers = client.finalize_transfers(transfers, psbt, progress)?;
+                    for transfer in transfers.consignments {
+                        if consig_paths.contains_key(&transfer.contract_id()) {
+                            let path = consig_paths
+                                .get(&transfer.contract_id())
+                                .expect("Invalid consignment path");
+                            let _ = transfer.strict_file_save(path);
+                        }
+                    }
+
+                    let psbt_bytes = transfers.psbt.serialize();
                     fs::write(psbt_out.unwrap_or(psbt_in), psbt_bytes)?;
                 }
 

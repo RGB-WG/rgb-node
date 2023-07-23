@@ -36,16 +36,16 @@ pub mod client;
 mod error;
 mod messages;
 mod service_id;
-mod reveal;
+mod structs;
 
 pub use client::Client;
 pub use error::{Error, FailureCode};
 pub(crate) use messages::BusMsg;
 pub use messages::{
     AcceptReq, ComposeReq, ContractValidity, FinalizeTransfersRes, HelloReq, OutpointFilter,
-    RpcMsg, TransferFinalize, TransferReq, TransfersReq,
+    RpcMsg, TransfersReq,
 };
-pub use reveal::Reveal;
 pub use service_id::ServiceId;
+pub use structs::{NewTransfer, Reveal};
 
 pub const RGB_NODE_RPC_ENDPOINT: &str = "0.0.0.0:63963";

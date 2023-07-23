@@ -9,16 +9,13 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::collections::BTreeSet;
-use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use amplify::num::u24;
 use bitcoin::secp256k1::rand::random;
 use bitcoin::{OutPoint, Txid};
 use commit_verify::ConsensusCommit;
 use electrum_client::{Client as ElectrumClient, ConfigBuilder};
-use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use microservices::error::BootstrapError;
 use microservices::esb;
@@ -31,18 +28,11 @@ use rgb::{
     StateTransfer, TransferConsignment, Validity,
 };
 use rgb_rpc::{OutpointFilter, Reveal, RpcMsg};
-use stens::AsciiString;
-use storm::{
-    Chunk, Container, ContainerFullId, ContainerHeader, ContainerId, ContainerInfo, MesgId,
-};
-use storm_ext::ExtMsg as StormMsg;
-use storm_rpc::AddressedMsg;
-use strict_encoding::{MediumVec, StrictEncode};
+use storm::ContainerId;
 
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, FinalizeTransfersReq,
-    OutpointStateReq, ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
-    ValidityResp,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransfersReq, OutpointStateReq,
+    ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId, ValidityResp,
 };
 use crate::{Config, DaemonError, LaunchError};
 
@@ -236,23 +226,6 @@ impl Runtime {
                 self.handle_outpoint_state(endpoints, client_id, outpoints)?;
             }
 
-            CtlMsg::FinalizeTransfer(FinalizeTransferReq {
-                client_id,
-                consignment,
-                endseals,
-                psbt,
-                beneficiary,
-            }) => {
-                self.handle_finalize_transfer(
-                    endpoints,
-                    client_id,
-                    consignment,
-                    endseals,
-                    psbt,
-                    beneficiary,
-                )?;
-            }
-
             CtlMsg::FinalizeTransfers(FinalizeTransfersReq {
                 client_id,
                 transfers,
@@ -411,87 +384,6 @@ impl Runtime {
                 let _ =
                     self.send_rpc(endpoints, client_id, RpcMsg::OutpointState(transitions_info));
                 self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?
-            }
-        }
-        Ok(())
-    }
-
-    fn handle_finalize_transfer(
-        &mut self,
-        endpoints: &mut Endpoints,
-        client_id: ClientId,
-        consignment: StateTransfer,
-        endseals: Vec<SealEndpoint>,
-        psbt: Psbt,
-        beneficiary: Option<NodeAddr>,
-    ) -> Result<(), DaemonError> {
-        match self.finalize_transfer(consignment, endseals, psbt) {
-            Err(err) => {
-                let _ = self.send_rpc(endpoints, client_id, err);
-                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingFailed)?
-            }
-            Ok(transfer) => {
-                if let Some(beneficiary) = beneficiary {
-                    // 1. Containerize consignment
-                    // TODO: Make consignment containerization part of the RGB stdlib; use logical,
-                    //       not a size-chunking
-                    let data = transfer.consignment.strict_serialize()?;
-                    let mut chunk_ids = MediumVec::new();
-                    let size = data.len() as u64;
-                    for piece in data.chunks(u24::MAX.into_usize()) {
-                        let chunk = Chunk::try_from(piece)?;
-                        let chunk_id = chunk.chunk_id();
-                        self.store.store(storm_rpc::DB_TABLE_CHUNKS, chunk_id, &chunk)?;
-                        chunk_ids.push(chunk_id)?;
-                    }
-
-                    let header = ContainerHeader {
-                        version: 0,
-                        mime: AsciiString::from_str("application/vnd.lnpbp.rgb.consignment")
-                            .expect("hardcoded MIME type"),
-                        info: empty!(),
-                        size,
-                    };
-                    let header_chunk = Chunk::try_from(header.strict_serialize()?)?;
-                    let container = Container {
-                        header: header.clone(),
-                        chunks: chunk_ids,
-                    };
-                    let container_chunk = Chunk::try_from(container.strict_serialize()?)?;
-
-                    // 2. Upload container to stored database
-                    let container_id = container.container_id();
-                    self.store.store(
-                        storm_rpc::DB_TABLE_CONTAINER_HEADERS,
-                        container_id,
-                        &header_chunk,
-                    )?;
-                    self.store.store(
-                        storm_rpc::DB_TABLE_CONTAINERS,
-                        container_id,
-                        &container_chunk,
-                    )?;
-
-                    // 3. Instruct storm to send the consignment to the remote peer
-                    // TODO: Ensure we are connected to the beneficiary
-                    let container_full_id = ContainerFullId {
-                        // TODO: Change to use message-wrapped container announcements
-                        message_id: MesgId::default(),
-                        container_id,
-                    };
-                    let addressed_msg = AddressedMsg {
-                        remote_id: beneficiary.id,
-                        data: ContainerInfo {
-                            id: container_full_id,
-                            header,
-                        },
-                    };
-
-                    self.send_storm(endpoints, StormMsg::ContainerAnnouncement(addressed_msg))?;
-                }
-                let _ =
-                    self.send_rpc(endpoints, client_id, RpcMsg::StateTransferFinalize(transfer));
-                self.send_ctl(endpoints, ServiceId::rgbd(), CtlMsg::ProcessingComplete)?;
             }
         }
         Ok(())

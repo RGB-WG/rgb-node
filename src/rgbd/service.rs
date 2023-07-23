@@ -13,7 +13,6 @@ use std::collections::{BTreeSet, VecDeque};
 use amplify::Wrapper;
 use bitcoin::hashes::Hash;
 use bitcoin::{OutPoint, Txid};
-use internet2::addr::NodeAddr;
 use internet2::ZmqSocketType;
 use lnpbp::chain::Chain;
 use microservices::cli::LogStyle;
@@ -27,8 +26,7 @@ use rgb::{
     Contract, ContractConsignment, ContractId, SealEndpoint, StateTransfer, TransferConsignment,
 };
 use rgb_rpc::{
-    AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, Reveal, RpcMsg, TransferReq,
-    TransfersReq,
+    AcceptReq, ComposeReq, FailureCode, HelloReq, OutpointFilter, Reveal, RpcMsg, TransfersReq,
 };
 use storm::ContainerId;
 use storm_ext::ExtMsg as StormMsg;
@@ -36,8 +34,8 @@ use storm_rpc::AddressedMsg;
 
 use crate::bucketd::StashError;
 use crate::bus::{
-    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransferReq, FinalizeTransfersReq,
-    OutpointStateReq, ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
+    BusMsg, ConsignReq, CtlMsg, DaemonId, Endpoints, FinalizeTransfersReq, OutpointStateReq,
+    ProcessDisclosureReq, ProcessReq, Responder, ServiceBus, ServiceId,
 };
 use crate::db::ChunkHolder;
 use crate::rgbd::daemons::Daemon;
@@ -261,22 +259,6 @@ impl Runtime {
             }
             RpcMsg::ProcessDisclosure(txid) => {
                 self.process_disclosure(endpoints, client_id, txid)?;
-            }
-
-            RpcMsg::Transfer(TransferReq {
-                consignment,
-                endseals,
-                psbt,
-                beneficiary,
-            }) => {
-                self.complete_transfer(
-                    endpoints,
-                    client_id,
-                    consignment,
-                    endseals,
-                    psbt,
-                    beneficiary,
-                )?;
             }
 
             RpcMsg::FinalizeTransfers(TransfersReq { transfers, psbt }) => {
@@ -544,25 +526,6 @@ impl Runtime {
             self.launch_daemon(Daemon::Bucketd, self.config.clone())?;
         }
         Ok(())
-    }
-
-    fn complete_transfer(
-        &mut self,
-        endpoints: &mut Endpoints,
-        client_id: ClientId,
-        consignment: StateTransfer,
-        endseals: Vec<SealEndpoint>,
-        psbt: Psbt,
-        beneficiary: Option<NodeAddr>,
-    ) -> Result<(), DaemonError> {
-        self.ctl_queue.push_back(CtlMsg::FinalizeTransfer(FinalizeTransferReq {
-            client_id,
-            consignment,
-            endseals,
-            psbt,
-            beneficiary,
-        }));
-        self.pick_or_start(endpoints, client_id)
     }
 
     fn complete_transfers(
