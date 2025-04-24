@@ -19,21 +19,44 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
+//! Command-line interface to BP Node
 
-use bpwallet::Network;
+#[macro_use]
+extern crate amplify;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate clap;
 
-/// Final configuration resulting from data contained in config file environment variables and
-/// command-line options.
-/// For security reasons a node key is kept separately.
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-pub struct Config {
-    /// Data location
-    pub data_dir: PathBuf,
+mod args;
+mod client;
+mod command;
 
-    pub network: Network,
+use bpwallet::cli::{ExecError, LogLevel};
+use clap::Parser;
+use rgbrpc::Response;
 
-    pub rpc: Vec<SocketAddr>,
+pub use crate::args::{Args, Command};
+use crate::client::BpClient;
+
+fn main() -> Result<(), ExecError> {
+    let args = Args::parse();
+    LogLevel::from_verbosity_flag_count(args.verbose).apply();
+    trace!("Command-line arguments: {:#?}", &args);
+
+    let client = BpClient::new(args.remote, cb)?;
+
+    args.command.exec(client)
+}
+
+fn cb(reply: Response) {
+    match reply {
+        Response::Failure(failure) => {
+            println!("Failure: {failure}");
+        }
+        Response::Pong(_noise) => {}
+        Response::Status(status) => {
+            println!("{}", serde_yaml::to_string(&status).unwrap());
+        }
+    }
 }

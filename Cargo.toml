@@ -1,76 +1,91 @@
 [workspace]
-default-members = [".", "rpc", "cli"]
-members = [".", "rpc", "cli"]
+default-members = [".", "rpc", "client"]
+members = [".", "rpc", "client"]
+exclude = []
+
+[workspace.package]
+version = "0.12.0-alpha.1"
+authors = ["Dr Maxim Orlovsky <orlovsky@lnp-bp.org>"]
+keywords = ["bitcoin", "lightning-network", "lnp-bp", "smart-contracts", "rgb"]
+categories = ["cryptography::cryptocurrencies", "network-programming"]
+edition = "2024"
+rust-version = "1.85.0"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+amplify = "4.8.0"
+strict_encoding = "2.8.1"
+bp-std = "0.12.0-beta.5"
+bp-wallet = { version = "0.12.0-beta.5", default-features = false }
+bp-rpc = "0.12.0-alpha.1"
+bp-client = "0.12.0-alpha.1"
+
+io-reactor = "0.6.0"
+cyphernet = { version = "0.5.2", features = ["tor", "dns", "ed25519", "p2p-ed25519"] }
+microservices = { version = "0.12.0" }
+netservices = { version = "0.12.0-beta.1", features = ["eidolon", "reactor"] }
+crossbeam-channel = "0.5.15"
+
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9.34"
+
+clap = { version = "4.4.8", features = ["derive", "env"] }
+clap_complete = "4.5.7"
+log = { version = "0.4" }
+loglevel = { version = "0.2.0" }
+shellexpand = { version = "3.1.0" }
+dotenv = { version = "0.15" }
+settings = { version = "0.14", package = "config" }
+configure_me = { version = "0.4" }
+configure_me_codegen = "0.4.4"
 
 [package]
-name = "rgb_node"
-description = "RGB node"
-version = "0.9.2"
-authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
-license = "MIT"
-keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
-categories = ["network-programming"]
-edition = "2021"
-rust-version = "1.59.0"
+name = "rgb-node"
+description = "RGB Node: sovereign smart contracts backend"
+version.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
 readme = "README.md"
 build = "build.rs"
-exclude = [".github", "Dockerfile", ".dockerignore", "contrib", "doc"]
+exclude = [".github", "Dockerfile", ".dockerignore", "contrib", "shell"]
 
 [lib]
-name = "rgb_node"
+name = "rgbnode"
 
 [[bin]]
 name = "rgbd"
 required-features = ["server"]
 
-[[bin]]
-name = "bucketd"
-required-features = ["server"]
-
 [dependencies]
-# LNP/BP crates
-amplify = "3.13.0"
-strict_encoding = "~0.9.0"
-stens = "0.9.0"
-commit_verify = "~0.9.0"
-internet2 = { version = "0.9.0", features = ["keygen", "zmq"] }
-microservices = { version = "0.9.0", default-features = false, features = ["node"] }
-lnpbp = "0.9.0"
-bp-core = { version = "0.9.0", features = ["psbt"] }
-lnp-core = { version = "0.9.1", features = ["bifrost"] }
-lnp_rpc = "0.9.1"
-rgb-std = "0.9.0"
-rgb_rpc = { version = "0.9.1", path = "./rpc" }
-storm-core = "0.9.0"
-storm_ext = "0.9.0"
-storm_rpc = "0.9.0"
-store_rpc = "0.9.0"
-bitcoin = "0.29.2"
-psbt = "0.9.0"
-electrum-client = "0.12.0"
-# OS
-log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
-env_logger = "0.7"
-clap = { version = "~3.2.23", optional = true, features = ["env", "derive"] }
-configure_me = { version = "0.4", optional = true }
-colored = "2.0.0"
-shellexpand = { version = "2.1", optional = true }
+amplify.workspace = true
+strict_encoding.workspace = true
+bp-wallet = { workspace = true, features = ["cli"] }
+rgb-rpc = { version = "0.12.0-alpha.1", path = "rpc" }
+io-reactor.workspace = true
+microservices = { workspace = true, features = ["log"] }
+netservices = { workspace = true, features = ["log"] }
+crossbeam-channel.workspace = true
+log.workspace = true
+loglevel.workspace = true
+clap = { workspace = true, optional = true }
+shellexpand = { workspace = true, optional = true }
+settings = { workspace = true, optional = true }
+configure_me = { workspace = true, optional = true }
+dotenv = { workspace = true, optional = true }
 
 [build-dependencies]
-amplify = "3.13.0"
-internet2 = "0.9.0"
-microservices = { version = "0.9.0", default-features = false }
-lnpbp = "0.9.0"
-psbt = "0.9.0"
-rgb-std = "0.9.0"
-rgb_rpc = { version = "0.9.1", path = "./rpc" }
-storm_ext = "0.9.0"
-store_rpc = "0.9.0"
-clap = { version = "~3.2.23", features = ["env"] }
-clap_complete = "~3.2.5"
-log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
-shellexpand = "2.1"
-configure_me_codegen = "0.4"
+amplify.workspace = true
+bp-wallet = { workspace = true, features = ["cli"] }
+rgb-rpc = { version = "0.12.0-alpha.1", path = "rpc" }
+clap.workspace = true
+clap_complete.workspace = true
+log.workspace = true
+shellexpand.workspace = true
+configure_me_codegen.workspace = true
 
 [features]
 default = ["server"]
@@ -78,15 +93,17 @@ default = ["server"]
 # Server is a standalone application that runs daemons.
 # Required for all apps that can be launched from command-line shell as binaries
 # (i.e. both servers and cli)
-server = ["microservices/server", "microservices/cli", "clap", "configure_me",
-          "amplify/parse_arg", "shellexpand"]
-# Embedded is an app that contains embedded node and that talks to it through
-# integration layer
-embedded = ["microservices/embedded"]
+server = ["dep:dotenv", "dep:clap", "dep:settings", "dep:configure_me", "dep:shellexpand"]
 
 [package.metadata.configure_me]
 spec = "config_spec.toml"
 
-[package.metadata.docs.rs]
-all-features = true
-rustc-args = ["--cfg", "docsrs"]
+[patch.crates-io]
+bp-consensus = { git = "https://github.com/BP-WG/bp-core", branch = "v0.12" }
+io-reactor = { git = "https://github.com/rust-amplify/io-reactor", branch = "v0.6" }
+cyphergraphy = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
+cypheraddr = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
+microservices = { git = "https://github.com/cyphernet-labs/microservices.rs", branch = "master" }
+netservices = { git = "https://github.com/cyphernet-labs/netservices.rs", branch = "develop" }
+bp-rpc = { git = "https://github.com/BP-WG/bp-node", branch = "master" }
+bp-client = { git = "https://github.com/BP-WG/bp-node", branch = "master" }

@@ -1,43 +1,28 @@
 [package]
-name = "rgb_rpc"
-description = "RGB node RPC API"
-version = "0.9.1"
-authors = ["Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>"]
-license = "MIT"
-keywords = ["bitcoin", "node", "layer-2", "smart-contracts", "rgb"]
-categories = ["network-programming"]
-edition = "2021"
-rust-version = "1.59.0"
+name = "rgb-rpc"
+description = "RGB Node RPC API"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 readme = "../README.md"
 
 [lib]
-name = "rgb_rpc"
+name = "rgbrpc"
 
 [dependencies]
-amplify = "3.13.0"
-strict_encoding = "~0.9.0"
-rgb-std = "0.9.0"
-storm-core = "0.9.0"
-lnpbp = "0.9.0"
-bitcoin = "0.29.2"
-psbt = "0.9.0"
-internet2 = "0.9.0"
-bp-core = { version = "0.9.0", features = ["psbt"] }
-microservices = { version = "0.9.0", default-features = false, features = ["client"] }
-serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
-serde_with = { version = "1.14", optional = true }
-serde_yaml = { version = "0.9.16", optional = true }
-log = "0.4.14"
-colored = "2"
+amplify.workspace = true
+strict_encoding.workspace = true
+bp-rpc = { workspace = true, optional = true }
+netservices.workspace = true
+serde = { workspace = true, optional = true }
 
 [features]
 default = ["serde"]
 all = ["serde"]
 serde = [
-    "serde_crate", "serde_with", "serde_yaml", "rgb-std/serde",
-    "amplify/serde", "internet2/serde", "microservices/serde",
+    "dep:serde", "amplify/serde", "strict_encoding/serde", "bp-rpc/serde"
 ]
-
-[package.metadata.docs.rs]
-all-features = true
-rustc-args = ["--cfg", "docsrs"]

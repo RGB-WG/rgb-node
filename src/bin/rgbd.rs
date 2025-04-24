@@ -1,51 +1,74 @@
-// RGB node providing smart contracts functionality for Bitcoin & Lightning.
+// RGB Node: sovereign smart contracts backend
 //
-// Written in 2022 by
-//     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
+// SPDX-License-Identifier: Apache-2.0
 //
-// Copyright (C) 2022 by LNP/BP Standards Association, Switzerland.
+// Designed in 2020-2025 by Dr Maxim Orlovsky <orlovsky@lnp-bp.org>
+// Written in 2020-2025 by Dr Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
-// You should have received a copy of the MIT License along with this software.
-// If not, see <https://opensource.org/licenses/MIT>.
-
-#![recursion_limit = "256"]
-
-//! Main executable for RGB node.
+// Copyright (C) 2020-2024 LNP/BP Standards Association. All rights reserved.
+// Copyright (C) 2025 RGB Consortium, Switzerland. All rights reserved.
+// Copyright (C) 2020-2025 Dr Maxim Orlovsky. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed under the License
+// is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+// or implied. See the License for the specific language governing permissions and limitations under
+// the License.
 
 #[macro_use]
-extern crate log;
+extern crate clap;
+
+mod opts;
+
+use std::fs;
+use std::process::{ExitCode, Termination, exit};
 
 use clap::Parser;
-use microservices::error::BootstrapError;
-use rgb_node::rgbd::Opts;
-use rgb_node::{rgbd, Config, LaunchError};
+use loglevel::LogLevel;
+pub use rgbnode;
+use rgbnode::{Broker, BrokerError, Config};
 
-fn main() -> Result<(), BootstrapError<LaunchError>> {
-    println!("rgbd: RGB stash microservice");
+use crate::opts::{Command, Opts};
 
+struct Status(Result<(), BrokerError>);
+
+impl Termination for Status {
+    fn report(self) -> ExitCode {
+        match self.0 {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(err) => {
+                eprintln!("Error: {err}");
+                ExitCode::FAILURE
+            }
+        }
+    }
+}
+
+fn main() -> Status {
     let mut opts = Opts::parse();
-    trace!("Command-line arguments: {:?}", opts);
     opts.process();
-    trace!("Processed arguments: {:?}", opts);
+    LogLevel::from_verbosity_flag_count(opts.verbose).apply();
+    log::debug!("Command-line arguments: {:#?}", &opts);
 
-    let config = Config::from(opts);
-    trace!("Daemon configuration: {:?}", config);
-    debug!("CTL socket {}", config.ctl_endpoint);
-    debug!("RPC socket {}", config.rpc_endpoint);
-    debug!("STORE socket {}", config.store_endpoint);
-    debug!("STORM socket {}", config.storm_endpoint);
-
-    /*
-    use self::internal::ResultExt;
-    let (config_from_file, _) =
-        internal::Config::custom_args_and_optional_files(std::iter::empty::<
-            &str,
-        >())
-        .unwrap_or_exit();
-     */
-
-    debug!("Starting runtime ...");
-    rgbd::run(config).expect("running rgbd runtime");
-
-    unreachable!()
+    match opts.command {
+        Some(Command::Init) => {
+            eprint!("Initializing ... ");
+            if let Err(err) = fs::create_dir_all(&opts.general.data_dir) {
+                eprintln!(
+                    "unable to create data directory at '{}'\n{err}",
+                    opts.general.data_dir.display()
+                );
+                exit(3);
+            }
+            Status(Ok(()))
+        }
+        None => {
+            let conf = Config::from(opts);
+            Status(Broker::start(conf).and_then(|runtime| runtime.run()))
+        }
+    }
 }

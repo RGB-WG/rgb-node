@@ -1,44 +1,31 @@
-// RGB node providing smart contracts functionality for Bitcoin & Lightning.
+// RGB Node: sovereign smart contracts backend
 //
-// Written in 2022 by
-//     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
+// SPDX-License-Identifier: Apache-2.0
 //
-// Copyright (C) 2022 by LNP/BP Standards Association, Switzerland.
+// Designed in 2020-2025 by Dr Maxim Orlovsky <orlovsky@lnp-bp.org>
+// Written in 2020-2025 by Dr Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
-// You should have received a copy of the MIT License along with this software.
-// If not, see <https://opensource.org/licenses/MIT>.
-
-// Coding conventions
-#![deny(
-    non_upper_case_globals,
-    non_camel_case_types,
-    non_snake_case,
-    unused_mut,
-    unused_imports,
-    dead_code,
-    //missing_docs
-)]
-#![allow(clippy::result_large_err)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+// Copyright (C) 2020-2024 LNP/BP Standards Association. All rights reserved.
+// Copyright (C) 2025 RGB Consortium, Switzerland. All rights reserved.
+// Copyright (C) 2020-2025 Dr Maxim Orlovsky. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License. You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software distributed under the License
+// is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+// or implied. See the License for the specific language governing permissions and limitations under
+// the License.
 
 #[macro_use]
 extern crate amplify;
-#[macro_use]
-extern crate strict_encoding;
-#[macro_use]
-extern crate internet2;
-#[macro_use]
-extern crate log;
 
 mod config;
-mod error;
-pub mod rgbd;
-pub mod bus;
-pub mod bucketd;
-#[cfg(feature = "server")]
-pub mod opts;
-pub(crate) mod db;
+mod broker;
+mod rpc;
 
+pub use broker::{Broker, BrokerError, BrokerRpcMsg};
 pub use config::Config;
-pub(crate) use error::DaemonError;
-pub use error::LaunchError;
+pub use rpc::{RpcCmd, RpcController};

@@ -2,9 +2,15 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+    tags:
+      - 'v[0-9]+.*'
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - develop
+      - 'v[0-9]+.?*'
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,70 +19,49 @@ jobs:
   default:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Install rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Default build
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --workspace
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --workspace
+  no-default:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --workspace --no-default-features
   features:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        feature:
-          - server
-          - embedded
+        feature: [ server, cli, log, serde ]
     steps:
-      - uses: actions/checkout@v2
-      - name: Install rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Feature ${{ matrix.feature }}
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --no-default-features --features=${{ matrix.feature }}
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Feature ${{matrix.feature}}
+        run: cargo check --workspace --no-default-features --features=${{matrix.feature}}
+      - name: Feature ${{matrix.feature}}
+        run: cargo check --workspace --features=${{matrix.feature}}
   platforms:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, windows-2019, windows-2022 ]
+        os: [ ubuntu-22.04, ubuntu-latest, macos-13, macos-latest ]
     steps:
-      - uses: actions/checkout@v2
-      - name: Install rust stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Build with all features
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --workspace --all-targets --all-features
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Platform ${{matrix.os}}
+        run: cargo check --workspace --all-features # we skip test targets here to be sure that the main library can be built
   toolchains:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [ nightly, beta, stable, 1.59.0 ]
+        toolchain: [ nightly, beta, stable, 1.85.0 ]
     steps:
-      - uses: actions/checkout@v2
-      - name: Install rust ${{ matrix.toolchain }}
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-      - name: All features
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --workspace --all-targets --all-features
+          toolchain: ${{matrix.toolchain}}
+      - name: Toolchain ${{matrix.toolchain}}
+        run: cargo +${{matrix.toolchain}} check --workspace --all-targets --all-features

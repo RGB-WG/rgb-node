@@ -1,0 +1,118 @@
+#compdef rgb-node
+
+autoload -U is-at-least
+
+_rgb-node() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'-d+[Data directory path]:DATA_DIR:_files -/' \
+'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
+'-n+[Network to use]:NETWORK:_default' \
+'--network=[Network to use]:NETWORK:_default' \
+'*-l+[Address(es) to listen for client RPC connections]:LISTEN:_default' \
+'*--listen=[Address(es) to listen for client RPC connections]:LISTEN:_default' \
+'*-v[Set a verbosity level]' \
+'*--verbose[Set a verbosity level]' \
+'--no-network-prefix[Do not add network prefix to the \`--data-dir\`]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_rgb-node_commands" \
+"*::: :->rgb-node" \
+&& ret=0
+    case $state in
+    (rgb-node)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:rgb-node-command-$line[1]:"
+        case $line[1] in
+            (init)
+_arguments "${_arguments_options[@]}" : \
+'-d+[Data directory path]:DATA_DIR:_files -/' \
+'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
+'-n+[Network to use]:NETWORK:_default' \
+'--network=[Network to use]:NETWORK:_default' \
+'*-v[Set a verbosity level]' \
+'*--verbose[Set a verbosity level]' \
+'--no-network-prefix[Do not add network prefix to the \`--data-dir\`]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_rgb-node__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:rgb-node-help-command-$line[1]:"
+        case $line[1] in
+            (init)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_rgb-node_commands] )) ||
+_rgb-node_commands() {
+    local commands; commands=(
+'init:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'rgb-node commands' commands "$@"
+}
+(( $+functions[_rgb-node__help_commands] )) ||
+_rgb-node__help_commands() {
+    local commands; commands=(
+'init:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'rgb-node help commands' commands "$@"
+}
+(( $+functions[_rgb-node__help__help_commands] )) ||
+_rgb-node__help__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-node help help commands' commands "$@"
+}
+(( $+functions[_rgb-node__help__init_commands] )) ||
+_rgb-node__help__init_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-node help init commands' commands "$@"
+}
+(( $+functions[_rgb-node__init_commands] )) ||
+_rgb-node__init_commands() {
+    local commands; commands=()
+    _describe -t commands 'rgb-node init commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_rgb-node" ]; then
+    _rgb-node "$@"
+else
+    compdef _rgb-node rgb-node
+fi

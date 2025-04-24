@@ -19,21 +19,12 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
+#[macro_use]
+extern crate amplify;
+#[macro_use]
+extern crate strict_encoding;
 
-use bpwallet::Network;
+pub use ::rgbrpc as rpc;
+mod client;
 
-/// Final configuration resulting from data contained in config file environment variables and
-/// command-line options.
-/// For security reasons a node key is kept separately.
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-pub struct Config {
-    /// Data location
-    pub data_dir: PathBuf,
-
-    pub network: Network,
-
-    pub rpc: Vec<SocketAddr>,
-}
+pub use client::{BpClient, Delegate};

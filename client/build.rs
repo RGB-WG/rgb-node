@@ -19,21 +19,33 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate amplify;
 
-use bpwallet::Network;
+use std::fs;
 
-/// Final configuration resulting from data contained in config file environment variables and
-/// command-line options.
-/// For security reasons a node key is kept separately.
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-pub struct Config {
-    /// Data location
-    pub data_dir: PathBuf,
+use clap::CommandFactory;
+use clap_complete::generate_to;
+use clap_complete::shells::*;
 
-    pub network: Network,
+pub mod cli {
+    include!("src/args.rs");
+}
 
-    pub rpc: Vec<SocketAddr>,
+fn main() -> Result<(), configure_me_codegen::Error> {
+    let outdir = "../shell";
+
+    fs::create_dir_all(outdir).expect("failed to create shell dir");
+    #[allow(clippy::single_element_loop)]
+    for app in [cli::Args::command()].iter_mut() {
+        let name = app.get_name().to_string();
+        generate_to(Bash, app, &name, outdir)?;
+        generate_to(PowerShell, app, &name, outdir)?;
+        generate_to(Zsh, app, &name, outdir)?;
+    }
+
+    // configure_me_codegen::build_script_auto()
+    Ok(())
 }

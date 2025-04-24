@@ -19,21 +19,19 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
+use bpwallet::cli::ExecError;
 
-use bpwallet::Network;
+use crate::Command;
+use crate::client::BpClient;
 
-/// Final configuration resulting from data contained in config file environment variables and
-/// command-line options.
-/// For security reasons a node key is kept separately.
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-pub struct Config {
-    /// Data location
-    pub data_dir: PathBuf,
-
-    pub network: Network,
-
-    pub rpc: Vec<SocketAddr>,
+impl Command {
+    pub fn exec(self, mut client: BpClient) -> Result<(), ExecError> {
+        match self {
+            Command::Ping => {
+                client.ping()?;
+            }
+        }
+        client.join().expect("Client thread panicked");
+        Ok(())
+    }
 }

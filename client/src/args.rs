@@ -19,21 +19,30 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
+use rgbrpc::RemoteAddr;
 
-use bpwallet::Network;
+/// Command-line tool for working with store daemon
+#[derive(Parser, Clone, PartialEq, Eq, Debug)]
+#[command(name = "bp-cli", bin_name = "bp-cli", author, version)]
+pub struct Args {
+    /// Set a verbosity level
+    ///
+    /// Can be used multiple times to increase verbosity
+    #[arg(short, long, global = true, action = clap::ArgAction::Count)]
+    pub verbose: u8,
 
-/// Final configuration resulting from data contained in config file environment variables and
-/// command-line options.
-/// For security reasons a node key is kept separately.
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-pub struct Config {
-    /// Data location
-    pub data_dir: PathBuf,
+    /// Remote address of the RGB node to connect to
+    #[arg(short, long, default_value = "127.0.0.1:5343")]
+    pub remote: RemoteAddr,
 
-    pub network: Network,
+    /// Command to execute
+    #[command(subcommand)]
+    pub command: Command,
+}
 
-    pub rpc: Vec<SocketAddr>,
+/// Command-line commands:
+#[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
+pub enum Command {
+    #[display("ping")]
+    Ping,
 }

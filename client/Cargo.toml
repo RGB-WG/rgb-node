@@ -1,0 +1,45 @@
+[package]
+name = "rgb-client"
+description = "RGB node command-line interface"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories = ["cryptography::cryptocurrencies", "network-programming", "command-line-utilities"]
+edition.workspace = true
+rust-version.workspace = true
+readme = "../README.md"
+build = "build.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "rgb-cli"
+required-features = ["cli"]
+
+[lib]
+name = "rgbclient"
+
+[dependencies]
+amplify.workspace = true
+strict_encoding.workspace = true
+bp-wallet = { workspace = true, optional = true, features = ["cli"] }
+rgb-rpc = { version = "0.12.0-alpha.1", path = "../rpc" }
+io-reactor.workspace = true
+netservices.workspace = true
+clap = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+shellexpand = { workspace = true, optional = true }
+serde_yaml = { workspace = true, optional = true }
+
+[build-dependencies]
+amplify.workspace = true
+clap.workspace = true
+clap_complete.workspace = true
+rgb-rpc = { version = "0.12.0-alpha.1", path = "../rpc" }
+configure_me_codegen.workspace = true
+
+[features]
+default = ["cli"]
+all = ["log", "cli"]
+cli = ["log", "dep:clap", "dep:shellexpand", "dep:bp-wallet", "dep:serde_yaml"]
+log = ["dep:log", "io-reactor/log", "netservices/log"]
