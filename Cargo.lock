@@ -1508,9 +1508,9 @@ dependencies = [
 
 [[package]]
 name = "miniscript"
-version = "9.0.0"
+version = "9.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123a10aae81d0712ecc09b780f6f0ae0b0f506a5c4c912974725760d59ba073e"
+checksum = "152791b5a02e0841b9ff1087396e1aba9f9caf81e8b96095be483734b265c094"
 dependencies = [
  "bitcoin",
 ]
