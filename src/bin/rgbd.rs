@@ -29,8 +29,10 @@ use std::process::{ExitCode, Termination, exit};
 
 use clap::Parser;
 use loglevel::LogLevel;
+use rgb::popls::bp::seals::TxoSeal;
+use rgb::{Consensus, StockpileDir};
 pub use rgbnode;
-use rgbnode::{Broker, BrokerError, Config};
+use rgbnode::{Broker, BrokerError};
 
 use crate::opts::{Command, Opts};
 
@@ -54,21 +56,28 @@ fn main() -> Status {
     LogLevel::from_verbosity_flag_count(opts.verbose).apply();
     log::debug!("Command-line arguments: {:#?}", &opts);
 
-    match opts.command {
+    let (conf, command) = opts.into_config_cmd();
+    let data_dir = &conf.data_dir;
+    match command {
         Some(Command::Init) => {
             eprint!("Initializing ... ");
-            if let Err(err) = fs::create_dir_all(&opts.general.data_dir) {
-                eprintln!(
-                    "unable to create data directory at '{}'\n{err}",
-                    opts.general.data_dir.display()
-                );
+            if let Err(err) = fs::create_dir_all(data_dir) {
+                eprintln!("unable to create data directory at '{}'\n{err}", data_dir.display());
                 exit(3);
             }
             Status(Ok(()))
         }
         None => {
-            let conf = Config::from(opts);
-            Status(Broker::start(conf).and_then(|runtime| runtime.run()))
+            let stockpile = StockpileDir::<TxoSeal>::load(
+                data_dir.clone(),
+                Consensus::Bitcoin,
+                conf.network.is_testnet(),
+            )
+            .unwrap_or_else(|err| {
+                eprintln!("Can't load stockpile from '{}' {err}", data_dir.display());
+                exit(4);
+            });
+            Status(Broker::start(conf, stockpile).and_then(|runtime| runtime.run()))
         }
     }
 }

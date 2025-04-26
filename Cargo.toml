@@ -15,10 +15,12 @@ license = "Apache-2.0"
 [workspace.dependencies]
 amplify = "4.8.0"
 strict_encoding = "2.8.1"
+ultrasonic = "0.12.0-beta.5"
 bp-std = "0.12.0-beta.5"
 bp-wallet = { version = "0.12.0-beta.5", default-features = false }
 bp-rpc = "0.12.0-alpha.1"
 bp-client = "0.12.0-alpha.1"
+rgb-std = "0.12.0-beta.5"
 
 io-reactor = "0.6.0"
 cyphernet = { version = "0.5.2", features = ["tor", "dns", "ed25519", "p2p-ed25519"] }
@@ -64,6 +66,7 @@ required-features = ["server"]
 amplify.workspace = true
 strict_encoding.workspace = true
 bp-wallet = { workspace = true, features = ["cli"] }
+rgb-std = { workspace = true, features = ["fs"] }
 rgb-rpc = { version = "0.12.0-alpha.1", path = "rpc" }
 io-reactor.workspace = true
 microservices = { workspace = true, features = ["log"] }
@@ -91,19 +94,40 @@ configure_me_codegen.workspace = true
 default = ["server"]
 
 # Server is a standalone application that runs daemons.
-# Required for all apps that can be launched from command-line shell as binaries
-# (i.e. both servers and cli)
+# Required for all apps that can be launched from a command-line shell as binaries
+# (i.e., both servers and cli)
 server = ["dep:dotenv", "dep:clap", "dep:settings", "dep:configure_me", "dep:shellexpand"]
 
 [package.metadata.configure_me]
 spec = "config_spec.toml"
 
 [patch.crates-io]
+aluvm = { git = "https://github.com/AluVM/aluvm", branch = "master" }
+zk-aluvm = { git = "https://github.com/AluVM/zk-aluvm", branch = "master" }
+ultrasonic = { git = "https://github.com/AluVM/ultrasonic", branch = "master" }
+hypersonic = { git = "https://github.com/AluVM/sonic", branch = "master" }
+sonic-api = { git = "https://github.com/AluVM/sonic", branch = "master" }
+sonic-callreq = { git = "https://github.com/AluVM/sonic", branch = "master" }
 bp-consensus = { git = "https://github.com/BP-WG/bp-core", branch = "v0.12" }
+bp-dbc = { git = "https://github.com/BP-WG/bp-core", branch = "v0.12" }
+bp-seals = { git = "https://github.com/BP-WG/bp-core", branch = "v0.12" }
+bp-core = { git = "https://github.com/BP-WG/bp-core", branch = "v0.12" }
+bp-invoice = { git = "https://github.com/BP-WG/bp-std", branch = "v0.12" }
+bp-derive = { git = "https://github.com/BP-WG/bp-std", branch = "v0.12" }
+descriptors = { git = "https://github.com/BP-WG/bp-std", branch = "v0.12" }
+psbt = { git = "https://github.com/BP-WG/bp-std", branch = "v0.12" }
+bp-std = { git = "https://github.com/BP-WG/bp-std", branch = "v0.12" }
+bp-wallet = { git = "https://github.com/BP-WG/bp-wallet", branch = "v0.12" }
+bp-electrum = { git = "https://github.com/BP-WG/bp-electrum-client", branch = "v0.12" }
+bp-esplora = { git = "https://github.com/BP-WG/bp-esplora-client", branch = "v0.12" }
+bp-rpc = { git = "https://github.com/BP-WG/bp-node", branch = "master" }
+bp-client = { git = "https://github.com/BP-WG/bp-node", branch = "master" }
+rgb-core = { git = "https://github.com/RGB-WG/rgb-core", branch = "v0.12" }
+rgb-std = { git = "https://github.com/RGB-WG/rgb-std", branch = "v0.12" }
+rgb-invoice = { git = "https://github.com/RGB-WG/rgb-std", branch = "v0.12" }
+
 io-reactor = { git = "https://github.com/rust-amplify/io-reactor", branch = "v0.6" }
 cyphergraphy = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
 cypheraddr = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
 microservices = { git = "https://github.com/cyphernet-labs/microservices.rs", branch = "master" }
 netservices = { git = "https://github.com/cyphernet-labs/netservices.rs", branch = "develop" }
-bp-rpc = { git = "https://github.com/BP-WG/bp-node", branch = "master" }
-bp-client = { git = "https://github.com/BP-WG/bp-node", branch = "master" }

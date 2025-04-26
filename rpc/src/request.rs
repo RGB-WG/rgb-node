@@ -26,6 +26,7 @@ use netservices::Frame;
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
+use ultrasonic::ContractId;
 
 use crate::RGB_RPC_LIB;
 
@@ -41,6 +42,10 @@ pub enum Request {
 
     #[strict_type(tag = 0x02)]
     Status,
+
+    #[display("STATE({0})")]
+    #[strict_type(tag = 0x04)]
+    State(ContractId),
 }
 
 impl Frame for Request {

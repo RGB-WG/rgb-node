@@ -66,14 +66,13 @@ impl Opts {
         conf_path.set_extension("toml");
         conf_path
     }
-}
 
-impl From<Opts> for Config {
-    fn from(opts: Opts) -> Self {
-        Config {
-            data_dir: opts.general.data_dir,
-            network: opts.general.network,
-            rpc: opts.listen,
-        }
+    pub fn into_config_cmd(self) -> (Config, Option<Command>) {
+        let config = Config {
+            data_dir: self.general.base_dir(),
+            network: self.general.network,
+            rpc: self.listen,
+        };
+        (config, self.command)
     }
 }

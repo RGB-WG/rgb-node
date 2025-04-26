@@ -21,11 +21,12 @@
 
 use std::io::{Read, Write};
 
-use amplify::confinement::{TinyBlob, U24 as U24MAX};
+use amplify::confinement::{MediumVec, TinyBlob, U24 as U24MAX};
 use netservices::Frame;
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
+use ultrasonic::ContractId;
 
 use crate::{Failure, RGB_RPC_LIB, Status};
 
@@ -45,6 +46,13 @@ pub enum Response {
     #[strict_type(tag = 0x02)]
     #[display("STATUS")]
     Status(Status),
+
+    #[strict_type(tag = 0x04)]
+    NotFound(ContractId),
+
+    #[strict_type(tag = 0x05)]
+    #[display("STATE({0})")]
+    State(ContractReply),
 }
 
 impl Frame for Response {
@@ -64,4 +72,14 @@ impl Frame for Response {
         self.strict_encode(writer)?;
         Ok(())
     }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Display)]
+#[display("{contract_id}, ...")]
+#[derive(StrictType, StrictDumb, StrictEncode, StrictDecode)]
+#[strict_type(lib = RGB_RPC_LIB)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ContractReply {
+    pub contract_id: ContractId,
+    pub data: MediumVec<u8>,
 }

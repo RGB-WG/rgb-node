@@ -34,7 +34,7 @@ mod command;
 
 use bpwallet::cli::{ExecError, LogLevel};
 use clap::Parser;
-use rgbrpc::Response;
+use rgbrpc::{ContractReply, Response};
 
 pub use crate::args::{Args, Command};
 use crate::client::BpClient;
@@ -57,6 +57,12 @@ fn cb(reply: Response) {
         Response::Pong(_noise) => {}
         Response::Status(status) => {
             println!("{}", serde_yaml::to_string(&status).unwrap());
+        }
+        Response::State(ContractReply { contract_id, .. }) => {
+            println!("Contract status for {contract_id}:");
+        }
+        Response::NotFound(contract_id) => {
+            println!("Contract {contract_id} is not found");
         }
     }
 }

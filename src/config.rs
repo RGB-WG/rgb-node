@@ -37,3 +37,11 @@ pub struct Config {
 
     pub rpc: Vec<SocketAddr>,
 }
+
+impl Config {
+    pub fn data_dir(&self) -> PathBuf {
+        let data_dir = self.data_dir.to_str().expect("Invalid data dir");
+        let data_dir = shellexpand::full(&data_dir).expect("Invalid data dir");
+        PathBuf::from(data_dir.to_string()).join(self.network.to_string())
+    }
+}

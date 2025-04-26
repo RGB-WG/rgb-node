@@ -21,7 +21,7 @@
 
 //! RPC connections from clients organized into a reactor thread.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::convert::Infallible;
 use std::error::Error;
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -33,10 +33,10 @@ use netservices::Direction;
 use netservices::remotes::DisconnectReason;
 use netservices::service::{ServiceCommand, ServiceController};
 use reactor::Timestamp;
-use rgbrpc::{ClientInfo, RemoteAddr, Request, Response, Session, Status};
+use rgbrpc::{ClientInfo, Failure, RemoteAddr, Request, Response, Session, Status};
 use strict_encoding::DecodeError;
 
-use crate::BrokerRpcMsg;
+use crate::{BrokerRpcMsg, ReqId};
 
 // TODO: Make this configuration parameter
 const MAX_CLIENTS: usize = 0xFFFF;
@@ -44,19 +44,26 @@ const NAME: &str = "rpc";
 
 #[derive(Clone, Debug)]
 pub enum RpcCmd {
-    Send(SocketAddr, Response),
+    Send(ReqId, Response),
 }
 
 pub struct RpcController {
     network: Network,
-    broker: Sender<BrokerRpcMsg>,
+    broker: Sender<(ReqId, BrokerRpcMsg)>,
     actions: VecDeque<ServiceCommand<SocketAddr, Response>>,
     clients: HashMap<SocketAddr, ClientInfo>,
+    requests: BTreeMap<ReqId, SocketAddr>,
 }
 
 impl RpcController {
-    pub fn new(network: Network, broker: Sender<BrokerRpcMsg>) -> Self {
-        Self { network, broker, actions: none!(), clients: none!() }
+    pub fn new(network: Network, broker: Sender<(ReqId, BrokerRpcMsg)>) -> Self {
+        Self {
+            network,
+            broker,
+            actions: none!(),
+            clients: none!(),
+            requests: none!(),
+        }
     }
 }
 
@@ -108,34 +115,38 @@ impl ServiceController<RemoteAddr, Session, TcpListener, RpcCmd> for RpcControll
         let client = self.clients.remove(&remote).unwrap_or_else(|| {
             panic!("Client at {remote} got disconnected but not found in the provider list");
         });
-        log::warn!(target: NAME, "Client at {remote} got disconnected due to {reason} ({})", client.agent.map(|a| a.to_string()).unwrap_or(none!()));
+        log::warn!(target: NAME, "Client at {remote} got disconnected due to {reason} ({})", client.agent.map(|a| a.to_string()).unwrap_or_default());
     }
 
     fn on_command(&mut self, cmd: RpcCmd) {
         match cmd {
-            RpcCmd::Send(remote, response) => self
-                .actions
-                .push_back(ServiceCommand::Send(remote, response)),
+            RpcCmd::Send(req_id, response) => {
+                let remote = self.requests.remove(&req_id).unwrap_or_else(|| {
+                    panic!("Unmatched reply to non-existing request {req_id}");
+                });
+                self.send_response(remote, response);
+            }
         }
     }
 
     fn on_frame(&mut self, remote: SocketAddr, req: Request) {
-        log::debug!(target: NAME, "Processing `{req}`");
+        log::trace!(target: NAME, "Processing `{req}`");
 
         let client = self.clients.get_mut(&remote).expect("must be known");
         client.last_seen = Timestamp::now().as_millis();
 
-        let response = match req {
+        match req {
             // TODO: Check that networks match
-            Request::Ping(noise) => Some(Response::Pong(noise)),
-            Request::Status => Some(Response::Status(Status {
-                clients: SmallVec::from_iter_checked(self.clients.values().cloned()),
-            })),
-        };
-        if let Some(response) = response {
-            log::debug!(target: NAME, "Sending `{response}` to {remote}");
-            self.actions
-                .push_back(ServiceCommand::Send(remote, response));
+            Request::Ping(noise) => self.send_response(remote, Response::Pong(noise)),
+            Request::Status => self.send_response(
+                remote,
+                Response::Status(Status {
+                    clients: SmallVec::from_iter_checked(self.clients.values().cloned()),
+                }),
+            ),
+            Request::State(contract_id) => {
+                self.request_broker(remote, BrokerRpcMsg::ContractState(contract_id));
+            }
         }
     }
 
@@ -149,4 +160,29 @@ impl Iterator for RpcController {
     type Item = ServiceCommand<SocketAddr, Response>;
 
     fn next(&mut self) -> Option<Self::Item> { self.actions.pop_front() }
+}
+
+impl RpcController {
+    pub fn send_response(&mut self, remote: SocketAddr, response: Response) {
+        log::trace!(target: NAME, "Sending `{response}` to {remote}");
+        self.actions
+            .push_back(ServiceCommand::Send(remote, response));
+    }
+
+    pub fn request_broker(&mut self, remote: SocketAddr, request: BrokerRpcMsg) {
+        let req_id = self
+            .requests
+            .last_key_value()
+            .map(|(id, _)| *id)
+            .unwrap_or_default()
+            + 1;
+        self.requests.insert(req_id, remote);
+        if let Err(err) = self.broker.send((req_id, request)) {
+            log::error!(target: NAME, "Broker thread channel is dead: {err}");
+            self.send_response(
+                remote,
+                Response::Failure(Failure::internal_error("Broker thread channel is dead")),
+            );
+        }
+    }
 }
