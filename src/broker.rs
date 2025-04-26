@@ -23,11 +23,12 @@ use std::io;
 use std::time::Duration;
 
 use amplify::IoError;
+use amplify::confinement::MediumVec;
 use crossbeam_channel::{Receiver, select};
 use microservices::UThread;
 use netservices::{NetAccept, service};
 use rgb::{ContractId, Pile, Stockpile};
-use rgbrpc::{ContractReply, Response};
+use rgbrpc::{ContractReply, Failure, Response};
 
 use crate::rpc::RpcCmd;
 use crate::services::{ContractsReader, ContractsWriter, ReaderReq, ReaderResp, ReplyMsg};
@@ -44,7 +45,7 @@ where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
     Sp::Pile: Send,
-    <Sp::Pile as Pile>::Seal: Send,
+    <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
     rpc_runtime: service::Runtime<RpcCmd>,
     rpc_rx: Receiver<(ReqId, BrokerRpcMsg)>,
@@ -59,7 +60,7 @@ where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
     Sp::Pile: Send,
-    <Sp::Pile as Pile>::Seal: Send,
+    <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
     pub fn start(conf: Config, stockpile: Sp) -> Result<Self, BrokerError> {
         const TIMEOUT: Option<Duration> = Some(Duration::from_secs(60 * 10));
@@ -140,11 +141,19 @@ where
         log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
         match (resp.req_id(), resp.into_reply()) {
             (req_id, ReplyMsg::State(contract_id, state)) => {
-                // TODO: Serialize state
-                self.send_rpc_resp(
-                    req_id,
-                    Response::State(ContractReply { contract_id, data: none!() }),
-                );
+                // TODO: Move from bincode to strict encoding, which requires implementation of
+                //       Strict(En/De)code for TypedVal, and switching ContractState from using
+                //       StrictVal to TypedVal
+                let serialized = bincode::serde::encode_to_vec(&state, bincode::config::standard())
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                let resp = match MediumVec::try_from(serialized) {
+                    Ok(data) => Response::State(ContractReply { contract_id, data }),
+                    Err(_) => {
+                        log::warn!("Contract state for {contract_id} exceeds the 16MB limit");
+                        Response::Failure(Failure::too_large(contract_id))
+                    }
+                };
+                self.send_rpc_resp(req_id, resp);
             }
             (req_id, ReplyMsg::NotFound(id)) => {
                 self.send_rpc_resp(req_id, Response::NotFound(id));
@@ -179,6 +188,6 @@ pub enum BrokerError {
     /// {0}
     Importer(IoError),
 
-    /// unable to create thread for {0}.
+    /// unable to create a thread for {0}.
     Thread(&'static str),
 }

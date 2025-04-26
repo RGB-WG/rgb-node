@@ -30,6 +30,7 @@ crossbeam-channel = "0.5.15"
 
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.34"
+bincode = { version = "2.0.1", default-features = false, features = ["std", "serde"] }
 
 clap = { version = "4.4.8", features = ["derive", "env"] }
 clap_complete = "4.5.7"
@@ -66,12 +67,14 @@ required-features = ["server"]
 amplify.workspace = true
 strict_encoding.workspace = true
 bp-wallet = { workspace = true, features = ["cli"] }
-rgb-std = { workspace = true, features = ["fs"] }
+rgb-std = { workspace = true, features = ["fs", "serde"] }
 rgb-rpc = { version = "0.12.0-alpha.1", path = "rpc" }
 io-reactor.workspace = true
 microservices = { workspace = true, features = ["log"] }
 netservices = { workspace = true, features = ["log"] }
 crossbeam-channel.workspace = true
+serde.workspace = true
+bincode.workspace = true
 log.workspace = true
 loglevel.workspace = true
 clap = { workspace = true, optional = true }
