@@ -27,8 +27,9 @@ use amplify::confinement::MediumVec;
 use crossbeam_channel::{Receiver, select};
 use microservices::UThread;
 use netservices::{NetAccept, service};
+use rgb::aluvm::alu::ExecStep::Fail;
 use rgb::{ContractId, Pile, Stockpile};
-use rgbrpc::{ContractReply, Failure, Response};
+use rgbrpc::{ContractReply, Failure, RgbRpcResp};
 
 use crate::dispatcher::Dispatch2Broker;
 use crate::services::{ContractsReader, ContractsWriter, Reader2Broker, ReaderMsg, Request2Reader};
@@ -136,7 +137,10 @@ where
                     .try_send(Request2Reader::ReadState(req_id, contract_id))
                 {
                     log::error!("Unable to send a request to the reader thread: {err}");
-                    self.send_rpc_resp(req_id, Response::NotFound(contract_id));
+                    self.send_rpc_resp(
+                        req_id,
+                        RgbRpcResp::Failure(Failure::not_found(contract_id)),
+                    );
                 }
             }
         }
@@ -153,22 +157,22 @@ where
                 let serialized = bincode::serde::encode_to_vec(&state, bincode::config::standard())
                     .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
                 let resp = match MediumVec::try_from(serialized) {
-                    Ok(data) => Response::State(ContractReply { contract_id, data }),
+                    Ok(data) => RgbRpcResp::State(ContractReply { contract_id, data }),
                     Err(_) => {
                         log::warn!("Contract state for {contract_id} exceeds the 16MB limit");
-                        Response::Failure(Failure::too_large(contract_id))
+                        RgbRpcResp::Failure(Failure::too_large(contract_id))
                     }
                 };
                 self.send_rpc_resp(req_id, resp);
             }
             (req_id, ReaderMsg::NotFound(id)) => {
-                self.send_rpc_resp(req_id, Response::NotFound(id));
+                self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));
             }
         }
         Ok(())
     }
 
-    fn send_rpc_resp(&mut self, req_id: ReqId, response: Response) {
+    fn send_rpc_resp(&mut self, req_id: ReqId, response: RgbRpcResp) {
         if let Err(err) = self
             .dispatch_runtime
             .cmd(Dispatch2Broker::Send(req_id, response))

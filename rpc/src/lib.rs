@@ -31,7 +31,7 @@ mod request;
 mod response;
 
 pub use bprpc::{AgentInfo, ClientInfo, Failure, RemoteAddr, Session, Status, Version};
-pub use request::Request;
-pub use response::{ContractReply, Response};
+pub use request::RgbRpcReq;
+pub use response::{ContractReply, RgbRpcResp};
 
 pub const RGB_RPC_LIB: &str = "RGBRPC";

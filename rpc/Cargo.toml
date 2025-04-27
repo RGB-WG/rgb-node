@@ -16,7 +16,7 @@ name = "rgbrpc"
 [dependencies]
 amplify.workspace = true
 strict_encoding.workspace = true
-ultrasonic.workspace = true
+sonic-api.workspace = true
 bp-rpc = { workspace = true, optional = true }
 netservices.workspace = true
 serde = { workspace = true, optional = true }
@@ -25,5 +25,5 @@ serde = { workspace = true, optional = true }
 default = ["serde"]
 all = ["serde"]
 serde = [
-    "dep:serde", "amplify/serde", "strict_encoding/serde", "bp-rpc/serde", "ultrasonic/serde"
+    "dep:serde", "amplify/serde", "strict_encoding/serde", "bp-rpc/serde", "sonic-api/serde"
 ]

@@ -21,12 +21,14 @@
 
 use std::io::{Read, Write};
 
-use amplify::confinement::{MediumVec, TinyBlob, U24 as U24MAX};
+use amplify::confinement::{
+    MediumOrdSet, MediumVec, SmallBlob, SmallOrdSet, TinyBlob, U24 as U24MAX,
+};
 use netservices::Frame;
+use sonicapi::{Articles, CodexId, ContractId, Schema};
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
-use ultrasonic::ContractId;
 
 use crate::{Failure, RGB_RPC_LIB, Status};
 
@@ -34,28 +36,61 @@ use crate::{Failure, RGB_RPC_LIB, Status};
 #[derive(StrictType, StrictDumb, StrictEncode, StrictDecode)]
 #[strict_type(lib = RGB_RPC_LIB, tags = custom, dumb = Self::Pong(strict_dumb!()))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Response {
-    #[strict_type(tag = 0x00)]
+pub enum RgbRpcResp {
     #[display("FAILURE({0})")]
+    #[strict_type(tag = 0x00)]
     Failure(Failure),
 
-    #[strict_type(tag = 0x01)]
     #[display("PONG")]
+    #[strict_type(tag = 0x01)]
     Pong(TinyBlob),
 
-    #[strict_type(tag = 0x02)]
     #[display("STATUS")]
+    #[strict_type(tag = 0x03)]
     Status(Status),
 
-    #[strict_type(tag = 0x04)]
-    NotFound(ContractId),
+    #[display("ISSUERS(...)")]
+    #[strict_type(tag = 0x10)]
+    Issuers(SmallOrdSet<CodexId>),
 
-    #[strict_type(tag = 0x05)]
+    #[display("CONTRACTS(...)")]
+    #[strict_type(tag = 0x12)]
+    Contracts(MediumOrdSet<ContractId>),
+
+    #[strict_type(tag = 0x20)]
+    #[display("ISSUER(...)")]
+    Issuer(Schema),
+
+    #[strict_type(tag = 0x22)]
+    #[display("ARTICLES(...)")]
+    Articles(Articles),
+
     #[display("STATE({0})")]
+    #[strict_type(tag = 0x24)]
     State(ContractReply),
+
+    #[display("CONSIGN_INIT({0})")]
+    #[strict_type(tag = 0x30)]
+    ConsignInit(u64),
+
+    #[display("CONSIGN_DATA({0}, ...)")]
+    #[strict_type(tag = 0x32)]
+    ConsignData(u64, SmallBlob),
+
+    #[display("IMPORTED({0})")]
+    #[strict_type(tag = 0x40)]
+    Imported(CodexId),
+
+    #[display("ACCEPT_START({0})")]
+    #[strict_type(tag = 0x42)]
+    AcceptStart(u64),
+
+    #[display("ACCEPT_COMPLETE({0})")]
+    #[strict_type(tag = 0x44)]
+    AcceptComplete(u64),
 }
 
-impl Frame for Response {
+impl Frame for RgbRpcResp {
     type Error = DecodeError;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {
@@ -81,5 +116,6 @@ impl Frame for Response {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ContractReply {
     pub contract_id: ContractId,
+    /// Reply data in bincode format
     pub data: MediumVec<u8>,
 }

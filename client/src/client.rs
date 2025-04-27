@@ -30,18 +30,18 @@ use netservices::client::{
     Client, ClientCommand, ClientDelegate, ConnectionDelegate, OnDisconnect,
 };
 use netservices::{Frame, ImpossibleResource, NetSession, NetTransport};
-use rgbrpc::{RemoteAddr, Request, Response, Session};
+use rgbrpc::{RemoteAddr, RgbRpcReq, RgbRpcResp, Session};
 
 pub struct Delegate {
-    cb: fn(Response),
+    cb: fn(RgbRpcResp),
 }
 
 pub struct BpClient {
-    inner: Client<Request>,
+    inner: Client<RgbRpcReq>,
 }
 
 impl BpClient {
-    pub fn new(remote: RemoteAddr, cb: fn(Response)) -> io::Result<Self> {
+    pub fn new(remote: RemoteAddr, cb: fn(RgbRpcResp)) -> io::Result<Self> {
         let delegate = Delegate { cb };
         let inner = Client::new(delegate, remote)?;
         Ok(Self { inner })
@@ -49,14 +49,14 @@ impl BpClient {
 
     pub fn ping(&mut self) -> io::Result<()> {
         let noise = TinyBlob::default(); // TODO: produce random noise
-        self.inner.send(Request::Ping(noise))
+        self.inner.send(RgbRpcReq::Ping(noise))
     }
 
     pub fn join(self) -> Result<(), Box<dyn Any + Send>> { self.inner.join() }
 }
 
 impl ConnectionDelegate<RemoteAddr, Session> for Delegate {
-    type Request = Request;
+    type Request = RgbRpcReq;
 
     fn connect(&mut self, remote: &RemoteAddr) -> Session {
         TcpStream::connect(remote).unwrap_or_else(|err| {
@@ -84,7 +84,7 @@ impl ConnectionDelegate<RemoteAddr, Session> for Delegate {
 }
 
 impl ClientDelegate<RemoteAddr, Session> for Delegate {
-    type Reply = Response;
+    type Reply = RgbRpcResp;
 
     fn on_reply(&mut self, reply: Self::Reply) {
         #[cfg(feature = "log")]
@@ -100,7 +100,7 @@ impl ClientDelegate<RemoteAddr, Session> for Delegate {
 }
 
 impl Iterator for Delegate {
-    type Item = ClientCommand<Request>;
+    type Item = ClientCommand<RgbRpcReq>;
 
     fn next(&mut self) -> Option<Self::Item> { None }
 }

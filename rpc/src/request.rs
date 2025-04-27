@@ -21,34 +21,64 @@
 
 use std::io::{Read, Write};
 
-use amplify::confinement::{TinyBlob, U24 as U24MAX};
+use amplify::confinement::{SmallBlob, TinyBlob, U24 as U24MAX};
 use netservices::Frame;
+use sonicapi::{CodexId, ContractId, Schema};
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
-use ultrasonic::ContractId;
 
 use crate::RGB_RPC_LIB;
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Display)]
+#[derive(Clone, Eq, PartialEq, Debug, Display)]
 #[display(UPPERCASE)]
 #[derive(StrictType, StrictDumb, StrictEncode, StrictDecode)]
 #[strict_type(lib = RGB_RPC_LIB, tags = custom, dumb = Self::Ping(strict_dumb!()))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Request {
+pub enum RgbRpcReq {
     #[display("PING")]
-    #[strict_type(tag = 0x00)]
+    #[strict_type(tag = 0x01)]
     Ping(TinyBlob),
 
-    #[strict_type(tag = 0x02)]
+    #[strict_type(tag = 0x03)]
     Status,
 
+    #[strict_type(tag = 0x10)]
+    Issuers,
+
+    #[strict_type(tag = 0x12)]
+    Contracts,
+
+    #[display("ISSUER({0})")]
+    #[strict_type(tag = 0x20)]
+    Issuer(CodexId),
+
+    #[display("ARTICLES({0})")]
+    #[strict_type(tag = 0x22)]
+    Articles(ContractId),
+
     #[display("STATE({0})")]
-    #[strict_type(tag = 0x04)]
+    #[strict_type(tag = 0x24)]
     State(ContractId),
+
+    #[display("CONSIGN({0}, ...)")]
+    #[strict_type(tag = 0x30)]
+    Consign(u64, ContractId),
+
+    #[display("IMPORT(...)")]
+    #[strict_type(tag = 0x40)]
+    Import(Schema),
+
+    #[display("ACCEPT_INIT({0})")]
+    #[strict_type(tag = 0x42)]
+    AcceptInit(ContractId),
+
+    #[display("ACCEPT_DATA")]
+    #[strict_type(tag = 0x44)]
+    AcceptData(u64, SmallBlob),
 }
 
-impl Frame for Request {
+impl Frame for RgbRpcReq {
     type Error = DecodeError;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {

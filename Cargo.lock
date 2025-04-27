@@ -482,7 +482,7 @@ dependencies = [
 [[package]]
 name = "bp-rpc"
 version = "0.12.0-alpha.1"
-source = "git+https://github.com/BP-WG/bp-node?branch=master#144a65cbd66fab6b3d04395b6817747e3db39f29"
+source = "git+https://github.com/BP-WG/bp-node?branch=master#27fa84b94d1df7491d085bbf84ac97ea7ab85f46"
 dependencies = [
  "amplify",
  "bp-std",
@@ -1326,7 +1326,7 @@ dependencies = [
 [[package]]
 name = "hypersonic"
 version = "0.12.0-beta.5"
-source = "git+https://github.com/AluVM/sonic?branch=master#0cedd840862937d20234e7532f34992b76d6ab05"
+source = "git+https://github.com/AluVM/sonic?branch=master#55f4fae9408db9f5c6505a18e688d8bfba1baad3"
 dependencies = [
  "aluvm",
  "amplify",
@@ -2084,8 +2084,8 @@ dependencies = [
  "bp-rpc",
  "netservices",
  "serde",
+ "sonic-api",
  "strict_encoding",
- "ultrasonic",
 ]
 
 [[package]]
@@ -2438,7 +2438,7 @@ dependencies = [
 [[package]]
 name = "sonic-api"
 version = "0.12.0-beta.5"
-source = "git+https://github.com/AluVM/sonic?branch=master#0cedd840862937d20234e7532f34992b76d6ab05"
+source = "git+https://github.com/AluVM/sonic?branch=master#55f4fae9408db9f5c6505a18e688d8bfba1baad3"
 dependencies = [
  "aluvm",
  "amplify",
@@ -2457,7 +2457,7 @@ dependencies = [
 [[package]]
 name = "sonic-callreq"
 version = "0.12.0-beta.5"
-source = "git+https://github.com/AluVM/sonic?branch=master#0cedd840862937d20234e7532f34992b76d6ab05"
+source = "git+https://github.com/AluVM/sonic?branch=master#55f4fae9408db9f5c6505a18e688d8bfba1baad3"
 dependencies = [
  "amplify",
  "baid64",
@@ -3143,4 +3143,4 @@ dependencies = [
 [[patch.unused]]
 name = "bp-client"
 version = "0.12.0-alpha.1"
-source = "git+https://github.com/BP-WG/bp-node?branch=master#144a65cbd66fab6b3d04395b6817747e3db39f29"
+source = "git+https://github.com/BP-WG/bp-node?branch=master#27fa84b94d1df7491d085bbf84ac97ea7ab85f46"

@@ -15,7 +15,7 @@ license = "Apache-2.0"
 [workspace.dependencies]
 amplify = "4.8.0"
 strict_encoding = "2.8.1"
-ultrasonic = "0.12.0-beta.5"
+sonic-api = "0.12.0-beta.5"
 bp-std = "0.12.0-beta.5"
 bp-wallet = { version = "0.12.0-beta.5", default-features = false }
 bp-rpc = "0.12.0-alpha.1"

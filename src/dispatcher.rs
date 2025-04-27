@@ -33,7 +33,7 @@ use netservices::Direction;
 use netservices::remotes::DisconnectReason;
 use netservices::service::{ServiceCommand, ServiceController};
 use reactor::Timestamp;
-use rgbrpc::{ClientInfo, Failure, RemoteAddr, Request, Response, Session, Status};
+use rgbrpc::{ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status};
 use strict_encoding::DecodeError;
 
 use crate::{Broker2Dispatch, ReqId};
@@ -44,13 +44,13 @@ const NAME: &str = "dispatcher";
 
 #[derive(Clone, Debug)]
 pub enum Dispatch2Broker {
-    Send(ReqId, Response),
+    Send(ReqId, RgbRpcResp),
 }
 
 pub struct Displatcher {
     network: Network,
     broker: Sender<(ReqId, Broker2Dispatch)>,
-    actions: VecDeque<ServiceCommand<SocketAddr, Response>>,
+    actions: VecDeque<ServiceCommand<SocketAddr, RgbRpcResp>>,
     clients: HashMap<SocketAddr, ClientInfo>,
     requests: BTreeMap<ReqId, SocketAddr>,
 }
@@ -68,8 +68,8 @@ impl Displatcher {
 }
 
 impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Displatcher {
-    type InFrame = Request;
-    type OutFrame = Response;
+    type InFrame = RgbRpcReq;
+    type OutFrame = RgbRpcResp;
 
     fn should_accept(&mut self, _remote: &RemoteAddr, _time: Timestamp) -> bool {
         // For now, we just do not allow more than 64k connections.
@@ -129,7 +129,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Di
         }
     }
 
-    fn on_frame(&mut self, remote: SocketAddr, req: Request) {
+    fn on_frame(&mut self, remote: SocketAddr, req: RgbRpcReq) {
         log::trace!(target: NAME, "Processing `{req}`");
 
         let client = self.clients.get_mut(&remote).expect("must be known");
@@ -137,16 +137,17 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Di
 
         match req {
             // TODO: Check that networks match
-            Request::Ping(noise) => self.send_response(remote, Response::Pong(noise)),
-            Request::Status => self.send_response(
+            RgbRpcReq::Ping(noise) => self.send_response(remote, RgbRpcResp::Pong(noise)),
+            RgbRpcReq::Status => self.send_response(
                 remote,
-                Response::Status(Status {
+                RgbRpcResp::Status(Status {
                     clients: SmallVec::from_iter_checked(self.clients.values().cloned()),
                 }),
             ),
-            Request::State(contract_id) => {
+            RgbRpcReq::State(contract_id) => {
                 self.request_broker(remote, Broker2Dispatch::ContractState(contract_id));
             }
+            _ => todo!(),
         }
     }
 
@@ -157,13 +158,13 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Di
 }
 
 impl Iterator for Displatcher {
-    type Item = ServiceCommand<SocketAddr, Response>;
+    type Item = ServiceCommand<SocketAddr, RgbRpcResp>;
 
     fn next(&mut self) -> Option<Self::Item> { self.actions.pop_front() }
 }
 
 impl Displatcher {
-    pub fn send_response(&mut self, remote: SocketAddr, response: Response) {
+    pub fn send_response(&mut self, remote: SocketAddr, response: RgbRpcResp) {
         log::trace!(target: NAME, "Sending `{response}` to {remote}");
         self.actions
             .push_back(ServiceCommand::Send(remote, response));
@@ -181,7 +182,7 @@ impl Displatcher {
             log::error!(target: NAME, "Broker thread channel is dead: {err}");
             self.send_response(
                 remote,
-                Response::Failure(Failure::internal_error("Broker thread channel is dead")),
+                RgbRpcResp::Failure(Failure::internal_error("Broker thread channel is dead")),
             );
         }
     }
