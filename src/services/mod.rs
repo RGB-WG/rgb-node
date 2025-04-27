@@ -22,5 +22,5 @@
 mod contracts_reader;
 mod contracts_writer;
 
-pub use contracts_reader::{ContractsReader, ReaderReq, ReaderResp, ReplyMsg};
-pub use contracts_writer::{ContractsWriter, WriterReq};
+pub use contracts_reader::{ContractsReader, Reader2Broker, ReaderMsg, Request2Reader};
+pub use contracts_writer::{ContractsWriter, Request2Writer};

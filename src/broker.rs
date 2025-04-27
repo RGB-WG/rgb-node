@@ -30,13 +30,13 @@ use netservices::{NetAccept, service};
 use rgb::{ContractId, Pile, Stockpile};
 use rgbrpc::{ContractReply, Failure, Response};
 
-use crate::rpc::RpcCmd;
-use crate::services::{ContractsReader, ContractsWriter, ReaderReq, ReaderResp, ReplyMsg};
-use crate::{Config, ReqId, RpcController};
+use crate::dispatcher::Dispatch2Broker;
+use crate::services::{ContractsReader, ContractsWriter, Reader2Broker, ReaderMsg, Request2Reader};
+use crate::{Config, Displatcher, ReqId};
 
 #[derive(Debug, Display)]
 #[display(lowercase)]
-pub enum BrokerRpcMsg {
+pub enum Broker2Dispatch {
     ContractState(ContractId),
 }
 
@@ -47,10 +47,10 @@ where
     Sp::Pile: Send,
     <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-    rpc_runtime: service::Runtime<RpcCmd>,
-    rpc_rx: Receiver<(ReqId, BrokerRpcMsg)>,
+    dispatch_runtime: service::Runtime<Dispatch2Broker>,
+    dispatch_rx: Receiver<(ReqId, Broker2Dispatch)>,
 
-    reader_rx: Receiver<ReaderResp<<Sp::Pile as Pile>::Seal>>,
+    reader_rx: Receiver<Reader2Broker<<Sp::Pile as Pile>::Seal>>,
     reader_thread: UThread<ContractsReader<<Sp::Pile as Pile>::Seal>>,
     writer_thread: UThread<ContractsWriter<Sp>>,
 }
@@ -67,7 +67,7 @@ where
 
         log::info!("Starting contracts reader thread...");
         let (reader_tx, reader_rx) =
-            crossbeam_channel::unbounded::<ReaderResp<<Sp::Pile as Pile>::Seal>>();
+            crossbeam_channel::unbounded::<Reader2Broker<<Sp::Pile as Pile>::Seal>>();
         let reader = ContractsReader::new(reader_tx);
         let reader_thread = UThread::new(reader, TIMEOUT);
 
@@ -75,22 +75,28 @@ where
         let writer = ContractsWriter::new(stockpile, reader_thread.sender());
         let writer_thread = UThread::new(writer, TIMEOUT);
 
-        log::info!("Starting the RPC server thread...");
-        let (rpc_tx, rpc_rx) = crossbeam_channel::unbounded::<(ReqId, BrokerRpcMsg)>();
-        let controller = RpcController::new(conf.network, rpc_tx.clone());
+        log::info!("Starting the dispatcher thread...");
+        let (rpc_tx, rpc_rx) = crossbeam_channel::unbounded::<(ReqId, Broker2Dispatch)>();
+        let controller = Displatcher::new(conf.network, rpc_tx.clone());
         let listen = conf.rpc.iter().map(|addr| {
             NetAccept::bind(addr).unwrap_or_else(|err| panic!("unable to bind to {addr}: {err}"))
         });
         let rpc_runtime = service::Runtime::new(conf.rpc[0], controller, listen)
-            .map_err(|err| BrokerError::Rpc(err.into()))?;
+            .map_err(|err| BrokerError::Dispatcher(err.into()))?;
 
         log::info!("Launch completed successfully");
-        Ok(Self { rpc_runtime, rpc_rx, reader_rx, reader_thread, writer_thread })
+        Ok(Self {
+            dispatch_runtime: rpc_runtime,
+            dispatch_rx: rpc_rx,
+            reader_rx,
+            reader_thread,
+            writer_thread,
+        })
     }
 
     pub fn run(mut self) -> Result<(), BrokerError> {
         select! {
-            recv(self.rpc_rx) -> msg => {
+            recv(self.dispatch_rx) -> msg => {
                 match msg {
                     Ok((req_id, msg)) => { self.proc_rpc_msg(req_id, msg).expect("unable to send a message"); },
                     Err(err) => {
@@ -108,9 +114,9 @@ where
             }
         }
 
-        self.rpc_runtime
+        self.dispatch_runtime
             .join()
-            .map_err(|_| BrokerError::Thread("RPC server"))?;
+            .map_err(|_| BrokerError::Thread("Dispatcher"))?;
         self.reader_thread
             .join()
             .map_err(|_| BrokerError::Thread("Contracts reader"))?;
@@ -120,14 +126,14 @@ where
         Ok(())
     }
 
-    fn proc_rpc_msg(&mut self, req_id: ReqId, msg: BrokerRpcMsg) -> io::Result<()> {
+    fn proc_rpc_msg(&mut self, req_id: ReqId, msg: Broker2Dispatch) -> io::Result<()> {
         log::debug!("Received an RPC message: {msg}");
         match msg {
-            BrokerRpcMsg::ContractState(contract_id) => {
+            Broker2Dispatch::ContractState(contract_id) => {
                 if let Err(err) = self
                     .reader_thread
                     .sender()
-                    .try_send(ReaderReq::ReadState(req_id, contract_id))
+                    .try_send(Request2Reader::ReadState(req_id, contract_id))
                 {
                     log::error!("Unable to send a request to the reader thread: {err}");
                     self.send_rpc_resp(req_id, Response::NotFound(contract_id));
@@ -137,10 +143,10 @@ where
         Ok(())
     }
 
-    fn proc_reader_msg(&mut self, resp: ReaderResp<<Sp::Pile as Pile>::Seal>) -> io::Result<()> {
+    fn proc_reader_msg(&mut self, resp: Reader2Broker<<Sp::Pile as Pile>::Seal>) -> io::Result<()> {
         log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
         match (resp.req_id(), resp.into_reply()) {
-            (req_id, ReplyMsg::State(contract_id, state)) => {
+            (req_id, ReaderMsg::State(contract_id, state)) => {
                 // TODO: Move from bincode to strict encoding, which requires implementation of
                 //       Strict(En/De)code for TypedVal, and switching ContractState from using
                 //       StrictVal to TypedVal
@@ -155,7 +161,7 @@ where
                 };
                 self.send_rpc_resp(req_id, resp);
             }
-            (req_id, ReplyMsg::NotFound(id)) => {
+            (req_id, ReaderMsg::NotFound(id)) => {
                 self.send_rpc_resp(req_id, Response::NotFound(id));
             }
         }
@@ -163,9 +169,12 @@ where
     }
 
     fn send_rpc_resp(&mut self, req_id: ReqId, response: Response) {
-        if let Err(err) = self.rpc_runtime.cmd(RpcCmd::Send(req_id, response)) {
-            log::error!("Channel to the RPC thread is broken: {err}");
-            panic!("The channel to the RPC thread is broken. Unable to proceed, exiting.");
+        if let Err(err) = self
+            .dispatch_runtime
+            .cmd(Dispatch2Broker::Send(req_id, response))
+        {
+            log::error!("Channel to the dispatcher thread is broken: {err}");
+            panic!("The channel to the dispatcher thread is broken. Unable to proceed, exiting.");
         };
     }
 }
@@ -173,10 +182,10 @@ where
 #[derive(Debug, Display, Error, From)]
 #[display(doc_comments)]
 pub enum BrokerError {
-    /// unable to initialize RPC service.
+    /// unable to initialize dispatcher.
     ///
     /// {0}
-    Rpc(IoError),
+    Dispatcher(IoError),
 
     /// unable to initialize importing service.
     ///

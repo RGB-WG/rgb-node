@@ -25,16 +25,16 @@ use std::ops::ControlFlow;
 use microservices::{USender, UService};
 use rgb::{Contracts, Pile, Stockpile};
 
-use super::ReaderReq;
+use super::Request2Reader;
 
-pub enum WriterReq {
+pub enum Request2Writer {
     Consign(),
     Accept(),
 }
 
 pub struct ContractsWriter<Sp: Stockpile> {
     contracts: Contracts<Sp>,
-    reader: USender<ReaderReq<<Sp::Pile as Pile>::Seal>>,
+    reader: USender<Request2Reader<<Sp::Pile as Pile>::Seal>>,
 }
 
 impl<Sp: Stockpile> ContractsWriter<Sp>
@@ -44,7 +44,7 @@ where
     Sp::Pile: Send,
     <Sp::Pile as Pile>::Seal: Send,
 {
-    pub fn new(stockpile: Sp, reader: USender<ReaderReq<<Sp::Pile as Pile>::Seal>>) -> Self {
+    pub fn new(stockpile: Sp, reader: USender<Request2Reader<<Sp::Pile as Pile>::Seal>>) -> Self {
         log::info!(target: Self::NAME, "Loading contracts from persistence");
         let me = Self { contracts: Contracts::load(stockpile), reader };
 
@@ -53,7 +53,7 @@ where
             let state = me.contracts.contract_state(id);
             log::debug!(target: Self::NAME, "Sending contract state for {id}");
             me.reader
-                .send(ReaderReq::UpdateState(id, state))
+                .send(Request2Reader::UpdateState(id, state))
                 .unwrap_or_else(|err| panic!("Failed to send state for contract {id}: {err}"));
         }
         me
@@ -67,14 +67,14 @@ where
     Sp::Pile: Send,
     <Sp::Pile as Pile>::Seal: Send,
 {
-    type Msg = WriterReq;
+    type Msg = Request2Writer;
     type Error = Infallible;
     const NAME: &'static str = "contracts-writer";
 
     fn process(&mut self, msg: Self::Msg) -> Result<ControlFlow<u8>, Self::Error> {
         match msg {
-            WriterReq::Consign() => {}
-            WriterReq::Accept() => {}
+            Request2Writer::Consign() => {}
+            Request2Writer::Accept() => {}
         }
         Ok(ControlFlow::Continue(()))
     }

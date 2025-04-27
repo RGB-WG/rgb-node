@@ -29,19 +29,19 @@ use rgb::{ContractId, ContractState, RgbSeal};
 
 use crate::ReqId;
 
-pub enum ReaderReq<Seal> {
+pub enum Request2Reader<Seal> {
     ReadState(ReqId, ContractId),
     UpdateState(ContractId, ContractState<Seal>),
 }
 
-pub struct ReaderResp<Seal: RgbSeal>(ReqId, ReplyMsg<Seal>);
+pub struct Reader2Broker<Seal: RgbSeal>(ReqId, ReaderMsg<Seal>);
 
-impl<Seal: RgbSeal> ReaderResp<Seal> {
+impl<Seal: RgbSeal> Reader2Broker<Seal> {
     pub fn req_id(&self) -> ReqId { self.0 }
-    pub fn into_reply(self) -> ReplyMsg<Seal> { self.1 }
+    pub fn into_reply(self) -> ReaderMsg<Seal> { self.1 }
 }
 
-pub enum ReplyMsg<Seal: RgbSeal> {
+pub enum ReaderMsg<Seal: RgbSeal> {
     State(ContractId, ContractState<Seal>),
     NotFound(ContractId),
 }
@@ -49,39 +49,39 @@ pub enum ReplyMsg<Seal: RgbSeal> {
 #[derive(Debug)]
 pub struct ContractsReader<Seal: RgbSeal> {
     state: HashMap<ContractId, ContractState<Seal>>,
-    broker: Sender<ReaderResp<Seal>>,
+    broker: Sender<Reader2Broker<Seal>>,
 }
 
 impl<Seal: RgbSeal> ContractsReader<Seal> {
-    pub fn new(broker: Sender<ReaderResp<Seal>>) -> Self { Self { state: none!(), broker } }
+    pub fn new(broker: Sender<Reader2Broker<Seal>>) -> Self { Self { state: none!(), broker } }
 }
 
 // TODO: Make it reactor to process non-blocking replies to the Broker
 impl<Seal> UService for ContractsReader<Seal>
 where Seal: RgbSeal + Send + 'static
 {
-    type Msg = ReaderReq<Seal>;
+    type Msg = Request2Reader<Seal>;
     type Error = Infallible;
     const NAME: &'static str = "contracts-reader";
 
     fn process(&mut self, msg: Self::Msg) -> Result<ControlFlow<u8>, Self::Error> {
         match msg {
-            ReaderReq::ReadState(req_id, id) => {
+            Request2Reader::ReadState(req_id, id) => {
                 log::trace!(target: Self::NAME, "Sending state for contract {id}");
                 let state = self
                     .state
                     .get(&id)
                     .cloned()
-                    .map(|state| ReplyMsg::State(id, state))
+                    .map(|state| ReaderMsg::State(id, state))
                     .unwrap_or_else(|| {
                         log::trace!(target: Self::NAME, "State for contract {id} is not known");
-                        ReplyMsg::NotFound(id)
+                        ReaderMsg::NotFound(id)
                     });
-                if let Err(err) = self.broker.try_send(ReaderResp(req_id, state)) {
+                if let Err(err) = self.broker.try_send(Reader2Broker(req_id, state)) {
                     log::error!(target: Self::NAME, "Failed to send reply {req_id}: {err}");
                 }
             }
-            ReaderReq::UpdateState(id, state) => {
+            Request2Reader::UpdateState(id, state) => {
                 log::debug!(target: Self::NAME, "Received state update for contract {id}");
                 self.state.insert(id, state);
             }

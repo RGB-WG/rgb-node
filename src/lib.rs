@@ -24,12 +24,12 @@ extern crate amplify;
 
 mod config;
 mod broker;
-mod rpc;
+mod dispatcher;
 pub mod services;
 pub mod workers;
 
-pub use broker::{Broker, BrokerError, BrokerRpcMsg};
+pub use broker::{Broker, Broker2Dispatch, BrokerError};
 pub use config::Config;
-pub use rpc::{RpcCmd, RpcController};
+pub use dispatcher::{Dispatch2Broker, Displatcher};
 
 pub type ReqId = u64;

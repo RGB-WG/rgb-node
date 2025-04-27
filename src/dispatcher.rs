@@ -36,27 +36,27 @@ use reactor::Timestamp;
 use rgbrpc::{ClientInfo, Failure, RemoteAddr, Request, Response, Session, Status};
 use strict_encoding::DecodeError;
 
-use crate::{BrokerRpcMsg, ReqId};
+use crate::{Broker2Dispatch, ReqId};
 
 // TODO: Make this configuration parameter
 const MAX_CLIENTS: usize = 0xFFFF;
-const NAME: &str = "rpc";
+const NAME: &str = "dispatcher";
 
 #[derive(Clone, Debug)]
-pub enum RpcCmd {
+pub enum Dispatch2Broker {
     Send(ReqId, Response),
 }
 
-pub struct RpcController {
+pub struct Displatcher {
     network: Network,
-    broker: Sender<(ReqId, BrokerRpcMsg)>,
+    broker: Sender<(ReqId, Broker2Dispatch)>,
     actions: VecDeque<ServiceCommand<SocketAddr, Response>>,
     clients: HashMap<SocketAddr, ClientInfo>,
     requests: BTreeMap<ReqId, SocketAddr>,
 }
 
-impl RpcController {
-    pub fn new(network: Network, broker: Sender<(ReqId, BrokerRpcMsg)>) -> Self {
+impl Displatcher {
+    pub fn new(network: Network, broker: Sender<(ReqId, Broker2Dispatch)>) -> Self {
         Self {
             network,
             broker,
@@ -67,7 +67,7 @@ impl RpcController {
     }
 }
 
-impl ServiceController<RemoteAddr, Session, TcpListener, RpcCmd> for RpcController {
+impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Displatcher {
     type InFrame = Request;
     type OutFrame = Response;
 
@@ -118,9 +118,9 @@ impl ServiceController<RemoteAddr, Session, TcpListener, RpcCmd> for RpcControll
         log::warn!(target: NAME, "Client at {remote} got disconnected due to {reason} ({})", client.agent.map(|a| a.to_string()).unwrap_or_default());
     }
 
-    fn on_command(&mut self, cmd: RpcCmd) {
+    fn on_command(&mut self, cmd: Dispatch2Broker) {
         match cmd {
-            RpcCmd::Send(req_id, response) => {
+            Dispatch2Broker::Send(req_id, response) => {
                 let remote = self.requests.remove(&req_id).unwrap_or_else(|| {
                     panic!("Unmatched reply to non-existing request {req_id}");
                 });
@@ -145,7 +145,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, RpcCmd> for RpcControll
                 }),
             ),
             Request::State(contract_id) => {
-                self.request_broker(remote, BrokerRpcMsg::ContractState(contract_id));
+                self.request_broker(remote, Broker2Dispatch::ContractState(contract_id));
             }
         }
     }
@@ -156,20 +156,20 @@ impl ServiceController<RemoteAddr, Session, TcpListener, RpcCmd> for RpcControll
     }
 }
 
-impl Iterator for RpcController {
+impl Iterator for Displatcher {
     type Item = ServiceCommand<SocketAddr, Response>;
 
     fn next(&mut self) -> Option<Self::Item> { self.actions.pop_front() }
 }
 
-impl RpcController {
+impl Displatcher {
     pub fn send_response(&mut self, remote: SocketAddr, response: Response) {
         log::trace!(target: NAME, "Sending `{response}` to {remote}");
         self.actions
             .push_back(ServiceCommand::Send(remote, response));
     }
 
-    pub fn request_broker(&mut self, remote: SocketAddr, request: BrokerRpcMsg) {
+    pub fn request_broker(&mut self, remote: SocketAddr, request: Broker2Dispatch) {
         let req_id = self
             .requests
             .last_key_value()
