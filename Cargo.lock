@@ -376,6 +376,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eeab4423108c5d7c744f4d234de88d18d636100093ae04caf4825134b9c3a32"
 
 [[package]]
+name = "bp-client"
+version = "0.12.0-alpha.1"
+source = "git+https://github.com/BP-WG/bp-node?branch=master#27fa84b94d1df7491d085bbf84ac97ea7ab85f46"
+dependencies = [
+ "amplify",
+ "bp-rpc",
+ "bp-wallet",
+ "clap",
+ "clap_complete",
+ "configure_me_codegen",
+ "io-reactor",
+ "log",
+ "netservices",
+ "serde_yaml",
+ "shellexpand",
+ "strict_encoding",
+]
+
+[[package]]
 name = "bp-consensus"
 version = "0.12.0-beta.5"
 source = "git+https://github.com/BP-WG/bp-core?branch=v0.12#f1fbfbc6e80360e636287d815839c040449c942c"
@@ -2056,6 +2075,7 @@ version = "0.12.0-alpha.1"
 dependencies = [
  "amplify",
  "bincode",
+ "bp-client",
  "bp-wallet",
  "clap",
  "clap_complete",
@@ -3139,8 +3159,3 @@ dependencies = [
  "strict_encoding",
  "wasm-bindgen",
 ]
-
-[[patch.unused]]
-name = "bp-client"
-version = "0.12.0-alpha.1"
-source = "git+https://github.com/BP-WG/bp-node?branch=master#27fa84b94d1df7491d085bbf84ac97ea7ab85f46"

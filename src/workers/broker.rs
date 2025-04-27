@@ -27,13 +27,12 @@ use amplify::confinement::MediumVec;
 use crossbeam_channel::{Receiver, select};
 use microservices::UThread;
 use netservices::{NetAccept, service};
-use rgb::aluvm::alu::ExecStep::Fail;
 use rgb::{ContractId, Pile, Stockpile};
 use rgbrpc::{ContractReply, Failure, RgbRpcResp};
 
 use crate::dispatcher::Dispatch2Broker;
 use crate::services::{ContractsReader, ContractsWriter, Reader2Broker, ReaderMsg, Request2Reader};
-use crate::{Config, Displatcher, ReqId};
+use crate::{Config, Dispatcher, ReqId};
 
 #[derive(Debug, Display)]
 #[display(lowercase)]
@@ -78,7 +77,7 @@ where
 
         log::info!("Starting the dispatcher thread...");
         let (rpc_tx, rpc_rx) = crossbeam_channel::unbounded::<(ReqId, Broker2Dispatch)>();
-        let controller = Displatcher::new(conf.network, rpc_tx.clone());
+        let controller = Dispatcher::new(conf.network, rpc_tx.clone());
         let listen = conf.rpc.iter().map(|addr| {
             NetAccept::bind(addr).unwrap_or_else(|err| panic!("unable to bind to {addr}: {err}"))
         });

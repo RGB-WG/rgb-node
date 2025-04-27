@@ -20,3 +20,6 @@
 // the License.
 
 mod validator;
+mod broker;
+
+pub use broker::{Broker, Broker2Dispatch, BrokerError};

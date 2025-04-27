@@ -19,16 +19,7 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-#[macro_use]
-extern crate amplify;
+pub mod dispatcher;
+//mod watcher;
 
-mod config;
-pub mod services;
-mod workers;
-mod reactors;
-
-pub use config::Config;
-pub use reactors::*;
-pub use workers::*;
-
-pub type ReqId = u64;
+pub use dispatcher::{Dispatch2Broker, Dispatcher};

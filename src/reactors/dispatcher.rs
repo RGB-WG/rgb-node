@@ -47,7 +47,7 @@ pub enum Dispatch2Broker {
     Send(ReqId, RgbRpcResp),
 }
 
-pub struct Displatcher {
+pub struct Dispatcher {
     network: Network,
     broker: Sender<(ReqId, Broker2Dispatch)>,
     actions: VecDeque<ServiceCommand<SocketAddr, RgbRpcResp>>,
@@ -55,7 +55,7 @@ pub struct Displatcher {
     requests: BTreeMap<ReqId, SocketAddr>,
 }
 
-impl Displatcher {
+impl Dispatcher {
     pub fn new(network: Network, broker: Sender<(ReqId, Broker2Dispatch)>) -> Self {
         Self {
             network,
@@ -67,13 +67,13 @@ impl Displatcher {
     }
 }
 
-impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Displatcher {
+impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Dispatcher {
     type InFrame = RgbRpcReq;
     type OutFrame = RgbRpcResp;
 
     fn should_accept(&mut self, _remote: &RemoteAddr, _time: Timestamp) -> bool {
         // For now, we just do not allow more than 64k connections.
-        // In a future, we may also filter out known clients doing spam and DDoS attacks
+        // In the future, we may also filter out known clients doing spam and DDoS attacks
         self.clients.len() < MAX_CLIENTS
     }
 
@@ -157,13 +157,13 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Di
     }
 }
 
-impl Iterator for Displatcher {
+impl Iterator for Dispatcher {
     type Item = ServiceCommand<SocketAddr, RgbRpcResp>;
 
     fn next(&mut self) -> Option<Self::Item> { self.actions.pop_front() }
 }
 
-impl Displatcher {
+impl Dispatcher {
     pub fn send_response(&mut self, remote: SocketAddr, response: RgbRpcResp) {
         log::trace!(target: NAME, "Sending `{response}` to {remote}");
         self.actions
@@ -178,7 +178,7 @@ impl Displatcher {
             .unwrap_or_default()
             + 1;
         self.requests.insert(req_id, remote);
-        if let Err(err) = self.broker.send((req_id, request)) {
+        if let Err(err) = self.broker.try_send((req_id, request)) {
             log::error!(target: NAME, "Broker thread channel is dead: {err}");
             self.send_response(
                 remote,

@@ -67,6 +67,7 @@ required-features = ["server"]
 amplify.workspace = true
 strict_encoding.workspace = true
 bp-wallet = { workspace = true, features = ["cli"] }
+bp-client.workspace = true
 rgb-std = { workspace = true, features = ["fs", "serde"] }
 rgb-rpc = { version = "0.12.0-alpha.1", path = "rpc" }
 io-reactor.workspace = true
