@@ -19,25 +19,45 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::io;
+use std::error::Error as StdError;
+use std::thread::JoinHandle;
 use std::time::Duration;
+use std::{io, thread};
 
 use amplify::IoError;
 use amplify::confinement::MediumVec;
-use crossbeam_channel::{Receiver, select};
+use crossbeam_channel::{Receiver, Sender, select};
 use microservices::UThread;
 use netservices::{NetAccept, service};
 use rgb::{ContractId, Pile, Stockpile};
 use rgbrpc::{ContractReply, Failure, RgbRpcResp};
 
-use crate::dispatcher::Dispatch2Broker;
+use crate::dispatcher::Broker2Dispatch;
 use crate::services::{ContractsReader, ContractsWriter, Reader2Broker, ReaderMsg, Request2Reader};
 use crate::{Config, Dispatcher, ReqId};
 
 #[derive(Debug, Display)]
 #[display(lowercase)]
-pub enum Broker2Dispatch {
+pub enum Dispatch2Broker {
     ContractState(ContractId),
+}
+
+#[derive(Clone)]
+pub struct EmbeddedRgb {
+    sender: Sender<(ReqId, Dispatch2Broker)>,
+    receiver: Receiver<Broker2Dispatch>,
+}
+
+impl EmbeddedRgb {
+    pub fn cmd() {}
+}
+
+enum NodeRpc {
+    Standalone(service::Runtime<Broker2Dispatch>),
+    Embedded {
+        dispatcher: EmbeddedRgb,
+        sender: Sender<Broker2Dispatch>,
+    },
 }
 
 pub struct Broker<Sp: Stockpile>
@@ -47,8 +67,8 @@ where
     Sp::Pile: Send,
     <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-    dispatch_runtime: service::Runtime<Dispatch2Broker>,
-    dispatch_rx: Receiver<(ReqId, Broker2Dispatch)>,
+    rpc_runtime: NodeRpc,
+    rpc_rx: Receiver<(ReqId, Dispatch2Broker)>,
 
     reader_rx: Receiver<Reader2Broker<<Sp::Pile as Pile>::Seal>>,
     reader_thread: UThread<ContractsReader<<Sp::Pile as Pile>::Seal>>,
@@ -62,7 +82,29 @@ where
     Sp::Pile: Send,
     <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-    pub fn start(conf: Config, stockpile: Sp) -> Result<Self, BrokerError> {
+    pub fn start_embedded(conf: Config, stockpile: Sp) -> Result<Self, BrokerError> {
+        Self::start_inner(conf, stockpile, true)
+    }
+
+    pub fn run_standalone(conf: Config, stockpile: Sp) -> Result<(), BrokerError> {
+        let me = Self::start_inner(conf, stockpile, false)?;
+        me.run_internal()
+    }
+
+    pub fn run(self) -> io::Result<JoinHandle<Result<(), BrokerError>>> {
+        thread::Builder::new()
+            .name(s!("broker"))
+            .spawn(move || self.run_internal())
+    }
+
+    pub fn get_api(&self) -> EmbeddedRgb {
+        match &self.rpc_runtime {
+            NodeRpc::Standalone(_) => unreachable!(),
+            NodeRpc::Embedded { dispatcher, sender } => dispatcher.clone(),
+        }
+    }
+
+    fn start_inner(conf: Config, stockpile: Sp, embedded: bool) -> Result<Self, BrokerError> {
         const TIMEOUT: Option<Duration> = Some(Duration::from_secs(60 * 10));
 
         log::info!("Starting contracts reader thread...");
@@ -76,27 +118,31 @@ where
         let writer_thread = UThread::new(writer, TIMEOUT);
 
         log::info!("Starting the dispatcher thread...");
-        let (rpc_tx, rpc_rx) = crossbeam_channel::unbounded::<(ReqId, Broker2Dispatch)>();
-        let controller = Dispatcher::new(conf.network, rpc_tx.clone());
-        let listen = conf.rpc.iter().map(|addr| {
-            NetAccept::bind(addr).unwrap_or_else(|err| panic!("unable to bind to {addr}: {err}"))
-        });
-        let rpc_runtime = service::Runtime::new(conf.rpc[0], controller, listen)
-            .map_err(|err| BrokerError::Dispatcher(err.into()))?;
+        let (rpc_tx, rpc_rx) = crossbeam_channel::unbounded::<(ReqId, Dispatch2Broker)>();
+        let rpc_runtime = if embedded {
+            let (embedded_tx, embedded_rx) = crossbeam_channel::unbounded::<Broker2Dispatch>();
+            NodeRpc::Embedded {
+                dispatcher: EmbeddedRgb { sender: rpc_tx, receiver: embedded_rx },
+                sender: embedded_tx,
+            }
+        } else {
+            let controller = Dispatcher::new(conf.network, rpc_tx);
+            let listen = conf.rpc.iter().map(|addr| {
+                NetAccept::bind(addr)
+                    .unwrap_or_else(|err| panic!("unable to bind to {addr}: {err}"))
+            });
+            let rpc_runtime = service::Runtime::new(conf.rpc[0], controller, listen)
+                .map_err(|err| BrokerError::Dispatcher(err.into()))?;
+            NodeRpc::Standalone(rpc_runtime)
+        };
 
         log::info!("Launch completed successfully");
-        Ok(Self {
-            dispatch_runtime: rpc_runtime,
-            dispatch_rx: rpc_rx,
-            reader_rx,
-            reader_thread,
-            writer_thread,
-        })
+        Ok(Self { rpc_runtime, rpc_rx, reader_rx, reader_thread, writer_thread })
     }
 
-    pub fn run(mut self) -> Result<(), BrokerError> {
+    fn run_internal(mut self) -> Result<(), BrokerError> {
         select! {
-            recv(self.dispatch_rx) -> msg => {
+            recv(self.rpc_rx) -> msg => {
                 match msg {
                     Ok((req_id, msg)) => { self.proc_rpc_msg(req_id, msg).expect("unable to send a message"); },
                     Err(err) => {
@@ -114,9 +160,11 @@ where
             }
         }
 
-        self.dispatch_runtime
-            .join()
-            .map_err(|_| BrokerError::Thread("Dispatcher"))?;
+        if let NodeRpc::Standalone(mut rpc_runtime) = self.rpc_runtime {
+            rpc_runtime
+                .join()
+                .map_err(|_| BrokerError::Thread("Dispatcher"))?;
+        }
         self.reader_thread
             .join()
             .map_err(|_| BrokerError::Thread("Contracts reader"))?;
@@ -126,10 +174,10 @@ where
         Ok(())
     }
 
-    fn proc_rpc_msg(&mut self, req_id: ReqId, msg: Broker2Dispatch) -> io::Result<()> {
+    fn proc_rpc_msg(&mut self, req_id: ReqId, msg: Dispatch2Broker) -> io::Result<()> {
         log::debug!("Received an RPC message: {msg}");
         match msg {
-            Broker2Dispatch::ContractState(contract_id) => {
+            Dispatch2Broker::ContractState(contract_id) => {
                 if let Err(err) = self
                     .reader_thread
                     .sender()
@@ -172,10 +220,14 @@ where
     }
 
     fn send_rpc_resp(&mut self, req_id: ReqId, response: RgbRpcResp) {
-        if let Err(err) = self
-            .dispatch_runtime
-            .cmd(Dispatch2Broker::Send(req_id, response))
-        {
+        if let Err(err) = match &mut self.rpc_runtime {
+            NodeRpc::Standalone(runtime) => runtime
+                .cmd(Broker2Dispatch::Send(req_id, response))
+                .map_err(|e| Box::new(e) as Box<dyn StdError>),
+            NodeRpc::Embedded { dispatcher: _, sender } => sender
+                .try_send(Broker2Dispatch::Send(req_id, response))
+                .map_err(|e| Box::new(e) as Box<dyn StdError>),
+        } {
             log::error!("Channel to the dispatcher thread is broken: {err}");
             panic!("The channel to the dispatcher thread is broken. Unable to proceed, exiting.");
         };

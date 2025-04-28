@@ -36,27 +36,27 @@ use reactor::Timestamp;
 use rgbrpc::{ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status};
 use strict_encoding::DecodeError;
 
-use crate::{Broker2Dispatch, ReqId};
+use crate::{Dispatch2Broker, ReqId};
 
 // TODO: Make this configuration parameter
 const MAX_CLIENTS: usize = 0xFFFF;
 const NAME: &str = "dispatcher";
 
 #[derive(Clone, Debug)]
-pub enum Dispatch2Broker {
+pub enum Broker2Dispatch {
     Send(ReqId, RgbRpcResp),
 }
 
 pub struct Dispatcher {
     network: Network,
-    broker: Sender<(ReqId, Broker2Dispatch)>,
+    broker: Sender<(ReqId, Dispatch2Broker)>,
     actions: VecDeque<ServiceCommand<SocketAddr, RgbRpcResp>>,
     clients: HashMap<SocketAddr, ClientInfo>,
     requests: BTreeMap<ReqId, SocketAddr>,
 }
 
 impl Dispatcher {
-    pub fn new(network: Network, broker: Sender<(ReqId, Broker2Dispatch)>) -> Self {
+    pub fn new(network: Network, broker: Sender<(ReqId, Dispatch2Broker)>) -> Self {
         Self {
             network,
             broker,
@@ -67,7 +67,7 @@ impl Dispatcher {
     }
 }
 
-impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Dispatcher {
+impl ServiceController<RemoteAddr, Session, TcpListener, Broker2Dispatch> for Dispatcher {
     type InFrame = RgbRpcReq;
     type OutFrame = RgbRpcResp;
 
@@ -118,9 +118,9 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Di
         log::warn!(target: NAME, "Client at {remote} got disconnected due to {reason} ({})", client.agent.map(|a| a.to_string()).unwrap_or_default());
     }
 
-    fn on_command(&mut self, cmd: Dispatch2Broker) {
+    fn on_command(&mut self, cmd: Broker2Dispatch) {
         match cmd {
-            Dispatch2Broker::Send(req_id, response) => {
+            Broker2Dispatch::Send(req_id, response) => {
                 let remote = self.requests.remove(&req_id).unwrap_or_else(|| {
                     panic!("Unmatched reply to non-existing request {req_id}");
                 });
@@ -145,7 +145,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Dispatch2Broker> for Di
                 }),
             ),
             RgbRpcReq::State(contract_id) => {
-                self.request_broker(remote, Broker2Dispatch::ContractState(contract_id));
+                self.request_broker(remote, Dispatch2Broker::ContractState(contract_id));
             }
             _ => todo!(),
         }
@@ -170,7 +170,7 @@ impl Dispatcher {
             .push_back(ServiceCommand::Send(remote, response));
     }
 
-    pub fn request_broker(&mut self, remote: SocketAddr, request: Broker2Dispatch) {
+    pub fn request_broker(&mut self, remote: SocketAddr, request: Dispatch2Broker) {
         let req_id = self
             .requests
             .last_key_value()

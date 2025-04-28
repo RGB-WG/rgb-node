@@ -77,7 +77,8 @@ fn main() -> Status {
                 eprintln!("Can't load stockpile from '{}' {err}", data_dir.display());
                 exit(4);
             });
-            Status(Broker::start(conf, stockpile).and_then(|runtime| runtime.run()))
+            let status = Broker::run_standalone(conf, stockpile);
+            Status(status)
         }
     }
 }
