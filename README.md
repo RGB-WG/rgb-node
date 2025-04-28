@@ -22,16 +22,37 @@ which serves as the node non-blocking reactor-based (see [`io-reactor`]) microse
 The node daemon has the following components:
 
 - **Broker**, integrating all services and managing their communications;
-- **RPC**: reactor-based thread managing incoming client connections, notifying them about changes
-  to the subscribed information;
+- **RPC**: reactor-based thread managing incoming client connections,
+  notifying them about changes to the subscribed information;
 - ...
 
 By default, the node exposes a binary RPC API over TCP, which can be exposed as more high-level APIs
-(HTTP REST, Websocket-based or JSON-RPC) using special adaptor services.
+(HTTP REST, Websocket-based, or JSON-RPC) using special adaptor services.
+
+## Building clients
+
+RGB Node can be run in two modes:
+as a standalone server and as a multithreaded service embedded into some other process.
+
+### Standalone server
+
+The mode is turned on using `server` feature flag and leads to production of `rgbd` executable.
+The binary can be run as a daemon, and accessed via binary RGB RPC interface.
+The use of the RPC API can be simplified through `rgb-client` crate, providing high-level API.
+
+### Embedded service
+
+The mode is turned on using `embedded` feature flag and leads to production of `rgbnode` library.
+To run RGB Node inside any app in this mode please call `Broker::start_embedded`,
+giving in the method arguments a configuration and instantiated persistence provider.
+The method returns `Broker` instance; call `Broker::client` to receive an `AsyncClient` which can
+be used to process all calls to the node.
+
+NB: Do not forget to join the `Broker` thread from the main app by calling `Broker::run` method.
 
 ## OS Support
 
-The project currently supports Linux, macOS and UNIX.
+The project currently supports Linux, macOS, and UNIX.
 Windows support is a work-in-progress, requiring downstream [`io-reactor`] framework changes.
 
 [`io-reactor`]: https://github.com/rust-amplify/io-reactor
