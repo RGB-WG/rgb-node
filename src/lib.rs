@@ -19,6 +19,11 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+#[cfg(all(feature = "embedded", feature = "server"))]
+compile_error!("Either `embedded` or `server` feature must be used");
+#[cfg(not(any(feature = "embedded", feature = "server")))]
+compile_error!("Either `embedded` or `server` feature must be used");
+
 #[macro_use]
 extern crate amplify;
 

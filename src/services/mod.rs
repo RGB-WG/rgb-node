@@ -21,6 +21,10 @@
 
 mod contracts_reader;
 mod contracts_writer;
+#[cfg(feature = "embedded")]
+mod async_client;
 
+#[cfg(feature = "embedded")]
+pub use async_client::{AsyncClient, AsyncDispatcher, AsyncNodeError};
 pub use contracts_reader::{ContractsReader, Reader2Broker, ReaderMsg, Request2Reader};
 pub use contracts_writer::{ContractsWriter, Request2Writer};

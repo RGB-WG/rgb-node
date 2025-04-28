@@ -19,26 +19,36 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+#[cfg(all(feature = "embedded", feature = "server"))]
+compile_error!("Either `embedded` or `server` feature must be used");
+#[cfg(not(any(feature = "embedded", feature = "server")))]
+compile_error!("Either `embedded` or `server` feature must be used");
+
+#[cfg(feature = "server")]
 #[macro_use]
 extern crate amplify;
+#[cfg(feature = "server")]
 #[macro_use]
 extern crate clap;
 
-use std::fs;
-
-use clap::CommandFactory;
-use clap_complete::generate_to;
-use clap_complete::shells::*;
-
 pub mod rgbd {
+    #[cfg(feature = "server")]
     include!("src/bin/opts/mod.rs");
 }
 
 pub mod rgbnode {
+    #[cfg(feature = "server")]
     include!("src/config.rs");
 }
 
+#[cfg(feature = "server")]
 fn main() -> Result<(), configure_me_codegen::Error> {
+    use std::fs;
+
+    use clap::CommandFactory;
+    use clap_complete::generate_to;
+    use clap_complete::shells::*;
+
     let outdir = "./shell";
 
     fs::create_dir_all(outdir).expect("failed to create shell dir");
@@ -53,3 +63,6 @@ fn main() -> Result<(), configure_me_codegen::Error> {
     // configure_me_codegen::build_script_auto()
     Ok(())
 }
+
+#[cfg(not(feature = "server"))]
+fn main() {}

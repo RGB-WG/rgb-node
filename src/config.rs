@@ -19,6 +19,7 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+#[cfg(not(feature = "embedded"))]
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
@@ -35,12 +36,14 @@ pub struct Config {
 
     pub network: Network,
 
+    #[cfg(not(feature = "embedded"))]
     pub rpc: Vec<SocketAddr>,
 }
 
 impl Config {
     pub fn data_dir(&self) -> PathBuf {
         let data_dir = self.data_dir.to_str().expect("Invalid data dir");
+        #[cfg(not(feature = "embedded"))]
         let data_dir = shellexpand::full(&data_dir).expect("Invalid data dir");
         PathBuf::from(data_dir.to_string()).join(self.network.to_string())
     }

@@ -36,27 +36,22 @@ use reactor::Timestamp;
 use rgbrpc::{ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status};
 use strict_encoding::DecodeError;
 
-use crate::{Dispatch2Broker, ReqId};
+use crate::ReqId;
 
 // TODO: Make this configuration parameter
 const MAX_CLIENTS: usize = 0xFFFF;
 const NAME: &str = "dispatcher";
 
-#[derive(Clone, Debug)]
-pub enum Broker2Dispatch {
-    Send(ReqId, RgbRpcResp),
-}
-
 pub struct Dispatcher {
     network: Network,
-    broker: Sender<(ReqId, Dispatch2Broker)>,
+    broker: Sender<(ReqId, RgbRpcReq)>,
     actions: VecDeque<ServiceCommand<SocketAddr, RgbRpcResp>>,
     clients: HashMap<SocketAddr, ClientInfo>,
     requests: BTreeMap<ReqId, SocketAddr>,
 }
 
 impl Dispatcher {
-    pub fn new(network: Network, broker: Sender<(ReqId, Dispatch2Broker)>) -> Self {
+    pub fn new(network: Network, broker: Sender<(ReqId, RgbRpcReq)>) -> Self {
         Self {
             network,
             broker,
@@ -67,7 +62,7 @@ impl Dispatcher {
     }
 }
 
-impl ServiceController<RemoteAddr, Session, TcpListener, Broker2Dispatch> for Dispatcher {
+impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> for Dispatcher {
     type InFrame = RgbRpcReq;
     type OutFrame = RgbRpcResp;
 
@@ -118,15 +113,11 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Broker2Dispatch> for Di
         log::warn!(target: NAME, "Client at {remote} got disconnected due to {reason} ({})", client.agent.map(|a| a.to_string()).unwrap_or_default());
     }
 
-    fn on_command(&mut self, cmd: Broker2Dispatch) {
-        match cmd {
-            Broker2Dispatch::Send(req_id, response) => {
-                let remote = self.requests.remove(&req_id).unwrap_or_else(|| {
-                    panic!("Unmatched reply to non-existing request {req_id}");
-                });
-                self.send_response(remote, response);
-            }
-        }
+    fn on_command(&mut self, (req_id, response): (ReqId, RgbRpcResp)) {
+        let remote = self.requests.remove(&req_id).unwrap_or_else(|| {
+            panic!("Unmatched reply to non-existing request {req_id}");
+        });
+        self.send_response(remote, response);
     }
 
     fn on_frame(&mut self, remote: SocketAddr, req: RgbRpcReq) {
@@ -144,10 +135,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, Broker2Dispatch> for Di
                     clients: SmallVec::from_iter_checked(self.clients.values().cloned()),
                 }),
             ),
-            RgbRpcReq::State(contract_id) => {
-                self.request_broker(remote, Dispatch2Broker::ContractState(contract_id));
-            }
-            _ => todo!(),
+            other => self.request_broker(remote, other),
         }
     }
 
@@ -170,7 +158,7 @@ impl Dispatcher {
             .push_back(ServiceCommand::Send(remote, response));
     }
 
-    pub fn request_broker(&mut self, remote: SocketAddr, request: Dispatch2Broker) {
+    pub fn request_broker(&mut self, remote: SocketAddr, request: RgbRpcReq) {
         let req_id = self
             .requests
             .last_key_value()

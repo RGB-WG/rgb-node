@@ -74,6 +74,7 @@ io-reactor.workspace = true
 microservices = { workspace = true, features = ["log"] }
 netservices = { workspace = true, features = ["log"] }
 crossbeam-channel.workspace = true
+async-channel = { version = "2.3.1", optional = true }
 serde.workspace = true
 bincode.workspace = true
 log.workspace = true
@@ -95,12 +96,14 @@ shellexpand.workspace = true
 configure_me_codegen.workspace = true
 
 [features]
-default = ["server"]
+default = []
+all = ["server"]
 
 # Server is a standalone application that runs daemons.
 # Required for all apps that can be launched from a command-line shell as binaries
 # (i.e., both servers and cli)
 server = ["dep:dotenv", "dep:clap", "dep:settings", "dep:configure_me", "dep:shellexpand"]
+embedded = ["async-channel"]
 
 [package.metadata.configure_me]
 spec = "config_spec.toml"

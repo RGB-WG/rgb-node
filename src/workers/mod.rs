@@ -22,4 +22,4 @@
 mod validator;
 mod broker;
 
-pub use broker::{Broker, BrokerError, Dispatch2Broker, EmbeddedRgb};
+pub use broker::{Broker, BrokerError};

@@ -22,4 +22,4 @@
 pub mod dispatcher;
 //mod watcher;
 
-pub use dispatcher::{Broker2Dispatch, Dispatcher};
+pub use dispatcher::Dispatcher;
