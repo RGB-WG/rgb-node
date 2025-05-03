@@ -22,14 +22,19 @@ which serves as the node non-blocking reactor-based (see [`io-reactor`]) microse
 The node daemon has the following components:
 
 - **Broker**, integrating all services and managing their communications;
-- **RPC**: reactor-based thread managing incoming client connections,
-  notifying them about changes to the subscribed information;
-- ...
+- **Dispatcher**: reactor-based thread managing incoming client RPC connections;
+- **Contracts reader**, performing read-only ultra-fast access to the contracts and their state;
+- **Contracts writer**, performing operations on contracts which require persistence;
+- **Watcher**, connecting BP Node and monitoring on-chain and mempool events;
+- **Validator**: a worker thread pool, doing consignment validation in background;
+- **AsyncDispatcher**, used in embedded mode (see below).
 
-By default, the node exposes a binary RPC API over TCP, which can be exposed as more high-level APIs
-(HTTP REST, Websocket-based, or JSON-RPC) using special adaptor services.
+All read operations can be performed in parallel;
+the write operation does not block read operations
+but requires exclusive access to the contract (meaning that all writes to the same contract are
+performed serially).
 
-## Building clients
+## Using
 
 RGB Node can be run in two modes:
 as a standalone server and as a multithreaded service embedded into some other process.
@@ -37,8 +42,11 @@ as a standalone server and as a multithreaded service embedded into some other p
 ### Standalone server
 
 The mode is turned on using `server` feature flag and leads to production of `rgbd` executable.
-The binary can be run as a daemon, and accessed via binary RGB RPC interface.
+The binary can be run as a daemon and accessed via binary RGB RPC interface.
 The use of the RPC API can be simplified through `rgb-client` crate, providing high-level API.
+
+By default, the node exposes a binary RPC API over TCP, which can be exposed as more high-level APIs
+(HTTP REST, Websocket-based, or JSON-RPC) using special adaptor services.
 
 ### Embedded service
 
