@@ -29,8 +29,9 @@ use std::process::{ExitCode, Termination, exit};
 
 use clap::Parser;
 use loglevel::LogLevel;
+use rgb::Consensus;
 use rgb::popls::bp::seals::TxoSeal;
-use rgb::{Consensus, StockpileDir};
+use rgb_persist_fs::StockpileDir;
 pub use rgbnode;
 use rgbnode::{Broker, BrokerError};
 

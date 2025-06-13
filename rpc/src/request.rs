@@ -23,7 +23,7 @@ use std::io::{Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob, U24 as U24MAX};
 use netservices::Frame;
-use sonicapi::{CodexId, ContractId, Schema};
+use sonicapi::{CodexId, ContractId};
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
@@ -65,10 +65,11 @@ pub enum RgbRpcReq {
     #[strict_type(tag = 0x30)]
     Consign(u64, ContractId),
 
+    /*
     #[display("IMPORT(...)")]
     #[strict_type(tag = 0x40)]
-    Import(Schema),
-
+    Import(Issuer),
+     */
     #[display("ACCEPT_INIT({0})")]
     #[strict_type(tag = 0x42)]
     AcceptInit(ContractId),

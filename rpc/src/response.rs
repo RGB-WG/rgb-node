@@ -25,7 +25,7 @@ use amplify::confinement::{
     MediumOrdSet, MediumVec, SmallBlob, SmallOrdSet, TinyBlob, U24 as U24MAX,
 };
 use netservices::Frame;
-use sonicapi::{Articles, CodexId, ContractId, Schema};
+use sonicapi::{CodexId, ContractId};
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
@@ -57,6 +57,7 @@ pub enum RgbRpcResp {
     #[strict_type(tag = 0x12)]
     Contracts(MediumOrdSet<ContractId>),
 
+    /*
     #[strict_type(tag = 0x20)]
     #[display("ISSUER(...)")]
     Issuer(Schema),
@@ -64,7 +65,7 @@ pub enum RgbRpcResp {
     #[strict_type(tag = 0x22)]
     #[display("ARTICLES(...)")]
     Articles(Articles),
-
+     */
     #[display("STATE({0})")]
     #[strict_type(tag = 0x24)]
     State(ContractReply),
