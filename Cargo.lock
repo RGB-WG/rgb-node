@@ -416,7 +416,7 @@ dependencies = [
 [[package]]
 name = "bp-derive"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#361b8c4b810c8f7fcf667c8ad28076656fc5346a"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
 dependencies = [
  "amplify",
  "bp-consensus",
@@ -431,7 +431,7 @@ dependencies = [
 [[package]]
 name = "bp-invoice"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#361b8c4b810c8f7fcf667c8ad28076656fc5346a"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
 dependencies = [
  "amplify",
  "bech32",
@@ -474,7 +474,7 @@ dependencies = [
 [[package]]
 name = "bp-std"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#361b8c4b810c8f7fcf667c8ad28076656fc5346a"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
 dependencies = [
  "amplify",
  "bp-consensus",
@@ -897,7 +897,7 @@ dependencies = [
 [[package]]
 name = "descriptors"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#361b8c4b810c8f7fcf667c8ad28076656fc5346a"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
 dependencies = [
  "amplify",
  "bp-derive",
@@ -1607,15 +1607,18 @@ dependencies = [
 [[package]]
 name = "psbt"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#361b8c4b810c8f7fcf667c8ad28076656fc5346a"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
 dependencies = [
  "amplify",
  "base64 0.22.1",
  "bp-consensus",
+ "bp-core",
  "bp-derive",
+ "commit_verify",
  "descriptors",
  "indexmap",
  "serde",
+ "strict_encoding",
 ]
 
 [[package]]
@@ -1791,7 +1794,7 @@ dependencies = [
 [[package]]
 name = "rgb-invoice"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-std?branch=async#dce6cf94950a1279b7569039ea71561ce9ddd2eb"
+source = "git+https://github.com/RGB-WG/rgb-std?branch=node#3154b79522922629e07e1cdb3914ef9018d033fc"
 dependencies = [
  "amplify",
  "baid64",
@@ -1828,16 +1831,18 @@ dependencies = [
  "netservices",
  "rgb-persist-fs",
  "rgb-rpc",
+ "rgb-runtime",
  "rgb-std",
  "serde",
  "shellexpand",
  "strict_encoding",
+ "strict_types",
 ]
 
 [[package]]
 name = "rgb-persist-fs"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-std?branch=async#dce6cf94950a1279b7569039ea71561ce9ddd2eb"
+source = "git+https://github.com/RGB-WG/rgb-std?branch=node#3154b79522922629e07e1cdb3914ef9018d033fc"
 dependencies = [
  "amplify",
  "aora",
@@ -1847,21 +1852,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "rgb-psbt"
+version = "0.12.0-rc.2"
+source = "git+https://github.com/RGB-WG/rgb?branch=async#eb58719ef2b5eb489d2ba9e278ce9fd38625438e"
+dependencies = [
+ "amplify",
+ "bp-core",
+ "bp-std",
+ "rgb-std",
+]
+
+[[package]]
 name = "rgb-rpc"
 version = "0.12.0-alpha.1"
 dependencies = [
  "amplify",
  "bp-rpc",
+ "bp-std",
  "netservices",
+ "rgb-std",
  "serde",
  "sonic-api",
  "strict_encoding",
+ "strict_types",
+]
+
+[[package]]
+name = "rgb-runtime"
+version = "0.12.0-rc.2"
+source = "git+https://github.com/RGB-WG/rgb?branch=async#eb58719ef2b5eb489d2ba9e278ce9fd38625438e"
+dependencies = [
+ "amplify",
+ "bp-std",
+ "chrono",
+ "commit_verify",
+ "getrandom 0.2.16",
+ "getrandom 0.3.3",
+ "indexmap",
+ "rgb-psbt",
+ "rgb-std",
+ "strict_types",
+ "wasm-bindgen",
 ]
 
 [[package]]
 name = "rgb-std"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb-std?branch=async#dce6cf94950a1279b7569039ea71561ce9ddd2eb"
+source = "git+https://github.com/RGB-WG/rgb-std?branch=node#3154b79522922629e07e1cdb3914ef9018d033fc"
 dependencies = [
  "amplify",
  "aora",

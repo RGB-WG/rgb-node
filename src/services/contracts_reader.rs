@@ -19,68 +19,87 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::convert::Infallible;
 use std::ops::ControlFlow;
 
+use bpstd::DescrId;
+use bpstd::psbt::Utxo;
 use crossbeam_channel::Sender;
 use microservices::UService;
-use rgb::{ContractId, ContractState, RgbSeal};
+use rgb::popls::bp::seals::TxoSeal;
+use rgb::{
+    CellAddr, ContractId, ContractState, ContractStateName, ImmutableState, Opid, WitnessStatus,
+};
+use rgbp::descriptor::RgbDescr;
+use rgbrpc::WalletInfo;
+use strict_types::StrictVal;
 
 use crate::ReqId;
 
-pub enum Request2Reader<Seal> {
-    ReadState(ReqId, ContractId),
-    UpdateState(ContractId, ContractState<Seal>),
+pub enum Request2Reader {
+    ReadContractState(ReqId, ContractId),
+    ReadWallet(ReqId, DescrId),
+    UpdateState(ContractId, ContractState<TxoSeal>),
 }
 
-pub struct Reader2Broker<Seal: RgbSeal>(ReqId, ReaderMsg<Seal>);
+pub struct Reader2Broker(ReqId, ReaderMsg);
 
-impl<Seal: RgbSeal> Reader2Broker<Seal> {
+impl Reader2Broker {
     pub fn req_id(&self) -> ReqId { self.0 }
-    pub fn into_reply(self) -> ReaderMsg<Seal> { self.1 }
+    pub fn into_reply(self) -> ReaderMsg { self.1 }
 }
 
-pub enum ReaderMsg<Seal: RgbSeal> {
-    State(ContractId, ContractState<Seal>),
-    NotFound(ContractId),
+pub enum ReaderMsg {
+    ContractState(ContractId, ContractState<TxoSeal>),
+    ContractNotFound(ContractId),
+
+    WalletInfo(DescrId, WalletInfo),
+    WalletNotFount(DescrId),
 }
 
-#[derive(Debug)]
-pub struct ContractsReader<Seal: RgbSeal> {
-    state: HashMap<ContractId, ContractState<Seal>>,
-    broker: Sender<Reader2Broker<Seal>>,
+pub struct ContractsReader {
+    state: HashMap<ContractId, ContractState<TxoSeal>>,
+    wallets: HashMap<DescrId, RoWallet>,
+    broker: Sender<Reader2Broker>,
 }
 
-impl<Seal: RgbSeal> ContractsReader<Seal> {
-    pub fn new(broker: Sender<Reader2Broker<Seal>>) -> Self { Self { state: none!(), broker } }
+impl ContractsReader {
+    pub fn new(broker: Sender<Reader2Broker>) -> Self {
+        Self { state: none!(), wallets: none!(), broker }
+    }
+}
+
+#[derive(Clone)]
+pub struct RoWallet {
+    pub utxos: HashSet<Utxo>,
+    pub descriptor: RgbDescr,
 }
 
 // TODO: Make it reactor to process non-blocking replies to the Broker
-impl<Seal> UService for ContractsReader<Seal>
-where Seal: RgbSeal + Send + 'static
-{
-    type Msg = Request2Reader<Seal>;
+impl UService for ContractsReader {
+    type Msg = Request2Reader;
     type Error = Infallible;
     const NAME: &'static str = "contracts-reader";
 
     fn process(&mut self, msg: Self::Msg) -> Result<ControlFlow<u8>, Self::Error> {
         match msg {
-            Request2Reader::ReadState(req_id, id) => {
+            Request2Reader::ReadContractState(req_id, id) => {
                 log::trace!(target: Self::NAME, "Sending state for contract {id}");
                 let state = self
                     .state
                     .get(&id)
                     .cloned()
-                    .map(|state| ReaderMsg::State(id, state))
+                    .map(|state| ReaderMsg::ContractState(id, state))
                     .unwrap_or_else(|| {
                         log::trace!(target: Self::NAME, "State for contract {id} is not known");
-                        ReaderMsg::NotFound(id)
+                        ReaderMsg::ContractNotFound(id)
                     });
                 if let Err(err) = self.broker.try_send(Reader2Broker(req_id, state)) {
                     log::error!(target: Self::NAME, "Failed to send reply {req_id}: {err}");
                 }
             }
+            Request2Reader::ReadWallet(req_id, id) => {}
             Request2Reader::UpdateState(id, state) => {
                 log::debug!(target: Self::NAME, "Received state update for contract {id}");
                 self.state.insert(id, state);

@@ -26,6 +26,7 @@ use std::time::Duration;
 
 use amplify::IoError;
 use amplify::confinement::MediumVec;
+use bpstd::seals::TxoSeal;
 #[cfg(feature = "embedded")]
 use crossbeam_channel::Sender;
 use crossbeam_channel::{Receiver, select};
@@ -46,8 +47,7 @@ pub struct Broker<Sp: Stockpile>
 where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
-    Sp::Pile: Send,
-    <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
+    Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
     #[cfg(feature = "embedded")]
     rpc_thread: UThread<AsyncDispatcher>,
@@ -58,8 +58,8 @@ where
     rpc_thread: service::Runtime<(ReqId, RgbRpcResp)>,
     rpc_rx: Receiver<(ReqId, RgbRpcReq)>,
 
-    reader_rx: Receiver<Reader2Broker<<Sp::Pile as Pile>::Seal>>,
-    reader_thread: UThread<ContractsReader<<Sp::Pile as Pile>::Seal>>,
+    reader_rx: Receiver<Reader2Broker>,
+    reader_thread: UThread<ContractsReader>,
     writer_thread: UThread<ContractsWriter<Sp>>,
 }
 
@@ -67,8 +67,7 @@ impl<Sp> Broker<Sp>
 where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
-    Sp::Pile: Send,
-    <Sp::Pile as Pile>::Seal: Send + serde::Serialize + for<'de> serde::Deserialize<'de>,
+    Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
     #[cfg(feature = "embedded")]
     pub fn start_embedded(conf: Config, stockpile: Sp) -> Result<Self, BrokerError> {
@@ -95,8 +94,7 @@ where
         const TIMEOUT: Option<Duration> = Some(Duration::from_secs(60 * 10));
 
         log::info!("Starting contracts reader thread...");
-        let (reader_tx, reader_rx) =
-            crossbeam_channel::unbounded::<Reader2Broker<<Sp::Pile as Pile>::Seal>>();
+        let (reader_tx, reader_rx) = crossbeam_channel::unbounded::<Reader2Broker>();
         let reader = ContractsReader::new(reader_tx);
         let reader_thread = UThread::new(reader, TIMEOUT);
 
@@ -176,7 +174,7 @@ where
                 if let Err(err) = self
                     .reader_thread
                     .sender()
-                    .try_send(Request2Reader::ReadState(req_id, contract_id))
+                    .try_send(Request2Reader::ReadContractState(req_id, contract_id))
                 {
                     log::error!("Unable to send a request to the reader thread: {err}");
                     self.send_rpc_resp(
@@ -190,10 +188,10 @@ where
         Ok(())
     }
 
-    fn proc_reader_msg(&mut self, resp: Reader2Broker<<Sp::Pile as Pile>::Seal>) -> io::Result<()> {
+    fn proc_reader_msg(&mut self, resp: Reader2Broker) -> io::Result<()> {
         log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
         match (resp.req_id(), resp.into_reply()) {
-            (req_id, ReaderMsg::State(contract_id, state)) => {
+            (req_id, ReaderMsg::ContractState(contract_id, state)) => {
                 // TODO: Move from bincode to strict encoding, which requires implementation of
                 //       Strict(En/De)code for TypedVal, and switching ContractState from using
                 //       StrictVal to TypedVal
@@ -208,7 +206,13 @@ where
                 };
                 self.send_rpc_resp(req_id, resp);
             }
-            (req_id, ReaderMsg::NotFound(id)) => {
+            (req_id, ReaderMsg::ContractNotFound(id)) => {
+                self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));
+            }
+            (req_id, ReaderMsg::WalletInfo(wallet_id, info)) => {
+                todo!()
+            }
+            (req_id, ReaderMsg::WalletNotFount(id)) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));
             }
         }

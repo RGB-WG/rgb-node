@@ -26,6 +26,8 @@ compile_error!("Either `embedded` or `server` feature must be used");
 
 #[macro_use]
 extern crate amplify;
+#[macro_use]
+extern crate serde;
 
 mod config;
 pub mod services;

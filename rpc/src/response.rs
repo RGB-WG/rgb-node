@@ -19,16 +19,20 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+use std::collections::BTreeMap;
 use std::io::{Read, Write};
 
 use amplify::confinement::{
     MediumOrdSet, MediumVec, SmallBlob, SmallOrdSet, TinyBlob, U24 as U24MAX,
 };
+use bpstd::psbt::Utxo;
 use netservices::Frame;
-use sonicapi::{CodexId, ContractId};
+use rgb::{ContractStateName, ImmutableState, WitnessStatus};
+use sonicapi::{CellAddr, CodexId, ContractId, Opid};
 use strict_encoding::{
     DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
 };
+use strict_types::StrictVal;
 
 use crate::{Failure, RGB_RPC_LIB, Status};
 
@@ -119,4 +123,15 @@ pub struct ContractReply {
     pub contract_id: ContractId,
     /// Reply data in bincode format
     pub data: MediumVec<u8>,
+}
+
+#[derive(Clone)]
+#[derive(Serialize, Deserialize)]
+pub struct WalletInfo {
+    pub descriptor: String,
+    pub signers: Vec<String>,
+    pub immutable: BTreeMap<ContractStateName, Vec<ImmutableState>>,
+    pub owned: BTreeMap<Utxo, BTreeMap<ContractStateName, BTreeMap<CellAddr, StrictVal>>>,
+    pub aggregated: BTreeMap<ContractStateName, StrictVal>,
+    pub confirmations: BTreeMap<Opid, WitnessStatus>,
 }

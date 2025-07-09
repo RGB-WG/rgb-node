@@ -22,6 +22,7 @@
 use std::convert::Infallible;
 use std::ops::ControlFlow;
 
+use bpstd::seals::TxoSeal;
 use microservices::{USender, UService};
 use rgb::{Contracts, Pile, Stockpile};
 
@@ -32,19 +33,22 @@ pub enum Request2Writer {
     Accept(),
 }
 
-pub struct ContractsWriter<Sp: Stockpile> {
+pub struct ContractsWriter<Sp>
+where
+    Sp: Stockpile,
+    Sp::Pile: Pile<Seal = TxoSeal>,
+{
     contracts: Contracts<Sp>,
-    reader: USender<Request2Reader<<Sp::Pile as Pile>::Seal>>,
+    reader: USender<Request2Reader>,
 }
 
 impl<Sp: Stockpile> ContractsWriter<Sp>
 where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
-    Sp::Pile: Send,
-    <Sp::Pile as Pile>::Seal: Send,
+    Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
-    pub fn new(stockpile: Sp, reader: USender<Request2Reader<<Sp::Pile as Pile>::Seal>>) -> Self {
+    pub fn new(stockpile: Sp, reader: USender<Request2Reader>) -> Self {
         log::info!(target: Self::NAME, "Loading contracts from persistence");
         let me = Self { contracts: Contracts::load(stockpile), reader };
 
@@ -64,8 +68,7 @@ impl<Sp: Stockpile> UService for ContractsWriter<Sp>
 where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
-    Sp::Pile: Send,
-    <Sp::Pile as Pile>::Seal: Send,
+    Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
     type Msg = Request2Writer;
     type Error = Infallible;
