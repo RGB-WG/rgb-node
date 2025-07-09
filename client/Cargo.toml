@@ -22,12 +22,12 @@ name = "rgbclient"
 [dependencies]
 amplify.workspace = true
 strict_encoding.workspace = true
-bp-wallet = { workspace = true, optional = true, features = ["cli"] }
 rgb-rpc = { version = "0.12.0-alpha.1", path = "../rpc" }
 io-reactor.workspace = true
 netservices.workspace = true
 clap = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
+loglevel = { workspace = true, optional = true }
 shellexpand = { workspace = true, optional = true }
 serde_yaml = { workspace = true, optional = true }
 
@@ -41,5 +41,5 @@ configure_me_codegen.workspace = true
 [features]
 default = ["cli"]
 all = ["log", "cli"]
-cli = ["log", "dep:clap", "dep:shellexpand", "dep:bp-wallet", "dep:serde_yaml"]
-log = ["dep:log", "io-reactor/log", "netservices/log"]
+cli = ["log", "dep:clap", "dep:shellexpand", "dep:serde_yaml"]
+log = ["dep:log", "dep:loglevel", "io-reactor/log", "netservices/log"]

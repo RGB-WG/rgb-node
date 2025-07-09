@@ -21,15 +21,15 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-node' -ScriptBlock {
 
     $completions = @(switch ($command) {
         'rgb-node' {
-            [CompletionResult]::new('-d', '-d', [CompletionResultType]::ParameterName, 'Data directory path')
-            [CompletionResult]::new('--data-dir', '--data-dir', [CompletionResultType]::ParameterName, 'Data directory path')
-            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Network to use')
-            [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Network to use')
+            [CompletionResult]::new('-d', '-d', [CompletionResultType]::ParameterName, 'Location of the data directory')
+            [CompletionResult]::new('--data-dir', '--data-dir', [CompletionResultType]::ParameterName, 'Location of the data directory')
+            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
+            [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('-l', '-l', [CompletionResultType]::ParameterName, 'Address(es) to listen for client RPC connections')
             [CompletionResult]::new('--listen', '--listen', [CompletionResultType]::ParameterName, 'Address(es) to listen for client RPC connections')
             [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'Set a verbosity level')
             [CompletionResult]::new('--verbose', '--verbose', [CompletionResultType]::ParameterName, 'Set a verbosity level')
-            [CompletionResult]::new('--no-network-prefix', '--no-network-prefix', [CompletionResultType]::ParameterName, 'Do not add network prefix to the `--data-dir`')
+            [CompletionResult]::new('--no-network-prefix', '--no-network-prefix', [CompletionResultType]::ParameterName, 'Do not add network name as a prefix to the data directory')
             [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             [CompletionResult]::new('-V', '-V ', [CompletionResultType]::ParameterName, 'Print version')
@@ -39,13 +39,13 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-node' -ScriptBlock {
             break
         }
         'rgb-node;init' {
-            [CompletionResult]::new('-d', '-d', [CompletionResultType]::ParameterName, 'Data directory path')
-            [CompletionResult]::new('--data-dir', '--data-dir', [CompletionResultType]::ParameterName, 'Data directory path')
-            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Network to use')
-            [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Network to use')
+            [CompletionResult]::new('-d', '-d', [CompletionResultType]::ParameterName, 'Location of the data directory')
+            [CompletionResult]::new('--data-dir', '--data-dir', [CompletionResultType]::ParameterName, 'Location of the data directory')
+            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
+            [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'Set a verbosity level')
             [CompletionResult]::new('--verbose', '--verbose', [CompletionResultType]::ParameterName, 'Set a verbosity level')
-            [CompletionResult]::new('--no-network-prefix', '--no-network-prefix', [CompletionResultType]::ParameterName, 'Do not add network prefix to the `--data-dir`')
+            [CompletionResult]::new('--no-network-prefix', '--no-network-prefix', [CompletionResultType]::ParameterName, 'Do not add network name as a prefix to the data directory')
             [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             break

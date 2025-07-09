@@ -27,7 +27,7 @@ use std::error::Error;
 use std::net::{SocketAddr, TcpListener, TcpStream};
 
 use amplify::confinement::SmallVec;
-use bpwallet::Network;
+use bpstd::Network;
 use crossbeam_channel::Sender;
 use netservices::Direction;
 use netservices::remotes::DisconnectReason;

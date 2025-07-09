@@ -19,10 +19,18 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use bpwallet::cli::ExecError;
+use std::io;
 
 use crate::Command;
 use crate::client::BpClient;
+
+#[derive(Debug, Display, Error, From)]
+#[non_exhaustive]
+#[display(inner)]
+pub enum ExecError {
+    #[from]
+    Io(io::Error),
+}
 
 impl Command {
     pub fn exec(self, mut client: BpClient) -> Result<(), ExecError> {

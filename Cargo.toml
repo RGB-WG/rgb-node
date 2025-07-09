@@ -16,7 +16,7 @@ license = "Apache-2.0"
 amplify = "4.9.0"
 strict_encoding = "2.9.1"
 sonic-api = "0.12.0-rc.2"
-bp-wallet = { version = "0.12.0-rc.2", default-features = false }
+bp-std = "0.12.0-rc.2"
 bp-rpc = "0.12.0-alpha.1"
 bp-client = "0.12.0-alpha.1"
 rgb-std = "0.12.0-rc.2"
@@ -66,7 +66,7 @@ required-features = ["server"]
 [dependencies]
 amplify.workspace = true
 strict_encoding.workspace = true
-bp-wallet = { workspace = true, features = ["cli"] }
+bp-std.workspace = true
 bp-client.workspace = true
 rgb-std = { workspace = true, features = ["binfile", "serde"] }
 rgb-persist-fs.workspace = true
@@ -88,7 +88,7 @@ dotenv = { workspace = true, optional = true }
 
 [build-dependencies]
 amplify.workspace = true
-bp-wallet = { workspace = true, features = ["cli"] }
+bp-std.workspace = true
 rgb-rpc = { version = "0.12.0-alpha.1", path = "rpc" }
 clap.workspace = true
 clap_complete.workspace = true
@@ -115,6 +115,18 @@ cyphergraphy = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch 
 cypheraddr = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
 microservices = { git = "https://github.com/cyphernet-labs/microservices.rs", branch = "master" }
 netservices = { git = "https://github.com/cyphernet-labs/netservices.rs", branch = "develop" }
+
+bp-consensus = { git = "https://github.com/BP-WG/bp-core" }
+bp-core = { git = "https://github.com/BP-WG/bp-core" }
+bp-invoice = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
+bp-derive = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
+descriptors = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
+psbt = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
+bp-std = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
+bp-esplora = { git = "https://github.com/BP-WG/bp-esplora-client", branch = "master" }
+bp-wallet = { git = "https://github.com/BP-WG/bp-wallet", branch = "persistence" }
+rgb-std = { git = "https://github.com/RGB-WG/rgb-std", branch = "async" }
+rgb-persist-fs = { git = "https://github.com/RGB-WG/rgb-std", branch = "async" }
 
 bp-rpc = { git = "https://github.com/BP-WG/bp-node" }
 bp-client = { git = "https://github.com/BP-WG/bp-node" }

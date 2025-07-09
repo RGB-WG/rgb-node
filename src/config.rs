@@ -23,7 +23,7 @@
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
-use bpwallet::Network;
+use bpstd::Network;
 
 /// Final configuration resulting from data contained in config file environment variables and
 /// command-line options.

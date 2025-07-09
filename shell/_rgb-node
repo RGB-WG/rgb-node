@@ -15,15 +15,15 @@ _rgb-node() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" : \
-'-d+[Data directory path]:DATA_DIR:_files -/' \
-'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
-'-n+[Network to use]:NETWORK:_default' \
-'--network=[Network to use]:NETWORK:_default' \
+'-d+[Location of the data directory]:DATA_DIR:_files -/' \
+'--data-dir=[Location of the data directory]:DATA_DIR:_files -/' \
+'-n+[Bitcoin network]:NETWORK:_default' \
+'--network=[Bitcoin network]:NETWORK:_default' \
 '*-l+[Address(es) to listen for client RPC connections]:LISTEN:_default' \
 '*--listen=[Address(es) to listen for client RPC connections]:LISTEN:_default' \
 '*-v[Set a verbosity level]' \
 '*--verbose[Set a verbosity level]' \
-'--no-network-prefix[Do not add network prefix to the \`--data-dir\`]' \
+'--no-network-prefix[Do not add network name as a prefix to the data directory]' \
 '-h[Print help (see more with '\''--help'\'')]' \
 '--help[Print help (see more with '\''--help'\'')]' \
 '-V[Print version]' \
@@ -39,13 +39,13 @@ _rgb-node() {
         case $line[1] in
             (init)
 _arguments "${_arguments_options[@]}" : \
-'-d+[Data directory path]:DATA_DIR:_files -/' \
-'--data-dir=[Data directory path]:DATA_DIR:_files -/' \
-'-n+[Network to use]:NETWORK:_default' \
-'--network=[Network to use]:NETWORK:_default' \
+'-d+[Location of the data directory]:DATA_DIR:_files -/' \
+'--data-dir=[Location of the data directory]:DATA_DIR:_files -/' \
+'-n+[Bitcoin network]:NETWORK:_default' \
+'--network=[Bitcoin network]:NETWORK:_default' \
 '*-v[Set a verbosity level]' \
 '*--verbose[Set a verbosity level]' \
-'--no-network-prefix[Do not add network prefix to the \`--data-dir\`]' \
+'--no-network-prefix[Do not add network name as a prefix to the data directory]' \
 '-h[Print help (see more with '\''--help'\'')]' \
 '--help[Print help (see more with '\''--help'\'')]' \
 && ret=0
