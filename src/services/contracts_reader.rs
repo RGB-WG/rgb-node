@@ -58,6 +58,12 @@ pub enum ReaderMsg {
     WalletNotFount(DescrId),
 }
 
+#[derive(Clone)]
+pub struct RoWallet {
+    pub utxos: HashSet<Utxo>,
+    pub descriptor: RgbDescr,
+}
+
 pub struct ContractsReader {
     state: HashMap<ContractId, ContractState<TxoSeal>>,
     wallets: HashMap<DescrId, RoWallet>,
@@ -68,12 +74,24 @@ impl ContractsReader {
     pub fn new(broker: Sender<Reader2Broker>) -> Self {
         Self { state: none!(), wallets: none!(), broker }
     }
-}
 
-#[derive(Clone)]
-pub struct RoWallet {
-    pub utxos: HashSet<Utxo>,
-    pub descriptor: RgbDescr,
+    pub fn wallet_info(&self, wallet_id: DescrId) -> Option<WalletInfo> {
+        let wallet = self.wallets.get(&wallet_id)?;
+        Some(WalletInfo {
+            descriptor: wallet.descriptor.to_string(),
+            signers: todo!(),
+            immutable: Default::default(),
+            owned: Default::default(),
+            aggregated: Default::default(),
+            confirmations: Default::default(),
+        })
+    }
+
+    pub fn send_to_broker(&self, req_id: ReqId, reply: Reader2Broker) {
+        if let Err(err) = self.broker.try_send(reply) {
+            log::error!(target: Self::NAME, "Failed to send reply {req_id}: {err}");
+        }
+    }
 }
 
 // TODO: Make it reactor to process non-blocking replies to the Broker
@@ -95,11 +113,19 @@ impl UService for ContractsReader {
                         log::trace!(target: Self::NAME, "State for contract {id} is not known");
                         ReaderMsg::ContractNotFound(id)
                     });
-                if let Err(err) = self.broker.try_send(Reader2Broker(req_id, state)) {
-                    log::error!(target: Self::NAME, "Failed to send reply {req_id}: {err}");
-                }
+                self.send_to_broker(req_id, Reader2Broker(req_id, state));
             }
-            Request2Reader::ReadWallet(req_id, id) => {}
+            Request2Reader::ReadWallet(req_id, id) => {
+                log::trace!(target: Self::NAME, "Sending state for wallet {id}");
+                let state = self
+                    .wallet_info(id)
+                    .map(|info| ReaderMsg::WalletInfo(id, info))
+                    .unwrap_or_else(|| {
+                        log::trace!(target: Self::NAME, "State for wallet {id} is not known");
+                        ReaderMsg::WalletNotFount(id)
+                    });
+                self.send_to_broker(req_id, Reader2Broker(req_id, state));
+            }
             Request2Reader::UpdateState(id, state) => {
                 log::debug!(target: Self::NAME, "Received state update for contract {id}");
                 self.state.insert(id, state);
