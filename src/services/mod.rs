@@ -19,12 +19,12 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-mod contracts_reader;
-mod contracts_writer;
+mod reader;
+mod writer;
 #[cfg(feature = "embedded")]
 mod async_client;
 
 #[cfg(feature = "embedded")]
 pub use async_client::{AsyncClient, AsyncDispatcher, AsyncNodeError};
-pub use contracts_reader::{ContractsReader, Reader2Broker, ReaderMsg, Request2Reader};
-pub use contracts_writer::{ContractsWriter, Request2Writer};
+pub use reader::{Reader2Broker, ReaderMsg, ReaderService, Request2Reader};
+pub use writer::{Request2Writer, WriterService};

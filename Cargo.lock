@@ -1908,6 +1908,7 @@ dependencies = [
  "bp-std",
  "ciborium",
  "netservices",
+ "rgb-runtime",
  "rgb-std",
  "serde",
  "sonic-api",
@@ -1928,7 +1929,9 @@ dependencies = [
  "indexmap",
  "rgb-psbt",
  "rgb-std",
+ "serde",
  "strict_types",
+ "toml 0.8.23",
  "wasm-bindgen",
 ]
 

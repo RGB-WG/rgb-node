@@ -25,7 +25,6 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use amplify::IoError;
-use amplify::confinement::MediumVec;
 use bpstd::seals::TxoSeal;
 #[cfg(feature = "embedded")]
 use crossbeam_channel::Sender;
@@ -40,7 +39,7 @@ use rgbrpc::{ContractReply, Failure, RgbRpcReq, RgbRpcResp};
 use crate::Dispatcher;
 #[cfg(feature = "embedded")]
 use crate::services::{AsyncClient, AsyncDispatcher};
-use crate::services::{ContractsReader, ContractsWriter, Reader2Broker, ReaderMsg, Request2Reader};
+use crate::services::{Reader2Broker, ReaderMsg, ReaderService, Request2Reader, WriterService};
 use crate::{Config, ReqId};
 
 pub struct Broker<Sp: Stockpile>
@@ -59,8 +58,8 @@ where
     rpc_rx: Receiver<(ReqId, RgbRpcReq)>,
 
     reader_rx: Receiver<Reader2Broker>,
-    reader_thread: UThread<ContractsReader>,
-    writer_thread: UThread<ContractsWriter<Sp>>,
+    reader_thread: UThread<ReaderService>,
+    writer_thread: UThread<WriterService<Sp>>,
 }
 
 impl<Sp> Broker<Sp>
@@ -95,11 +94,11 @@ where
 
         log::info!("Starting contracts reader thread...");
         let (reader_tx, reader_rx) = crossbeam_channel::unbounded::<Reader2Broker>();
-        let reader = ContractsReader::new(reader_tx);
+        let reader = ReaderService::new(reader_tx);
         let reader_thread = UThread::new(reader, TIMEOUT);
 
         log::info!("Starting contracts writer thread...");
-        let writer = ContractsWriter::new(stockpile, reader_thread.sender());
+        let writer = WriterService::new(stockpile, reader_thread.sender());
         let writer_thread = UThread::new(writer, TIMEOUT);
 
         log::info!("Starting the dispatcher thread...");

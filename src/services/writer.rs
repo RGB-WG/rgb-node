@@ -33,7 +33,7 @@ pub enum Request2Writer {
     Accept(),
 }
 
-pub struct ContractsWriter<Sp>
+pub struct WriterService<Sp>
 where
     Sp: Stockpile,
     Sp::Pile: Pile<Seal = TxoSeal>,
@@ -42,7 +42,7 @@ where
     reader: USender<Request2Reader>,
 }
 
-impl<Sp: Stockpile> ContractsWriter<Sp>
+impl<Sp: Stockpile> WriterService<Sp>
 where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<Sp: Stockpile> UService for ContractsWriter<Sp>
+impl<Sp: Stockpile> UService for WriterService<Sp>
 where
     Sp: Stockpile + Send + 'static,
     Sp::Stock: Send,

@@ -20,6 +20,7 @@ sonic-api = { workspace = true, features = ["serde"] }
 bp-std = { workspace = true, features = ["serde", "client-side-validation"] }
 bp-rpc = { workspace = true, features = ["serde"] }
 rgb-std = { workspace = true, features = ["serde"] }
+rgb-runtime = { workspace = true, features = ["serde"] }
 netservices.workspace = true
 serde.workspace = true
 ciborium.workspace = true

@@ -28,9 +28,7 @@ use bpstd::psbt::Utxo;
 use crossbeam_channel::Sender;
 use microservices::UService;
 use rgb::popls::bp::seals::TxoSeal;
-use rgb::{
-    CellAddr, ContractId, ContractState, ContractStateName, ImmutableState, Opid, WitnessStatus,
-};
+use rgb::{CellAddr, ContractId, ContractState, ContractStateName};
 use rgbp::descriptor::RgbDescr;
 use rgbrpc::WalletInfo;
 use strict_types::StrictVal;
@@ -64,26 +62,67 @@ pub struct RoWallet {
     pub descriptor: RgbDescr,
 }
 
-pub struct ContractsReader {
+pub struct ReaderService {
     state: HashMap<ContractId, ContractState<TxoSeal>>,
     wallets: HashMap<DescrId, RoWallet>,
     broker: Sender<Reader2Broker>,
 }
 
-impl ContractsReader {
+impl ReaderService {
     pub fn new(broker: Sender<Reader2Broker>) -> Self {
         Self { state: none!(), wallets: none!(), broker }
     }
 
     pub fn wallet_info(&self, wallet_id: DescrId) -> Option<WalletInfo> {
         let wallet = self.wallets.get(&wallet_id)?;
+
+        let mut immutable = bmap! {};
+        let mut owned: BTreeMap<Utxo, BTreeMap<ContractStateName, BTreeMap<CellAddr, StrictVal>>> =
+            wallet
+                .utxos
+                .iter()
+                .map(|utxo| (*utxo, default!()))
+                .collect();
+        let mut aggregated = bmap! {};
+        let mut confirmations = bmap! {};
+        for (contract_id, state) in &self.state {
+            for (state_name, state) in &state.immutable {
+                let contract_state_name = ContractStateName::new(*contract_id, state_name.clone());
+                let mut immutable_state = bmap! {};
+                for state in state {
+                    confirmations.insert(state.addr.opid, state.status);
+                    immutable_state.insert(state.addr, state.data.clone());
+                }
+                immutable.insert(contract_state_name, immutable_state);
+            }
+            for (state_name, state) in &state.owned {
+                let contract_state_name = ContractStateName::new(*contract_id, state_name.clone());
+                for state in state {
+                    let Some(owned_state) = owned
+                        .iter_mut()
+                        .find(|(utxo, _)| utxo.outpoint == state.assignment.seal.primary)
+                        .map(|(_, data)| data)
+                    else {
+                        continue;
+                    };
+                    confirmations.insert(state.addr.opid, state.status);
+                    owned_state
+                        .entry(contract_state_name.clone())
+                        .or_default()
+                        .insert(state.addr, state.assignment.data.clone());
+                }
+            }
+            for (state_name, state) in &state.aggregated {
+                let contract_state_name = ContractStateName::new(*contract_id, state_name.clone());
+                aggregated.insert(contract_state_name, state.clone());
+            }
+        }
         Some(WalletInfo {
-            descriptor: wallet.descriptor.to_string(),
-            signers: todo!(),
-            immutable: Default::default(),
-            owned: Default::default(),
-            aggregated: Default::default(),
-            confirmations: Default::default(),
+            descriptor: wallet.descriptor.clone(),
+            immutable,
+            owned,
+            aggregated,
+            confirmations,
         })
     }
 
@@ -95,7 +134,7 @@ impl ContractsReader {
 }
 
 // TODO: Make it reactor to process non-blocking replies to the Broker
-impl UService for ContractsReader {
+impl UService for ReaderService {
     type Msg = Request2Reader;
     type Error = Infallible;
     const NAME: &'static str = "contracts-reader";

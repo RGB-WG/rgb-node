@@ -22,14 +22,13 @@
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
 
-use amplify::confinement::{
-    MediumOrdSet, MediumVec, SmallBlob, SmallOrdSet, TinyBlob, U24 as U24MAX,
-};
+use amplify::confinement::{MediumOrdSet, SmallBlob, SmallOrdSet, TinyBlob};
 use bpstd::psbt::Utxo;
 use bpstd::seals::TxoSeal;
 use netservices::Frame;
-use rgb::{ContractState, ContractStateName, ImmutableState, WitnessStatus};
-use sonicapi::{CellAddr, CodexId, ContractId, Opid};
+use rgb::{ContractState, ContractStateName, WitnessStatus};
+use rgbp::descriptor::RgbDescr;
+use sonicapi::{CellAddr, CodexId, ContractId, Opid, StateAtom};
 use strict_types::StrictVal;
 
 use crate::{CiboriumError, Failure, Status};
@@ -103,9 +102,8 @@ pub struct ContractReply {
 #[derive(Clone)]
 #[derive(Serialize, Deserialize)]
 pub struct WalletInfo {
-    pub descriptor: String,
-    pub signers: Vec<String>,
-    pub immutable: BTreeMap<ContractStateName, Vec<ImmutableState>>,
+    pub descriptor: RgbDescr,
+    pub immutable: BTreeMap<ContractStateName, BTreeMap<CellAddr, StateAtom>>,
     pub owned: BTreeMap<Utxo, BTreeMap<ContractStateName, BTreeMap<CellAddr, StrictVal>>>,
     pub aggregated: BTreeMap<ContractStateName, StrictVal>,
     pub confirmations: BTreeMap<Opid, WitnessStatus>,
