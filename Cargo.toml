@@ -32,7 +32,6 @@ crossbeam-channel = "0.5.15"
 
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.34"
-bincode = { version = "2.0.1", default-features = false, features = ["std", "serde"] } # Remove
 ciborium = "0.2.2"
 
 clap = { version = "4.4.8", features = ["derive", "env"] }
@@ -68,10 +67,8 @@ required-features = ["server"]
 
 [dependencies]
 amplify.workspace = true
-strict_encoding.workspace = true
 strict_types.workspace = true
 bp-std = { workspace = true, features = ["serde"] }
-bp-client.workspace = true
 rgb-std = { workspace = true, features = ["binfile", "serde"] }
 rgb-persist-fs.workspace = true
 rgb-runtime.workspace = true

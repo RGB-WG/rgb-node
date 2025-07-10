@@ -336,25 +336,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eeab4423108c5d7c744f4d234de88d18d636100093ae04caf4825134b9c3a32"
 
 [[package]]
-name = "bp-client"
-version = "0.12.0-alpha.1"
-source = "git+https://github.com/BP-WG/bp-node#61920aeb8eaf6d8c1ff68d237c1593d23d429fa4"
-dependencies = [
- "amplify",
- "bp-rpc",
- "clap",
- "clap_complete",
- "configure_me_codegen",
- "io-reactor",
- "log",
- "loglevel",
- "netservices",
- "serde_yaml",
- "shellexpand",
- "strict_encoding",
-]
-
-[[package]]
 name = "bp-consensus"
 version = "0.12.0-rc.2"
 source = "git+https://github.com/BP-WG/bp-core#43a25d025691626c01794a49b2a177db4fa5bceb"
@@ -1841,7 +1822,6 @@ version = "0.12.0-alpha.1"
 dependencies = [
  "amplify",
  "async-channel",
- "bp-client",
  "bp-std",
  "clap",
  "clap_complete",
@@ -1861,7 +1841,6 @@ dependencies = [
  "rgb-std",
  "serde",
  "shellexpand",
- "strict_encoding",
  "strict_types",
 ]
 
@@ -2882,6 +2861,11 @@ dependencies = [
  "strict_encoding",
  "wasm-bindgen",
 ]
+
+[[patch.unused]]
+name = "bp-client"
+version = "0.12.0-alpha.1"
+source = "git+https://github.com/BP-WG/bp-node#61920aeb8eaf6d8c1ff68d237c1593d23d429fa4"
 
 [[patch.unused]]
 name = "bp-esplora"
