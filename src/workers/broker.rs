@@ -173,7 +173,7 @@ where
                 if let Err(err) = self
                     .reader_thread
                     .sender()
-                    .try_send(Request2Reader::ReadContractState(req_id, contract_id))
+                    .try_send(Request2Reader::ReadContract(req_id, contract_id))
                 {
                     log::error!("Unable to send a request to the reader thread: {err}");
                     self.send_rpc_resp(

@@ -36,9 +36,15 @@ use strict_types::StrictVal;
 use crate::ReqId;
 
 pub enum Request2Reader {
-    ReadContractState(ReqId, ContractId),
+    // These are requests from the broker
+    ReadContract(ReqId, ContractId),
     ReadWallet(ReqId, DescrId),
-    UpdateState(ContractId, ContractState<TxoSeal>),
+
+    // These are requests from the writer
+    UpsertWallet(DescrId, RoWallet),
+    RemoveWallet(DescrId),
+    UpsertContract(ContractId, ContractState<TxoSeal>),
+    RemoveContract(ContractId),
 }
 
 pub struct Reader2Broker(ReqId, ReaderMsg);
@@ -141,7 +147,7 @@ impl UService for ReaderService {
 
     fn process(&mut self, msg: Self::Msg) -> Result<ControlFlow<u8>, Self::Error> {
         match msg {
-            Request2Reader::ReadContractState(req_id, id) => {
+            Request2Reader::ReadContract(req_id, id) => {
                 log::trace!(target: Self::NAME, "Sending state for contract {id}");
                 let state = self
                     .state
@@ -165,9 +171,25 @@ impl UService for ReaderService {
                     });
                 self.send_to_broker(req_id, Reader2Broker(req_id, state));
             }
-            Request2Reader::UpdateState(id, state) => {
-                log::debug!(target: Self::NAME, "Received state update for contract {id}");
+            Request2Reader::UpsertContract(id, state) => {
+                log::debug!(target: Self::NAME, "Received update for contract {id}");
                 self.state.insert(id, state);
+            }
+            Request2Reader::RemoveContract(id) => {
+                log::debug!(target: Self::NAME, "Received request to remove contract {id}");
+                if self.state.remove(&id).is_none() {
+                    log::warn!(target: Self::NAME, "Contract {id} is not known");
+                }
+            }
+            Request2Reader::UpsertWallet(id, wallet) => {
+                log::debug!(target: Self::NAME, "Received update for wallet {id}");
+                self.wallets.insert(id, wallet);
+            }
+            Request2Reader::RemoveWallet(id) => {
+                log::debug!(target: Self::NAME, "Received request to remove wallet {id}");
+                if self.wallets.remove(&id).is_none() {
+                    log::warn!(target: Self::NAME, "Wallet {id} is not known");
+                }
             }
         }
         Ok(ControlFlow::Continue(()))

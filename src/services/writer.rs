@@ -57,7 +57,7 @@ where
             let state = me.contracts.contract_state(id);
             log::debug!(target: Self::NAME, "Sending contract state for {id}");
             me.reader
-                .send(Request2Reader::UpdateState(id, state))
+                .send(Request2Reader::UpsertContract(id, state))
                 .unwrap_or_else(|err| panic!("Failed to send state for contract {id}: {err}"));
         }
         me
