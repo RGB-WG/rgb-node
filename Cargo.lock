@@ -287,16 +287,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
 
 [[package]]
-name = "bincode"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36eaf5d7b090263e8150820482d5d93cd964a81e4019913c972f4edcc6edb740"
-dependencies = [
- "serde",
- "unty",
-]
-
-[[package]]
 name = "binfile"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -416,7 +406,7 @@ dependencies = [
 [[package]]
 name = "bp-derive"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#3e609f479be810d924c3ec56719a8738e3584fcb"
 dependencies = [
  "amplify",
  "bp-consensus",
@@ -431,7 +421,7 @@ dependencies = [
 [[package]]
 name = "bp-invoice"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#3e609f479be810d924c3ec56719a8738e3584fcb"
 dependencies = [
  "amplify",
  "bech32",
@@ -474,7 +464,7 @@ dependencies = [
 [[package]]
 name = "bp-std"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#3e609f479be810d924c3ec56719a8738e3584fcb"
 dependencies = [
  "amplify",
  "bp-consensus",
@@ -600,9 +590,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.40"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40b6887a1d8685cebccf115538db5c0efe625ccac9696ad45c409d96566e910f"
+checksum = "be92d32e80243a54711e5d7ce823c35c41c9d929dc4ab58e1276f625841aadf9"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -610,9 +600,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.40"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0c66c08ce9f0c698cbce5c0279d0bb6ac936d8674174fe48f736533b964f59e"
+checksum = "707eab41e9622f9139419d573eca0900137718000c517d47da73045f54331c3d"
 dependencies = [
  "anstream",
  "anstyle",
@@ -622,18 +612,18 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.5.54"
+version = "4.5.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aad5b1b4de04fead402672b48897030eec1f3bfe1550776322f59f6d6e6a5677"
+checksum = "a5abde44486daf70c5be8b8f8f1b66c49f86236edf6fa2abadb4d961c4c6229a"
 dependencies = [
  "clap",
 ]
 
 [[package]]
 name = "clap_derive"
-version = "4.5.40"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2c7947ae4cc3d851207c1adb5b5e260ff0cca11446b1d6d1423788e442257ce"
+checksum = "ef4f52386a59ca4c860f7393bcf8abd8dfd91ecccc0f774635ff68e92eeef491"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -924,7 +914,7 @@ dependencies = [
 [[package]]
 name = "descriptors"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#3e609f479be810d924c3ec56719a8738e3584fcb"
 dependencies = [
  "amplify",
  "bp-derive",
@@ -1644,7 +1634,7 @@ dependencies = [
 [[package]]
 name = "psbt"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#ccefdba0718c3f282f4dec00c4eb84a85b4e2c29"
+source = "git+https://github.com/BP-WG/bp-std?branch=feat%2Fdescriptors#3e609f479be810d924c3ec56719a8738e3584fcb"
 dependencies = [
  "amplify",
  "base64 0.22.1",
@@ -1851,7 +1841,6 @@ version = "0.12.0-alpha.1"
 dependencies = [
  "amplify",
  "async-channel",
- "bincode",
  "bp-client",
  "bp-std",
  "clap",
@@ -1891,7 +1880,7 @@ dependencies = [
 [[package]]
 name = "rgb-psbt"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb?branch=async#eb58719ef2b5eb489d2ba9e278ce9fd38625438e"
+source = "git+https://github.com/RGB-WG/rgb?branch=node#b1ff5cfcdd37bf50f0c6d823fd89e6fadfcecbb3"
 dependencies = [
  "amplify",
  "bp-core",
@@ -1918,7 +1907,7 @@ dependencies = [
 [[package]]
 name = "rgb-runtime"
 version = "0.12.0-rc.2"
-source = "git+https://github.com/RGB-WG/rgb?branch=async#eb58719ef2b5eb489d2ba9e278ce9fd38625438e"
+source = "git+https://github.com/RGB-WG/rgb?branch=node#b1ff5cfcdd37bf50f0c6d823fd89e6fadfcecbb3"
 dependencies = [
  "amplify",
  "bp-std",
@@ -2502,12 +2491,6 @@ name = "unsafe-libyaml"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
-
-[[package]]
-name = "unty"
-version = "0.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d49784317cd0d1ee7ec5c716dd598ec5b4483ea832a2dced265471cc0f690ae"
 
 [[package]]
 name = "utf8parse"

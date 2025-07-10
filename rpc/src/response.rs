@@ -99,7 +99,7 @@ pub struct ContractReply {
     pub state: ContractState<TxoSeal>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct WalletInfo {
     pub descriptor: RgbDescr,

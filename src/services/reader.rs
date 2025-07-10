@@ -35,6 +35,7 @@ use strict_types::StrictVal;
 
 use crate::ReqId;
 
+#[derive(Debug)]
 pub enum Request2Reader {
     // These are requests from the broker
     ReadContract(ReqId, ContractId),
@@ -47,6 +48,7 @@ pub enum Request2Reader {
     RemoveContract(ContractId),
 }
 
+#[derive(Debug)]
 pub struct Reader2Broker(ReqId, ReaderMsg);
 
 impl Reader2Broker {
@@ -54,6 +56,7 @@ impl Reader2Broker {
     pub fn into_reply(self) -> ReaderMsg { self.1 }
 }
 
+#[derive(Debug)]
 pub enum ReaderMsg {
     ContractState(ContractId, ContractState<TxoSeal>),
     ContractNotFound(ContractId),
@@ -62,12 +65,13 @@ pub enum ReaderMsg {
     WalletNotFount(DescrId),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RoWallet {
     pub utxos: HashSet<Utxo>,
     pub descriptor: RgbDescr,
 }
 
+#[derive(Debug)]
 pub struct ReaderService {
     state: HashMap<ContractId, ContractState<TxoSeal>>,
     wallets: HashMap<DescrId, RoWallet>,

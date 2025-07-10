@@ -82,7 +82,6 @@ netservices = { workspace = true, features = ["log"] }
 crossbeam-channel.workspace = true
 async-channel = { version = "2.3.1", optional = true }
 serde.workspace = true
-bincode.workspace = true
 log.workspace = true
 loglevel.workspace = true
 clap = { workspace = true, optional = true }
@@ -132,8 +131,8 @@ bp-esplora = { git = "https://github.com/BP-WG/bp-esplora-client", branch = "mas
 bp-wallet = { git = "https://github.com/BP-WG/bp-wallet", branch = "persistence" }
 rgb-std = { git = "https://github.com/RGB-WG/rgb-std", branch = "node" }
 rgb-persist-fs = { git = "https://github.com/RGB-WG/rgb-std", branch = "node" }
-rgb-psbt = { git = "https://github.com/RGB-WG/rgb", branch = "async" }
-rgb-runtime = { git = "https://github.com/RGB-WG/rgb", branch = "async" }
+rgb-psbt = { git = "https://github.com/RGB-WG/rgb", branch = "node" }
+rgb-runtime = { git = "https://github.com/RGB-WG/rgb", branch = "node" }
 
 bp-rpc = { git = "https://github.com/BP-WG/bp-node" }
 bp-client = { git = "https://github.com/BP-WG/bp-node" }
