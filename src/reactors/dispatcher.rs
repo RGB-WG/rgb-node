@@ -33,8 +33,9 @@ use netservices::Direction;
 use netservices::remotes::DisconnectReason;
 use netservices::service::{ServiceCommand, ServiceController};
 use reactor::Timestamp;
-use rgbrpc::{ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status};
-use strict_encoding::DecodeError;
+use rgbrpc::{
+    CiboriumError, ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status,
+};
 
 use crate::ReqId;
 
@@ -139,7 +140,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
         }
     }
 
-    fn on_frame_unparsable(&mut self, remote: SocketAddr, err: &DecodeError) {
+    fn on_frame_unparsable(&mut self, remote: SocketAddr, err: &CiboriumError) {
         log::error!(target: NAME, "Disconnecting client {remote} due to unparsable frame: {err}");
         self.actions.push_back(ServiceCommand::Disconnect(remote))
     }

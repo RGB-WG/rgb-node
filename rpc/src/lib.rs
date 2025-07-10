@@ -22,9 +22,6 @@
 #[macro_use]
 extern crate amplify;
 #[macro_use]
-extern crate strict_encoding;
-#[cfg(feature = "serde")]
-#[macro_use]
 extern crate serde;
 
 mod request;
@@ -34,4 +31,11 @@ pub use bprpc::{AgentInfo, ClientInfo, Failure, RemoteAddr, Session, Status, Ver
 pub use request::RgbRpcReq;
 pub use response::{ContractReply, RgbRpcResp, WalletInfo};
 
-pub const RGB_RPC_LIB: &str = "RGBRPC";
+#[derive(Debug, Display, Error, From)]
+#[display(inner)]
+pub enum CiboriumError {
+    #[from]
+    Serialize(ciborium::ser::Error<std::io::Error>),
+    #[from]
+    Deserialize(ciborium::de::Error<std::io::Error>),
+}

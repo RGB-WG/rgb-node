@@ -21,79 +21,57 @@
 
 use std::io::{Read, Write};
 
-use amplify::confinement::{SmallBlob, TinyBlob, U24 as U24MAX};
+use amplify::confinement::{SmallBlob, TinyBlob};
 use netservices::Frame;
 use sonicapi::{CodexId, ContractId};
-use strict_encoding::{
-    DecodeError, StreamReader, StreamWriter, StrictDecode, StrictEncode, StrictReader, StrictWriter,
-};
 
-use crate::RGB_RPC_LIB;
+use crate::CiboriumError;
 
 #[derive(Clone, Eq, PartialEq, Debug, Display)]
 #[display(UPPERCASE)]
-#[derive(StrictType, StrictDumb, StrictEncode, StrictDecode)]
-#[strict_type(lib = RGB_RPC_LIB, tags = custom, dumb = Self::Ping(strict_dumb!()))]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Serialize, Deserialize)]
 pub enum RgbRpcReq {
     #[display("PING")]
-    #[strict_type(tag = 0x01)]
     Ping(TinyBlob),
 
-    #[strict_type(tag = 0x03)]
     Status,
 
-    #[strict_type(tag = 0x10)]
     Issuers,
 
-    #[strict_type(tag = 0x12)]
     Contracts,
 
     #[display("ISSUER({0})")]
-    #[strict_type(tag = 0x20)]
     Issuer(CodexId),
 
     #[display("ARTICLES({0})")]
-    #[strict_type(tag = 0x22)]
     Articles(ContractId),
 
     #[display("STATE({0})")]
-    #[strict_type(tag = 0x24)]
     State(ContractId),
 
     #[display("CONSIGN({0}, ...)")]
-    #[strict_type(tag = 0x30)]
     Consign(u64, ContractId),
 
     /*
     #[display("IMPORT(...)")]
-    #[strict_type(tag = 0x40)]
     Import(Issuer),
      */
     #[display("ACCEPT_INIT({0})")]
-    #[strict_type(tag = 0x42)]
     AcceptInit(ContractId),
 
     #[display("ACCEPT_DATA")]
-    #[strict_type(tag = 0x44)]
     AcceptData(u64, SmallBlob),
 }
 
 impl Frame for RgbRpcReq {
-    type Error = DecodeError;
+    type Error = CiboriumError;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {
-        let mut reader = StrictReader::with(StreamReader::new::<U24MAX>(reader));
-        match Self::strict_decode(&mut reader) {
-            Ok(request) => Ok(Some(request)),
-            Err(DecodeError::Io(_)) => Ok(None),
-            Err(err) => Err(err),
-        }
+        ciborium::from_reader(reader).map_err(CiboriumError::from)
     }
 
     fn marshall(&self, writer: impl Write) -> Result<(), Self::Error> {
-        let writer = StrictWriter::with(StreamWriter::new::<U24MAX>(writer));
-        self.strict_encode(writer)?;
+        ciborium::into_writer(self, writer)?;
         Ok(())
     }
 }

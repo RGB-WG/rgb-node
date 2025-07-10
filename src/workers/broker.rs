@@ -192,19 +192,7 @@ where
         log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
         match (resp.req_id(), resp.into_reply()) {
             (req_id, ReaderMsg::ContractState(contract_id, state)) => {
-                // TODO: Move from bincode to strict encoding, which requires implementation of
-                //       Strict(En/De)code for TypedVal, and switching ContractState from using
-                //       StrictVal to TypedVal
-                let serialized = bincode::serde::encode_to_vec(&state, bincode::config::standard())
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-                let resp = match MediumVec::try_from(serialized) {
-                    Ok(data) => RgbRpcResp::State(ContractReply { contract_id, data }),
-                    Err(_) => {
-                        log::warn!("Contract state for {contract_id} exceeds the 16MB limit");
-                        RgbRpcResp::Failure(Failure::too_large(contract_id))
-                    }
-                };
-                self.send_rpc_resp(req_id, resp);
+                self.send_rpc_resp(req_id, RgbRpcResp::State(ContractReply { contract_id, state }));
             }
             (req_id, ReaderMsg::ContractNotFound(id)) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));

@@ -14,21 +14,17 @@ readme = "../README.md"
 name = "rgbrpc"
 
 [dependencies]
-amplify.workspace = true
-strict_encoding.workspace = true
-strict_types.workspace = true
-sonic-api.workspace = true
-bp-std.workspace = true
-bp-rpc = { workspace = true, optional = true }
-rgb-std.workspace = true
+amplify = { workspace = true, features = ["serde"] }
+strict_types = { workspace = true, features = ["serde"] }
+sonic-api = { workspace = true, features = ["serde"] }
+bp-std = { workspace = true, features = ["serde", "client-side-validation"] }
+bp-rpc = { workspace = true, features = ["serde"] }
+rgb-std = { workspace = true, features = ["serde"] }
 netservices.workspace = true
-serde = { workspace = true, optional = true }
+serde.workspace = true
+ciborium.workspace = true
 
 [features]
-default = ["serde"]
-all = ["serde"]
-serde = [
-    "dep:serde", "amplify/serde",
-    "strict_encoding/serde", "strict_types/serde",
-    "sonic-api/serde", "bp-std/serde", "bp-rpc/serde", "rgb-std/serde"
-]
+default = []
+all = []
+serde = []
