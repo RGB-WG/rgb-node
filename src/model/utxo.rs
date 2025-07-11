@@ -19,29 +19,34 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-#[cfg(all(feature = "embedded", feature = "server"))]
-compile_error!("Either `embedded` or `server` feature must be used");
-#[cfg(not(any(feature = "embedded", feature = "server")))]
-compile_error!("Either `embedded` or `server` feature must be used");
+use bpstd::{DescrId, Outpoint, Sats, Terminal};
+use native_db::{Key, ToKey};
+use native_model::Model;
 
-#[macro_use]
-extern crate amplify;
-#[macro_use]
-extern crate native_db;
-#[macro_use]
-extern crate native_model;
-#[macro_use]
-extern crate serde;
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct UtxoId {
+    pub descr: DescrId,
+    pub outpoint: Outpoint,
+}
 
-mod config;
-mod model;
-pub mod services;
-mod workers;
-mod reactors;
+impl ToKey for UtxoId {
+    fn to_key(&self) -> Key { (self.descr.0, self.outpoint.to_string()).to_key() }
 
-pub use config::Config;
-pub use model::{DbHolder, DbUtxos, UtxoId, UtxoModel};
-pub use reactors::*;
-pub use workers::*;
+    fn key_names() -> Vec<String> { vec!["utxo_id".to_string()] }
+}
 
-pub type ReqId = u64;
+#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize)]
+#[native_model(id = 1, version = 1)]
+#[native_db(primary_key(utxo_id -> UtxoId))]
+pub struct UtxoModel {
+    descr: DescrId,
+    outpoint: Outpoint,
+    terminal: Terminal,
+    value: Sats,
+}
+
+impl UtxoModel {
+    pub fn utxo_id(&self) -> UtxoId { UtxoId { descr: self.descr, outpoint: self.outpoint } }
+}

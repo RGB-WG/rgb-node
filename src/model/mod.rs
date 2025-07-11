@@ -19,29 +19,8 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-#[cfg(all(feature = "embedded", feature = "server"))]
-compile_error!("Either `embedded` or `server` feature must be used");
-#[cfg(not(any(feature = "embedded", feature = "server")))]
-compile_error!("Either `embedded` or `server` feature must be used");
+mod utxo;
+mod db;
 
-#[macro_use]
-extern crate amplify;
-#[macro_use]
-extern crate native_db;
-#[macro_use]
-extern crate native_model;
-#[macro_use]
-extern crate serde;
-
-mod config;
-mod model;
-pub mod services;
-mod workers;
-mod reactors;
-
-pub use config::Config;
-pub use model::{DbHolder, DbUtxos, UtxoId, UtxoModel};
-pub use reactors::*;
-pub use workers::*;
-
-pub type ReqId = u64;
+pub use db::{DbHolder, DbUtxos};
+pub use utxo::{UtxoId, UtxoModel};

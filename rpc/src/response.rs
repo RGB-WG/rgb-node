@@ -27,7 +27,7 @@ use bpstd::psbt::Utxo;
 use bpstd::seals::TxoSeal;
 use netservices::Frame;
 use rgb::{ContractState, ContractStateName, WitnessStatus};
-use rgbp::descriptor::RgbDescr;
+use rgbp::descriptors::RgbDescr;
 use sonicapi::{CellAddr, CodexId, ContractId, Opid, StateAtom};
 use strict_types::StrictVal;
 

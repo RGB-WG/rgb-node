@@ -29,6 +29,8 @@ cyphernet = { version = "0.5.2", features = ["tor", "dns", "ed25519", "p2p-ed255
 microservices = { version = "0.12.0" }
 netservices = { version = "0.12.0-beta.1", features = ["eidolon", "reactor"] }
 crossbeam-channel = "0.5.15"
+native_db = "0.8.2"
+native_model = "0.4.20"
 
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9.34"
@@ -77,6 +79,8 @@ io-reactor.workspace = true
 microservices = { workspace = true, features = ["log"] }
 netservices = { workspace = true, features = ["log"] }
 crossbeam-channel.workspace = true
+native_db.workspace = true
+native_model.workspace = true
 async-channel = { version = "2.3.1", optional = true }
 serde.workspace = true
 log.workspace = true

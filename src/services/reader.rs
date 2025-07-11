@@ -29,7 +29,7 @@ use crossbeam_channel::Sender;
 use microservices::UService;
 use rgb::popls::bp::seals::TxoSeal;
 use rgb::{CellAddr, ContractId, ContractState, ContractStateName};
-use rgbp::descriptor::RgbDescr;
+use rgbp::descriptors::RgbDescr;
 use rgbrpc::WalletInfo;
 use strict_types::StrictVal;
 

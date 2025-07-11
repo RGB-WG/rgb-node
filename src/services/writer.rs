@@ -19,14 +19,21 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+use std::collections::HashSet;
 use std::convert::Infallible;
 use std::ops::ControlFlow;
 
+use bpstd::psbt::PsbtConstructor;
 use bpstd::seals::TxoSeal;
+use bpstd::{Network, XpubDerivable};
 use microservices::{USender, UService};
 use rgb::{Contracts, Pile, Stockpile};
+use rgbp::resolvers::MultiResolver;
+use rgbp::{Owner, OwnerProvider, RgbRuntime};
 
 use super::Request2Reader;
+use crate::services::reader::RoWallet;
+use crate::{DbHolder, DbUtxos};
 
 pub enum Request2Writer {
     Consign(),
@@ -38,7 +45,7 @@ where
     Sp: Stockpile,
     Sp::Pile: Pile<Seal = TxoSeal>,
 {
-    contracts: Contracts<Sp>,
+    runtime: RgbRuntime<Owner<MultiResolver, DbHolder, XpubDerivable, DbUtxos>, Sp>,
     reader: USender<Request2Reader>,
 }
 
@@ -48,18 +55,48 @@ where
     Sp::Stock: Send,
     Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
-    pub fn new(stockpile: Sp, reader: USender<Request2Reader>) -> Self {
+    pub fn new(network: Network, stockpile: Sp, reader: USender<Request2Reader>) -> Self {
         log::info!(target: Self::NAME, "Loading contracts from persistence");
-        let me = Self { contracts: Contracts::load(stockpile), reader };
+        let contracts = Contracts::load(stockpile);
+
+        // TODO: Use real resolver
+        let resolver = MultiResolver::new_absent().unwrap_or_else(|err| {
+            log::error!(target: Self::NAME, "Unable to connect to the resolver. {err}");
+            panic!("Unable to connect to the resolver due to {err}");
+        });
+
+        log::info!(target: Self::NAME, "Loading wallets from database");
+        let holder = DbHolder::load().unwrap_or_else(|err| {
+            log::error!(target: Self::NAME, "Unable to load database. {err}");
+            panic!("Unable to load database due to {err}");
+        });
+        let owner = Owner::with_components(network, holder, resolver);
+
+        let runtime = RgbRuntime::with_components(owner, contracts);
+        let mut me = Self { runtime, reader };
 
         log::info!(target: Self::NAME, "Contracts loaded successfully, sending state to the reader");
-        for id in me.contracts.contract_ids() {
-            let state = me.contracts.contract_state(id);
+        for id in me.runtime.contracts.contract_ids() {
+            let state = me.runtime.contracts.contract_state(id);
             log::debug!(target: Self::NAME, "Sending contract state for {id}");
             me.reader
                 .send(Request2Reader::UpsertContract(id, state))
                 .unwrap_or_else(|err| panic!("Failed to send state for contract {id}: {err}"));
         }
+
+        log::info!(target: Self::NAME, "Wallets loaded successfully, sending state to the reader");
+        let all_wallets = me.runtime.wallet.wallet_ids().collect::<HashSet<_>>();
+        for id in all_wallets {
+            me.runtime.wallet.switch(id);
+            let descriptor = me.runtime.wallet.descriptor().clone();
+            let utxo = me.runtime.wallet.utxos();
+            let wallet = RoWallet { descriptor, utxos: utxo.utxos() };
+            log::debug!(target: Self::NAME, "Sending wallet state for {id}");
+            me.reader
+                .send(Request2Reader::UpsertWallet(id, wallet))
+                .unwrap_or_else(|err| panic!("Failed to send state for wallet {id}: {err}"));
+        }
+
         me
     }
 }
