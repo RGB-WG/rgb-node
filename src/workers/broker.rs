@@ -33,7 +33,7 @@ use microservices::UThread;
 #[cfg(feature = "server")]
 use netservices::{NetAccept, service};
 use rgb::{Pile, Stockpile};
-use rgbrpc::{ContractReply, Failure, RgbRpcReq, RgbRpcResp};
+use rgbrpc::{Failure, RgbRpcReq, RgbRpcResp};
 
 #[cfg(feature = "server")]
 use crate::Dispatcher;
@@ -191,13 +191,13 @@ where
         log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
         match (resp.req_id(), resp.into_reply()) {
             (req_id, ReaderMsg::ContractState(contract_id, state)) => {
-                self.send_rpc_resp(req_id, RgbRpcResp::State(ContractReply { contract_id, state }));
+                self.send_rpc_resp(req_id, RgbRpcResp::ContractState(contract_id, state));
             }
             (req_id, ReaderMsg::ContractNotFound(id)) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));
             }
             (req_id, ReaderMsg::WalletInfo(wallet_id, info)) => {
-                todo!()
+                self.send_rpc_resp(req_id, RgbRpcResp::WalletState(wallet_id, info));
             }
             (req_id, ReaderMsg::WalletNotFount(id)) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));

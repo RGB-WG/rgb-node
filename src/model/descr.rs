@@ -19,10 +19,21 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-mod db;
-mod descr;
-mod utxo;
+use bpstd::DescrId;
+use native_db::ToKey;
+use native_model::Model;
+use rgbp::descriptors::RgbDescr;
 
-pub use db::{DbHolder, DbUtxos};
-pub use descr::DescrModel;
-pub use utxo::{OutpointModel, UtxoId, UtxoModel};
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+#[native_model(id = 1, version = 1)]
+#[native_db]
+pub struct DescrModel {
+    #[primary_key]
+    pub id: u64,
+    pub descriptor: RgbDescr,
+}
+
+impl DescrModel {
+    pub fn descr_id(&self) -> DescrId { DescrId(self.id) }
+}

@@ -19,7 +19,8 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use bpstd::{DescrId, Outpoint, Sats, Terminal};
+use bpstd::psbt::Utxo;
+use bpstd::{ConsensusEncode, DescrId, Outpoint, Sats, Terminal};
 use native_db::{Key, ToKey};
 use native_model::Model;
 
@@ -33,20 +34,50 @@ pub struct UtxoId {
 impl ToKey for UtxoId {
     fn to_key(&self) -> Key { (self.descr.0, self.outpoint.to_string()).to_key() }
 
-    fn key_names() -> Vec<String> { vec!["utxo_id".to_string()] }
+    fn key_names() -> Vec<String> { vec!["utxo_id".to_owned()] }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 #[derive(Serialize, Deserialize)]
-#[native_model(id = 1, version = 1)]
+pub struct OutpointModel(pub Outpoint);
+
+impl ToKey for OutpointModel {
+    fn to_key(&self) -> Key { self.0.consensus_serialize().to_key() }
+
+    fn key_names() -> Vec<String> { vec!["outpoint".to_owned()] }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize)]
+#[native_model(id = 2, version = 1)]
 #[native_db(primary_key(utxo_id -> UtxoId))]
 pub struct UtxoModel {
-    descr: DescrId,
-    outpoint: Outpoint,
-    terminal: Terminal,
-    value: Sats,
+    pub descr: DescrId,
+    #[secondary_key]
+    pub outpoint: OutpointModel,
+    pub terminal: Terminal,
+    pub value: Sats,
 }
 
 impl UtxoModel {
-    pub fn utxo_id(&self) -> UtxoId { UtxoId { descr: self.descr, outpoint: self.outpoint } }
+    pub fn with(id: DescrId, utxo: Utxo) -> Self {
+        Self {
+            descr: id,
+            outpoint: OutpointModel(utxo.outpoint),
+            terminal: utxo.terminal,
+            value: utxo.value,
+        }
+    }
+
+    pub fn utxo_id(&self) -> UtxoId { UtxoId { descr: self.descr, outpoint: self.outpoint.0 } }
+}
+
+impl From<UtxoModel> for Utxo {
+    fn from(utxo: UtxoModel) -> Self {
+        Utxo {
+            outpoint: utxo.outpoint.0,
+            value: utxo.value,
+            terminal: utxo.terminal,
+        }
+    }
 }

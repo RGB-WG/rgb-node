@@ -29,7 +29,7 @@ mod response;
 
 pub use bprpc::{AgentInfo, ClientInfo, Failure, RemoteAddr, Session, Status, Version};
 pub use request::RgbRpcReq;
-pub use response::{ContractReply, RgbRpcResp, WalletInfo};
+pub use response::{RgbRpcResp, WalletInfo};
 
 #[derive(Debug, Display, Error, From)]
 #[display(inner)]

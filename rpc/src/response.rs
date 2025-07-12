@@ -23,6 +23,7 @@ use std::collections::BTreeMap;
 use std::io::{Read, Write};
 
 use amplify::confinement::{MediumOrdSet, SmallBlob, SmallOrdSet, TinyBlob};
+use bpstd::DescrId;
 use bpstd::psbt::Utxo;
 use bpstd::seals::TxoSeal;
 use netservices::Frame;
@@ -33,7 +34,7 @@ use strict_types::StrictVal;
 
 use crate::{CiboriumError, Failure, Status};
 
-#[derive(Clone, Eq, PartialEq, Debug, Display)]
+#[derive(Clone, Debug, Display)]
 #[derive(Serialize, Deserialize)]
 pub enum RgbRpcResp {
     #[display("FAILURE({0})")]
@@ -58,8 +59,11 @@ pub enum RgbRpcResp {
     #[display("ARTICLES(...)")]
     Articles(Articles),
      */
-    #[display("STATE({0})")]
-    State(ContractReply),
+    #[display("CONTRACT_STATE({0}, ...)")]
+    ContractState(ContractId, ContractState<TxoSeal>),
+
+    #[display("WALLET_STATE({0}, ...)")]
+    WalletState(DescrId, WalletInfo),
 
     #[display("CONSIGN_INIT({0})")]
     ConsignInit(u64),
@@ -88,15 +92,6 @@ impl Frame for RgbRpcResp {
         ciborium::into_writer(self, writer)?;
         Ok(())
     }
-}
-
-#[derive(Clone, Eq, PartialEq, Debug, Display)]
-#[display("{contract_id}, ...")]
-#[derive(Serialize, Deserialize)]
-pub struct ContractReply {
-    pub contract_id: ContractId,
-    /// Reply data in bincode format
-    pub state: ContractState<TxoSeal>,
 }
 
 #[derive(Clone, Debug)]

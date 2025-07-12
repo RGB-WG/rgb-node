@@ -40,7 +40,7 @@ mod workers;
 mod reactors;
 
 pub use config::Config;
-pub use model::{DbHolder, DbUtxos, UtxoId, UtxoModel};
+pub use model::{DbHolder, DbUtxos, DescrModel, UtxoId, UtxoModel};
 pub use reactors::*;
 pub use workers::*;
 

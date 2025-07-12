@@ -34,7 +34,7 @@ mod command;
 
 use clap::Parser;
 use loglevel::LogLevel;
-use rgbrpc::{ContractReply, RgbRpcResp};
+use rgbrpc::RgbRpcResp;
 
 pub use crate::args::{Args, Command};
 use crate::client::BpClient;
@@ -59,7 +59,7 @@ fn cb(reply: RgbRpcResp) {
         RgbRpcResp::Status(status) => {
             println!("{}", serde_yaml::to_string(&status).unwrap());
         }
-        RgbRpcResp::State(ContractReply { contract_id, .. }) => {
+        RgbRpcResp::ContractState(contract_id, ..) => {
             println!("Contract status for {contract_id}:");
         }
         _ => todo!(),

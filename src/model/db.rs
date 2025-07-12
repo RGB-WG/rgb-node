@@ -19,29 +19,32 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
 use std::sync::LazyLock;
 
 use bpstd::psbt::Utxo;
-use bpstd::{Keychain, NormalIndex, Outpoint, Sats, Terminal, XpubDerivable};
+use bpstd::{DescrId, Keychain, NormalIndex, Outpoint, Sats, Terminal, XpubDerivable};
+use native_db::transaction::{RTransaction, RwTransaction};
 use native_db::{Builder, Database, Models, db_type};
 use rgbp::descriptors::RgbDescr;
-use rgbp::{MultiHolder, OwnerProvider, UtxoSet};
+use rgbp::{Holder, MultiHolder, OwnerProvider, UtxoSet};
 
-use crate::model::UtxoModel;
+use crate::model::utxo::UtxoModelKey;
+use crate::model::{DescrModel, OutpointModel, UtxoModel};
 
 static MODELS: LazyLock<Models> = LazyLock::new(|| {
     let mut models = Models::new();
+    models.define::<DescrModel>().unwrap();
     models.define::<UtxoModel>().unwrap();
     models
 });
 
-fn db() -> Result<Database<'static>, db_type::Error> { Builder::new().create_in_memory(&MODELS) }
-
 pub struct DbHolder {
     inner: MultiHolder<XpubDerivable, DbUtxos>,
-    db: Database<'static>,
+    db: Rc<RefCell<Database<'static>>>,
 }
 
 impl Deref for DbHolder {
@@ -56,9 +59,20 @@ impl DerefMut for DbHolder {
 
 impl DbHolder {
     pub fn load() -> Result<Self, db_type::Error> {
-        let db = db()?;
-        let inner = MultiHolder::new();
-        // TODO: populate with data
+        let db = Builder::new().create_in_memory(&MODELS)?;
+        let db = Rc::new(RefCell::new(db));
+        let mut inner = MultiHolder::new();
+        {
+            let borrow = db.borrow();
+            let r = borrow.r_transaction()?;
+            for descr in r.scan().primary::<DescrModel>()?.all()? {
+                let descr = descr?;
+                let db_utxo = DbUtxos { id: descr.descr_id(), db: db.clone() };
+                let descr_id = descr.descr_id();
+                let holder = Holder::with_components(descr.descriptor, db_utxo);
+                inner.upsert(descr_id, holder)
+            }
+        }
         Ok(Self { inner, db })
     }
 }
@@ -77,36 +91,115 @@ impl OwnerProvider for DbHolder {
 }
 
 pub struct DbUtxos {
-    db: Database<'static>,
+    id: DescrId,
+    db: Rc<RefCell<Database<'static>>>,
 }
 
 impl DbUtxos {
-    pub fn utxos(&self) -> HashSet<Utxo> { todo!() }
+    fn with_reader<T>(&self, f: impl FnOnce(RTransaction) -> Result<T, db_type::Error>) -> T {
+        let borrow = self.db.borrow();
+        let tx = borrow.r_transaction().expect("unable to start transaction");
+        f(tx).expect("database read operation has failed")
+    }
+
+    fn with_writer(&mut self, mut f: impl FnOnce(&RwTransaction) -> Result<(), db_type::Error>) {
+        let borrow = self.db.borrow_mut();
+        let tx = borrow
+            .rw_transaction()
+            .expect("unable to start transaction");
+        f(&tx).expect("database write operation has failed");
+        tx.commit().expect("database data can't be committed");
+    }
+
+    fn all(&self) -> impl Iterator<Item = Utxo> {
+        self.with_reader(|tx| {
+            let scan = tx.scan().primary::<UtxoModel>()?;
+            Ok(scan
+                .all()?
+                .map(|res| res.unwrap().into())
+                .collect::<Vec<_>>()
+                .into_iter())
+        })
+    }
+
+    fn utxo(&self, outpoint: Outpoint) -> Option<UtxoModel> {
+        self.with_reader(|tx| {
+            tx.get()
+                .secondary::<UtxoModel>(UtxoModelKey::outpoint, OutpointModel(outpoint))
+        })
+    }
+
+    pub fn utxos(&self) -> HashSet<Utxo> { self.all().collect() }
 }
 
 impl UtxoSet for DbUtxos {
-    fn len(&self) -> usize { todo!() }
+    fn len(&self) -> usize { self.with_reader(|tx| tx.len().primary::<UtxoModel>()) as usize }
 
-    fn has(&self, outpoint: Outpoint) -> bool { todo!() }
+    fn has(&self, outpoint: Outpoint) -> bool { self.get(outpoint).is_some() }
 
-    fn get(&self, outpoint: Outpoint) -> Option<(Sats, Terminal)> { todo!() }
-
-    fn insert(&mut self, outpoint: Outpoint, value: Sats, terminal: Terminal) { todo!() }
-
-    fn insert_all(&mut self, utxos: impl IntoIterator<Item = Utxo>) { todo!() }
-
-    fn clear(&mut self) { todo!() }
-
-    fn remove(&mut self, outpoint: Outpoint) -> Option<(Sats, Terminal)> { todo!() }
-
-    fn remove_all(&mut self, outpoints: impl IntoIterator<Item = Outpoint>) { todo!() }
-
-    fn outpoints(&self) -> impl Iterator<Item = Outpoint> {
-        todo!();
-        std::iter::empty()
+    fn get(&self, outpoint: Outpoint) -> Option<(Sats, Terminal)> {
+        let rec = self.utxo(outpoint)?;
+        Some((rec.value, rec.terminal))
     }
+
+    fn insert(&mut self, outpoint: Outpoint, value: Sats, terminal: Terminal) {
+        let descr = self.id;
+        self.with_writer(|tx| {
+            let utxo = UtxoModel { descr, outpoint: OutpointModel(outpoint), value, terminal };
+            tx.insert(utxo)
+        });
+    }
+
+    fn insert_all(&mut self, utxos: impl IntoIterator<Item = Utxo>) {
+        let id = self.id;
+        self.with_writer(|tx| {
+            for utxo in utxos {
+                tx.insert(UtxoModel::with(id, utxo))?;
+            }
+            Ok(())
+        });
+    }
+
+    fn clear(&mut self) {
+        self.with_writer(|tx| {
+            for row in tx.scan().primary::<UtxoModel>()?.all()? {
+                tx.remove(row?)?;
+            }
+            Ok(())
+        });
+    }
+
+    fn remove(&mut self, outpoint: Outpoint) -> Option<(Sats, Terminal)> {
+        let utxo = self.utxo(outpoint)?;
+        self.with_writer(|tx| {
+            tx.remove(utxo)?;
+            Ok(())
+        });
+        Some((utxo.value, utxo.terminal))
+    }
+
+    fn remove_all(&mut self, outpoints: impl IntoIterator<Item = Outpoint>) {
+        self.with_writer(|tx| {
+            for outpoint in outpoints {
+                if let Some(utxo) = tx
+                    .get()
+                    .secondary::<UtxoModel>(UtxoModelKey::outpoint, OutpointModel(outpoint))?
+                {
+                    tx.remove(utxo)?;
+                }
+            }
+            Ok(())
+        });
+    }
+
+    fn outpoints(&self) -> impl Iterator<Item = Outpoint> { self.all().map(|utxo| utxo.outpoint) }
 
     fn next_index_noshift(&self, keychain: impl Into<Keychain>) -> NormalIndex { todo!() }
 
-    fn next_index(&mut self, keychain: impl Into<Keychain>, shift: bool) -> NormalIndex { todo!() }
+    fn next_index(&mut self, keychain: impl Into<Keychain>, _shift: bool) -> NormalIndex { todo!() }
 }
+
+// We send it only once on `WriterService` construction, and then use it from a single thread
+// always.
+unsafe impl Send for DbHolder {}
+unsafe impl Send for DbUtxos {}
