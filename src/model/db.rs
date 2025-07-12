@@ -22,6 +22,7 @@
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
+use std::path::Path;
 use std::rc::Rc;
 use std::sync::LazyLock;
 
@@ -58,8 +59,15 @@ impl DerefMut for DbHolder {
 }
 
 impl DbHolder {
-    pub fn load() -> Result<Self, db_type::Error> {
-        let db = Builder::new().create_in_memory(&MODELS)?;
+    const FILE: &'static str = "wallets.dat";
+
+    pub fn init(path: impl AsRef<Path>) -> Result<(), db_type::Error> {
+        Builder::new().create(&MODELS, path.as_ref().join(Self::FILE))?;
+        Ok(())
+    }
+
+    pub fn load(path: impl AsRef<Path>) -> Result<Self, db_type::Error> {
+        let db = Builder::new().open(&MODELS, path.as_ref().join(Self::FILE))?;
         let db = Rc::new(RefCell::new(db));
         let mut inner = MultiHolder::new();
         {

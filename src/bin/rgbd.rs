@@ -33,7 +33,7 @@ use rgb::Consensus;
 use rgb::popls::bp::seals::TxoSeal;
 use rgb_persist_fs::StockpileDir;
 pub use rgbnode;
-use rgbnode::{Broker, BrokerError};
+use rgbnode::{Broker, BrokerError, DbHolder};
 
 use crate::opts::{Command, Opts};
 
@@ -66,6 +66,11 @@ fn main() -> Status {
                 eprintln!("unable to create data directory at '{}'\n{err}", data_dir.display());
                 exit(3);
             }
+            if let Err(err) = DbHolder::init(data_dir) {
+                eprintln!("unable to create wallet database at '{}'\n{err}", data_dir.display());
+                exit(4);
+            }
+            eprintln!("done");
             Status(Ok(()))
         }
         None => {
@@ -76,7 +81,7 @@ fn main() -> Status {
             )
             .unwrap_or_else(|err| {
                 eprintln!("Can't load stockpile from '{}' {err}", data_dir.display());
-                exit(4);
+                exit(5);
             });
             let status = Broker::run_standalone(conf, stockpile);
             Status(status)

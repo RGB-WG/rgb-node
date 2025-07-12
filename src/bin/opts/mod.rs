@@ -35,11 +35,10 @@ pub const RGB_DATA_DIR_ENV: &str = "RGB_NODE_DATA_DIR";
     target_os = "linux",
     target_os = "freebsd",
     target_os = "openbsd",
-    target_os = "netbsd"
+    target_os = "netbsd",
+    target_os = "macos"
 ))]
 pub const RGB_DATA_DIR: &str = "~/.local/share/rgb-node";
-#[cfg(target_os = "macos")]
-pub const RGB_DATA_DIR: &str = "~/Library/Application Support/RGB Node";
 #[cfg(target_os = "windows")]
 pub const RGB_DATA_DIR: &str = "~\\AppData\\Local\\RGB Node";
 #[cfg(target_os = "ios")]

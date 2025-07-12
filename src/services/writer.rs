@@ -22,6 +22,7 @@
 use std::collections::HashSet;
 use std::convert::Infallible;
 use std::ops::ControlFlow;
+use std::path::Path;
 
 use bpstd::psbt::PsbtConstructor;
 use bpstd::seals::TxoSeal;
@@ -55,7 +56,12 @@ where
     Sp::Stock: Send,
     Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
-    pub fn new(network: Network, stockpile: Sp, reader: USender<Request2Reader>) -> Self {
+    pub fn new(
+        network: Network,
+        db_path: impl AsRef<Path>,
+        stockpile: Sp,
+        reader: USender<Request2Reader>,
+    ) -> Self {
         log::info!(target: Self::NAME, "Loading contracts from persistence");
         let contracts = Contracts::load(stockpile);
 
@@ -66,7 +72,7 @@ where
         });
 
         log::info!(target: Self::NAME, "Loading wallets from database");
-        let holder = DbHolder::load().unwrap_or_else(|err| {
+        let holder = DbHolder::load(db_path).unwrap_or_else(|err| {
             log::error!(target: Self::NAME, "Unable to load database. {err}");
             panic!("Unable to load database due to {err}");
         });

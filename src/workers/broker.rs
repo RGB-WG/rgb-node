@@ -98,7 +98,8 @@ where
         let reader_thread = UThread::new(reader, TIMEOUT);
 
         log::info!("Starting contracts writer thread...");
-        let writer = WriterService::new(conf.network, stockpile, reader_thread.sender());
+        let writer =
+            WriterService::new(conf.network, &conf.data_dir, stockpile, reader_thread.sender());
         let writer_thread = UThread::new(writer, TIMEOUT);
 
         log::info!("Starting the dispatcher thread...");
