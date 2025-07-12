@@ -18,12 +18,13 @@ amplify = { workspace = true, features = ["serde"] }
 strict_types = { workspace = true, features = ["serde"] }
 sonic-api = { workspace = true, features = ["serde"] }
 bp-std = { workspace = true, features = ["serde", "client-side-validation"] }
-bp-rpc = { workspace = true, features = ["serde"] }
 rgb-std = { workspace = true, features = ["serde"] }
 rgb-runtime = { workspace = true, features = ["serde"] }
+cyphernet = { workspace = true, features = ["serde"] }
 netservices.workspace = true
+indexmap = { workspace = true, features = ["serde"] }
 serde.workspace = true
-ciborium.workspace = true
+serde_cbor_2.workspace = true
 
 [features]
 default = []

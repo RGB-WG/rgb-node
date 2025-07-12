@@ -19,17 +19,24 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
+use bpstd::Network;
 use rgbrpc::RemoteAddr;
 
-/// Command-line tool for working with the RGB daemon
+pub const RGB_NODE_NETWORK_ENV: &str = "RGB_NODE_NETWORK";
+
+/// Command-line tool for working with the RGB Node
 #[derive(Parser, Clone, PartialEq, Eq, Debug)]
-#[command(name = "bp-cli", bin_name = "bp-cli", author, version)]
+#[command(name = "rgb-cli", bin_name = "rgb-cli", author, version)]
 pub struct Args {
     /// Set a verbosity level
     ///
     /// Can be used multiple times to increase verbosity
     #[arg(short, long, global = true, action = clap::ArgAction::Count)]
     pub verbose: u8,
+
+    /// Bitcoin network
+    #[arg(short, long, global = true, default_value = "testnet4", env = RGB_NODE_NETWORK_ENV)]
+    pub network: Network,
 
     /// Remote address of the RGB node to connect to
     #[arg(short, long, default_value = "127.0.0.1:5343")]

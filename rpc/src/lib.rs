@@ -24,18 +24,11 @@ extern crate amplify;
 #[macro_use]
 extern crate serde;
 
+mod data;
 mod request;
 mod response;
+mod frame;
 
-pub use bprpc::{AgentInfo, ClientInfo, Failure, RemoteAddr, Session, Status, Version};
+pub use data::{AgentInfo, ClientInfo, Failure, RemoteAddr, Session, Status, Version};
 pub use request::RgbRpcReq;
 pub use response::{RgbRpcResp, WalletInfo, WalletState};
-
-#[derive(Debug, Display, Error, From)]
-#[display(inner)]
-pub enum CiboriumError {
-    #[from]
-    Serialize(ciborium::ser::Error<std::io::Error>),
-    #[from]
-    Deserialize(ciborium::de::Error<std::io::Error>),
-}

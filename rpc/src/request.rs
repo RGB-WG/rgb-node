@@ -19,21 +19,22 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::io::{ErrorKind, Read, Write};
+use std::io::{Cursor, ErrorKind, Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
-use bpstd::{DescrId, Network};
+use bpstd::DescrId;
 use netservices::Frame;
 use rgbp::descriptors::RgbDescr;
 use sonicapi::{CodexId, ContractId};
 
-use crate::CiboriumError;
+use crate::AgentInfo;
+use crate::frame::CborFrame;
 
 #[derive(Clone, Debug, Display)]
 #[derive(Serialize, Deserialize)]
 pub enum RgbRpcReq {
     #[display("HELLO({0})")]
-    Hello(Network),
+    Hello(AgentInfo),
 
     #[display("PING")]
     Ping(TinyBlob),
@@ -83,19 +84,22 @@ pub enum RgbRpcReq {
 }
 
 impl Frame for RgbRpcReq {
-    type Error = CiboriumError;
+    type Error = serde_cbor_2::Error;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {
-        match ciborium::from_reader(reader) {
-            Ok(msg) => Ok(Some(msg)),
-            Err(ciborium::de::Error::Io(e)) if e.kind() == ErrorKind::UnexpectedEof => Ok(None),
-            Err(e) => Err(CiboriumError::from(e)),
-        }
+        let Some(frame) = CborFrame::unmarshall(reader)? else {
+            return Ok(None);
+        };
+        let cursor = Cursor::new(frame.0);
+        serde_cbor_2::from_reader(cursor).map(Some)
     }
 
     fn marshall(&self, writer: impl Write) -> Result<(), Self::Error> {
-        ciborium::into_writer(self, writer)?;
-        Ok(())
+        let mut buf = Vec::with_capacity(4096);
+        serde_cbor_2::to_writer(&mut buf, self)?;
+        CborFrame(buf)
+            .marshall(writer)
+            .map_err(serde_cbor_2::Error::from)
     }
 }
 
@@ -106,10 +110,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn serialization() {
+    fn partial_serialization() {
+        let cursor = Cursor::new(*b"\0\0\0\x08\x67Wallet");
+        let deser = RgbRpcReq::unmarshall(cursor).unwrap();
+        assert!(matches!(deser, None));
+    }
+
+    #[test]
+    fn single_serialization() {
         let mut buf = Vec::new();
         RgbRpcReq::Wallets.marshall(&mut buf).unwrap();
-        assert_eq!(buf, *b"\x67Wallets");
+        assert_eq!(buf, *b"\0\0\0\x08\x67Wallets");
         let deser = RgbRpcReq::unmarshall(&mut buf.as_slice()).unwrap().unwrap();
         assert!(matches!(deser, RgbRpcReq::Wallets));
     }
@@ -118,11 +129,24 @@ mod tests {
     fn stream_serialization() {
         let mut buf = Vec::new();
         RgbRpcReq::Wallets.marshall(&mut buf).unwrap();
-        assert_eq!(buf, *b"\x67Wallets");
+        assert_eq!(buf, *b"\0\0\0\x08\x67Wallets");
         let mut cursor = Cursor::new(&mut buf);
         let deser = RgbRpcReq::unmarshall(&mut cursor).unwrap().unwrap();
         assert!(matches!(deser, RgbRpcReq::Wallets));
         let nothing = RgbRpcReq::unmarshall(&mut cursor).unwrap();
         assert!(matches!(nothing, None));
+    }
+
+    #[test]
+    fn multi_serialization() {
+        let mut buf = Vec::new();
+        RgbRpcReq::Wallets.marshall(&mut buf).unwrap();
+        RgbRpcReq::Wallets.marshall(&mut buf).unwrap();
+        assert_eq!(buf, *b"\0\0\0\x08\x67Wallets\0\0\0\x08\x67Wallets");
+        let mut cursor = Cursor::new(&mut buf);
+        let deser = RgbRpcReq::unmarshall(&mut cursor).unwrap().unwrap();
+        assert!(matches!(deser, RgbRpcReq::Wallets));
+        let deser2 = RgbRpcReq::unmarshall(&mut cursor).unwrap().unwrap();
+        assert!(matches!(deser2, RgbRpcReq::Wallets));
     }
 }

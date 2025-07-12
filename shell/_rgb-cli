@@ -1,8 +1,8 @@
-#compdef bp-cli
+#compdef rgb-cli
 
 autoload -U is-at-least
 
-_bp-cli() {
+_rgb-cli() {
     typeset -A opt_args
     typeset -a _arguments_options
     local ret=1
@@ -25,14 +25,14 @@ _bp-cli() {
 '--help[Print help (see more with '\''--help'\'')]' \
 '-V[Print version]' \
 '--version[Print version]' \
-":: :_bp-cli_commands" \
-"*::: :->bp-cli" \
+":: :_rgb-cli_commands" \
+"*::: :->rgb-cli" \
 && ret=0
     case $state in
-    (bp-cli)
+    (rgb-cli)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:bp-cli-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:rgb-cli-command-$line[1]:"
         case $line[1] in
             (status)
 _arguments "${_arguments_options[@]}" : \
@@ -66,7 +66,7 @@ _arguments "${_arguments_options[@]}" : \
 ;;
 (help)
 _arguments "${_arguments_options[@]}" : \
-":: :_bp-cli__help_commands" \
+":: :_rgb-cli__help_commands" \
 "*::: :->help" \
 && ret=0
 
@@ -74,7 +74,7 @@ _arguments "${_arguments_options[@]}" : \
     (help)
         words=($line[1] "${words[@]}")
         (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:bp-cli-help-command-$line[1]:"
+        curcontext="${curcontext%:*:*}:rgb-cli-help-command-$line[1]:"
         case $line[1] in
             (status)
 _arguments "${_arguments_options[@]}" : \
@@ -101,64 +101,64 @@ esac
 esac
 }
 
-(( $+functions[_bp-cli_commands] )) ||
-_bp-cli_commands() {
+(( $+functions[_rgb-cli_commands] )) ||
+_rgb-cli_commands() {
     local commands; commands=(
 'status:Get RGB node status information' \
 'wallets:List wallets known to the RGB node' \
 'contracts:List contracts known to the RGB node' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
-    _describe -t commands 'bp-cli commands' commands "$@"
+    _describe -t commands 'rgb-cli commands' commands "$@"
 }
-(( $+functions[_bp-cli__contracts_commands] )) ||
-_bp-cli__contracts_commands() {
+(( $+functions[_rgb-cli__contracts_commands] )) ||
+_rgb-cli__contracts_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli contracts commands' commands "$@"
+    _describe -t commands 'rgb-cli contracts commands' commands "$@"
 }
-(( $+functions[_bp-cli__help_commands] )) ||
-_bp-cli__help_commands() {
+(( $+functions[_rgb-cli__help_commands] )) ||
+_rgb-cli__help_commands() {
     local commands; commands=(
 'status:Get RGB node status information' \
 'wallets:List wallets known to the RGB node' \
 'contracts:List contracts known to the RGB node' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
-    _describe -t commands 'bp-cli help commands' commands "$@"
+    _describe -t commands 'rgb-cli help commands' commands "$@"
 }
-(( $+functions[_bp-cli__help__contracts_commands] )) ||
-_bp-cli__help__contracts_commands() {
+(( $+functions[_rgb-cli__help__contracts_commands] )) ||
+_rgb-cli__help__contracts_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli help contracts commands' commands "$@"
+    _describe -t commands 'rgb-cli help contracts commands' commands "$@"
 }
-(( $+functions[_bp-cli__help__help_commands] )) ||
-_bp-cli__help__help_commands() {
+(( $+functions[_rgb-cli__help__help_commands] )) ||
+_rgb-cli__help__help_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli help help commands' commands "$@"
+    _describe -t commands 'rgb-cli help help commands' commands "$@"
 }
-(( $+functions[_bp-cli__help__status_commands] )) ||
-_bp-cli__help__status_commands() {
+(( $+functions[_rgb-cli__help__status_commands] )) ||
+_rgb-cli__help__status_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli help status commands' commands "$@"
+    _describe -t commands 'rgb-cli help status commands' commands "$@"
 }
-(( $+functions[_bp-cli__help__wallets_commands] )) ||
-_bp-cli__help__wallets_commands() {
+(( $+functions[_rgb-cli__help__wallets_commands] )) ||
+_rgb-cli__help__wallets_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli help wallets commands' commands "$@"
+    _describe -t commands 'rgb-cli help wallets commands' commands "$@"
 }
-(( $+functions[_bp-cli__status_commands] )) ||
-_bp-cli__status_commands() {
+(( $+functions[_rgb-cli__status_commands] )) ||
+_rgb-cli__status_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli status commands' commands "$@"
+    _describe -t commands 'rgb-cli status commands' commands "$@"
 }
-(( $+functions[_bp-cli__wallets_commands] )) ||
-_bp-cli__wallets_commands() {
+(( $+functions[_rgb-cli__wallets_commands] )) ||
+_rgb-cli__wallets_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli wallets commands' commands "$@"
+    _describe -t commands 'rgb-cli wallets commands' commands "$@"
 }
 
-if [ "$funcstack[1]" = "_bp-cli" ]; then
-    _bp-cli "$@"
+if [ "$funcstack[1]" = "_rgb-cli" ]; then
+    _rgb-cli "$@"
 else
-    compdef _bp-cli bp-cli
+    compdef _rgb-cli rgb-cli
 fi

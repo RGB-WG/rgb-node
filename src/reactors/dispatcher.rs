@@ -26,16 +26,13 @@ use std::convert::Infallible;
 use std::error::Error;
 use std::net::{SocketAddr, TcpListener, TcpStream};
 
-use amplify::confinement::SmallVec;
 use bpstd::Network;
 use crossbeam_channel::Sender;
 use netservices::Direction;
 use netservices::remotes::DisconnectReason;
 use netservices::service::{ServiceCommand, ServiceController};
 use reactor::Timestamp;
-use rgbrpc::{
-    CiboriumError, ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status,
-};
+use rgbrpc::{ClientInfo, Failure, RemoteAddr, RgbRpcReq, RgbRpcResp, Session, Status};
 
 use crate::ReqId;
 
@@ -91,7 +88,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
     fn on_established(
         &mut self,
         addr: SocketAddr,
-        _remote: RemoteAddr,
+        remote: RemoteAddr,
         direction: Direction,
         time: Timestamp,
     ) {
@@ -100,6 +97,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
             .clients
             .insert(addr, ClientInfo {
                 agent: None,
+                remote,
                 connected: time.as_millis(),
                 last_seen: time.as_millis(),
             })
@@ -126,11 +124,20 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
     fn on_frame(&mut self, remote: SocketAddr, req: RgbRpcReq) {
         log::debug!(target: NAME, "Processing client request `{req}`");
 
-        let client = self.clients.get_mut(&remote).expect("must be known");
+        let client = self
+            .clients
+            .get_mut(&remote)
+            .expect("connection without handshake");
         client.last_seen = Timestamp::now().as_millis();
 
+        if client.agent.is_none() && !matches!(req, RgbRpcReq::Hello(_)) {
+            log::warn!(target: NAME, "Client at {remote} sent a request without HELLO");
+            self.send_response(remote, RgbRpcResp::Failure(Failure::no_hello()));
+            return;
+        }
+
         match req {
-            RgbRpcReq::Hello(network) if self.network != network => {
+            RgbRpcReq::Hello(agent) if self.network != agent.network => {
                 self.send_response(
                     remote,
                     RgbRpcResp::Failure(Failure::internal_error(&format!(
@@ -140,21 +147,20 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
                 );
                 self.actions.push_back(ServiceCommand::Disconnect(remote));
             }
-            RgbRpcReq::Hello(_) => {
+            RgbRpcReq::Hello(agent) => {
+                client.agent = Some(agent);
                 self.send_response(remote, RgbRpcResp::Message(Self::WELCOME.to_owned()));
             }
             RgbRpcReq::Ping(noise) => self.send_response(remote, RgbRpcResp::Pong(noise)),
             RgbRpcReq::Status => self.send_response(
                 remote,
-                RgbRpcResp::Status(Status {
-                    clients: SmallVec::from_iter_checked(self.clients.values().cloned()),
-                }),
+                RgbRpcResp::Status(Status { clients: self.clients.values().cloned().collect() }),
             ),
             other => self.request_broker(remote, other),
         }
     }
 
-    fn on_frame_unparsable(&mut self, remote: SocketAddr, err: &CiboriumError) {
+    fn on_frame_unparsable(&mut self, remote: SocketAddr, err: &serde_cbor_2::Error) {
         log::error!(target: NAME, "Disconnecting client {remote} due to unparsable frame: {err}");
         self.actions.push_back(ServiceCommand::Disconnect(remote))
     }
@@ -168,7 +174,7 @@ impl Iterator for Dispatcher {
 
 impl Dispatcher {
     pub fn send_response(&mut self, remote: SocketAddr, response: RgbRpcResp) {
-        log::trace!(target: NAME, "Sending `{response}` to {remote}");
+        log::debug!(target: NAME, "Sending `{response}` to {remote}");
         self.actions
             .push_back(ServiceCommand::Send(remote, response));
     }

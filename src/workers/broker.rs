@@ -148,6 +148,7 @@ where
                         },
                         Err(err) => {
                             log::error!(target: Self::NAME, "Error receiving RPC message: {err}");
+                            panic!("RPC channel is broken.")
                         }
                     }
                 },
@@ -159,6 +160,7 @@ where
                         },
                         Err(err) => {
                             log::error!(target: Self::NAME, "Error receiving reader message: {err}");
+                            panic!("Reader channel is broken.")
                         }
                     }
                 }

@@ -26,11 +26,12 @@ use std::net::TcpStream;
 use std::process::exit;
 
 use amplify::confinement::TinyBlob;
+use bpstd::Network;
 use netservices::client::{
     Client, ClientCommand, ClientDelegate, ConnectionDelegate, OnDisconnect,
 };
 use netservices::{Frame, ImpossibleResource, NetSession, NetTransport};
-use rgbrpc::{RemoteAddr, RgbRpcReq, RgbRpcResp, Session};
+use rgbrpc::{AgentInfo, RemoteAddr, RgbRpcReq, RgbRpcResp, Session};
 
 pub struct Delegate {
     cb: fn(RgbRpcResp),
@@ -41,9 +42,11 @@ pub struct RgbClient {
 }
 
 impl RgbClient {
-    pub fn new(remote: RemoteAddr, cb: fn(RgbRpcResp)) -> io::Result<Self> {
+    pub fn new(remote: RemoteAddr, network: Network, cb: fn(RgbRpcResp)) -> io::Result<Self> {
         let delegate = Delegate { cb };
         let inner = Client::new::<_, Session, _>(delegate, remote)?;
+        let info = AgentInfo::new(network, "RGBNodeCLI", 0, 12, 0);
+        inner.send(RgbRpcReq::Hello(info))?;
         Ok(Self { inner })
     }
 

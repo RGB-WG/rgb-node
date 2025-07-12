@@ -2,12 +2,12 @@
 using namespace System.Management.Automation
 using namespace System.Management.Automation.Language
 
-Register-ArgumentCompleter -Native -CommandName 'bp-cli' -ScriptBlock {
+Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 
     $commandElements = $commandAst.CommandElements
     $command = @(
-        'bp-cli'
+        'rgb-cli'
         for ($i = 1; $i -lt $commandElements.Count; $i++) {
             $element = $commandElements[$i]
             if ($element -isnot [StringConstantExpressionAst] -or
@@ -20,7 +20,7 @@ Register-ArgumentCompleter -Native -CommandName 'bp-cli' -ScriptBlock {
     }) -join ';'
 
     $completions = @(switch ($command) {
-        'bp-cli' {
+        'rgb-cli' {
             [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('-r', '-r', [CompletionResultType]::ParameterName, 'Remote address of the RGB node to connect to')
@@ -37,7 +37,7 @@ Register-ArgumentCompleter -Native -CommandName 'bp-cli' -ScriptBlock {
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
             break
         }
-        'bp-cli;status' {
+        'rgb-cli;status' {
             [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'Set a verbosity level')
@@ -46,7 +46,7 @@ Register-ArgumentCompleter -Native -CommandName 'bp-cli' -ScriptBlock {
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             break
         }
-        'bp-cli;wallets' {
+        'rgb-cli;wallets' {
             [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'Set a verbosity level')
@@ -55,7 +55,7 @@ Register-ArgumentCompleter -Native -CommandName 'bp-cli' -ScriptBlock {
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             break
         }
-        'bp-cli;contracts' {
+        'rgb-cli;contracts' {
             [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'Set a verbosity level')
@@ -64,23 +64,23 @@ Register-ArgumentCompleter -Native -CommandName 'bp-cli' -ScriptBlock {
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             break
         }
-        'bp-cli;help' {
+        'rgb-cli;help' {
             [CompletionResult]::new('status', 'status', [CompletionResultType]::ParameterValue, 'Get RGB node status information')
             [CompletionResult]::new('wallets', 'wallets', [CompletionResultType]::ParameterValue, 'List wallets known to the RGB node')
             [CompletionResult]::new('contracts', 'contracts', [CompletionResultType]::ParameterValue, 'List contracts known to the RGB node')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
             break
         }
-        'bp-cli;help;status' {
+        'rgb-cli;help;status' {
             break
         }
-        'bp-cli;help;wallets' {
+        'rgb-cli;help;wallets' {
             break
         }
-        'bp-cli;help;contracts' {
+        'rgb-cli;help;contracts' {
             break
         }
-        'bp-cli;help;help' {
+        'rgb-cli;help;help' {
             break
         }
     })

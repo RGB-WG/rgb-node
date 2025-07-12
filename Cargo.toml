@@ -28,14 +28,15 @@ io-reactor = "0.6.0"
 cyphernet = { version = "0.5.2", features = ["tor", "dns", "ed25519", "p2p-ed25519"] }
 microservices = { version = "0.12.0" }
 netservices = { version = "0.12.0-beta.1", features = ["eidolon", "reactor"] }
+indexmap = "2.10.0"
 crossbeam-channel = "0.5.15"
 native_db = "0.8.2"
 native_model = "0.4.20"
 
 serde = { version = "1", features = ["derive"] }
+serde_cbor_2 = "0.13.0"
 serde_yaml = "0.9.34"
 toml = "0.9.2"
-ciborium = "0.2.2"
 
 clap = { version = "4.4.8", features = ["derive", "env"] }
 clap_complete = "4.5.7"
@@ -80,6 +81,7 @@ native_db.workspace = true
 native_model.workspace = true
 async-channel = { version = "2.3.1", optional = true }
 serde.workspace = true
+serde_cbor_2.workspace = true
 toml = { workspace = true, optional = true }
 log.workspace = true
 loglevel.workspace = true

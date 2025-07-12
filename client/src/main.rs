@@ -48,7 +48,7 @@ fn main() -> Result<(), ExecError> {
     LogLevel::from_verbosity_flag_count(args.verbose).apply();
     trace!("Command-line arguments: {:#?}", &args);
 
-    let client = RgbClient::new(args.remote, cb)?;
+    let client = RgbClient::new(args.remote, args.network, cb)?;
 
     args.command.exec(client)
 }
@@ -60,12 +60,18 @@ fn cb(reply: RgbRpcResp) {
         }
         RgbRpcResp::Message(msg) => {
             println!("Message from RGB Node: {msg}");
+            return;
         }
-        RgbRpcResp::Pong(_noise) => {}
+        RgbRpcResp::Pong(_noise) => {
+            return;
+        }
         RgbRpcResp::Status(status) => {
             println!("{}", serde_yaml::to_string(&status).unwrap());
         }
         RgbRpcResp::Contracts(contracts) => {
+            if contracts.is_empty() {
+                println!("No contracts found");
+            }
             for contract in contracts {
                 println!("---");
                 println!("{}", serde_yaml::to_string(&contract).expect("Unable to generate YAML"));
@@ -78,6 +84,9 @@ fn cb(reply: RgbRpcResp) {
         RgbRpcResp::Wallets(wallets) => {
             println!("Wallets:");
             println!("Id\tName\tDescriptor class");
+            if wallets.is_empty() {
+                println!("No wallets found");
+            }
             for wallet in wallets {
                 println!("{}\t{}\t{}", wallet.id, wallet.name, wallet.descriptor.class())
             }

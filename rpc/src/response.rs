@@ -20,7 +20,7 @@
 // the License.
 
 use std::collections::BTreeMap;
-use std::io::{ErrorKind, Read, Write};
+use std::io::{Cursor, Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
 use bpstd::DescrId;
@@ -33,7 +33,8 @@ use rgbp::descriptors::RgbDescr;
 use sonicapi::{CellAddr, CodexId, ContractId, Opid, StateAtom};
 use strict_types::StrictVal;
 
-use crate::{CiboriumError, Failure, Status};
+use crate::frame::CborFrame;
+use crate::{Failure, Status};
 
 #[derive(Clone, Debug, Display)]
 #[derive(Serialize, Deserialize)]
@@ -89,19 +90,22 @@ pub enum RgbRpcResp {
 }
 
 impl Frame for RgbRpcResp {
-    type Error = CiboriumError;
+    type Error = serde_cbor_2::Error;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {
-        match ciborium::from_reader(reader) {
-            Ok(msg) => Ok(Some(msg)),
-            Err(ciborium::de::Error::Io(e)) if e.kind() == ErrorKind::UnexpectedEof => Ok(None),
-            Err(e) => Err(CiboriumError::from(e)),
-        }
+        let Some(frame) = CborFrame::unmarshall(reader)? else {
+            return Ok(None);
+        };
+        let cursor = Cursor::new(frame.0);
+        serde_cbor_2::from_reader(cursor).map(Some)
     }
 
     fn marshall(&self, writer: impl Write) -> Result<(), Self::Error> {
-        ciborium::into_writer(self, writer)?;
-        Ok(())
+        let mut buf = Vec::with_capacity(4096);
+        serde_cbor_2::to_writer(&mut buf, self)?;
+        CborFrame(buf)
+            .marshall(writer)
+            .map_err(serde_cbor_2::Error::from)
     }
 }
 
@@ -133,7 +137,7 @@ mod tests {
     fn serialization() {
         let mut buf = Vec::new();
         RgbRpcResp::Message(s!("Test")).marshall(&mut buf).unwrap();
-        assert_eq!(buf, *b"\xA1\x67Message\x64Test");
+        assert_eq!(buf, *b"\0\0\0\x0e\xA1\x67Message\x64Test");
         let deser = RgbRpcResp::unmarshall(&mut buf.as_slice())
             .unwrap()
             .unwrap();
@@ -144,7 +148,7 @@ mod tests {
     fn stream_serialization() {
         let mut buf = Vec::new();
         RgbRpcResp::Message(s!("Test")).marshall(&mut buf).unwrap();
-        assert_eq!(buf, *b"\xA1\x67Message\x64Test");
+        assert_eq!(buf, *b"\0\0\0\x0e\xA1\x67Message\x64Test");
         let mut cursor = Cursor::new(&mut buf);
         let deser = RgbRpcResp::unmarshall(&mut cursor).unwrap().unwrap();
         assert!(matches!(deser, RgbRpcResp::Message(m) if m == "Test"));
