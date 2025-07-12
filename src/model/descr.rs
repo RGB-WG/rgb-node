@@ -19,7 +19,9 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use bpstd::DescrId;
+use std::collections::BTreeMap;
+
+use bpstd::{DescrId, Keychain, NormalIndex};
 use native_db::ToKey;
 use native_model::Model;
 use rgbp::descriptors::RgbDescr;
@@ -32,8 +34,16 @@ pub struct DescrModel {
     #[primary_key]
     pub id: u64,
     pub descriptor: RgbDescr,
+    pub next_index: BTreeMap<Keychain, NormalIndex>,
 }
 
 impl DescrModel {
     pub fn descr_id(&self) -> DescrId { DescrId(self.id) }
+
+    pub fn next_index(&self, keychain: impl Into<Keychain>) -> NormalIndex {
+        self.next_index
+            .get(&keychain.into())
+            .copied()
+            .unwrap_or_default()
+    }
 }

@@ -26,7 +26,7 @@ use std::rc::Rc;
 use std::sync::LazyLock;
 
 use bpstd::psbt::Utxo;
-use bpstd::{DescrId, Keychain, NormalIndex, Outpoint, Sats, Terminal, XpubDerivable};
+use bpstd::{DescrId, Idx, Keychain, NormalIndex, Outpoint, Sats, Terminal, XpubDerivable};
 use native_db::transaction::{RTransaction, RwTransaction};
 use native_db::{Builder, Database, Models, db_type};
 use rgbp::descriptors::RgbDescr;
@@ -129,6 +129,15 @@ impl DbUtxos {
         })
     }
 
+    fn descr(&self) -> DescrModel {
+        self.with_reader(|tx| {
+            Ok(tx
+                .get()
+                .primary::<DescrModel>(self.id.0)?
+                .expect("descriptor not found"))
+        })
+    }
+
     pub fn utxos(&self) -> HashSet<Utxo> { self.all().collect() }
 }
 
@@ -194,9 +203,26 @@ impl UtxoSet for DbUtxos {
 
     fn outpoints(&self) -> impl Iterator<Item = Outpoint> { self.all().map(|utxo| utxo.outpoint) }
 
-    fn next_index_noshift(&self, keychain: impl Into<Keychain>) -> NormalIndex { todo!() }
+    fn next_index_noshift(&self, keychain: impl Into<Keychain>) -> NormalIndex {
+        self.descr().next_index(keychain)
+    }
 
-    fn next_index(&mut self, keychain: impl Into<Keychain>, _shift: bool) -> NormalIndex { todo!() }
+    fn next_index(&mut self, keychain: impl Into<Keychain>, shift: bool) -> NormalIndex {
+        let keychain = keychain.into();
+        let mut descr = self.descr();
+        let next_index = descr.next_index(keychain);
+        if shift {
+            descr
+                .next_index
+                .entry(keychain)
+                .and_modify(|i| *i = next_index.saturating_inc());
+            self.with_writer(|tx| {
+                tx.upsert(descr)?;
+                Ok(())
+            });
+        }
+        next_index
+    }
 }
 
 // We send it only once on `WriterService` construction, and then use it from a single thread
