@@ -34,7 +34,7 @@ pub mod cli {
     include!("src/args.rs");
 }
 
-fn main() -> Result<(), configure_me_codegen::Error> {
+fn main() -> Result<(), clap::Error> {
     let outdir = "../shell";
 
     fs::create_dir_all(outdir).expect("failed to create shell dir");
@@ -46,6 +46,5 @@ fn main() -> Result<(), configure_me_codegen::Error> {
         generate_to(Zsh, app, &name, outdir)?;
     }
 
-    // configure_me_codegen::build_script_auto()
     Ok(())
 }

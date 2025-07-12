@@ -52,6 +52,8 @@ pub struct Dispatcher {
 }
 
 impl Dispatcher {
+    const WELCOME: &'static str = "Welcome to RGB Node v0.12.0-alpha.1";
+
     pub fn new(network: Network, broker: Sender<(ReqId, RgbRpcReq)>) -> Self {
         Self {
             network,
@@ -128,7 +130,19 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
         client.last_seen = Timestamp::now().as_millis();
 
         match req {
-            // TODO: Check that networks match
+            RgbRpcReq::Hello(network) if self.network != network => {
+                self.send_response(
+                    remote,
+                    RgbRpcResp::Failure(Failure::internal_error(&format!(
+                        "Network mismatch, node operates on {}",
+                        self.network
+                    ))),
+                );
+                self.actions.push_back(ServiceCommand::Disconnect(remote));
+            }
+            RgbRpcReq::Hello(_) => {
+                self.send_response(remote, RgbRpcResp::Message(Self::WELCOME.to_owned()));
+            }
             RgbRpcReq::Ping(noise) => self.send_response(remote, RgbRpcResp::Pong(noise)),
             RgbRpcReq::Status => self.send_response(
                 remote,

@@ -110,7 +110,7 @@ impl DbUtxos {
         f(tx).expect("database read operation has failed")
     }
 
-    fn with_writer(&mut self, mut f: impl FnOnce(&RwTransaction) -> Result<(), db_type::Error>) {
+    fn with_writer(&mut self, f: impl FnOnce(&RwTransaction) -> Result<(), db_type::Error>) {
         let borrow = self.db.borrow_mut();
         let tx = borrow
             .rw_transaction()

@@ -68,13 +68,13 @@ where
         // TODO: Use real resolver
         let resolver = MultiResolver::new_absent().unwrap_or_else(|err| {
             log::error!(target: Self::NAME, "Unable to connect to the resolver. {err}");
-            panic!("Unable to connect to the resolver due to {err}");
+            panic!("Unable to connect to the resolver. {err}");
         });
 
         log::info!(target: Self::NAME, "Loading wallets from database");
         let holder = DbHolder::load(db_path).unwrap_or_else(|err| {
             log::error!(target: Self::NAME, "Unable to load database. {err}");
-            panic!("Unable to load database due to {err}");
+            panic!("Unable to load database. {err}");
         });
         let owner = Owner::with_components(network, holder, resolver);
 

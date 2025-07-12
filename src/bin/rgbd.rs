@@ -21,6 +21,8 @@
 
 #[macro_use]
 extern crate clap;
+#[macro_use]
+extern crate serde;
 
 mod opts;
 
@@ -52,8 +54,7 @@ impl Termination for Status {
 }
 
 fn main() -> Status {
-    let mut opts = Opts::parse();
-    opts.process();
+    let opts = Opts::parse();
     LogLevel::from_verbosity_flag_count(opts.verbose).apply();
     log::debug!("Command-line arguments: {:#?}", &opts);
 
@@ -80,9 +81,10 @@ fn main() -> Status {
                 conf.network.is_testnet(),
             )
             .unwrap_or_else(|err| {
-                eprintln!("Can't load stockpile from '{}' {err}", data_dir.display());
+                eprintln!("Cannot load stockpile from '{}'. {err}", data_dir.display());
                 exit(5);
             });
+            println!("RGB Node, version 0.12.0-alpha.1");
             let status = Broker::run_standalone(conf, stockpile);
             Status(status)
         }

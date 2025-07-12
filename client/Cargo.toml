@@ -36,7 +36,6 @@ amplify.workspace = true
 clap.workspace = true
 clap_complete.workspace = true
 rgb-rpc = { version = "0.12.0-alpha.1", path = "../rpc" }
-configure_me_codegen.workspace = true
 
 [features]
 default = ["cli"]

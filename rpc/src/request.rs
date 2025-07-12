@@ -22,6 +22,7 @@
 use std::io::{Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
+use bpstd::Network;
 use netservices::Frame;
 use sonicapi::{CodexId, ContractId};
 
@@ -31,6 +32,9 @@ use crate::CiboriumError;
 #[display(UPPERCASE)]
 #[derive(Serialize, Deserialize)]
 pub enum RgbRpcReq {
+    #[display("HELLO({0})")]
+    Hello(Network),
+
     #[display("PING")]
     Ping(TinyBlob),
 

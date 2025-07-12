@@ -29,6 +29,7 @@ use bpstd::Network;
 /// command-line options.
 /// For security reasons a node key is kept separately.
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[derive(Serialize, Deserialize)]
 #[display(Debug)]
 pub struct Config {
     /// Data location
@@ -38,13 +39,4 @@ pub struct Config {
 
     #[cfg(not(feature = "embedded"))]
     pub rpc: Vec<SocketAddr>,
-}
-
-impl Config {
-    pub fn data_dir(&self) -> PathBuf {
-        let data_dir = self.data_dir.to_str().expect("Invalid data dir");
-        #[cfg(not(feature = "embedded"))]
-        let data_dir = shellexpand::full(&data_dir).expect("Invalid data dir");
-        PathBuf::from(data_dir.to_string()).join(self.network.to_string())
-    }
 }

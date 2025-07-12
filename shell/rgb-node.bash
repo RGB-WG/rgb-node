@@ -35,7 +35,7 @@ _rgb-node() {
 
     case "${cmd}" in
         rgb__node)
-            opts="-v -d -n -l -h -V --verbose --data-dir --network --no-network-prefix --listen --help --version init help"
+            opts="-v -d -c -n -l -h -V --verbose --data-dir --config --network --listen --help --version init help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -49,6 +49,20 @@ _rgb-node() {
                     return 0
                     ;;
                 -d)
+                    COMPREPLY=()
+                    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+                        compopt -o plusdirs
+                    fi
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=()
+                    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+                        compopt -o plusdirs
+                    fi
+                    return 0
+                    ;;
+                -c)
                     COMPREPLY=()
                     if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
                         compopt -o plusdirs
@@ -121,7 +135,7 @@ _rgb-node() {
             return 0
             ;;
         rgb__node__init)
-            opts="-v -d -n -h --verbose --data-dir --network --no-network-prefix --help"
+            opts="-v -d -c -n -h --verbose --data-dir --config --network --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -135,6 +149,20 @@ _rgb-node() {
                     return 0
                     ;;
                 -d)
+                    COMPREPLY=()
+                    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+                        compopt -o plusdirs
+                    fi
+                    return 0
+                    ;;
+                --config)
+                    COMPREPLY=()
+                    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+                        compopt -o plusdirs
+                    fi
+                    return 0
+                    ;;
+                -c)
                     COMPREPLY=()
                     if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
                         compopt -o plusdirs

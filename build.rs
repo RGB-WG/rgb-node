@@ -27,6 +27,8 @@ compile_error!("Either `embedded` or `server` feature must be used");
 #[cfg(feature = "server")]
 #[macro_use]
 extern crate amplify;
+#[macro_use]
+extern crate serde;
 #[cfg(feature = "server")]
 #[macro_use]
 extern crate clap;
@@ -42,7 +44,7 @@ pub mod rgbnode {
 }
 
 #[cfg(feature = "server")]
-fn main() -> Result<(), configure_me_codegen::Error> {
+fn main() -> Result<(), clap::Error> {
     use std::fs;
 
     use clap::CommandFactory;
@@ -60,7 +62,6 @@ fn main() -> Result<(), configure_me_codegen::Error> {
         generate_to(Zsh, app, &name, outdir)?;
     }
 
-    // configure_me_codegen::build_script_auto()
     Ok(())
 }
 

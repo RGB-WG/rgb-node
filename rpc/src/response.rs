@@ -37,6 +37,9 @@ use crate::{CiboriumError, Failure, Status};
 #[derive(Clone, Debug, Display)]
 #[derive(Serialize, Deserialize)]
 pub enum RgbRpcResp {
+    #[display("MESSAGE({0})")]
+    Message(String),
+
     #[display("FAILURE({0})")]
     Failure(Failure),
 
