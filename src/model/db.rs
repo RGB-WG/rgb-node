@@ -34,11 +34,11 @@ use rgbp::descriptors::RgbDescr;
 use rgbp::{Holder, MultiHolder, OwnerProvider, UtxoSet};
 
 use crate::model::utxo::UtxoModelKey;
-use crate::model::{DescrModel, OutpointModel, UtxoModel};
+use crate::model::{OutpointModel, UtxoModel, WalletModel};
 
 static MODELS: LazyLock<Models> = LazyLock::new(|| {
     let mut models = Models::new();
-    models.define::<DescrModel>().unwrap();
+    models.define::<WalletModel>().unwrap();
     models.define::<UtxoModel>().unwrap();
     models
 });
@@ -73,16 +73,18 @@ impl DbHolder {
         {
             let borrow = db.borrow();
             let r = borrow.r_transaction()?;
-            for descr in r.scan().primary::<DescrModel>()?.all()? {
-                let descr = descr?;
-                let db_utxo = DbUtxos { id: descr.descr_id(), db: db.clone() };
-                let descr_id = descr.descr_id();
-                let holder = Holder::with_components(descr.descriptor, db_utxo);
+            for model in r.scan().primary::<WalletModel>()?.all()? {
+                let model = model?;
+                let descr_id = model.descr_id();
+                let db_utxo = DbUtxos { id: descr_id, name: model.name, db: db.clone() };
+                let holder = Holder::with_components(model.descriptor, db_utxo);
                 inner.upsert(descr_id, holder)
             }
         }
         Ok(Self { inner, db })
     }
+
+    pub fn name(&self) -> String { self.inner.current().utxos().name() }
 }
 
 impl OwnerProvider for DbHolder {
@@ -100,6 +102,7 @@ impl OwnerProvider for DbHolder {
 
 pub struct DbUtxos {
     id: DescrId,
+    name: String,
     db: Rc<RefCell<Database<'static>>>,
 }
 
@@ -137,15 +140,16 @@ impl DbUtxos {
         })
     }
 
-    fn descr(&self) -> DescrModel {
+    fn model(&self) -> WalletModel {
         self.with_reader(|tx| {
             Ok(tx
                 .get()
-                .primary::<DescrModel>(self.id.0)?
+                .primary::<WalletModel>(self.id.0)?
                 .expect("descriptor not found"))
         })
     }
 
+    pub fn name(&self) -> String { self.name.clone() }
     pub fn utxos(&self) -> HashSet<Utxo> { self.all().collect() }
 }
 
@@ -212,12 +216,12 @@ impl UtxoSet for DbUtxos {
     fn outpoints(&self) -> impl Iterator<Item = Outpoint> { self.all().map(|utxo| utxo.outpoint) }
 
     fn next_index_noshift(&self, keychain: impl Into<Keychain>) -> NormalIndex {
-        self.descr().next_index(keychain)
+        self.model().next_index(keychain)
     }
 
     fn next_index(&mut self, keychain: impl Into<Keychain>, shift: bool) -> NormalIndex {
         let keychain = keychain.into();
-        let mut descr = self.descr();
+        let mut descr = self.model();
         let next_index = descr.next_index(keychain);
         if shift {
             descr

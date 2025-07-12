@@ -30,14 +30,15 @@ use rgbp::descriptors::RgbDescr;
 #[derive(Serialize, Deserialize)]
 #[native_model(id = 1, version = 1)]
 #[native_db]
-pub struct DescrModel {
+pub struct WalletModel {
     #[primary_key]
     pub id: u64,
+    pub name: String,
     pub descriptor: RgbDescr,
     pub next_index: BTreeMap<Keychain, NormalIndex>,
 }
 
-impl DescrModel {
+impl WalletModel {
     pub fn descr_id(&self) -> DescrId { DescrId(self.id) }
 
     pub fn next_index(&self, keychain: impl Into<Keychain>) -> NormalIndex {

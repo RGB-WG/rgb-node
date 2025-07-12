@@ -20,9 +20,9 @@
 // the License.
 
 mod db;
-mod descr;
+mod wallet;
 mod utxo;
 
 pub use db::{DbHolder, DbUtxos};
-pub use descr::DescrModel;
 pub use utxo::{OutpointModel, UtxoId, UtxoModel};
+pub use wallet::WalletModel;

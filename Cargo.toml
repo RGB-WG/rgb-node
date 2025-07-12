@@ -124,12 +124,12 @@ bp-derive = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptor
 descriptors = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
 psbt = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
 bp-std = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
-bp-esplora = { git = "https://github.com/BP-WG/bp-esplora-client", branch = "master" }
-bp-wallet = { git = "https://github.com/BP-WG/bp-wallet", branch = "persistence" }
 rgb-std = { git = "https://github.com/RGB-WG/rgb-std", branch = "node" }
 rgb-persist-fs = { git = "https://github.com/RGB-WG/rgb-std", branch = "node" }
 rgb-psbt = { git = "https://github.com/RGB-WG/rgb", branch = "node" }
 rgb-runtime = { git = "https://github.com/RGB-WG/rgb", branch = "node" }
 
+#bp-electrum = { git = "https://github.com/BP-WG/bp-electrum-client", branch = "master" }
+#bp-esplora = { git = "https://github.com/BP-WG/bp-esplora-client", branch = "master" }
+#bp-client = { git = "https://github.com/BP-WG/bp-node" }
 bp-rpc = { git = "https://github.com/BP-WG/bp-node" }
-bp-client = { git = "https://github.com/BP-WG/bp-node" }

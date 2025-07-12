@@ -29,8 +29,9 @@ use crossbeam_channel::Sender;
 use microservices::UService;
 use rgb::popls::bp::seals::TxoSeal;
 use rgb::{CellAddr, ContractId, ContractState, ContractStateName};
+use rgbp::ContractInfo;
 use rgbp::descriptors::RgbDescr;
-use rgbrpc::WalletInfo;
+use rgbrpc::{WalletInfo, WalletState};
 use strict_types::StrictVal;
 
 use crate::ReqId;
@@ -38,13 +39,15 @@ use crate::ReqId;
 #[derive(Debug)]
 pub enum Request2Reader {
     // These are requests from the broker
+    ListContracts(ReqId),
     ReadContract(ReqId, ContractId),
+    ListWallets(ReqId),
     ReadWallet(ReqId, DescrId),
 
     // These are requests from the writer
     UpsertWallet(DescrId, RoWallet),
     RemoveWallet(DescrId),
-    UpsertContract(ContractId, ContractState<TxoSeal>),
+    UpsertContract(ContractId, RoContract),
     RemoveContract(ContractId),
 }
 
@@ -58,32 +61,53 @@ impl Reader2Broker {
 
 #[derive(Debug)]
 pub enum ReaderMsg {
+    Contracts(Vec<ContractInfo>),
     ContractState(ContractId, ContractState<TxoSeal>),
     ContractNotFound(ContractId),
 
-    WalletInfo(DescrId, WalletInfo),
+    Wallets(Vec<WalletInfo>),
+    WalletState(DescrId, WalletState),
     WalletNotFount(DescrId),
 }
 
 #[derive(Clone, Debug)]
 pub struct RoWallet {
-    pub utxos: HashSet<Utxo>,
+    pub id: DescrId,
+    pub name: String,
     pub descriptor: RgbDescr,
+    pub utxos: HashSet<Utxo>,
+}
+
+impl RoWallet {
+    pub fn info(&self) -> WalletInfo {
+        WalletInfo {
+            id: self.id,
+            name: self.name.clone(),
+            descriptor: self.descriptor.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct RoContract {
+    pub id: ContractId,
+    pub info: ContractInfo,
+    pub state: ContractState<TxoSeal>,
 }
 
 #[derive(Debug)]
 pub struct ReaderService {
-    state: HashMap<ContractId, ContractState<TxoSeal>>,
+    contracts: HashMap<ContractId, RoContract>,
     wallets: HashMap<DescrId, RoWallet>,
     broker: Sender<Reader2Broker>,
 }
 
 impl ReaderService {
     pub fn new(broker: Sender<Reader2Broker>) -> Self {
-        Self { state: none!(), wallets: none!(), broker }
+        Self { contracts: none!(), wallets: none!(), broker }
     }
 
-    pub fn wallet_info(&self, wallet_id: DescrId) -> Option<WalletInfo> {
+    pub fn wallet_info(&self, wallet_id: DescrId) -> Option<WalletState> {
         let wallet = self.wallets.get(&wallet_id)?;
 
         let mut immutable = bmap! {};
@@ -95,7 +119,8 @@ impl ReaderService {
                 .collect();
         let mut aggregated = bmap! {};
         let mut confirmations = bmap! {};
-        for (contract_id, state) in &self.state {
+        for (contract_id, contract) in &self.contracts {
+            let state = &contract.state;
             for (state_name, state) in &state.immutable {
                 let contract_state_name = ContractStateName::new(*contract_id, state_name.clone());
                 let mut immutable_state = bmap! {};
@@ -127,8 +152,8 @@ impl ReaderService {
                 aggregated.insert(contract_state_name, state.clone());
             }
         }
-        Some(WalletInfo {
-            descriptor: wallet.descriptor.clone(),
+        Some(WalletState {
+            info: wallet.info(),
             immutable,
             owned,
             aggregated,
@@ -136,14 +161,14 @@ impl ReaderService {
         })
     }
 
-    pub fn send_to_broker(&self, req_id: ReqId, reply: Reader2Broker) {
+    pub fn send_to_broker(&self, reply: Reader2Broker) {
+        let req_id = reply.req_id();
         if let Err(err) = self.broker.try_send(reply) {
             log::error!(target: Self::NAME, "Failed to send reply {req_id}: {err}");
         }
     }
 }
 
-// TODO: Make it reactor to process non-blocking replies to the Broker
 impl UService for ReaderService {
     type Msg = Request2Reader;
     type Error = Infallible;
@@ -151,39 +176,53 @@ impl UService for ReaderService {
 
     fn process(&mut self, msg: Self::Msg) -> Result<ControlFlow<u8>, Self::Error> {
         match msg {
+            Request2Reader::ListContracts(req_id) => {
+                log::trace!(target: Self::NAME, "Listing all contracts");
+                let contracts = self
+                    .contracts
+                    .values()
+                    .map(|contract| contract.info.clone())
+                    .collect();
+                self.send_to_broker(Reader2Broker(req_id, ReaderMsg::Contracts(contracts)));
+            }
             Request2Reader::ReadContract(req_id, id) => {
                 log::trace!(target: Self::NAME, "Sending state for contract {id}");
-                let state = self
-                    .state
+                let reply = self
+                    .contracts
                     .get(&id)
-                    .cloned()
-                    .map(|state| ReaderMsg::ContractState(id, state))
+                    .map(|contract| ReaderMsg::ContractState(id, contract.state.clone()))
                     .unwrap_or_else(|| {
                         log::trace!(target: Self::NAME, "State for contract {id} is not known");
                         ReaderMsg::ContractNotFound(id)
                     });
-                self.send_to_broker(req_id, Reader2Broker(req_id, state));
+                self.send_to_broker(Reader2Broker(req_id, reply));
+            }
+            Request2Reader::UpsertContract(id, contract) => {
+                log::debug!(target: Self::NAME, "Received update for contract {id}");
+                self.contracts.insert(id, contract);
+            }
+            Request2Reader::RemoveContract(id) => {
+                log::debug!(target: Self::NAME, "Received request to remove contract {id}");
+                if self.contracts.remove(&id).is_none() {
+                    log::warn!(target: Self::NAME, "Contract {id} is not known");
+                }
+            }
+
+            Request2Reader::ListWallets(req_id) => {
+                log::trace!(target: Self::NAME, "Listing all wallets");
+                let wallets = self.wallets.values().map(RoWallet::info).collect();
+                self.send_to_broker(Reader2Broker(req_id, ReaderMsg::Wallets(wallets)));
             }
             Request2Reader::ReadWallet(req_id, id) => {
                 log::trace!(target: Self::NAME, "Sending state for wallet {id}");
                 let state = self
                     .wallet_info(id)
-                    .map(|info| ReaderMsg::WalletInfo(id, info))
+                    .map(|info| ReaderMsg::WalletState(id, info))
                     .unwrap_or_else(|| {
                         log::trace!(target: Self::NAME, "State for wallet {id} is not known");
                         ReaderMsg::WalletNotFount(id)
                     });
-                self.send_to_broker(req_id, Reader2Broker(req_id, state));
-            }
-            Request2Reader::UpsertContract(id, state) => {
-                log::debug!(target: Self::NAME, "Received update for contract {id}");
-                self.state.insert(id, state);
-            }
-            Request2Reader::RemoveContract(id) => {
-                log::debug!(target: Self::NAME, "Received request to remove contract {id}");
-                if self.state.remove(&id).is_none() {
-                    log::warn!(target: Self::NAME, "Contract {id} is not known");
-                }
+                self.send_to_broker(Reader2Broker(req_id, state));
             }
             Request2Reader::UpsertWallet(id, wallet) => {
                 log::debug!(target: Self::NAME, "Received update for wallet {id}");

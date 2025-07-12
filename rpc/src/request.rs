@@ -22,13 +22,14 @@
 use std::io::{Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
-use bpstd::Network;
+use bpstd::{DescrId, Network};
 use netservices::Frame;
+use rgbp::descriptors::RgbDescr;
 use sonicapi::{CodexId, ContractId};
 
 use crate::CiboriumError;
 
-#[derive(Clone, Eq, PartialEq, Debug, Display)]
+#[derive(Clone, Debug, Display)]
 #[display(UPPERCASE)]
 #[derive(Serialize, Deserialize)]
 pub enum RgbRpcReq {
@@ -40,6 +41,17 @@ pub enum RgbRpcReq {
 
     Status,
 
+    Wallets,
+
+    #[display("WALLET({0})")]
+    Wallet(DescrId),
+
+    #[display("CREATE({0})")]
+    Create(RgbDescr),
+
+    #[display("DELETE({0})")]
+    Delete(DescrId),
+
     Issuers,
 
     Contracts,
@@ -50,8 +62,8 @@ pub enum RgbRpcReq {
     #[display("ARTICLES({0})")]
     Articles(ContractId),
 
-    #[display("STATE({0})")]
-    State(ContractId),
+    #[display("CONTRACT({0})")]
+    Contract(ContractId),
 
     #[display("CONSIGN({0}, ...)")]
     Consign(u64, ContractId),

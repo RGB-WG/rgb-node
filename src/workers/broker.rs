@@ -170,18 +170,17 @@ where
     fn proc_rpc_msg(&mut self, req_id: ReqId, msg: RgbRpcReq) -> io::Result<()> {
         log::debug!("Received an RPC message: {msg}");
         match msg {
-            RgbRpcReq::State(contract_id) => {
-                if let Err(err) = self
-                    .reader_thread
-                    .sender()
-                    .try_send(Request2Reader::ReadContract(req_id, contract_id))
-                {
-                    log::error!("Unable to send a request to the reader thread: {err}");
-                    self.send_rpc_resp(
-                        req_id,
-                        RgbRpcResp::Failure(Failure::not_found(contract_id)),
-                    );
-                }
+            RgbRpcReq::Wallets => {
+                self.send_reader_req(req_id, Request2Reader::ListWallets(req_id));
+            }
+            RgbRpcReq::Wallet(wallet_id) => {
+                self.send_reader_req(req_id, Request2Reader::ReadWallet(req_id, wallet_id));
+            }
+            RgbRpcReq::Contracts => {
+                self.send_reader_req(req_id, Request2Reader::ListContracts(req_id));
+            }
+            RgbRpcReq::Contract(contract_id) => {
+                self.send_reader_req(req_id, Request2Reader::ReadContract(req_id, contract_id));
             }
             _ => todo!(),
         }
@@ -190,21 +189,38 @@ where
 
     fn proc_reader_msg(&mut self, resp: Reader2Broker) -> io::Result<()> {
         log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
-        match (resp.req_id(), resp.into_reply()) {
-            (req_id, ReaderMsg::ContractState(contract_id, state)) => {
+        let req_id = resp.req_id();
+        match resp.into_reply() {
+            ReaderMsg::Contracts(contracts) => {
+                self.send_rpc_resp(req_id, RgbRpcResp::Contracts(contracts));
+            }
+            ReaderMsg::ContractState(contract_id, state) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::ContractState(contract_id, state));
             }
-            (req_id, ReaderMsg::ContractNotFound(id)) => {
+            ReaderMsg::ContractNotFound(id) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));
             }
-            (req_id, ReaderMsg::WalletInfo(wallet_id, info)) => {
-                self.send_rpc_resp(req_id, RgbRpcResp::WalletState(wallet_id, info));
+            ReaderMsg::Wallets(wallets) => {
+                self.send_rpc_resp(req_id, RgbRpcResp::Wallets(wallets));
             }
-            (req_id, ReaderMsg::WalletNotFount(id)) => {
+            ReaderMsg::WalletState(wallet_id, state) => {
+                self.send_rpc_resp(req_id, RgbRpcResp::WalletState(wallet_id, state));
+            }
+            ReaderMsg::WalletNotFount(id) => {
                 self.send_rpc_resp(req_id, RgbRpcResp::Failure(Failure::not_found(id)));
             }
         }
         Ok(())
+    }
+
+    fn send_reader_req(&mut self, req_id: ReqId, req: Request2Reader) {
+        if let Err(err) = self.reader_thread.sender().try_send(req) {
+            log::error!("Unable to send a request to the reader thread: {err}");
+            self.send_rpc_resp(
+                req_id,
+                RgbRpcResp::Failure(Failure::internal_error("broken reader service")),
+            );
+        }
     }
 
     fn send_rpc_resp(&mut self, req_id: ReqId, response: RgbRpcResp) {

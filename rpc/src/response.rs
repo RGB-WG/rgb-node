@@ -22,12 +22,13 @@
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
 
-use amplify::confinement::{MediumOrdSet, SmallBlob, SmallOrdSet, TinyBlob};
+use amplify::confinement::{SmallBlob, TinyBlob};
 use bpstd::DescrId;
 use bpstd::psbt::Utxo;
 use bpstd::seals::TxoSeal;
 use netservices::Frame;
 use rgb::{ContractState, ContractStateName, WitnessStatus};
+use rgbp::ContractInfo;
 use rgbp::descriptors::RgbDescr;
 use sonicapi::{CellAddr, CodexId, ContractId, Opid, StateAtom};
 use strict_types::StrictVal;
@@ -49,11 +50,14 @@ pub enum RgbRpcResp {
     #[display("STATUS")]
     Status(Status),
 
-    #[display("ISSUERS(...)")]
-    Issuers(SmallOrdSet<CodexId>),
+    #[display("STATUS")]
+    Wallets(Vec<WalletInfo>),
 
-    #[display("CONTRACTS(...)")]
-    Contracts(MediumOrdSet<ContractId>),
+    #[display("WALLET_STATE({0}, ...)")]
+    WalletState(DescrId, WalletState),
+
+    #[display("ISSUERS(...)")]
+    Issuers(Vec<CodexId>),
 
     /*
     #[display("ISSUER(...)")]
@@ -62,11 +66,11 @@ pub enum RgbRpcResp {
     #[display("ARTICLES(...)")]
     Articles(Articles),
      */
+    #[display("CONTRACTS(...)")]
+    Contracts(Vec<ContractInfo>),
+
     #[display("CONTRACT_STATE({0}, ...)")]
     ContractState(ContractId, ContractState<TxoSeal>),
-
-    #[display("WALLET_STATE({0}, ...)")]
-    WalletState(DescrId, WalletInfo),
 
     #[display("CONSIGN_INIT({0})")]
     ConsignInit(u64),
@@ -100,7 +104,15 @@ impl Frame for RgbRpcResp {
 #[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct WalletInfo {
+    pub id: DescrId,
+    pub name: String,
     pub descriptor: RgbDescr,
+}
+
+#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct WalletState {
+    pub info: WalletInfo,
     pub immutable: BTreeMap<ContractStateName, BTreeMap<CellAddr, StateAtom>>,
     pub owned: BTreeMap<Utxo, BTreeMap<ContractStateName, BTreeMap<CellAddr, StrictVal>>>,
     pub aggregated: BTreeMap<ContractStateName, StrictVal>,

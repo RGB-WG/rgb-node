@@ -2811,18 +2811,3 @@ dependencies = [
  "strict_encoding",
  "wasm-bindgen",
 ]
-
-[[patch.unused]]
-name = "bp-client"
-version = "0.12.0-alpha.1"
-source = "git+https://github.com/BP-WG/bp-node#61920aeb8eaf6d8c1ff68d237c1593d23d429fa4"
-
-[[patch.unused]]
-name = "bp-esplora"
-version = "0.12.0-rc.1"
-source = "git+https://github.com/BP-WG/bp-esplora-client?branch=master#8d39c4ac615c0b117a09027e216e3a7dfd321c02"
-
-[[patch.unused]]
-name = "bp-wallet"
-version = "0.12.0-rc.2"
-source = "git+https://github.com/BP-WG/bp-wallet?branch=persistence#42f973eb5597164a13b51253750c60e458e130c2"

@@ -30,10 +30,10 @@ use bpstd::{Network, XpubDerivable};
 use microservices::{USender, UService};
 use rgb::{Contracts, Pile, Stockpile};
 use rgbp::resolvers::MultiResolver;
-use rgbp::{Owner, OwnerProvider, RgbRuntime};
+use rgbp::{ContractInfo, Owner, OwnerProvider, RgbRuntime};
 
 use super::Request2Reader;
-use crate::services::reader::RoWallet;
+use crate::services::reader::{RoContract, RoWallet};
 use crate::{DbHolder, DbUtxos};
 
 pub enum Request2Writer {
@@ -84,9 +84,11 @@ where
         log::info!(target: Self::NAME, "Contracts loaded successfully, sending state to the reader");
         for id in me.runtime.contracts.contract_ids() {
             let state = me.runtime.contracts.contract_state(id);
+            let info = ContractInfo::new(id, &me.runtime.contracts.contract_articles(id));
+            let contract = RoContract { id, state, info };
             log::debug!(target: Self::NAME, "Sending contract state for {id}");
             me.reader
-                .send(Request2Reader::UpsertContract(id, state))
+                .send(Request2Reader::UpsertContract(id, contract))
                 .unwrap_or_else(|err| panic!("Failed to send state for contract {id}: {err}"));
         }
 
@@ -95,8 +97,9 @@ where
         for id in all_wallets {
             me.runtime.wallet.switch(id);
             let descriptor = me.runtime.wallet.descriptor().clone();
+            let name = me.runtime.wallet.name();
             let utxo = me.runtime.wallet.utxos();
-            let wallet = RoWallet { descriptor, utxos: utxo.utxos() };
+            let wallet = RoWallet { id, name, descriptor, utxos: utxo.utxos() };
             log::debug!(target: Self::NAME, "Sending wallet state for {id}");
             me.reader
                 .send(Request2Reader::UpsertWallet(id, wallet))
