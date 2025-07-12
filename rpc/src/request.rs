@@ -19,7 +19,7 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
 use bpstd::{DescrId, Network};
@@ -30,7 +30,6 @@ use sonicapi::{CodexId, ContractId};
 use crate::CiboriumError;
 
 #[derive(Clone, Debug, Display)]
-#[display(UPPERCASE)]
 #[derive(Serialize, Deserialize)]
 pub enum RgbRpcReq {
     #[display("HELLO({0})")]
@@ -39,8 +38,10 @@ pub enum RgbRpcReq {
     #[display("PING")]
     Ping(TinyBlob),
 
+    #[display("STATUS")]
     Status,
 
+    #[display("WALLETS")]
     Wallets,
 
     #[display("WALLET({0})")]
@@ -52,8 +53,10 @@ pub enum RgbRpcReq {
     #[display("DELETE({0})")]
     Delete(DescrId),
 
+    #[display("ISSUERS")]
     Issuers,
 
+    #[display("CONTRACTS")]
     Contracts,
 
     #[display("ISSUER({0})")]
@@ -83,11 +86,43 @@ impl Frame for RgbRpcReq {
     type Error = CiboriumError;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {
-        ciborium::from_reader(reader).map_err(CiboriumError::from)
+        match ciborium::from_reader(reader) {
+            Ok(msg) => Ok(Some(msg)),
+            Err(ciborium::de::Error::Io(e)) if e.kind() == ErrorKind::UnexpectedEof => Ok(None),
+            Err(e) => Err(CiboriumError::from(e)),
+        }
     }
 
     fn marshall(&self, writer: impl Write) -> Result<(), Self::Error> {
         ciborium::into_writer(self, writer)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn serialization() {
+        let mut buf = Vec::new();
+        RgbRpcReq::Wallets.marshall(&mut buf).unwrap();
+        assert_eq!(buf, *b"\x67Wallets");
+        let deser = RgbRpcReq::unmarshall(&mut buf.as_slice()).unwrap().unwrap();
+        assert!(matches!(deser, RgbRpcReq::Wallets));
+    }
+
+    #[test]
+    fn stream_serialization() {
+        let mut buf = Vec::new();
+        RgbRpcReq::Wallets.marshall(&mut buf).unwrap();
+        assert_eq!(buf, *b"\x67Wallets");
+        let mut cursor = Cursor::new(&mut buf);
+        let deser = RgbRpcReq::unmarshall(&mut cursor).unwrap().unwrap();
+        assert!(matches!(deser, RgbRpcReq::Wallets));
+        let nothing = RgbRpcReq::unmarshall(&mut cursor).unwrap();
+        assert!(matches!(nothing, None));
     }
 }

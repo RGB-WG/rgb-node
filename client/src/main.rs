@@ -32,12 +32,15 @@ mod args;
 mod client;
 mod command;
 
+use std::process::exit;
+
+use bpstd::Descriptor;
 use clap::Parser;
 use loglevel::LogLevel;
 use rgbrpc::RgbRpcResp;
 
 pub use crate::args::{Args, Command};
-use crate::client::BpClient;
+use crate::client::RgbClient;
 use crate::command::ExecError;
 
 fn main() -> Result<(), ExecError> {
@@ -45,7 +48,7 @@ fn main() -> Result<(), ExecError> {
     LogLevel::from_verbosity_flag_count(args.verbose).apply();
     trace!("Command-line arguments: {:#?}", &args);
 
-    let client = BpClient::new(args.remote, cb)?;
+    let client = RgbClient::new(args.remote, cb)?;
 
     args.command.exec(client)
 }
@@ -55,13 +58,31 @@ fn cb(reply: RgbRpcResp) {
         RgbRpcResp::Failure(failure) => {
             println!("Failure: {failure}");
         }
+        RgbRpcResp::Message(msg) => {
+            println!("Message from RGB Node: {msg}");
+        }
         RgbRpcResp::Pong(_noise) => {}
         RgbRpcResp::Status(status) => {
             println!("{}", serde_yaml::to_string(&status).unwrap());
         }
-        RgbRpcResp::ContractState(contract_id, ..) => {
-            println!("Contract status for {contract_id}:");
+        RgbRpcResp::Contracts(contracts) => {
+            for contract in contracts {
+                println!("---");
+                println!("{}", serde_yaml::to_string(&contract).expect("Unable to generate YAML"));
+            }
+        }
+        RgbRpcResp::ContractState(contract_id, state) => {
+            println!("Contract state for {contract_id}:");
+            println!("{}", serde_yaml::to_string(&state).expect("Unable to generate YAML"));
+        }
+        RgbRpcResp::Wallets(wallets) => {
+            println!("Wallets:");
+            println!("Id\tName\tDescriptor class");
+            for wallet in wallets {
+                println!("{}\t{}\t{}", wallet.id, wallet.name, wallet.descriptor.class())
+            }
         }
         _ => todo!(),
     }
+    exit(0)
 }

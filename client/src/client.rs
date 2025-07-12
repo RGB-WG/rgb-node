@@ -36,14 +36,14 @@ pub struct Delegate {
     cb: fn(RgbRpcResp),
 }
 
-pub struct BpClient {
+pub struct RgbClient {
     inner: Client<RgbRpcReq>,
 }
 
-impl BpClient {
+impl RgbClient {
     pub fn new(remote: RemoteAddr, cb: fn(RgbRpcResp)) -> io::Result<Self> {
         let delegate = Delegate { cb };
-        let inner = Client::new(delegate, remote)?;
+        let inner = Client::new::<_, Session, _>(delegate, remote)?;
         Ok(Self { inner })
     }
 
@@ -51,6 +51,10 @@ impl BpClient {
         let noise = TinyBlob::default(); // TODO: produce random noise
         self.inner.send(RgbRpcReq::Ping(noise))
     }
+
+    pub fn status(&self) -> io::Result<()> { self.inner.send(RgbRpcReq::Status) }
+    pub fn contracts(&self) -> io::Result<()> { self.inner.send(RgbRpcReq::Contracts) }
+    pub fn wallets(&self) -> io::Result<()> { self.inner.send(RgbRpcReq::Wallets) }
 
     pub fn join(self) -> Result<(), Box<dyn Any + Send>> { self.inner.join() }
 }
@@ -61,8 +65,8 @@ impl ConnectionDelegate<RemoteAddr, Session> for Delegate {
     fn connect(&mut self, remote: &RemoteAddr) -> Session {
         TcpStream::connect(remote).unwrap_or_else(|err| {
             #[cfg(feature = "log")]
-            log::error!("Unable to connect BP Node {remote} due to {err}");
-            eprintln!("Unable to connect BP Node {remote}");
+            log::error!("Unable to connect RGB Node {remote} due to {err}");
+            eprintln!("Unable to connect RGB Node {remote}");
             exit(1);
         })
     }

@@ -22,7 +22,7 @@
 use std::io;
 
 use crate::Command;
-use crate::client::BpClient;
+use crate::client::RgbClient;
 
 #[derive(Debug, Display, Error, From)]
 #[non_exhaustive]
@@ -33,11 +33,13 @@ pub enum ExecError {
 }
 
 impl Command {
-    pub fn exec(self, mut client: BpClient) -> Result<(), ExecError> {
+    pub fn exec(self, client: RgbClient) -> Result<(), ExecError> {
         match self {
-            Command::Ping => {
-                client.ping()?;
+            Command::Status => {
+                client.status()?;
             }
+            Command::Wallets => client.wallets()?,
+            Command::Contracts => client.contracts()?,
         }
         client.join().expect("Client thread panicked");
         Ok(())

@@ -19,12 +19,7 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-#[macro_use]
-extern crate amplify;
-#[macro_use]
-extern crate strict_encoding;
-
 pub use ::rgbrpc as rpc;
 mod client;
 
-pub use client::{BpClient, Delegate};
+pub use client::{Delegate, RgbClient};

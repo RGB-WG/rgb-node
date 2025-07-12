@@ -32,7 +32,23 @@ _bp-cli() {
         (( CURRENT += 1 ))
         curcontext="${curcontext%:*:*}:bp-cli-command-$line[1]:"
         case $line[1] in
-            (ping)
+            (status)
+_arguments "${_arguments_options[@]}" : \
+'*-v[Set a verbosity level]' \
+'*--verbose[Set a verbosity level]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+&& ret=0
+;;
+(wallets)
+_arguments "${_arguments_options[@]}" : \
+'*-v[Set a verbosity level]' \
+'*--verbose[Set a verbosity level]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+&& ret=0
+;;
+(contracts)
 _arguments "${_arguments_options[@]}" : \
 '*-v[Set a verbosity level]' \
 '*--verbose[Set a verbosity level]' \
@@ -52,7 +68,15 @@ _arguments "${_arguments_options[@]}" : \
         (( CURRENT += 1 ))
         curcontext="${curcontext%:*:*}:bp-cli-help-command-$line[1]:"
         case $line[1] in
-            (ping)
+            (status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(wallets)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(contracts)
 _arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
@@ -72,33 +96,57 @@ esac
 (( $+functions[_bp-cli_commands] )) ||
 _bp-cli_commands() {
     local commands; commands=(
-'ping:' \
+'status:Get RGB node status information' \
+'wallets:List wallets known to the RGB node' \
+'contracts:List contracts known to the RGB node' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'bp-cli commands' commands "$@"
 }
+(( $+functions[_bp-cli__contracts_commands] )) ||
+_bp-cli__contracts_commands() {
+    local commands; commands=()
+    _describe -t commands 'bp-cli contracts commands' commands "$@"
+}
 (( $+functions[_bp-cli__help_commands] )) ||
 _bp-cli__help_commands() {
     local commands; commands=(
-'ping:' \
+'status:Get RGB node status information' \
+'wallets:List wallets known to the RGB node' \
+'contracts:List contracts known to the RGB node' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'bp-cli help commands' commands "$@"
+}
+(( $+functions[_bp-cli__help__contracts_commands] )) ||
+_bp-cli__help__contracts_commands() {
+    local commands; commands=()
+    _describe -t commands 'bp-cli help contracts commands' commands "$@"
 }
 (( $+functions[_bp-cli__help__help_commands] )) ||
 _bp-cli__help__help_commands() {
     local commands; commands=()
     _describe -t commands 'bp-cli help help commands' commands "$@"
 }
-(( $+functions[_bp-cli__help__ping_commands] )) ||
-_bp-cli__help__ping_commands() {
+(( $+functions[_bp-cli__help__status_commands] )) ||
+_bp-cli__help__status_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli help ping commands' commands "$@"
+    _describe -t commands 'bp-cli help status commands' commands "$@"
 }
-(( $+functions[_bp-cli__ping_commands] )) ||
-_bp-cli__ping_commands() {
+(( $+functions[_bp-cli__help__wallets_commands] )) ||
+_bp-cli__help__wallets_commands() {
     local commands; commands=()
-    _describe -t commands 'bp-cli ping commands' commands "$@"
+    _describe -t commands 'bp-cli help wallets commands' commands "$@"
+}
+(( $+functions[_bp-cli__status_commands] )) ||
+_bp-cli__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'bp-cli status commands' commands "$@"
+}
+(( $+functions[_bp-cli__wallets_commands] )) ||
+_bp-cli__wallets_commands() {
+    local commands; commands=()
+    _describe -t commands 'bp-cli wallets commands' commands "$@"
 }
 
 if [ "$funcstack[1]" = "_bp-cli" ]; then

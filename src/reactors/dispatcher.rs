@@ -124,7 +124,7 @@ impl ServiceController<RemoteAddr, Session, TcpListener, (ReqId, RgbRpcResp)> fo
     }
 
     fn on_frame(&mut self, remote: SocketAddr, req: RgbRpcReq) {
-        log::trace!(target: NAME, "Processing `{req}`");
+        log::debug!(target: NAME, "Processing client request `{req}`");
 
         let client = self.clients.get_mut(&remote).expect("must be known");
         client.last_seen = Timestamp::now().as_millis();

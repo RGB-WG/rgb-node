@@ -21,11 +21,11 @@
 
 use std::ops::ControlFlow;
 
-use amplify::confinement::MediumOrdSet;
 use async_channel::{SendError as AsyncSendError, Sender as AsyncSender};
 use crossbeam_channel::{Receiver, RecvError, SendError, Sender};
 use microservices::{USender, UService};
 use rgb::ContractId;
+use rgbp::ContractInfo;
 use rgbrpc::{Failure, RgbRpcReq, RgbRpcResp};
 
 use crate::ReqId;
@@ -52,7 +52,7 @@ impl AsyncClient {
         })
     }
 
-    pub async fn contract_ids(&self) -> MediumOrdSet<ContractId> {
+    pub async fn contract_info(&self) -> Vec<ContractInfo> {
         let RgbRpcResp::Contracts(ids) = self.request(RgbRpcReq::Contracts).await else {
             panic!("Unexpected response from RGB RPC server");
         };

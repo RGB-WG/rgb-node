@@ -36,18 +36,26 @@ use strict_types::StrictVal;
 
 use crate::ReqId;
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub enum Request2Reader {
     // These are requests from the broker
+    #[display("LIST_CONTRACTS({0})")]
     ListContracts(ReqId),
+    #[display("READ_CONTRACTS({0}, {1})")]
     ReadContract(ReqId, ContractId),
+    #[display("LIST_WALLETS({0})")]
     ListWallets(ReqId),
+    #[display("READ_WALLET({0}, {1})")]
     ReadWallet(ReqId, DescrId),
 
     // These are requests from the writer
+    #[display("UPSERT_WALLET({0}, ...)")]
     UpsertWallet(DescrId, RoWallet),
+    #[display("REMOVE_WALLET({0})")]
     RemoveWallet(DescrId),
+    #[display("UPSERT_CONTRACT({0}, ...)")]
     UpsertContract(ContractId, RoContract),
+    #[display("REMOVE_CONTRACT({0})")]
     RemoveContract(ContractId),
 }
 
@@ -56,17 +64,24 @@ pub struct Reader2Broker(ReqId, ReaderMsg);
 
 impl Reader2Broker {
     pub fn req_id(&self) -> ReqId { self.0 }
+    pub fn as_reply(&self) -> &ReaderMsg { &self.1 }
     pub fn into_reply(self) -> ReaderMsg { self.1 }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
 pub enum ReaderMsg {
+    #[display("CONTRACTS(...)")]
     Contracts(Vec<ContractInfo>),
+    #[display("CONTRACT_STATE({0}, ...)")]
     ContractState(ContractId, ContractState<TxoSeal>),
+    #[display("CONTRACT_NOT_FOUND({0})")]
     ContractNotFound(ContractId),
 
+    #[display("WALLETS(...)")]
     Wallets(Vec<WalletInfo>),
+    #[display("WALLET_STATE({0}, ...)")]
     WalletState(DescrId, WalletState),
+    #[display("WALLET_NOT_FOUND({0})")]
     WalletNotFount(DescrId),
 }
 
@@ -162,9 +177,10 @@ impl ReaderService {
     }
 
     pub fn send_to_broker(&self, reply: Reader2Broker) {
+        log::trace!(target: Self::NAME, "Sending reply `{}` to broker for request #{}", reply.1, reply.req_id());
         let req_id = reply.req_id();
         if let Err(err) = self.broker.try_send(reply) {
-            log::error!(target: Self::NAME, "Failed to send reply {req_id}: {err}");
+            log::error!(target: Self::NAME, "Failed to send reply to broker for request #{req_id}: {err}");
         }
     }
 }
@@ -177,7 +193,7 @@ impl UService for ReaderService {
     fn process(&mut self, msg: Self::Msg) -> Result<ControlFlow<u8>, Self::Error> {
         match msg {
             Request2Reader::ListContracts(req_id) => {
-                log::trace!(target: Self::NAME, "Listing all contracts");
+                log::debug!(target: Self::NAME, "Listing all contracts");
                 let contracts = self
                     .contracts
                     .values()
@@ -186,7 +202,7 @@ impl UService for ReaderService {
                 self.send_to_broker(Reader2Broker(req_id, ReaderMsg::Contracts(contracts)));
             }
             Request2Reader::ReadContract(req_id, id) => {
-                log::trace!(target: Self::NAME, "Sending state for contract {id}");
+                log::debug!(target: Self::NAME, "Sending state for contract {id}");
                 let reply = self
                     .contracts
                     .get(&id)
@@ -209,12 +225,12 @@ impl UService for ReaderService {
             }
 
             Request2Reader::ListWallets(req_id) => {
-                log::trace!(target: Self::NAME, "Listing all wallets");
+                log::debug!(target: Self::NAME, "Listing all wallets");
                 let wallets = self.wallets.values().map(RoWallet::info).collect();
                 self.send_to_broker(Reader2Broker(req_id, ReaderMsg::Wallets(wallets)));
             }
             Request2Reader::ReadWallet(req_id, id) => {
-                log::trace!(target: Self::NAME, "Sending state for wallet {id}");
+                log::debug!(target: Self::NAME, "Sending state for wallet {id}");
                 let state = self
                     .wallet_info(id)
                     .map(|info| ReaderMsg::WalletState(id, info))

@@ -21,7 +21,7 @@
 
 use rgbrpc::RemoteAddr;
 
-/// Command-line tool for working with store daemon
+/// Command-line tool for working with the RGB daemon
 #[derive(Parser, Clone, PartialEq, Eq, Debug)]
 #[command(name = "bp-cli", bin_name = "bp-cli", author, version)]
 pub struct Args {
@@ -43,6 +43,15 @@ pub struct Args {
 /// Command-line commands:
 #[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
 pub enum Command {
-    #[display("ping")]
-    Ping,
+    /// Get RGB node status information
+    #[display("status")]
+    Status,
+
+    /// List wallets known to the RGB node
+    #[display("wallets")]
+    Wallets,
+
+    /// List contracts known to the RGB node
+    #[display("contracts")]
+    Contracts,
 }

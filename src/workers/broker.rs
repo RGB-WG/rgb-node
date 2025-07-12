@@ -68,6 +68,8 @@ where
     Sp::Stock: Send,
     Sp::Pile: Pile<Seal = TxoSeal> + Send,
 {
+    const NAME: &'static str = "broker";
+
     #[cfg(feature = "embedded")]
     pub fn start_embedded(conf: Config, stockpile: Sp) -> Result<Self, BrokerError> {
         Self::start_inner(conf, stockpile)
@@ -92,17 +94,17 @@ where
     fn start_inner(conf: Config, stockpile: Sp) -> Result<Self, BrokerError> {
         const TIMEOUT: Option<Duration> = Some(Duration::from_secs(60 * 10));
 
-        log::info!("Starting contracts reader thread...");
+        log::info!(target: Self::NAME, "Starting contracts reader thread...");
         let (reader_tx, reader_rx) = crossbeam_channel::unbounded::<Reader2Broker>();
         let reader = ReaderService::new(reader_tx);
         let reader_thread = UThread::new(reader, TIMEOUT);
 
-        log::info!("Starting contracts writer thread...");
+        log::info!(target: Self::NAME, "Starting contracts writer thread...");
         let writer =
             WriterService::new(conf.network, &conf.data_dir, stockpile, reader_thread.sender());
         let writer_thread = UThread::new(writer, TIMEOUT);
 
-        log::info!("Starting the dispatcher thread...");
+        log::info!(target: Self::NAME, "Starting the dispatcher thread...");
         let (rpc_tx, rpc_rx) = crossbeam_channel::unbounded::<(ReqId, RgbRpcReq)>();
         #[cfg(feature = "embedded")]
         let (rpc_thread, rpc_tx) = {
@@ -123,7 +125,7 @@ where
             rpc_runtime
         };
 
-        log::info!("Launch completed successfully");
+        log::info!(target: Self::NAME, "Launch completed successfully");
         Ok(Self {
             rpc_thread,
             rpc_rx,
@@ -136,25 +138,34 @@ where
     }
 
     fn run_internal(mut self) -> Result<(), BrokerError> {
-        select! {
-            recv(self.rpc_rx) -> msg => {
-                match msg {
-                    Ok((req_id, msg)) => { self.proc_rpc_msg(req_id, msg).expect("unable to send a message"); },
-                    Err(err) => {
-                        log::error!("Error receiving RPC message: {err}");
+        loop {
+            select! {
+                recv(self.rpc_rx) -> msg => {
+                    match msg {
+                        Ok((req_id, msg)) => {
+                            log::trace!(target: Self::NAME, "Received a RPC message {msg} with #{req_id} from a client");
+                            self.proc_rpc_msg(req_id, msg).expect("unable to send a message");
+                        },
+                        Err(err) => {
+                            log::error!(target: Self::NAME, "Error receiving RPC message: {err}");
+                        }
                     }
-                }
-            },
-            recv(self.reader_rx) -> msg => {
-                match msg {
-                    Ok(msg) => { self.proc_reader_msg(msg).expect("unable to send a message"); },
-                    Err(err) => {
-                        log::error!("Error receiving reader message: {err}");
+                },
+                recv(self.reader_rx) -> msg => {
+                    match msg {
+                        Ok(msg) => {
+                            log::trace!(target: Self::NAME, "Received a message {} with #{} from reader", msg.as_reply(), msg.req_id());
+                            self.proc_reader_msg(msg).expect("unable to send a message");
+                        },
+                        Err(err) => {
+                            log::error!(target: Self::NAME, "Error receiving reader message: {err}");
+                        }
                     }
                 }
             }
         }
-
+        // TODO: Provide a control channel to the broker so we can terminate it
+        /*
         self.rpc_thread
             .join()
             .map_err(|_| BrokerError::Thread("Dispatcher"))?;
@@ -165,10 +176,11 @@ where
             .join()
             .map_err(|_| BrokerError::Thread("Contracts writer"))?;
         Ok(())
+         */
     }
 
     fn proc_rpc_msg(&mut self, req_id: ReqId, msg: RgbRpcReq) -> io::Result<()> {
-        log::debug!("Received an RPC message: {msg}");
+        log::debug!(target: Self::NAME, "Received an RPC message #{req_id} {msg}");
         match msg {
             RgbRpcReq::Wallets => {
                 self.send_reader_req(req_id, Request2Reader::ListWallets(req_id));
@@ -188,7 +200,7 @@ where
     }
 
     fn proc_reader_msg(&mut self, resp: Reader2Broker) -> io::Result<()> {
-        log::debug!("Received reply from a reader for an RPC request {}", resp.req_id());
+        log::debug!(target: Self::NAME, "Received reply from reader for an RPC request #{}", resp.req_id());
         let req_id = resp.req_id();
         match resp.into_reply() {
             ReaderMsg::Contracts(contracts) => {
@@ -214,8 +226,9 @@ where
     }
 
     fn send_reader_req(&mut self, req_id: ReqId, req: Request2Reader) {
+        log::trace!(target: Self::NAME, "Sending request #{req_id} `{req}` to reader");
         if let Err(err) = self.reader_thread.sender().try_send(req) {
-            log::error!("Unable to send a request to the reader thread: {err}");
+            log::error!(target: Self::NAME, "Unable to send a request to the reader thread: {err}");
             self.send_rpc_resp(
                 req_id,
                 RgbRpcResp::Failure(Failure::internal_error("broken reader service")),
@@ -224,6 +237,7 @@ where
     }
 
     fn send_rpc_resp(&mut self, req_id: ReqId, response: RgbRpcResp) {
+        log::trace!(target: Self::NAME, "Sending RPC response #{req_id} `{response}` back to dispatcher");
         if let Err(err) = {
             #[cfg(not(feature = "embedded"))]
             {
@@ -234,7 +248,7 @@ where
                 self.rpc_tx.send((req_id, response))
             }
         } {
-            log::error!("Channel to the dispatcher thread is broken: {err}");
+            log::error!(target: Self::NAME, "Channel to the dispatcher thread is broken: {err}");
             panic!("The channel to the dispatcher thread is broken. Unable to proceed, exiting.");
         };
     }

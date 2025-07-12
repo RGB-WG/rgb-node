@@ -20,7 +20,7 @@
 // the License.
 
 use std::collections::BTreeMap;
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
 use bpstd::DescrId;
@@ -50,7 +50,7 @@ pub enum RgbRpcResp {
     #[display("STATUS")]
     Status(Status),
 
-    #[display("STATUS")]
+    #[display("WALLETS(...)")]
     Wallets(Vec<WalletInfo>),
 
     #[display("WALLET_STATE({0}, ...)")]
@@ -92,7 +92,11 @@ impl Frame for RgbRpcResp {
     type Error = CiboriumError;
 
     fn unmarshall(reader: impl Read) -> Result<Option<Self>, Self::Error> {
-        ciborium::from_reader(reader).map_err(CiboriumError::from)
+        match ciborium::from_reader(reader) {
+            Ok(msg) => Ok(Some(msg)),
+            Err(ciborium::de::Error::Io(e)) if e.kind() == ErrorKind::UnexpectedEof => Ok(None),
+            Err(e) => Err(CiboriumError::from(e)),
+        }
     }
 
     fn marshall(&self, writer: impl Write) -> Result<(), Self::Error> {
@@ -117,4 +121,34 @@ pub struct WalletState {
     pub owned: BTreeMap<Utxo, BTreeMap<ContractStateName, BTreeMap<CellAddr, StrictVal>>>,
     pub aggregated: BTreeMap<ContractStateName, StrictVal>,
     pub confirmations: BTreeMap<Opid, WitnessStatus>,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn serialization() {
+        let mut buf = Vec::new();
+        RgbRpcResp::Message(s!("Test")).marshall(&mut buf).unwrap();
+        assert_eq!(buf, *b"\xA1\x67Message\x64Test");
+        let deser = RgbRpcResp::unmarshall(&mut buf.as_slice())
+            .unwrap()
+            .unwrap();
+        assert!(matches!(deser, RgbRpcResp::Message(m) if m == "Test"));
+    }
+
+    #[test]
+    fn stream_serialization() {
+        let mut buf = Vec::new();
+        RgbRpcResp::Message(s!("Test")).marshall(&mut buf).unwrap();
+        assert_eq!(buf, *b"\xA1\x67Message\x64Test");
+        let mut cursor = Cursor::new(&mut buf);
+        let deser = RgbRpcResp::unmarshall(&mut cursor).unwrap().unwrap();
+        assert!(matches!(deser, RgbRpcResp::Message(m) if m == "Test"));
+        let nothing = RgbRpcResp::unmarshall(&mut cursor).unwrap();
+        assert!(matches!(nothing, None));
+    }
 }
