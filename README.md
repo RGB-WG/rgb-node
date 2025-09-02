@@ -1,7 +1,7 @@
 # RGB Node: sovereign smart contracts backend
 
-![Build](https://github.com/RGB-WG/rgb-node/workflows/Build/badge.svg)
-![Lints](https://github.com/RGB-WG/rgb-node/workflows/Lints/badge.svg)
+[![Build](https://github.com/RGB-WG/rgb-node/workflows/Build/badge.svg)](https://github.com/RGB-WG/rgb-node/actions/workflows/build.yml)
+[![Lints](https://github.com/RGB-WG/rgb-node/workflows/Lints/badge.svg)](https://github.com/RGB-WG/rgb-node/actions/workflows/lint.yml)
 [![Apache-2 licensed](https://img.shields.io/crates/l/rgb-node)](./LICENSE)
 
 ## Components
