@@ -19,6 +19,9 @@ _rgb-cli() {
             rgb__cli,contracts)
                 cmd="rgb__cli__contracts"
                 ;;
+            rgb__cli,create)
+                cmd="rgb__cli__create"
+                ;;
             rgb__cli,help)
                 cmd="rgb__cli__help"
                 ;;
@@ -30,6 +33,9 @@ _rgb-cli() {
                 ;;
             rgb__cli__help,contracts)
                 cmd="rgb__cli__help__contracts"
+                ;;
+            rgb__cli__help,create)
+                cmd="rgb__cli__help__create"
                 ;;
             rgb__cli__help,help)
                 cmd="rgb__cli__help__help"
@@ -47,7 +53,7 @@ _rgb-cli() {
 
     case "${cmd}" in
         rgb__cli)
-            opts="-v -n -r -h -V --verbose --network --remote --help --version status wallets contracts help"
+            opts="-v -n -r -h -V --verbose --network --remote --help --version status wallets create contracts help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -98,8 +104,30 @@ _rgb-cli() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        rgb__cli__create)
+            opts="-v -n -h --verbose --network --help <NAME>"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --network)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -n)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         rgb__cli__help)
-            opts="status wallets contracts help"
+            opts="status wallets create contracts help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -113,6 +141,20 @@ _rgb-cli() {
             return 0
             ;;
         rgb__cli__help__contracts)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        rgb__cli__help__create)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )

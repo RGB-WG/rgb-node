@@ -22,6 +22,7 @@ name = "rgbclient"
 [dependencies]
 amplify.workspace = true
 bp-std.workspace = true
+rgb-runtime.workspace = true # TODO: Change to a descriptor
 rgb-rpc = { version = "0.12.0-alpha.1", path = "../rpc" }
 io-reactor.workspace = true
 netservices.workspace = true
@@ -34,6 +35,7 @@ serde_yaml = { workspace = true, optional = true }
 [build-dependencies]
 amplify.workspace = true
 bp-std.workspace = true
+rgb-runtime.workspace = true # TODO: Change to a descriptor
 rgb-rpc = { version = "0.12.0-alpha.1", path = "../rpc" }
 clap.workspace = true
 clap_complete.workspace = true

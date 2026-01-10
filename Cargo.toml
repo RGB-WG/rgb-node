@@ -113,25 +113,26 @@ embedded = ["async-channel"]
 spec = "config_spec.toml"
 
 [patch.crates-io]
-io-reactor = { git = "https://github.com/rust-amplify/io-reactor", branch = "v0.6" }
+io-reactor = { git = "https://github.com/rust-amplify/io-reactor", branch = "develop" }
 cyphergraphy = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
 cypheraddr = { git = "https://github.com/cyphernet-labs/cyphernet.rs", branch = "master" }
 microservices = { git = "https://github.com/cyphernet-labs/microservices.rs", branch = "master" }
 netservices = { git = "https://github.com/cyphernet-labs/netservices.rs", branch = "develop" }
 
-bp-consensus = { git = "https://github.com/BP-WG/bp-core" }
-bp-core = { git = "https://github.com/BP-WG/bp-core" }
-bp-invoice = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
-bp-derive = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
-descriptors = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
-psbt = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
-bp-std = { git = "https://github.com/BP-WG/bp-std", branch = "feat/descriptors" }
-rgb-std = { git = "https://github.com/RGB-WG/rgb-std", branch = "node" }
-rgb-persist-fs = { git = "https://github.com/RGB-WG/rgb-std", branch = "node" }
-rgb-psbt = { git = "https://github.com/RGB-WG/rgb", branch = "node" }
-rgb-runtime = { git = "https://github.com/RGB-WG/rgb", branch = "node" }
+bp-consensus = { git = "https://github.com/BP-WG/bp-core", branch = "develop" }
+bp-core = { git = "https://github.com/BP-WG/bp-core", branch = "develop" }
+bp-invoice = { git = "https://github.com/BP-WG/bp-std", branch = "master" }
+bp-derive = { git = "https://github.com/BP-WG/bp-std", branch = "master" }
+descriptors = { git = "https://github.com/BP-WG/bp-std", branch = "master" }
+psbt = { git = "https://github.com/BP-WG/bp-std", branch = "master" }
+bp-std = { git = "https://github.com/BP-WG/bp-std", branch = "master" }
+rgb-std = { git = "https://github.com/RGB-WG/rgb-std", branch = "master" }
+rgb-persist-fs = { git = "https://github.com/RGB-WG/rgb-std", branch = "master" }
+rgb-psbt = { git = "https://github.com/RGB-WG/rgb", branch = "master" }
+rgb-runtime = { git = "https://github.com/RGB-WG/rgb", branch = "master" }
 
 #bp-electrum = { git = "https://github.com/BP-WG/bp-electrum-client", branch = "master" }
 #bp-esplora = { git = "https://github.com/BP-WG/bp-esplora-client", branch = "master" }
 #bp-client = { git = "https://github.com/BP-WG/bp-node" }
-bp-rpc = { git = "https://github.com/BP-WG/bp-node" }
+#bp-rpc = { git = "https://github.com/BP-WG/bp-node" }
+bp-rpc = { path = "../bp-node/rpc" }

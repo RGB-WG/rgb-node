@@ -33,6 +33,7 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             [CompletionResult]::new('--version', '--version', [CompletionResultType]::ParameterName, 'Print version')
             [CompletionResult]::new('status', 'status', [CompletionResultType]::ParameterValue, 'Get RGB node status information')
             [CompletionResult]::new('wallets', 'wallets', [CompletionResultType]::ParameterValue, 'List wallets known to the RGB node')
+            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a wallet from a descriptor')
             [CompletionResult]::new('contracts', 'contracts', [CompletionResultType]::ParameterValue, 'List contracts known to the RGB node')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
             break
@@ -55,6 +56,15 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
             break
         }
+        'rgb-cli;create' {
+            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
+            [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
+            [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'Set a verbosity level')
+            [CompletionResult]::new('--verbose', '--verbose', [CompletionResultType]::ParameterName, 'Set a verbosity level')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help (see more with ''--help'')')
+            break
+        }
         'rgb-cli;contracts' {
             [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'Bitcoin network')
             [CompletionResult]::new('--network', '--network', [CompletionResultType]::ParameterName, 'Bitcoin network')
@@ -67,6 +77,7 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
         'rgb-cli;help' {
             [CompletionResult]::new('status', 'status', [CompletionResultType]::ParameterValue, 'Get RGB node status information')
             [CompletionResult]::new('wallets', 'wallets', [CompletionResultType]::ParameterValue, 'List wallets known to the RGB node')
+            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a wallet from a descriptor')
             [CompletionResult]::new('contracts', 'contracts', [CompletionResultType]::ParameterValue, 'List contracts known to the RGB node')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
             break
@@ -75,6 +86,9 @@ Register-ArgumentCompleter -Native -CommandName 'rgb-cli' -ScriptBlock {
             break
         }
         'rgb-cli;help;wallets' {
+            break
+        }
+        'rgb-cli;help;create' {
             break
         }
         'rgb-cli;help;contracts' {

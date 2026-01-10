@@ -20,6 +20,7 @@
 // the License.
 
 use bpstd::Network;
+use rgbp::descriptors::RgbDescr;
 use rgbrpc::RemoteAddr;
 
 pub const RGB_NODE_NETWORK_ENV: &str = "RGB_NODE_NETWORK";
@@ -48,7 +49,7 @@ pub struct Args {
 }
 
 /// Command-line commands:
-#[derive(Subcommand, Clone, PartialEq, Eq, Debug, Display)]
+#[derive(Subcommand, Clone, Debug, Display)]
 pub enum Command {
     /// Get RGB node status information
     #[display("status")]
@@ -58,7 +59,22 @@ pub enum Command {
     #[display("wallets")]
     Wallets,
 
+    /// Create a wallet from a descriptor
+    #[display("create")]
+    Create {
+        /// Name for the wallet
+        name: String,
+
+        /// Wallet descriptor
+        descr: RgbDescr,
+    },
+
     /// List contracts known to the RGB node
     #[display("contracts")]
     Contracts,
+    /*
+    /// Import a contract issuer
+    #[display("import")]
+    Import,
+     */
 }

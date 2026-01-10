@@ -19,7 +19,7 @@
 // or implied. See the License for the specific language governing permissions and limitations under
 // the License.
 
-use std::io::{Cursor, ErrorKind, Read, Write};
+use std::io::{Cursor, Read, Write};
 
 use amplify::confinement::{SmallBlob, TinyBlob};
 use bpstd::DescrId;
